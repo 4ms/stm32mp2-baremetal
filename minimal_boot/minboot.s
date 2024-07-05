@@ -15,7 +15,6 @@
 .global _Reset
 .global _start
 _Reset:
-_start:
     b Reset_Handler
     b . /* 0x4  Undefined Instruction */
     b . /* Software Interrupt */

@@ -17,10 +17,10 @@ DEPS   	  = $(addprefix $(OBJDIR)/, $(addsuffix .d, $(basename $(SOURCES))))
 
 # MCU := -ffreestanding -march=armv8-a -nostdinc
 
-# MCU := -mcpu=cortex-a35 
-# MCU += -mlittle-endian
-# MCU := -march=armv8-a
-# MCU += -mtune=cortex-a35
+MCU := -mcpu=cortex-a35 
+MCU += -mlittle-endian
+MCU += -march=armv8-a
+MCU += -mtune=cortex-a35
 # MCU += -march=armv8-a
 
 
@@ -39,7 +39,6 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 OPTFLAG ?= -O0
 
 AFLAGS =  \
-	-O0 \
 	-fdata-sections \
 	-ffunction-sections \
 	-fno-builtin \
@@ -51,7 +50,6 @@ AFLAGS =  \
 	-nostdinc \
 	-nostdlib \
 	-ffreestanding \
-	-r \
 
 # $(MCU)
 
@@ -81,18 +79,11 @@ CXXFLAGS ?= $(CFLAGS) \
 
 LINK_STDLIB ?= -nostdlib
 
-# with -ld to link: (complains it cannot find libc.a if we specify -nostartfiles or -nostdlib in AFLAGS. No link flags seem to change this (nostdlib, nostartfiles, ffreestanding).
-# Otherwise if we don't specify nostartfiles or nostdlib in AFLAGS, then it uses crt0.s and needs _write, etc and main)
-
-
-# with g++ to link:
-# Error: ./aarch64-none-elf/bin/ld: cannot use executable file 'build/obj/obj/minboot.o' as input to a link
-
 LFLAGS ?= -Wl,--gc-sections \
 		 -Wl,-Map,$(BUILDDIR)/$(BINARYNAME).map,--cref \
 		 -T $(LINKSCR) \
 		 $(LINK_STDLIB) \
-		 $(AFLAGS) \
+		 $(MCU) \
 		 -nostartfiles \
 		 $(EXTRALDFLAGS) \
 		 -ffreestanding \
@@ -136,17 +127,17 @@ install:
 $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(info Building $< at $(OPTFLAG))
-	$(AS) $(AFLAGS) $< -o $@ 
+	$(AS) $(AFLAGS) -c $< -o $@ 
 
 $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
 	@mkdir -p $(dir $@)
 	$(info Building $< at $(OPTFLAG))
-	@$(CC) $(DEPFLAGS) $(OPTFLAG) $(CFLAGS) $< -o $@
+	$(CC) $(DEPFLAGS) $(OPTFLAG) $(CFLAGS) $< -o $@
 
 $(OBJDIR)/%.o: %.c[cp]* $(OBJDIR)/%.d
 	@mkdir -p $(dir $@)
 	$(info Building $< at $(OPTFLAG))
-	@$(CXX) $(DEPFLAGS) $(OPTFLAG) $(CXXFLAGS) $< -o $@
+	$(CXX) $(DEPFLAGS) $(OPTFLAG) $(CXXFLAGS) $< -o $@
 
 $(ELF): $(OBJECTS) $(LINKSCR)
 	$(info Linking...)
