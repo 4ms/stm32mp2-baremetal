@@ -5,6 +5,7 @@ int main() {
   *uart = 'A';
   *uart = 'B';
   *uart = 'C';
+
   while (true) {
     *uart = 'D';
   }

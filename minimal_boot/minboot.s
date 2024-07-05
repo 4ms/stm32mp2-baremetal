@@ -30,5 +30,5 @@ Reset_Handler:
 	 ldr x4, =STM32_USART2_TDR 
 	 mov x0, #65 
 	 str x0, [x4] 
-	 b . 
-	/*bl main*/
+	/* b . */
+	bl main
