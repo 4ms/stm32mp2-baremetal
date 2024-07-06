@@ -6,27 +6,24 @@ LINKSCR ?= linkscript.ld
 BUILDDIR ?= build
 BINARYNAME ?= main
 UIMAGENAME ?= $(BUILDDIR)/main.uimg
-# SCRIPTDIR ?= ../../scripts
+SCRIPTDIR ?= ../scripts
 
 OBJDIR = $(BUILDDIR)/obj/obj
 LOADADDR 	?= 0x88000000
-ENTRYPOINT 	?= 0x88000000
+ENTRYPOINT 	?= 0x88000040
 
 OBJECTS   = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 DEPS   	  = $(addprefix $(OBJDIR)/, $(addsuffix .d, $(basename $(SOURCES))))
 
-# MCU := -ffreestanding -march=armv8-a -nostdinc
 
 MCU := -mcpu=cortex-a35 
-MCU += -mlittle-endian
 MCU += -march=armv8-a
 MCU += -mtune=cortex-a35
-# MCU += -march=armv8-a
+MCU += -mlittle-endian
 
-
-# FPU := -mfpu=neon-fp-armv8 
+# FIXME: unrecognized by aarch64-none-elf-g++:
+# FPU := -mfpu=neon
 # FPU += -mfloat-abi=hard
-# -mfpu=neon-fp-armv8
 
 EXTRA_ARCH_CFLAGS ?= 
 
@@ -39,8 +36,7 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 OPTFLAG ?= -O0
 
 AFLAGS =  \
-	-fdata-sections \
-	-ffunction-sections \
+	-fdata-sections -ffunction-sections \
 	-fno-builtin \
 	-fno-common \
 	-march=armv8-a \
@@ -50,8 +46,6 @@ AFLAGS =  \
 	-nostdinc \
 	-nostdlib \
 	-ffreestanding \
-
-# $(MCU)
 
 CFLAGS ?= -g2 \
 		 -fno-common \
@@ -110,7 +104,7 @@ ELF 	= $(BUILDDIR)/$(BINARYNAME).elf
 HEX 	= $(BUILDDIR)/$(BINARYNAME).hex
 BIN 	= $(BUILDDIR)/$(BINARYNAME).bin
 
-all: Makefile $(ELF) $(BIN) #$(UIMAGENAME)
+all: Makefile $(ELF) $(BIN) $(UIMAGENAME)
 
 elf: $(ELF)
 
