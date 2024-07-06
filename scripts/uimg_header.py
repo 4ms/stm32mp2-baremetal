@@ -16,11 +16,13 @@ magic = 0x27051956
 
 os_linux = 5             # U-Boot uses this for Linux OS images
 os_uboot = 17            # U-Boot uses this for SSBL images
+os_openrtos = 24
 
 arch_arm = 2
 
 image_type_kernel = 2    # U-Boot uses this for Linux OS images
 image_type_firmware = 5  # U-Boot uses this for SSBL images
+
 
 compress_none = 0        # MP1-Boot only supports uncompressed kernels, for now
 # compress_gzip = 1
@@ -40,10 +42,10 @@ if len(sys.argv) > 4:
 else:
     entryaddr = loadaddr
 
-os = os_linux
+os = os_openrtos
 image_type = image_type_kernel
 compress = compress_none
-image_name = bytes("stm32mp1-baremetal image", "ascii")
+image_name = bytes("stm32mp2-baremetal image", "ascii")
 
 # Calculate some header entries:
 header_size = 64
