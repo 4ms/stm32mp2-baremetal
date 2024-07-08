@@ -10,7 +10,7 @@ SCRIPTDIR ?= ../scripts
 
 OBJDIR = $(BUILDDIR)/obj/obj
 LOADADDR 	?= 0x88000000
-ENTRYPOINT 	?= 0x88000040
+ENTRYPOINT 	?= 0x88000000
 
 OBJECTS   = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 DEPS   	  = $(addprefix $(OBJDIR)/, $(addsuffix .d, $(basename $(SOURCES))))
@@ -111,6 +111,12 @@ elf: $(ELF)
 install:
 	cp $(UIMAGENAME) $(SDCARD_MOUNT_PATH)
 	diskutil unmount $(SDCARD_MOUNT_PATH)
+
+openocd:
+	openocd -s ../scripts/openocd -f board/stm32mp25x_dk.cfg
+
+debug: $(ELF)
+	$(ARCH)-gdb $(ELF)
 
 # install-mp1-boot:
 # 	@if [ "$${SD_DISK_DEVPART}" = "" ]; then echo "Please specify the disk and partition like this: make install-mp1-boot SD_DISK_DEVPART=/dev/diskXs3"; \
