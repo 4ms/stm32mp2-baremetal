@@ -5,19 +5,31 @@
 .global _Reset
 .global _start
 _Reset:
-	nop
+	ldr     x4, =STM32_USART2_TDR 
 
+printMP2:
+	/* UART: print 'M' */
+	mov     x1, #77
+	str     x1, [x4] 
+
+	/* UART: print 'P' */
+	mov     x1, #80
+	str     x1, [x4] 
+
+	/* UART: print '2' */
+	mov     x1, #50
+	str     x1, [x4] 
+
+	/* UART: print '\n' */
+	mov     x1, #10
+	str     x1, [x4] 
+
+	mov     w0, #0x4000000
 delay:
-	mov     w0, #0x30000000
     subs    w0, w0, #0x1
     b.ne    delay
 
-printM:
-	/* UART: print 'M' */
-	ldr x4, =STM32_USART2_TDR 
-	mov x0, #77
-	str x0, [x4] 
-
 loopforever:
-	b .
+	b       printMP2
+	
 
