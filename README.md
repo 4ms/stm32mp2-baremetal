@@ -26,9 +26,9 @@ Go ahead and clone all the repos now:
 mkdir mp2-dev    #this will be our project directory
 cd mp2-dev
 
-git checkout https://github.com/4ms/tf-a-stm32mp25.git
-git checkout https://github.com/4ms/u-boot-stm32mp25
-git checkout https://github.com/4ms/stm32mp2-baremetal
+git clone https://github.com/4ms/tf-a-stm32mp25.git
+git clone https://github.com/4ms/u-boot-stm32mp25
+git clone https://github.com/4ms/stm32mp2-baremetal
 ```
 
 Now you should have a directory structure like this:
@@ -229,7 +229,7 @@ Then type in the boot command:
 ```
 mmc dev 0
 fatload mmc 0:b 0x88000000 main.uimg
-bootm 0x88000000
+go 0x88000000
 ```
 
 This of course requires partition 11 to be already formatted as FATFS and that
