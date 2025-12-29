@@ -235,3 +235,17 @@ bootm 0x88000000
 This of course requires partition 11 to be already formatted as FATFS and that
 you already copied main.uimg to it (see previous step).
 
+## Debugging
+
+The SVD files are here:
+https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-devtools/cmsis-svd/cmsis-svd
+
+
+OpenOCD stuff here:
+https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-devtools/openocd
+
+
+The CA35 CMSIS device headers are missing from the STM32MP2 Cube HAL (only the M33 and M0 are present).
+But they are here in the DDR Firmware repo:
+https://github.com/STMicroelectronics/STM32DDRFW-UTIL/tree/main/Drivers/CMSIS/Device/ST/STM32MP2xx/Include
+
