@@ -5,7 +5,7 @@ ENTRY(_Reset)
 
 MEMORY
 {
-    ROM (rx) : ORIGIN = 0x8A000000, LENGTH = 1M
+    ROM (rx) : ORIGIN = 0x88000040, LENGTH = 16M
     RAM (rwx): ORIGIN = 0x90000000, LENGTH = 16M
 }
 
@@ -14,7 +14,7 @@ __HEAP_SIZE = 0x40000;
 SECTIONS
 {
     .text : {
-        *(.vector_table)
+ /*       *(.vector_table)*/
         *(.text)
         *(.text*)
 					/* Todo: check if we need the next 3 lines */

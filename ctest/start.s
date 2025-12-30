@@ -4,7 +4,6 @@
 
 /* serial1: usart6 */
 
-.section .vector_table, "x"
 .global _Reset
 .global _start
 _Reset:
@@ -19,7 +18,27 @@ _Reset:
 	mov x0, #10 
 	str x0, [x4] 
 
-	ldr	x0, =(SYS_INIT_SP_ADDR)
+	ldr	x0, =(_stack_start)
 	bic	sp, x0, #0xf	/* 16-byte alignment for ABI compliance */
 
 	b main
+
+.section .vector_table, "x"
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+
+

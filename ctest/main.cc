@@ -13,18 +13,27 @@ int main()
 
 	set_bss_char('Z');
 
+	delay(1);
+
 	while (true) {
 		*uart = ro_char;
+		delay(1);
 		*uart = data_char;
+		delay(1);
 		*uart = bss_char;
+		delay(1);
 		delay(0xFFFFFFFF);
 	}
 }
 
 void delay(unsigned x)
 {
-	while (x--)
-		;
+	volatile unsigned y = x;
+	while (true) {
+		y = y - 1;
+		if (y == 0)
+			break;
+	}
 }
 
 void set_bss_char(char x)
