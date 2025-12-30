@@ -42,11 +42,148 @@ mp2-dev/
 
 We'll add some more build dirs to the mp2-dev dir as we go along.
 
+# Baremetal Application
+
+We will skip the topic of bootloaders so we can get started more quickly. To do this, we'll use
+the stock SD Card supplied by ST (or flash your own card using their Starter Package or Developer Package
+instructions on their wiki)
+
+For building your own bootloader, skip down to `Bootloaders`
+
+
+## Building a baremetal application
+
+```bash
+cd stm32mp2-baremetal
+cd minimal_boot  #pick a project
+make
+
+# View the output file:
+ls -l build/main.uimg
+```
+
+## Copying the baremetal application to an SD Card:
+
+Using the stock SD Card from ST, you first need to format partition 11 as FATFS
+(it's in ext4 by default). Doing so is OS-specific.
+
+Then, copy the `main.uimg` file onto the SD Card partition 11 using your OS (not dd).
+
+```bash
+cp build/main.uimg /Volumes/sd-part11/
+```
+
+## Running a baremetal application without custom FIP or U-Boot
+
+You can boot with the stock SD Card image provided by ST, and then halt U-Boot
+when it asks "Hit any key..." 
+
+Then type in the boot command:
+
+```
+mmc dev 0
+fatload mmc 0:b 0x88000000 main.uimg
+go 0x88000000
+```
+
+This of course requires partition 11 to be already formatted as FATFS and that
+you already copied main.uimg to it (see previous step).
+
+## Debugging
+
+1. The Discovery and Eval boards have an SWD connection via the USB jack marked "ST-LINK". 
+Connect that to your computer.
+
+2. Power on with the SD card installed, and hit a key to stop U-boot from doing anything.
+
+3. Start openocd. The scripts for the stm32mp2 chips are included in this repo, as well as 
+the openocd config file (`openocd.cfg`). So start openocd in a new terminal window like this:
+```bash
+# From stm32mp2-baremetal/, which is where the openocd.cfg file lives:
+openocd
+```
+
+You should see:
+
+```
+Open On-Chip Debugger 0.12.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+srst_only srst_pulls_trst srst_gates_jtag srst_open_drain connect_deassert_srst
+
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : STLINK V3J12M3B5S1 (API v3) VID:PID 0483:3753
+Info : Target voltage: 3.287408
+Info : Unable to match requested speed 5000 kHz, using 3300 kHz
+Info : Unable to match requested speed 5000 kHz, using 3300 kHz
+Info : clock speed 3300 kHz
+Info : stlink_dap_op_connect(connect)
+Info : SWD DPIDR 0x6ba02477
+Info : stm32mp25x.a35_0: hardware has 6 breakpoints, 4 watchpoints
+Info : stm32mp25x.a35_1: hardware has 6 breakpoints, 4 watchpoints
+Info : [stm32mp25x.m33] Cortex-M33 r1p0 processor detected
+Info : [stm32mp25x.m33] target has 8 breakpoints, 4 watchpoints
+Info : [stm32mp25x.m0p] Cortex-M0+ r0p1 processor detected
+Info : [stm32mp25x.m0p] target has 4 breakpoints, 2 watchpoints
+Info : gdb port disabled
+Info : gdb port disabled
+Info : gdb port disabled
+Info : gdb port disabled
+Info : starting gdb server for stm32mp25x.a35_0 on 3333
+Info : Listening on port 3333 for gdb connections
+Info : starting gdb server for stm32mp25x.m33 on 3334
+Info : Listening on port 3334 for gdb connections
+Info : starting gdb server for stm32mp25x.m0p on 3335
+Info : Listening on port 3335 for gdb connections
+Info : [stm32mp25x.m33] external reset detected
+Info : [stm32mp25x.m0p] external reset detected`
+```
+
+4. Connect via gdb in another terminal window:
+
+```bash
+aarch64-none-elf-gdb build/main.elf
+```
+
+If gdb complains that it has a security setting preventing it from running the .gdbinit script, then
+either follow the instructions it provides to allow this directory, or run the commands yourself:
+
+```
+target extended-remote:3333
+thbreak *0x88000040
+```
+
+You can then do normal gdb stuff to load the image and debug it.
+
+```
+load build/main.elf
+file build/main.elf
+list main
+continue
+si
+x/64i 0x88000040
+```
+
+### Support files:
+
+The SVD files are here:
+https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-devtools/cmsis-svd/cmsis-svd
+
+
+OpenOCD stuff here:
+https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-devtools/openocd
+
+
+The CA35 CMSIS device headers are missing from the STM32MP2 Cube HAL (only the M33 and M0 are present).
+But they are here in the DDR Firmware repo:
+https://github.com/STMicroelectronics/STM32DDRFW-UTIL/tree/main/Drivers/CMSIS/Device/ST/STM32MP2xx/Include
+
 
 # Bootloaders:
 
-__Note: you can skip this entire Bootloaders section and use the stock SD Card from ST. Skip
-down to `Baremetal Application`__
+__Note: you can skip this entire Bootloaders section and use the stock SD Card from ST. (see above)__
 
 **Boot stages**
 - Boot Loader stage 1 (BL1) _AP Trusted ROM_ == BOOTROM on MP2
@@ -60,6 +197,25 @@ We ultimately build a FIP that integrates all the required bootloaders into one 
 Then we flash that fip file to an SD Card (or some other media like internal flash or eMMC).
 The bootloaders setup the system and then finally load our application from an SD Card (or 
 some other media, but we'll assume SD Card since it's most accessible).
+
+
+First, let's clone the bootloader repos:
+
+```bash
+cd ..   # go to the overall project dir, the parent dir of stm32mp2-baremetal/
+git clone https://github.com/4ms/tf-a-stm32mp25.git
+git clone https://github.com/4ms/u-boot-stm32mp25
+```
+
+Now you should have a directory structure like this:
+
+```
+mp2-dev/
+   |_ tf-a-stm32mp25/
+   |_ u-boot-stm32mp25/
+   |_ stm32mp2-baremetal/
+```
+
 
 ## TF-A
 
@@ -194,58 +350,4 @@ If you need to clear the U-boot environment variables, you can clear partition 7
 ```bash
 sudo dd if=/dev/zero of=/dev/diskXs7
 ```
-
-# Baremetal Application
-
-## Building a baremetal application
-
-```bash
-cd stm32mp2-baremetal
-cd minimal_boot  #pick a project
-make
-
-# View the output file:
-ls -l build/main.uimg
-```
-
-## Copying the baremetal application to an SD Card:
-
-Using the stock SD Card from ST, you first need to format partition 11 as FATFS
-(it's in ext4 by default). Doing so is OS-specific.
-
-Then, copy the `main.uimg` file onto the SD Card partition 11 using your OS (not dd).
-
-```bash
-cp build/main.uimg /Volumes/sd-part11/
-```
-
-## Running a baremetal application without custom FIP or U-Boot
-
-You can boot with the stock SD Card image provided by ST, and then halt U-Boot
-when it asks "Hit any key..." 
-
-Then type in the boot command:
-
-```
-mmc dev 0
-fatload mmc 0:b 0x88000000 main.uimg
-go 0x88000000
-```
-
-This of course requires partition 11 to be already formatted as FATFS and that
-you already copied main.uimg to it (see previous step).
-
-## Debugging
-
-The SVD files are here:
-https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-devtools/cmsis-svd/cmsis-svd
-
-
-OpenOCD stuff here:
-https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-devtools/openocd
-
-
-The CA35 CMSIS device headers are missing from the STM32MP2 Cube HAL (only the M33 and M0 are present).
-But they are here in the DDR Firmware repo:
-https://github.com/STMicroelectronics/STM32DDRFW-UTIL/tree/main/Drivers/CMSIS/Device/ST/STM32MP2xx/Include
 
