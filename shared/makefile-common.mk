@@ -9,8 +9,8 @@ UIMAGENAME ?= $(BUILDDIR)/main.uimg
 SCRIPTDIR ?= ../scripts
 
 OBJDIR = $(BUILDDIR)/obj/obj
-LOADADDR 	?= 0x88000000
-ENTRYPOINT 	?= 0x88000000
+LOADADDR 	?= 0x88000040
+ENTRYPOINT 	?= 0x88000040
 
 OBJECTS   = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 DEPS   	  = $(addprefix $(OBJDIR)/, $(addsuffix .d, $(basename $(SOURCES))))
