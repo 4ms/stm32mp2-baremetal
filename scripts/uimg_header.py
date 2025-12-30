@@ -42,7 +42,7 @@ if len(sys.argv) > 4:
 else:
     entryaddr = loadaddr
 
-os = os_openrtos
+os = os_linux
 image_type = image_type_kernel
 compress = compress_none
 image_name = bytes("stm32mp2-baremetal image", "ascii")
