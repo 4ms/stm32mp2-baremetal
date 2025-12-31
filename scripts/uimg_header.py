@@ -35,7 +35,7 @@ with open(sys.argv[1], "rb") as bin_file:
 if len(sys.argv) > 3:
     loadaddr = int(sys.argv[3], 16)
 else:
-    loadaddr = 0xC2000040
+    loadaddr = 0x88000040
 
 if len(sys.argv) > 4:
     entryaddr = int(sys.argv[4], 16)
