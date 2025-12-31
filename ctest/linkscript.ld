@@ -14,7 +14,7 @@ __HEAP_SIZE = 0x40000;
 SECTIONS
 {
     .text : {
- /*       *(.vector_table)*/
+        *(.vector_table)
         *(.text)
         *(.text*)
 					/* Todo: check if we need the next 3 lines */
