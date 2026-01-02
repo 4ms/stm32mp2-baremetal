@@ -7,6 +7,7 @@ SOURCES += mmu.c
 SOURCES += system_init.c
 SOURCES += print.c
 SOURCES += main.cc
+SOURCES += led.c
 
 INCLUDES := -I.
 

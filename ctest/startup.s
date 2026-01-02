@@ -1,6 +1,16 @@
 .cpu cortex-a35
 .equ STM32_USART2_TDR, 0x400E0028
 
+// // Green LD3 is PD8
+//.equ STM32_GPIOD_MODER, 0x44270000
+//.equ STM32_GPIOD_BSRR, 0x44270018
+//
+//// Blue LED1 is PJ7
+//.equ STM32_GPIOJ_MODER, 0x442D0000
+//.equ STM32_GPIOJ_BSRR, 0x442D0018
+
+//.equ STM32_RCC_GPIOHCFGR, 0x44200548
+
 // Drops to EL1 if started in EL2, sets SP, vectors, clears .bss, calls C.
 
     .section .text.boot, "ax"
@@ -10,6 +20,26 @@
 _Reset:
     // Mask interrupts
     msr     daifset, #0xf
+
+	bl led1_init
+	bl led3_init
+
+.global delay_100
+.type   delay_100, %function
+
+
+tog:
+	bl led1_on
+	bl delay_100
+	bl led1_off
+	bl delay_100
+
+	bl led3_on
+	bl delay_100
+	bl led3_off
+	bl delay_100
+
+	b tog
 
 	ldr x4, =STM32_USART2_TDR 
 	mov x0, #77
@@ -21,7 +51,9 @@ _Reset:
 	mov x0, #10 
 	str x0, [x4] 
 
+	bl led1_on
     bl early_hello
+	bl led1_off
 
     // Read CurrentEL (bits[3:2] hold EL)
     mrs     x0, CurrentEL
@@ -110,6 +142,12 @@ bss_done:
 hang:
     wfe
     b       hang
+
+delay_100:
+	mov x8, #0x2000000 //0x8000 = 4.5kHZ
+3:  subs x8, x8, #1
+	b.ne 3b
+	ret
 
 // ---- Vector table ----
 //   .align  11
