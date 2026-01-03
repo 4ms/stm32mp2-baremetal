@@ -78,7 +78,7 @@ SECTIONS
     _text_end = .;
 
     /* .data : AT(ADDR(.text) + SIZEOF(.text)) */
-    .data : AT(_text_end)
+    .data : /*AT(_text_end)*/
     {
         . = ALIGN(8);
         _data_start = .;
