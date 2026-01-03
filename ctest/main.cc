@@ -11,7 +11,10 @@ int main()
 {
 	volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x400E0028);
 
-	set_bss_char('Z');
+	if (bss_char == 0)
+		set_bss_char('Z');
+	else
+		set_bss_char('*');
 
 	delay(1);
 
