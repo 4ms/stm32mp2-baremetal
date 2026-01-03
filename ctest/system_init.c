@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-void mmu_enable_complete_map_stm32mp253_from_ddr(void);
+void mmu_enable(void);
 
 static inline uint64_t read_sctlr_el1(void)
 {
@@ -31,19 +31,11 @@ static inline void tlbi_vmalle1is(void)
 
 void system_init(void)
 {
-	// Make MMU/caches a known state
-	uint64_t sctlr = read_sctlr_el1();
-	sctlr &= ~(SCTLR_M | SCTLR_C | SCTLR_I);
-	write_sctlr_el1(sctlr);
-	isb();
-
 	// Invalidate TLB after turning MMU off
-	dsb_sy();
-	tlbi_vmalle1is();
-	dsb_sy();
-	isb();
+	// dsb_sy();
+	// tlbi_vmalle1is();
+	// dsb_sy();
+	// isb();
 
-	mmu_enable_complete_map_stm32mp253_from_ddr();
-
-	// After this: DDR is WBWA cacheable, peripherals device, SRAM cacheable.
+	mmu_enable();
 }

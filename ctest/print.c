@@ -19,7 +19,7 @@ typedef struct {
 
 #define USART2 ((stm32_usart_t *)USART2_BASE)
 
-static inline void early_putc(char c)
+void early_putc(char c)
 {
 	// Wait until transmit data register empty (TXE = bit 7)
 	while (!(USART2->ISR & (1U << 7)))
@@ -44,10 +44,8 @@ void early_puthex64(uint64_t v)
 		early_putc(hex[(v >> i) & 0xF]);
 }
 
-void early_hello(void)
+void early_print_el(void)
 {
-	early_puts("\n[BM] entered _start\n");
-
 	unsigned el;
 	__asm__ volatile("mrs %0, CurrentEL" : "=r"(el));
 	early_puts("CurrentEL=");

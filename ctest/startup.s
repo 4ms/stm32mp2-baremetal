@@ -24,23 +24,6 @@ _Reset:
 	bl led1_init
 	bl led3_init
 
-.global delay_100
-.type   delay_100, %function
-
-
-tog:
-	bl led1_on
-	bl delay_100
-	bl led1_off
-	bl delay_100
-
-	bl led3_on
-	bl delay_100
-	bl led3_off
-	bl delay_100
-
-	b tog
-
 	ldr x4, =STM32_USART2_TDR 
 	mov x0, #77
 	str x0, [x4] 
@@ -51,9 +34,7 @@ tog:
 	mov x0, #10 
 	str x0, [x4] 
 
-	bl led1_on
-    bl early_hello
-	bl led1_off
+    bl early_print_el
 
     // Read CurrentEL (bits[3:2] hold EL)
     mrs     x0, CurrentEL
@@ -103,9 +84,8 @@ tog:
 2:
     // If we started in EL1 already, fall through.
 el1_entry:
-	ldr x4, =STM32_USART2_TDR 
-	mov x1, '1'
-	str x1, [x4] 
+	mov x0, '>'
+	bl early_putc
 
     // Set up stack
     ldr     x1, =_stack_start
@@ -117,10 +97,11 @@ el1_entry:
     isb
 
     // Enable FP+SIMD at EL1
-    mrs     x0, cpacr_el1
-    orr     x0, x0, #(3 << 20)      // FPEN=11
-    msr     cpacr_el1, x0
-    isb
+	mrs     x1, cpacr_el1
+	orr	    x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
+	orr	    x1, x1, #3 << 22        /* Don't trap SIMD at EL1 or EL0*/
+	msr	    cpacr_el1, x1
+	isb
 
     // Clear .bss
     ldr     x0, =_bss_start
@@ -133,8 +114,21 @@ bss_loop:
     b       bss_loop
 bss_done:
 
-    // Call C runtime init hook (optional)
-    bl      system_init
+	bl led1_on
+	bl delay_100
+	bl led1_off
+
+    bl mmu_enable
+
+	mrs x1, sctlr_el1
+	orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
+	orr x1, x1, #0x0001    /* M: bit 1  MMU enable for EL1 and EL0  */
+	orr x1, x1, #0x0004    /* C: bit 2  Cacheability control for data accesses at EL1 and EL0 */
+	msr	sctlr_el1, x1
+
+	bl led3_on
+	bl delay_100
+	bl led3_off
 
     // Call main
     bl      main
@@ -144,10 +138,11 @@ hang:
     b       hang
 
 delay_100:
-	mov x8, #0x2000000 //0x8000 = 4.5kHZ
+	mov x8, #0x2000000 //about 50ms
 3:  subs x8, x8, #1
 	b.ne 3b
 	ret
+
 
 // ---- Vector table ----
 //   .align  11
