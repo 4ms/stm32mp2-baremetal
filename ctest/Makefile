@@ -8,6 +8,7 @@ SOURCES += system_init.c
 SOURCES += print.c
 SOURCES += main.cc
 SOURCES += led.c
+SOURCES += newlib_stub.c
 
 INCLUDES := -I.
 
