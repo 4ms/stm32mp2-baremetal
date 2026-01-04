@@ -11,7 +11,7 @@
 .macro handle_exception exc_type
 	// TODO:
 	mov	x21, #(\exc_type)
-	mrs	x22, esr_el2
+	mrs	x22, esr_el1
 	stp	x21, x22, [sp, #-16]!
 	//////
 	b .
@@ -115,8 +115,8 @@ vectors:
 	stp q28,	q29,	[sp, #-0x20]!
 	stp q30,	q31,	[sp, #-0x20]!
 /* Push exception LR for PC and spsr */
-	mrs x0, 	elr_el2
-	mrs x1, 	spsr_el2
+	mrs x0, 	elr_el1
+	mrs x1, 	spsr_el1
 	stp x0,		x1,	[sp, #-0x10]!
 /* Push fpcr and fpsr */
 	mrs x0, fpsr
@@ -134,8 +134,8 @@ vectors:
 /* Pop pc and spsr */
 	ldp x0,		x1,	[sp], #0x10
 /* Restore exception LR for PC and spsr */
-	msr spsr_el2, x1
-	msr elr_el2, x0
+	msr spsr_el1, x1
+	msr elr_el1, x0
 /* Pop q0-q31 */
 	ldp q30,	q31,	[sp], #0x20
 	ldp q28,	q29,	[sp], #0x20
