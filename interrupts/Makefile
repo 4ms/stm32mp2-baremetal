@@ -13,6 +13,8 @@ SOURCES += newlib_stub.c
 
 INCLUDES := -I.
 
+EXTRA_ARCH_CFLAGS := -DA35_NON_SECURE
+
 OPTFLAG := -O0
 
 include $(SHAREDDIR)/makefile-common.mk
