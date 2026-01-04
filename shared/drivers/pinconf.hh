@@ -1,7 +1,7 @@
 #pragma once
 #include "rcc.hh"
-#include "stm32mp1xx.h"
-#include "stm32mp1xx_ll_gpio.h"
+#include "stm32mp2xx.h"
+#include "stm32mp2xx_ll_gpio.h"
 
 enum class GPIO : uint32_t {
 	A = GPIOA_BASE,
@@ -98,8 +98,7 @@ struct PinConf {
 			  PinPull pull = PinPull::None,
 			  PinPolarity polarity = PinPolarity::Normal,
 			  PinSpeed speed = PinSpeed::High,
-			  PinOType otype = PinOType::PushPull) const
-	{
+			  PinOType otype = PinOType::PushPull) const {
 		auto port_ = reinterpret_cast<GPIO_TypeDef *>(gpio);
 		auto pin_ = static_cast<uint16_t>(pin);
 
@@ -125,41 +124,35 @@ struct PinConf {
 			  PinOType otype,
 			  PinPull pull = PinPull::None,
 			  PinPolarity polarity = PinPolarity::Normal,
-			  PinSpeed speed = PinSpeed::High) const
-	{
+			  PinSpeed speed = PinSpeed::High) const {
 		init(mode, pull, polarity, speed, otype);
 	}
 
-	void low() const
-	{
+	void low() const {
 		auto port_ = reinterpret_cast<GPIO_TypeDef *>(gpio);
 		auto pin_ = static_cast<uint16_t>(pin);
 		LL_GPIO_ResetOutputPin(port_, pin_);
 	}
 
-	void high() const
-	{
+	void high() const {
 		auto port_ = reinterpret_cast<GPIO_TypeDef *>(gpio);
 		auto pin_ = static_cast<uint16_t>(pin);
 		LL_GPIO_SetOutputPin(port_, pin_);
 	}
 
-	void toggle() const
-	{
+	void toggle() const {
 		auto port_ = reinterpret_cast<GPIO_TypeDef *>(gpio);
 		auto pin_ = static_cast<uint16_t>(pin);
 		LL_GPIO_TogglePin(port_, pin_);
 	}
 
-	bool read() const
-	{
+	bool read() const {
 		auto port_ = reinterpret_cast<GPIO_TypeDef *>(gpio);
 		auto pin_ = static_cast<uint16_t>(pin);
 		return LL_GPIO_IsInputPinSet(port_, pin_);
 	}
 
-	static constexpr uint32_t bit_to_num(PinNum PINx)
-	{
+	static constexpr uint32_t bit_to_num(PinNum PINx) {
 		return PINx == PinNum::_0  ? 0 :
 			   PINx == PinNum::_1  ? 1 :
 			   PINx == PinNum::_2  ? 2 :

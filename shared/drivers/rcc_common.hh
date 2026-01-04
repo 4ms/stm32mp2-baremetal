@@ -1,6 +1,6 @@
 #pragma once
 #include "register_access.hh"
-#include "stm32mp1xx.h"
+#include "stm32xx.h"
 #include <cstddef> //for offsetof
 
 namespace mdrivlib

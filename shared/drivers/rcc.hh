@@ -1,7 +1,7 @@
 #pragma once
 #include "rcc_common.hh"
 #include "register_access.hh"
-#include "stm32mp1xx.h"
+#include "stm32mp2xx.h"
 #include <cstddef>
 #include <variant>
 
@@ -146,25 +146,24 @@ using TIM11_ = NonexistantRegister;
 struct GPIO {
 	static inline volatile RegisterDataT *const _reg = &(RCC->MP_AHB4ENSETR);
 
-	static uint32_t get_gpio_bit(RegisterDataT periph) { return 1 << (((periph >> 12) - 2) & 0b1111); }
-	static void enable(GPIO_TypeDef *periph)
-	{
+	static uint32_t get_gpio_bit(RegisterDataT periph) {
+		return 1 << (((periph >> 12) - 2) & 0b1111);
+	}
+	static void enable(GPIO_TypeDef *periph) {
 		if (periph == GPIOZ)
 			GPIOZ_::set();
 		else
 			*_reg = *_reg | get_gpio_bit(reinterpret_cast<RegisterDataT>(periph));
 		[[maybe_unused]] bool delay_after_enabling = is_enabled(periph);
 	}
-	static void disable(GPIO_TypeDef *periph)
-	{
+	static void disable(GPIO_TypeDef *periph) {
 		if (periph == GPIOZ)
 			GPIOZ_::clear();
 		else
 			*_reg = *_reg & ~get_gpio_bit(reinterpret_cast<RegisterDataT>(periph));
 		[[maybe_unused]] bool delay_after_disabling = is_enabled(periph);
 	}
-	static bool is_enabled(GPIO_TypeDef *periph)
-	{
+	static bool is_enabled(GPIO_TypeDef *periph) {
 		if (periph == GPIOZ)
 			return GPIOZ_::read();
 		else

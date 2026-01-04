@@ -1,7 +1,7 @@
 #pragma once
 #include "pinconf.hh"
-#include "stm32mp1xx.h"
-#include "stm32mp1xx_ll_gpio.h"
+#include "stm32mp2xx.h"
+#include "stm32mp2xx_ll_gpio.h"
 
 enum class LedActive { Low, High };
 
@@ -19,31 +19,32 @@ public:
 	constexpr static uint16_t pin_mask = static_cast<uint16_t>(PINMASK);
 	constexpr static uint32_t pin_num = PinConf::bit_to_num(PINMASK);
 
-	Led() { PinConf{GPIOx, PINMASK, PinAF::AFNone}.init(PinMode::Output); }
+	Led() {
+		PinConf{GPIOx, PINMASK, PinAF::AFNone}.init(PinMode::Output);
+	}
 
-	void on()
-	{
+	void on() {
 		if constexpr (POLARITY == LedActive::High)
 			PinConf{GPIOx, PINMASK}.high();
 		else
 			PinConf{GPIOx, PINMASK}.low();
 	}
 
-	void off()
-	{
+	void off() {
 		if constexpr (POLARITY == LedActive::High)
 			PinConf{GPIOx, PINMASK}.low();
 		else
 			PinConf{GPIOx, PINMASK}.high();
 	}
 
-	void set(bool turnon)
-	{
+	void set(bool turnon) {
 		if (turnon)
 			on();
 		else
 			off();
 	}
 
-	void toggle() { PinConf{GPIOx, PINMASK}.toggle(); }
+	void toggle() {
+		PinConf{GPIOx, PINMASK}.toggle();
+	}
 };
