@@ -1,22 +1,19 @@
 #include "print.hh"
 
 // putchar_s(const char) Must be defined in the applicaton code somewhere
-void putchar_s(const char c);
+extern "C" void putchar_s(const char c);
 
-void printone(const unsigned char *str)
-{
+void printone(const unsigned char *str) {
 	while (*str)
 		putchar_s(*str++);
 }
 
-void printone(const char *str)
-{
+void printone(const char *str) {
 	while (*str)
 		putchar_s(*str++);
 }
 
-void printone(Hex hex)
-{
+void printone(Hex hex) {
 	auto value = hex.x;
 
 	if (!value) {
@@ -43,8 +40,7 @@ void printone(Hex hex)
 	printone(buf);
 }
 
-void printone(int value)
-{
+void printone(int value) {
 	if (!value) {
 		printone("0");
 		return;

@@ -6,12 +6,14 @@ SOURCES := startup.s
 SOURCES += vector_table.s
 SOURCES += mmu.c
 SOURCES += system_init.c
-SOURCES += print.c
 SOURCES += main.cc
 SOURCES += led.c
 SOURCES += newlib_stub.c
+SOURCES += uart_print.c
+SOURCES += $(SHAREDDIR)/print.cc
 
 INCLUDES := -I.
+INCLUDES += -I$(SHAREDDIR)
 
 EXTRA_ARCH_CFLAGS := -DA35_NON_SECURE
 

@@ -18,7 +18,7 @@ typedef struct {
 
 #define USART2 ((stm32_usart_t *)USART2_BASE)
 
-void early_putc(char c)
+void putchar_s(char c)
 {
 	// Wait until transmit data register empty (TXE = bit 7)
 	while (!(USART2->ISR & (1U << 7)))
@@ -31,8 +31,8 @@ void early_puts(const char *s)
 {
 	while (*s) {
 		if (*s == '\n')
-			early_putc('\r');
-		early_putc(*s++);
+			putchar_s('\r');
+		putchar_s(*s++);
 	}
 }
 
@@ -40,7 +40,7 @@ void early_puthex64(uint64_t v)
 {
 	static const char hex[] = "0123456789abcdef";
 	for (int i = 60; i >= 0; i -= 4)
-		early_putc(hex[(v >> i) & 0xF]);
+		putchar_s(hex[(v >> i) & 0xF]);
 }
 
 void early_print_el(void)
