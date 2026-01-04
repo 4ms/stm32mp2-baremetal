@@ -1,6 +1,5 @@
 #include <stdint.h>
 
-// #define USART2_BASE 0x40004400UL
 #define USART2_BASE 0x400E0000UL
 
 typedef struct {
