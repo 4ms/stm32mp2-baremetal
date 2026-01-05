@@ -1,3 +1,4 @@
+#include "drivers/interrupt.hh"
 #include "print.hh"
 #include <cstdint>
 
@@ -9,5 +10,7 @@ int main()
 	}
 }
 
-extern "C" void ISRHandler()
-{}
+extern "C" void ISRHandler(unsigned irqnum)
+{
+	mdrivlib::Interrupt::callISR(irqnum);
+}
