@@ -20,23 +20,21 @@ The goal is to run full applications with access:
 
 # Project setup
 
-Go ahead and clone all the repos now:
+Clone the repo into a parent directory, which will help keep things organized if you do any
+work with U-boot or TF-A:
 
 ```bash
-mkdir mp2-dev    #this will be our project directory
+mkdir mp2-dev    # The project parent dir
 cd mp2-dev
 
-git clone https://github.com/4ms/tf-a-stm32mp25.git
-git clone https://github.com/4ms/u-boot-stm32mp25
 git clone https://github.com/4ms/stm32mp2-baremetal
+cd stm32mp2-baremetal
 ```
 
 Now you should have a directory structure like this:
 
 ```
 mp2-dev/
-   |_ tf-a-stm32mp25/
-   |_ u-boot-stm32mp25/
    |_ stm32mp2-baremetal/
 ```
 
