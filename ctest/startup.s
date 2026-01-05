@@ -42,13 +42,13 @@ _Reset:
 // ---- If started in EL2, drop to EL1 ----
 1:
 	mov x0, 'E'
-	bl early_putc
+	bl putchar_s
 	mov x0, 'L'
-	bl early_putc
+	bl putchar_s
 	mov x0, '2'
-	bl early_putc
+	bl putchar_s
 	mov x0, '\n'
-	bl early_putc
+	bl putchar_s
 
     // Set up a SP 
     ldr     x1, =_stack_start
@@ -77,7 +77,7 @@ _Reset:
 // ---- EL1 common entry ----
 el1_entry:
 	mov x0, '>'
-	bl early_putc
+	bl putchar_s
 
     // Set up stack
     ldr     x1, =_stack_start
