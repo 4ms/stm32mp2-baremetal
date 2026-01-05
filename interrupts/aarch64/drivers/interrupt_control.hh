@@ -3,9 +3,6 @@
 #include "stm32mp2xx.h"
 #include <cstdint>
 
-namespace mdrivlib
-{
-
 struct InterruptControl {
 	InterruptControl() = delete;
 
@@ -40,4 +37,3 @@ struct InterruptControl {
 		GIC_EnableIRQ(irqn);
 	}
 };
-} // namespace mdrivlib

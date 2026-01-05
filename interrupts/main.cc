@@ -1,4 +1,4 @@
-#include "drivers/interrupt.hh"
+#include "interrupt.hh"
 #include "print.hh"
 
 void delay(unsigned x)
@@ -13,24 +13,24 @@ int main()
 {
 	print("Nested Interrupts with priorities test\n");
 
-	mdrivlib::InterruptManager::register_and_start_isr(SGI1_IRQn, 0, 0, []() {
+	InterruptManager::register_and_start_isr(SGI1_IRQn, 0, 0, []() {
 		print(" > SGI1 handler started\n");
 		print(" < SGI1 handler ended\n");
 	});
 
-	mdrivlib::InterruptManager::register_and_start_isr(SGI2_IRQn, 2, 3, []() {
+	InterruptManager::register_and_start_isr(SGI2_IRQn, 2, 3, []() {
 		print("> SGI2 handler started\n");
 		print("  SGI2: Sending SGI1\n");
 		GIC_SendSGI(SGI1_IRQn, 0b01, 0b00);
 		print("< SGI2 handler ended\n");
 	});
 
-	mdrivlib::InterruptManager::register_and_start_isr(SGI3_IRQn, 3, 0, []() {
+	InterruptManager::register_and_start_isr(SGI3_IRQn, 3, 0, []() {
 		print("> SGI3 handler started\n");
 		print("< SGI3 handler ended\n");
 	});
 
-	mdrivlib::InterruptManager::register_and_start_isr(USART2_IRQn, 3, 1, []() {
+	InterruptManager::register_and_start_isr(USART2_IRQn, 3, 1, []() {
 		print("> USART2 handler started\nReceived:\n   > ");
 
 		while (USART2->ISR & USART_ISR_RXFNE) {

@@ -1,17 +1,13 @@
 #pragma once
-// #include "drivers/arch.hh"
-#include "drivers/callable.hh"
+#include "callable.hh"
 #include "drivers/interrupt_control.hh"
 #include <array>
 #include <cstdint>
 
-namespace mdrivlib
-{
-
 // Interrupt Manager class
 class Interrupt {
 public:
-	static constexpr uint32_t NumISRs = 416;
+	static constexpr uint32_t NumISRs = 416; // FROM CMSIS device file
 
 	using ISRType = Callback;
 	using IRQType = IRQn_Type;
@@ -61,5 +57,3 @@ private:
 };
 
 using InterruptManager = Interrupt;
-
-} // namespace mdrivlib

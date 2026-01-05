@@ -8,10 +8,10 @@ SOURCES += mmu.c
 SOURCES += system_init.cc
 SOURCES += main.cc
 SOURCES += led.c
-SOURCES += newlib_stub.c
 SOURCES += aarch64/drivers/irq_init.c
 SOURCES += aarch64/drivers/interrupt_handler.cc
-SOURCES += ../drivers/uart_print.c
+SOURCES += $(SHAREDDIR)/system/libc_stub.c
+SOURCES += $(SHAREDDIR)/uart_print.c
 SOURCES += $(SHAREDDIR)/print.cc
 
 INCLUDES := -I.

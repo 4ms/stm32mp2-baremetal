@@ -5,10 +5,10 @@ SHAREDDIR = ../shared
 SOURCES := startup.s
 SOURCES += mmu.c
 SOURCES += system_init.c
-SOURCES += ../drivers/uart_print.c
 SOURCES += main.cc
 SOURCES += led.c
-SOURCES += newlib_stub.c
+SOURCES += $(SHAREDDIR)/system/libc_stub.c
+SOURCES += $(SHAREDDIR)/uart_print.c
 
 INCLUDES := -I.
 
