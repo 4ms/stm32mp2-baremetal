@@ -12,7 +12,18 @@
 	// TODO:
 	mov	x21, #(\exc_type)
 	mrs	x22, esr_el1
-	stp	x21, x22, [sp, #-16]!
+	// stp	x21, x22, [sp, #-16]!
+	mov x0, '\n'
+	bl putchar_s
+	mov x0, 'X'
+	bl putchar_s
+	mov x0, x21
+	bl early_puthex64
+	mov x0, '\n'
+	bl putchar_s
+	mov x0, x22
+	bl early_puthex64
+
 	//////
 	b .
 .endm
@@ -42,7 +53,7 @@ vectors:
 	.balign 128
 	b	handle_irq
 	.balign 128
-	b	unhandled_int
+	b	handle_fiq
 	.balign 128
 	handle_exception CUR_EL_SERR_SPX
 
@@ -171,17 +182,20 @@ vectors:
 	clrex
 .endm
 
+handle_fiq:
 handle_irq:
 
 	push_interrupt_context
 
-	mrs x0, icc_iar1_el1
+	// IAR: Acknowledge it with a read to the Interrupt Acknowledge Register
+	mov x1, #0x4AC20000
+	ldr w0, [x1, #12]	
 
 	// Skip if spurious
-	cmp x0, #1020
+	cmp w0, #1020
 	bhi exit_irq_handler
 
-	str x0,	[sp, #-0x08]! // Store the INTID
+	str w0,	[sp, #-0x04]! // Store the Interrupt ID
 
 	// enable interupts: 
 	msr DAIFClr, #(1<<1)
@@ -191,9 +205,11 @@ handle_irq:
 	// disable interupts: 
 	msr DAIFSet, #(1<<1)
 
-	ldr x0, [sp], #0x08 	// Pop INTID
+	ldr w0, [sp], #0x04 	// Pop Interrupt ID
 
-	msr icc_eoir1_el1, x0 	// Acknowledge
+	// EOIR: End with a write to End of Interrrupt Register
+	mov x1, #0x4AC20000
+	str w0, [x1, #16] 
 
 exit_irq_handler:
 

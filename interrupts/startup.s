@@ -33,12 +33,12 @@ el1_entry:
     isb
 
 // Enable System Register access (ICC_*_EL1 system registers)
-	mov x1, xzr
+	// mov x1, xzr
 	//orr x1, x1, #(1<<3)  // Enable EL0 to use ICC_SER_EL1
-	orr x1, x1, #(1<<2)  // Disable IRQ bypass
-	orr x1, x1, #(1<<1)  // Disable FIQ bypass
-	orr x1, x1, #(1<<0)  // System Register Enable
-	msr icc_sre_el1, x1
+	// orr x1, x1, #(1<<2)  // Disable IRQ bypass
+	// orr x1, x1, #(1<<1)  // Disable FIQ bypass
+	// orr x1, x1, #(1<<0)  // System Register Enable
+	// msr icc_sre_el1, x1
 
     // Enable FP+SIMD at EL1
 	mrs     x1, cpacr_el1
@@ -62,7 +62,7 @@ bss_done:
 	bl delay_100
 	bl led1_off
 
-    bl mmu_enable
+    bl system_init
 
 	mrs x1, sctlr_el1
 	orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
@@ -75,6 +75,8 @@ bss_done:
 	bl led3_off
 
 	bl __libc_init_array
+
+    msr     daifclr, #0xf
 
     // Call main
     bl      main
