@@ -1,4 +1,4 @@
-// From stm32mp257fxx_ca35.h:
+#error This file is for referenced and should not be used
 
 #define GIC_BASE 0x4AC00000UL
 #define GIC_DISTRIBUTOR_BASE (GIC_BASE + 0x10000UL)

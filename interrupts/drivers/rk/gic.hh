@@ -1,4 +1,5 @@
 #pragma once
+#error This file is for referenced and should not be used
 
 #include "gic_base.hh"
 #include <cstdint>
@@ -65,7 +66,8 @@ struct GICR_t {
 
 	// TODO...
 
-	void Wake() volatile {
+	void Wake() volatile
+	{
 		enum : uint32_t { ProcSleep = (1 << 1), ChildrenAsleep = (1 << 2) };
 
 		WAKER &= ~ProcSleep;
@@ -82,7 +84,8 @@ static inline volatile GICD_t *const GICDistributor = reinterpret_cast<GICD_t *>
 
 } // namespace HW
 
-static inline void GIC_EnableICCAccess(void) {
+static inline void GIC_EnableICCAccess(void)
+{
 	uint64_t reg = 1;
 	asm volatile("msr ICC_SRE_EL2, %0\n\t" : : "r"(reg) : "memory");
 }
@@ -90,19 +93,22 @@ static inline void GIC_EnableICCAccess(void) {
 // Groups
 //
 
-static inline void GIC_EnableGroup0(void) {
+static inline void GIC_EnableGroup0(void)
+{
 	HW::GICDistributor->CTLR |= 1U;
 	uint64_t reg = 0b1;
 	asm volatile("msr ICC_IGRPEN0_EL1, %0\n\t" : : "r"(reg) : "memory");
 }
 
-static inline void GIC_EnableGroup1NS(void) {
+static inline void GIC_EnableGroup1NS(void)
+{
 	HW::GICDistributor->CTLR |= (1 << 1);
 	uint64_t reg = 0b1;
 	asm volatile("msr ICC_IGRPEN1_EL1, %0\n\t" : : "r"(reg) : "memory");
 }
 
-static inline void GIC_EnableGroup1S(void) {
+static inline void GIC_EnableGroup1S(void)
+{
 	HW::GICDistributor->CTLR |= (1 << 2);
 	uint64_t reg = 0b1;
 	asm volatile("msr ICC_IGRPEN1_EL1, %0\n\t" : : "r"(reg) : "memory");
@@ -122,11 +128,13 @@ static inline void GIC_EnableGroup1S(void) {
 // IDs
 //
 
-static inline uint32_t GIC_DistributorInfo(void) {
+static inline uint32_t GIC_DistributorInfo(void)
+{
 	return (HW::GICDistributor->TYPER);
 }
 
-static inline uint32_t GIC_DistributorImplementer(void) {
+static inline uint32_t GIC_DistributorImplementer(void)
+{
 	return (HW::GICDistributor->IIDR);
 }
 
@@ -134,12 +142,14 @@ static inline uint32_t GIC_DistributorImplementer(void) {
 // Target
 //
 
-static inline void GIC_SetTarget(IRQn_Type IRQn, uint32_t cpu_target) {
+static inline void GIC_SetTarget(IRQn_Type IRQn, uint32_t cpu_target)
+{
 	uint32_t mask = HW::GICDistributor->ITARGETSR[IRQn / 4U] & ~(0xFFUL << ((IRQn % 4U) * 8U));
 	HW::GICDistributor->ITARGETSR[IRQn / 4U] = mask | ((cpu_target & 0xFFUL) << ((IRQn % 4U) * 8U));
 }
 
-static inline uint32_t GIC_GetTarget(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetTarget(IRQn_Type IRQn)
+{
 	return (HW::GICDistributor->ITARGETSR[IRQn / 4U] >> ((IRQn % 4U) * 8U)) & 0xFFUL;
 }
 
@@ -147,16 +157,19 @@ static inline uint32_t GIC_GetTarget(IRQn_Type IRQn) {
 // Enable/Disable
 //
 
-static inline void GIC_EnableIRQ(IRQn_Type IRQn) {
+static inline void GIC_EnableIRQ(IRQn_Type IRQn)
+{
 	HW::GICDistributor->ISENABLER[IRQn / 32U] = 1U << (IRQn % 32U);
 	HW::GICRedist->ISENABLER[IRQn / 32U] = 1U << (IRQn % 32U);
 }
 
-static inline uint32_t GIC_GetEnableIRQ(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetEnableIRQ(IRQn_Type IRQn)
+{
 	return (HW::GICDistributor->ISENABLER[IRQn / 32U] >> (IRQn % 32U)) & 1UL;
 }
 
-static inline void GIC_DisableIRQ(IRQn_Type IRQn) {
+static inline void GIC_DisableIRQ(IRQn_Type IRQn)
+{
 	HW::GICDistributor->ICENABLER[IRQn / 32U] = 1U << (IRQn % 32U);
 }
 
@@ -164,7 +177,8 @@ static inline void GIC_DisableIRQ(IRQn_Type IRQn) {
 // Pending
 //
 
-static inline uint32_t GIC_GetPendingIRQ(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetPendingIRQ(IRQn_Type IRQn)
+{
 	uint32_t pend;
 
 	if (IRQn >= 16U) {
@@ -183,7 +197,8 @@ static inline uint32_t GIC_GetPendingIRQ(IRQn_Type IRQn) {
 	return (pend);
 }
 
-static inline void GIC_SetPendingIRQ(IRQn_Type IRQn) {
+static inline void GIC_SetPendingIRQ(IRQn_Type IRQn)
+{
 	if (IRQn >= 16U) {
 		HW::GICDistributor->ISPENDR[IRQn / 32U] = 1U << (IRQn % 32U);
 	} else {
@@ -192,7 +207,8 @@ static inline void GIC_SetPendingIRQ(IRQn_Type IRQn) {
 	}
 }
 
-static inline void GIC_ClearPendingIRQ(IRQn_Type IRQn) {
+static inline void GIC_ClearPendingIRQ(IRQn_Type IRQn)
+{
 	if (IRQn >= 16U) {
 		HW::GICDistributor->ICPENDR[IRQn / 32U] = 1U << (IRQn % 32U);
 	} else {
@@ -207,7 +223,8 @@ static inline void GIC_ClearPendingIRQ(IRQn_Type IRQn) {
 
 // int_config: Bit 1: 0 - level sensitive, 1 - edge triggered
 enum InterruptConfig : uint32_t { Level = 0, Edge = 2 };
-static inline void GIC_SetConfiguration(IRQn_Type IRQn, InterruptConfig int_config) {
+static inline void GIC_SetConfiguration(IRQn_Type IRQn, InterruptConfig int_config)
+{
 	uint32_t icfgr = HW::GICDistributor->ICFGR[IRQn / 16U];
 	uint32_t shift = (IRQn % 16U) << 1U;
 
@@ -222,27 +239,32 @@ static inline void GIC_SetConfiguration(IRQn_Type IRQn, InterruptConfig int_conf
  * \return Int_config field value. Bit 0: Reserved (0 - N-N model, 1 - 1-N model for some GIC before v1)
  *                                 Bit 1: 0 - level sensitive, 1 - edge triggered
  */
-static inline uint32_t GIC_GetConfiguration(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetConfiguration(IRQn_Type IRQn)
+{
 	return (HW::GICDistributor->ICFGR[IRQn / 16U] >> ((IRQn % 16U) >> 1U));
 }
 
 //
 // Priority
 //
-static inline void GIC_SetPriority(IRQn_Type IRQn, uint32_t priority) {
+static inline void GIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
+{
 	uint32_t mask = HW::GICDistributor->IPRIORITYR[IRQn / 4U] & ~(0xFFUL << ((IRQn % 4U) * 8U));
 	HW::GICDistributor->IPRIORITYR[IRQn / 4U] = mask | ((priority & 0xFFUL) << ((IRQn % 4U) * 8U));
 }
 
-static inline uint32_t GIC_GetPriority(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetPriority(IRQn_Type IRQn)
+{
 	return (HW::GICDistributor->IPRIORITYR[IRQn / 4U] >> ((IRQn % 4U) * 8U)) & 0xFFUL;
 }
 
-static inline void GIC_SetRoutingMode(IRQn_Type IRQn) {
+static inline void GIC_SetRoutingMode(IRQn_Type IRQn)
+{
 	HW::GICDistributor->IROUTER[IRQn / 32U] = 1U << (IRQn % 32U);
 }
 
-static inline uint32_t GIC_GetRoutingMode(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetRoutingMode(IRQn_Type IRQn)
+{
 	return (HW::GICDistributor->IROUTER[IRQn / 32U] >> (IRQn % 32U)) & 1UL;
 }
 
@@ -250,13 +272,15 @@ static inline uint32_t GIC_GetRoutingMode(IRQn_Type IRQn) {
 // Acknowledge
 //
 
-static inline IRQn_Type GIC_AcknowledgePendingGroup0(void) {
+static inline IRQn_Type GIC_AcknowledgePendingGroup0(void)
+{
 	uint64_t reg;
 	__asm__ __volatile__("mrs %0, ICC_IAR0_EL1\n\t" : "=r"(reg) : : "memory");
 	return reg;
 }
 
-static inline uint64_t GIC_AcknowledgePendingGroup1() {
+static inline uint64_t GIC_AcknowledgePendingGroup1()
+{
 	uint64_t reg;
 	__asm__ __volatile__("mrs %0, ICC_IAR1_EL1\n\t" : "=r"(reg) : : "memory");
 	return reg;
@@ -265,7 +289,8 @@ static inline uint64_t GIC_AcknowledgePendingGroup1() {
 // EOIR always provides priority drop.
 // Two-step mode means ICC_DIR_EL1 provides interrupt deactivation,
 // otherwise EOIR also does interrupt deactivation
-static inline void GIC_SetEOIModeTwoStep(bool two_step) {
+static inline void GIC_SetEOIModeTwoStep(bool two_step)
+{
 	uint64_t reg;
 	asm volatile("mrs %0, ICC_CTLR_EL1\n\t" : "=r"(reg) : : "memory");
 	if (two_step)
@@ -275,16 +300,19 @@ static inline void GIC_SetEOIModeTwoStep(bool two_step) {
 	asm volatile("msr ICC_CTLR_EL1, %0\n\t" : : "r"(reg) : "memory");
 }
 
-static inline void GIC_EndInterruptGroup0(IRQn_Type IRQn) {
+static inline void GIC_EndInterruptGroup0(IRQn_Type IRQn)
+{
 	uint64_t reg = IRQn;
 	asm volatile("msr ICC_EOIR0_EL1, %0\n\t" : : "r"(reg) : "memory");
 }
 
-static inline void GIC_EndInterruptGroup1(uint64_t IRQn) {
+static inline void GIC_EndInterruptGroup1(uint64_t IRQn)
+{
 	asm volatile("msr ICC_EOIR1_EL1, %0\n\t" : : "r"(IRQn) : "memory");
 }
 
-static inline void GIC_DeactivateInterrupt(uint64_t IRQn) {
+static inline void GIC_DeactivateInterrupt(uint64_t IRQn)
+{
 	asm volatile("msr ICC_DIR_EL1, %0\n\t" : : "r"(IRQn) : "memory");
 }
 
@@ -292,44 +320,52 @@ static inline void GIC_DeactivateInterrupt(uint64_t IRQn) {
 // Priority Mask and Binary Point
 //
 
-static inline void GIC_SetInterfacePriorityMask(uint64_t priority) {
+static inline void GIC_SetInterfacePriorityMask(uint64_t priority)
+{
 	asm volatile("msr ICC_PMR_EL1, %0\n\t" : : "r"(priority) : "memory");
 }
 
-static inline uint32_t GIC_GetInterfacePriorityMask(void) {
+static inline uint32_t GIC_GetInterfacePriorityMask(void)
+{
 	uint64_t reg;
 	asm volatile("mrs %0, ICC_PMR_EL1\n\t" : "=r"(reg) : : "memory");
 	return reg;
 }
 
-static inline void GIC_SetBinaryPoint(uint64_t binary_point) {
+static inline void GIC_SetBinaryPoint(uint64_t binary_point)
+{
 	asm volatile("msr ICC_BPR0_EL1, %0\n\t" : : "r"(binary_point) : "memory");
 }
 
-static inline void GIC_SetBinaryPointGroup1(uint64_t binary_point) {
+static inline void GIC_SetBinaryPointGroup1(uint64_t binary_point)
+{
 	asm volatile("msr ICC_BPR1_EL1, %0\n\t" : : "r"(binary_point) : "memory");
 }
 
-static inline uint32_t GIC_GetBinaryPoint() {
+static inline uint32_t GIC_GetBinaryPoint()
+{
 	uint64_t reg;
 	asm volatile("mrs %0, ICC_BPR0_EL1\n\t" : "=r"(reg) : : "memory");
 	return reg;
 }
 
-static inline uint32_t GIC_GetBinaryPointGroup1() {
+static inline uint32_t GIC_GetBinaryPointGroup1()
+{
 	uint64_t reg;
 	asm volatile("mrs %0, ICC_BPR1_EL1\n\t" : "=r"(reg) : : "memory");
 	return reg;
 }
 
-static inline void GIC_SetBinaryPointCommonGroup() {
+static inline void GIC_SetBinaryPointCommonGroup()
+{
 	uint64_t reg;
 	asm volatile("mrs %0, ICC_CTLR_EL1\n\t" : "=r"(reg) : : "memory");
 	reg &= ~(1 << 0);
 	asm volatile("msr ICC_CTLR_EL1, %0\n\t" : : "r"(reg) : "memory");
 }
 
-static inline void GIC_SetBinaryPointNoCommonGroup() {
+static inline void GIC_SetBinaryPointNoCommonGroup()
+{
 	uint64_t reg;
 	asm volatile("mrs %0, ICC_CTLR_EL1\n\t" : "=r"(reg) : : "memory");
 	reg |= (1 << 0);
@@ -340,7 +376,8 @@ static inline void GIC_SetBinaryPointNoCommonGroup() {
  * \param [in] IRQn The interrupt to get status for.
  * \return 0 - not pending/active, 1 - pending, 2 - active, 3 - pending and active
  */
-static inline uint32_t GIC_GetIRQStatus(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetIRQStatus(IRQn_Type IRQn)
+{
 	uint32_t pending, active;
 
 	active = ((HW::GICDistributor->ISACTIVER[IRQn / 32U]) >> (IRQn % 32U)) & 1UL;
@@ -354,7 +391,8 @@ static inline uint32_t GIC_GetIRQStatus(IRQn_Type IRQn) {
  * \param [in] target_list List of CPUs the software interrupt should be forwarded to.
  * \param [in] filter_list Filter to be applied to determine interrupt receivers.
  */
-static inline void GIC_SendSGI(IRQn_Type IRQn, uint32_t target_list, uint32_t filter_list) {
+static inline void GIC_SendSGI(IRQn_Type IRQn, uint32_t target_list, uint32_t filter_list)
+{
 	HW::GICDistributor->SGIR = ((filter_list & 3U) << 24U) | ((target_list & 0xFFUL) << 16U) | (IRQn & 0x0FUL);
 }
 
@@ -369,7 +407,8 @@ static inline void GIC_SendSGI(IRQn_Type IRQn, uint32_t target_list, uint32_t fi
  * \param [in] IRQn The interrupt to be queried.
  * \param [in] group Interrupt group number: 0 - Group 0, 1 - Group 1
  */
-static inline void GIC_SetGroup(IRQn_Type IRQn, uint32_t group) {
+static inline void GIC_SetGroup(IRQn_Type IRQn, uint32_t group)
+{
 	uint32_t igroupr = HW::GICDistributor->IGROUPR[IRQn / 32U];
 	uint32_t shift = (IRQn % 32U);
 
@@ -384,6 +423,7 @@ static inline void GIC_SetGroup(IRQn_Type IRQn, uint32_t group) {
  * \param [in] IRQn The interrupt to be queried.
  * \return 0 - Group 0, 1 - Group 1
  */
-static inline uint32_t GIC_GetGroup(IRQn_Type IRQn) {
+static inline uint32_t GIC_GetGroup(IRQn_Type IRQn)
+{
 	return (HW::GICDistributor->IGROUPR[IRQn / 32U] >> (IRQn % 32U)) & 1UL;
 }
