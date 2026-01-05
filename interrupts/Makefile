@@ -14,6 +14,9 @@ SOURCES += $(SHAREDDIR)/print.cc
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
+INCLUDES += -I$(SHAREDDIR)/cmsis/Include
+INCLUDES += -I$(SHAREDDIR)/cmsis/Core_A/Include
+INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
 
 EXTRA_ARCH_CFLAGS := -DA35_NON_SECURE
 
