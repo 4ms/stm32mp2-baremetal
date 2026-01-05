@@ -1200,11 +1200,11 @@ __STATIC_FORCEINLINE void L1C_InvalidateBTAC(void) {
 /** \brief  Clean instruction cache line by address.
 * \param [in] va Pointer to instructions to clear the cache for.
 */
-__STATIC_FORCEINLINE void L1C_InvalidateICacheMVA(void *va) {
-  __set_ICIMVAC((uint32_t)va);
-  __DSB();     //ensure completion of the invalidation
-  __ISB();     //ensure instruction fetch path sees new I cache state
-}
+// __STATIC_FORCEINLINE void L1C_InvalidateICacheMVA(void *va) {
+//   __set_ICIMVAC((uint32_t)(uintptr_t)va);
+//   __DSB();     //ensure completion of the invalidation
+//   __ISB();     //ensure instruction fetch path sees new I cache state
+// }
 
 /** \brief  Invalidate the whole instruction cache
 */
@@ -1218,7 +1218,7 @@ __STATIC_FORCEINLINE void L1C_InvalidateICacheAll(void) {
 * \param [in] va Pointer to data to clear the cache for.
 */
 __STATIC_FORCEINLINE void L1C_CleanDCacheMVA(void *va) {
-  __set_DCCMVAC((uint32_t)va);
+  __set_DCCMVAC((uint32_t)(uintptr_t)va);
   __DMB();     //ensure the ordering of data cache maintenance operations and their effects
 }
 
@@ -1226,7 +1226,7 @@ __STATIC_FORCEINLINE void L1C_CleanDCacheMVA(void *va) {
 * \param [in] va Pointer to data to invalidate the cache for.
 */
 __STATIC_FORCEINLINE void L1C_InvalidateDCacheMVA(void *va) {
-  __set_DCIMVAC((uint32_t)va);
+  __set_DCIMVAC((uint32_t)(uintptr_t)va);
   __DMB();     //ensure the ordering of data cache maintenance operations and their effects
 }
 
@@ -1234,7 +1234,7 @@ __STATIC_FORCEINLINE void L1C_InvalidateDCacheMVA(void *va) {
 * \param [in] va Pointer to data to invalidate the cache for.
 */
 __STATIC_FORCEINLINE void L1C_CleanInvalidateDCacheMVA(void *va) {
-  __set_DCCIMVAC((uint32_t)va);
+  __set_DCCIMVAC((uint32_t)(uintptr_t)va);
   __DMB();     //ensure the ordering of data cache maintenance operations and their effects
 }
 
@@ -2842,7 +2842,7 @@ __STATIC_INLINE void MMU_TTPage4k(uint32_t *ttb, uint32_t base_address, uint32_t
   uint32_t i;
 
   offset = base_address >> 20;
-  entry  = ((int)ttb_l2 & 0xFFFFFC00) | descriptor_l1;
+  entry  = ((int)(uintptr_t)ttb_l2 & 0xFFFFFC00) | descriptor_l1;
 
   //4 bytes aligned
   ttb += offset;
@@ -2878,7 +2878,7 @@ __STATIC_INLINE void MMU_TTPage64k(uint32_t *ttb, uint32_t base_address, uint32_
 
 
   offset = base_address >> 20;
-  entry  = ((int)ttb_l2 & 0xFFFFFC00) | descriptor_l1;
+  entry  = ((int)(uintptr_t)ttb_l2 & 0xFFFFFC00) | descriptor_l1;
 
   //4 bytes aligned
   ttb += offset;
