@@ -203,15 +203,17 @@ First, let's clone the bootloader repos:
 cd ..   # go to the overall project dir, the parent dir of stm32mp2-baremetal/
 git clone https://github.com/4ms/tf-a-stm32mp25.git
 git clone https://github.com/4ms/u-boot-stm32mp25
+git clone https://github.com/4ms/optee-stm32mp25.git
 ```
 
 Now you should have a directory structure like this:
 
 ```
 mp2-dev/
+   |_ optee-stm32mp25/
+   |_ stm32mp2-baremetal/
    |_ tf-a-stm32mp25/
    |_ u-boot-stm32mp25/
-   |_ stm32mp2-baremetal/
 ```
 
 
@@ -226,8 +228,9 @@ probably any later version will also work (please open an issue if you find a ve
 
 Set the path to it like this (notice the trailing dash `-`)
 
-```
-export CROSS_COMPILE=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/aarch64-none-elf-
+```bash
+export PATH=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/:$PATH
+export CROSS_COMPILE=aarch64-none-elf-
 ```
 
 
@@ -243,8 +246,11 @@ ls -l build/stm32mp2/release/bl31.bin
 ls -l build/stm32mp2/release/bl2.bin
 ```
 
-TODO: I haven't quite finished this process yet, so for now we don't use these files! But we still need TF-A 
-in order to build and use fiptool.
+On MacOS, you may need to build like this:
+```bash
+make PLAT=stm32mp2 DTB_FILE_NAME=stm32mp257f-ev1.dtb STM32MP_SDMMC=1 SPD=opteed STM32MP_DDR4_TYPE=1 \
+    OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1 HOSTCCFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+```
 
 
 ## U-boot
@@ -282,28 +288,66 @@ ls -l build-baremetal-uboot/u-boot-notdb.bin
 
 ## Building OP-TEE
 
-SKIP THIS FOR NOW
 
-
-TODO: See https://wiki.st.com/stm32mpu/wiki/How_to_build_OP-TEE_components
-
-Eventually once we figure out OP-TEE, we'll combine the TF-A, U-Boot, and OP-TEE binaries like this:
+To build, first you will need the python prerequisites:
 
 ```bash
-make PLAT=stm32mp2 DTB_FILE_NAME=stm32mp257f-ev1.dtb STM32MP_SDMMC=1 SPD=opteed STM32MP_DDR4_TYPE=1 \
-    BL32=../optee-stm32mp25/build/bl32.bin BL33=../build-baremetal-uboot/u-boot.bin fip
+python3 -m venv .venv
+source .venv/bin/activate
+pip install cffi crytpography pyelftools pillow
 ```
 
 
-Notes:
-```
+export CROSS_COMPILE=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/aarch64-none-elf-
+To build OP-TEE, you need Linux (possibly Windows, but I can't confirm).
+This requires the aarch64-linux-gnu toolchain, which is not available on macOS.
+
+You can use ST's fork of op-tee (v4.0), or our fork (which just has building instructions in the README).
+
+You need to disable the CFG_SCMI_SCPFW flag, which is not mentioned on ST's wiki.
+
+```bash
+cd optee-stm32mp25
+
+export PATH=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/:$PATH
 export CROSS_COMPILE=aarch64-linux-gnu-
-make PLATFORM=stm32mp2 CFG_EMBED_DTB_SOURCE_FILE=stm32mp257f-ev1.dts CFG_TEE_CORE_LOG_LEVEL=2  O=build CFG_SCMI_SCPFW=n all
+export CROSS_COMPILE64=aarch64-linux-gnu-
+make PLATFORM=stm32mp2 CFG_EMBED_DTB_SOURCE_FILE=stm32mp257f-ev1.dts CFG_TEE_CORE_LOG_LEVEL=2 O=build CFG_SCMI_SCPFW=n all
 ```
+
+
+ST has some info here, but not all of it seems to work:
+https://wiki.st.com/stm32mpu/wiki/How_to_build_OP-TEE_components
+
+
+## Creating a FIP
+
+TODO: figure out which op-tee binary is bl32.bin
+
+```bash
+cd tf-a-stm32mp25
+
+make ARCH=aarch64 PLAT=stm32mp2 \
+    SPD=opteed \
+    STM32MP_DDR4_TYPE=1 \
+    STM32MP_SDMMC=1 \
+    DTB_FILE_NAME=stm32mp257f-ev1.dtb \
+    BL32=../optee-stm32mp25/build/core/tee-header_v2.bin \
+    BL32_EXTRA1=../optee-stm32mp25/build/core/tee-pager_v2.bin \
+    BL32_EXTRA2=../optee-stm32mp25/build/core/tee-pageable_v2.bin \
+    BL33=../build-baremetal-uboot/u-boot-nodtb.bin \
+    BL33_CFG=../build-baremetal-uboot/u-boot.dtb \
+    STM32MP_DDR_FW=../stm32-ddr-phy-binary/stm32mp2/ddr4_pmu_train.bin \
+    bl31 fip
+
+ls -l build/release/stm32mp2/fip.bin
+```
+
+
 
 ## Using an existing FIP so we don't have to build OP-TEE
 
-I haven't gotten OP-TEE to build yet, so for now we use an existing fip file
+Instead of building OP-TEE, you could use an existing fip file
 provided by ST, and replace the U-boot component with our own.
 
 Download the STM32MP2 developer package, and copy one of the fip files:
