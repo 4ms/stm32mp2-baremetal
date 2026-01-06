@@ -315,6 +315,11 @@ make fiptool
 ./tools/fiptool/fiptool help
 ```
 
+On macOS, you might need to change `make fiptool` to this:
+```
+make fiptool OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1 HOSTCCFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+```
+
 Now use fiptool to replace the U-boot binary:
 
 ```bash
