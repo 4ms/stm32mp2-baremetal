@@ -295,6 +295,12 @@ make PLAT=stm32mp2 DTB_FILE_NAME=stm32mp257f-ev1.dtb STM32MP_SDMMC=1 SPD=opteed 
 ```
 
 
+Notes:
+```
+export CROSS_COMPILE=aarch64-linux-gnu-
+make PLATFORM=stm32mp2 CFG_EMBED_DTB_SOURCE_FILE=stm32mp257f-ev1.dts CFG_TEE_CORE_LOG_LEVEL=2  O=build CFG_SCMI_SCPFW=n all
+```
+
 ## Using an existing FIP so we don't have to build OP-TEE
 
 I haven't gotten OP-TEE to build yet, so for now we use an existing fip file
