@@ -656,6 +656,7 @@ void HAL_SYSCFG_ETH2ClockSelect(uint32_t SYSCFG_ETHClock)
   * @retval None
   */
 
+#ifdef USE_SYSCFG_IOCR
 void HAL_SYSCFG_AnalogSwitchConfig(uint32_t SYSCFG_AnalogSwitch, uint32_t SYSCFG_SwitchState)
 {
   /* Check the parameter */
@@ -666,6 +667,7 @@ void HAL_SYSCFG_AnalogSwitchConfig(uint32_t SYSCFG_AnalogSwitch, uint32_t SYSCFG
   if ((SYSCFG_AnalogSwitch & SYSCFG_SWITCH_PA1) == SYSCFG_SWITCH_PA1)
     MODIFY_REG(SYSCFG->IOCR, SYSCFG_IOCR_ANA1_SEL,(uint32_t)(SYSCFG_SwitchState));
 }
+#endif
 
 /**
   * @brief  To Enable optimize the I/O speed when the product voltage is low.
@@ -693,10 +695,12 @@ void HAL_SYSCFG_AnalogSwitchConfig(uint32_t SYSCFG_AnalogSwitch, uint32_t SYSCFG
   *   @arg SYSCFG_HIGHSPEED_DCMI_PSSI_DCMIPP_SIGNAL
   * @retval None
   */
+#ifdef USE_SYSCFG_IOCR
 void HAL_SYSCFG_EnableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal )
 {
   SET_BIT(SYSCFG->IOCR, SYSCFG_HighSpeedSignal) ;
 }
+#endif
 
 /**
   * @brief  To Disable optimize the I/O speed when the product voltage is low.
@@ -724,11 +728,12 @@ void HAL_SYSCFG_EnableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal )
   *   @arg SYSCFG_HIGHSPEED_DCMI_PSSI_DCMIPP_SIGNAL
   * @retval None
   */
+#ifdef USE_SYSCFG_IOCR
 void HAL_SYSCFG_DisableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal)
 {
   CLEAR_BIT(SYSCFG->IOCR, SYSCFG_HighSpeedSignal) ;
 }
-
+#endif
 
 /**
  * @brief  Lock the SYSCFG item(s).

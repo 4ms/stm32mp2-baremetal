@@ -232,6 +232,7 @@
 /** @defgroup SYSCFG_Analog_Switch_Config SYSCFG Analog Switch Config
   * @{
   */
+#ifdef USE_SYSCFG_IOCR
 #define SYSCFG_SWITCH_PA0                            SYSCFG_IOCR_ANA0_SEL  /*!< Select PA0 analog switch */
 #define SYSCFG_SWITCH_PA1                            SYSCFG_IOCR_ANA1_SEL  /*!< Select PA1 analog switch */
 
@@ -247,6 +248,7 @@
                                                      (((STATE) & SYSCFG_SWITCH_PA0_CLOSE) == SYSCFG_SWITCH_PA0_CLOSE)   || \
                                                      (((STATE) & SYSCFG_SWITCH_PA1_OPEN) == SYSCFG_SWITCH_PA1_OPEN)     || \
                                                      (((STATE) & SYSCFG_SWITCH_PA1_CLOSE) == SYSCFG_SWITCH_PA1_CLOSE))
+#endif
 /**
   * @}
   */
