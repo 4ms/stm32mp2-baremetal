@@ -1,6 +1,6 @@
-// secondary_entry.S
 .global aux_main
-secondary_entry:
+.global aux_core_startup
+aux_core_startup:
     ldr  x0, =_cpu1_stack_start
     mov  sp, x0
 
