@@ -12,13 +12,27 @@ extern "C" void aux_main()
 	}
 }
 
+asm(".global secondary_entry\n"
+	"secondary_entry:\n"
+	"    ldr  x0, =_cpu1_stack_start\n"
+	"    mov  sp, x0\n"
+	"    dsb  sy\n"
+	"    isb\n"
+	"    ic   iallu\n"
+	"    dsb  sy\n"
+	"    isb\n"
+	"    bl   aux_main\n"
+	"1:  wfe\n"
+	"    b    1b\n");
+
 int start_cpu1(void (*cpu1_entry)(void), uint64_t context);
+extern "C" void secondary_entry(void);
 
 int main()
 {
 	print("HAL Test\n");
 
-	auto ret = start_cpu1(aux_main, 0);
+	auto ret = start_cpu1(secondary_entry, 0);
 
 	volatile uint64_t x = 1000000;
 	while (x--) {
