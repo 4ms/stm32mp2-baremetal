@@ -1,5 +1,17 @@
+#include "interrupt.hh"
 #include "print.hh"
+#include "psci.hh"
 #include <cstdint>
+
+void delay(unsigned x)
+{
+	volatile unsigned xx = x;
+	while (xx--)
+		;
+}
+
+// Defined in assembly:
+extern "C" void aux_core_startup(void);
 
 extern "C" void aux_main()
 {
@@ -13,22 +25,24 @@ extern "C" void aux_main()
 	}
 }
 
-int start_cpu1(void (*cpu1_entry)(void), uint64_t context);
-
-extern "C" void aux_core_startup(void);
-
 int main()
 {
 	print("Multicore A35 Test\n");
 
 	auto ret = start_cpu1(aux_core_startup, 0);
 
-	volatile uint64_t x = 1000000;
-	while (x--) {
-	}
+	delay(1000000);
 
-	print("Started, returned ", ret, "\n");
+	print("System call to start aux CA35 core returned ", ret, " (0=success)\n");
 
+	InterruptManager::register_and_start_isr(SGI1_IRQn, 0, 0, []() {
+		delay(500000);
+		print("> Core0 SGI received (delayed)\n");
+	});
+
+	delay(1000000);
+
+	int x;
 	while (true) {
 		x++;
 		if (x % 20'000'000 == 0)
