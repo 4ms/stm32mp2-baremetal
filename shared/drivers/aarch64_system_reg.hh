@@ -1,14 +1,16 @@
 #pragma once
 #include <cstdint>
 
-inline uint64_t get_core_id() {
+inline uint64_t get_core_id()
+{
 	uint64_t core_id;
 	asm volatile("mrs %0, mpidr_el1\n\t" : "=r"(core_id) : : "memory");
 	uint64_t aff3 = (core_id >> 32) & 0xFF;
 	return aff3;
 }
 
-inline uint64_t get_mpid() {
+inline uint64_t get_mpid()
+{
 	uint64_t core_id;
 	asm volatile("mrs %0, mpidr_el1\n\t" : "=r"(core_id) : : "memory");
 	// asm volatile("MRS      %0, MPIDR_EL1   \n"
@@ -20,13 +22,15 @@ inline uint64_t get_mpid() {
 	return (core_id & 0x00FF'FFFF) | aff3;
 }
 
-inline uint32_t read_current_el() {
+inline uint32_t read_current_el()
+{
 	uint64_t current_el;
 	asm volatile("mrs %0, CurrentEL\n\t" : "=r"(current_el) : : "memory");
 	return current_el;
 }
 
-inline uint32_t get_current_el(void) {
+inline uint32_t get_current_el(void)
+{
 	constexpr uint64_t CURRENT_EL_MASK = 0x3;
 	constexpr uint64_t CURRENT_EL_SHIFT = 2;
 
@@ -35,50 +39,58 @@ inline uint32_t get_current_el(void) {
 }
 
 // HCR
-inline uint64_t read_hcr_el2(void) {
+inline uint64_t read_hcr_el2(void)
+{
 	uint64_t reg;
 	asm volatile("mrs %0, HCR_EL2\n\t" : "=r"(reg) : : "memory");
 	return reg;
 }
 
 // SPSR
-inline uint64_t read_spsr_el1() {
+inline uint64_t read_spsr_el1()
+{
 	uint64_t spsr_el1;
 	asm volatile("mrs %0, SPSR_EL1\n\t" : "=r"(spsr_el1) : : "memory");
 	return spsr_el1;
 }
 
-inline void write_spsr_el1(uint64_t spsr_el1) {
+inline void write_spsr_el1(uint64_t spsr_el1)
+{
 	asm volatile("msr SPSR_EL1, %0\n\t" : : "r"(spsr_el1) : "memory");
 }
 
-inline uint64_t read_spsr_el2() {
+inline uint64_t read_spsr_el2()
+{
 	uint64_t spsr_el2;
 	asm volatile("mrs %0, SPSR_EL2\n\t" : "=r"(spsr_el2) : : "memory");
 	return spsr_el2;
 }
 
-inline void write_spsr_el2(uint64_t spsr_el2) {
+inline void write_spsr_el2(uint64_t spsr_el2)
+{
 	asm volatile("msr SPSR_EL2, %0\n\t" : : "r"(spsr_el2) : "memory");
 }
 
 // VBAR
 
-inline uint64_t read_vbar_el2() {
+inline uint64_t read_vbar_el2()
+{
 	uint64_t vbar_el2;
 
 	asm volatile("mrs %0, VBAR_EL2\n\t" : "=r"(vbar_el2) : : "memory");
 	return vbar_el2;
 }
 
-inline uint64_t read_vbar_el1() {
+inline uint64_t read_vbar_el1()
+{
 	uint64_t vbar_el1;
 
 	asm volatile("mrs %0, VBAR_EL1\n\t" : "=r"(vbar_el1) : : "memory");
 	return vbar_el1;
 }
 
-inline void write_vbar_el1(uint64_t vbar_el1) {
+inline void write_vbar_el1(uint64_t vbar_el1)
+{
 	asm volatile("msr VBAR_EL1, %0\n\t" : : "r"(vbar_el1) : "memory");
 }
 
@@ -89,45 +101,126 @@ constexpr uint64_t DAIF_ABT_BIT = (1 << 2); // Asynchronous abort mask bit
 constexpr uint64_t DAIF_IRQ_BIT = (1 << 1); // IRQ mask bit
 constexpr uint64_t DAIF_FIQ_BIT = (1 << 0); // FIQ mask bit
 
-inline uint32_t read_daif() {
+inline uint32_t read_daif()
+{
 	uint32_t daif;
 
 	asm volatile("mrs %0, DAIF\n\t" : "=r"(daif) : : "memory");
 	return daif;
 }
 
-inline void write_daif(uint32_t daif) {
+inline void write_daif(uint32_t daif)
+{
 	asm volatile("msr DAIF, %0\n\t" : : "r"(daif) : "memory");
 }
 
-inline void enable_debug_exceptions() {
+inline void enable_debug_exceptions()
+{
 	asm volatile("msr DAIFClr, %0\n\t" : : "i"(DAIF_DBG_BIT) : "memory");
 }
 
-inline void enable_serror_exceptions() {
+inline void enable_serror_exceptions()
+{
 	asm volatile("msr DAIFClr, %0\n\t" : : "i"(DAIF_ABT_BIT) : "memory");
 }
 
-inline void enable_irq() {
+inline void enable_irq()
+{
 	asm volatile("msr DAIFClr, %0\n\t" : : "i"(DAIF_IRQ_BIT) : "memory");
 }
 
-inline void enable_fiq() {
+inline void enable_fiq()
+{
 	asm volatile("msr DAIFClr, %0\n\t" : : "i"(DAIF_FIQ_BIT) : "memory");
 }
 
-inline void disable_debug_exceptions() {
+inline void disable_debug_exceptions()
+{
 	asm volatile("msr DAIFSet, %0\n\t" : : "i"(DAIF_DBG_BIT) : "memory");
 }
 
-inline void disable_serror_exceptions() {
+inline void disable_serror_exceptions()
+{
 	asm volatile("msr DAIFSet, %0\n\t" : : "i"(DAIF_ABT_BIT) : "memory");
 }
 
-inline void disable_irq() {
+inline void disable_irq()
+{
 	asm volatile("msr DAIFSet, %0\n\t" : : "i"(DAIF_IRQ_BIT) : "memory");
 }
 
-inline void disable_fiq() {
+inline void disable_fiq()
+{
 	asm volatile("msr DAIFSet, %0\n\t" : : "i"(DAIF_FIQ_BIT) : "memory");
+}
+
+// Read counter freq
+inline uint32_t read_cntfreq()
+{
+	uint64_t v;
+	asm volatile("mrs %0, cntfrq_el0" : "=r"(v));
+	return (uint32_t)v;
+}
+
+// Read physical counter ticks (cntpct)
+inline uint32_t read_cntpct()
+{
+	uint64_t v;
+	asm volatile("mrs %0, cntpct_el0" : "=r"(v));
+	return (uint32_t)v;
+}
+
+//
+// CNTP control:
+//  bit0 ENABLE
+//  bit1 IMASK (1 masks interrupt)
+//  bit2 ISTATUS (read-only, 1 if interrupt condition met)
+
+inline uint32_t read_cntp_ctl(void)
+{
+	uint64_t v;
+	asm volatile("mrs %0, cntp_ctl_el0" : "=r"(v));
+	return (uint32_t)v;
+}
+
+inline void write_cntp_ctl(uint32_t v)
+{
+	asm volatile("msr cntp_ctl_el0, %0" ::"r"((uint64_t)v));
+}
+
+inline void cntp_enable(bool en)
+{
+	uint32_t ctl = read_cntp_ctl();
+	if (en)
+		ctl |= (1u << 0);
+	else
+		ctl &= ~(1u << 0);
+	write_cntp_ctl(ctl);
+}
+
+inline void cntp_irq_enable(bool en)
+{
+	uint32_t ctl = read_cntp_ctl();
+	if (en)
+		ctl &= ~(1u << 1); /* IMASK=0 => unmasked */
+	else
+		ctl |= (1u << 1); /* IMASK=1 => masked */
+	write_cntp_ctl(ctl);
+}
+
+// Relative timer value (32-bit ticks from now)
+inline void set_cntp_tval_ticks(uint32_t ticks)
+{
+	asm volatile("msr cntp_tval_el0, %0" ::"r"((uint64_t)ticks));
+}
+
+inline bool cntp_irq_is_pending(void)
+{
+	return (read_cntp_ctl() & (1u << 2)) != 0;
+}
+
+// Absolute compare value (64-bit ticks)
+inline void set_cntp_cval(uint64_t cval)
+{
+	asm volatile("msr cntp_cval_el0, %0" ::"r"(cval));
 }
