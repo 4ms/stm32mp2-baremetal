@@ -5,7 +5,7 @@ bare-metal context on all cores.
 
 The goal is to run full applications with access:
   - Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
-  - Nested interrupts (using the GIC)
+  √ Nested interrupts (using the GIC)
   - USB dual-role host/device, leveraging the STM32 USB library
   - SAI (audio), 
      - Using DMA
@@ -80,12 +80,35 @@ Then type in the boot command:
 
 ```
 mmc dev 0
-fatload mmc 0:b 0x88000000 main.uimg
-go 0x88000000
+fatload mmc 0:b 0x88000040 main.uimg
+bootm 0x88000040
 ```
 
 This of course requires partition 11 to be already formatted as FATFS and that
 you already copied main.uimg to it (see previous step).
+
+You can also save this command in U-boot's environment variables, so that you don't have to 
+type it each time. In fact if you save it in `bootcmd` then it'll run automatically without
+you needing to press a key:
+
+```
+env set bootcmd "mmc dev 0;fatload mmc 0:b 0x88000040 main.uimg;bootm 0x88000040"
+env save
+```
+
+You can run a command with `run`:
+```
+run bootcmd
+```
+
+If you ever need to wipe the U-boot environment variables, you can clear partition 7.
+Use dd (from your computer, not from the U-Boot prompt):
+
+```bash
+sudo dd if=/dev/zero of=/dev/diskX7
+```
+
+
 
 ## Debugging
 
@@ -97,7 +120,7 @@ Connect that to your computer.
 3. Start openocd. The scripts for the stm32mp2 chips are included in this repo, as well as 
 the openocd config file (`openocd.cfg`). So start openocd in a new terminal window like this:
 ```bash
-# From stm32mp2-baremetal/, which is where the openocd.cfg file lives:
+cd stm32mp2-baremetal     # must be in this dir where the openocd.cfg file lives
 openocd
 ```
 
@@ -146,23 +169,26 @@ aarch64-none-elf-gdb build/main.elf
 ```
 
 If gdb complains that it has a security setting preventing it from running the .gdbinit script, then
-either follow the instructions it provides to allow this directory, or run the commands yourself:
+either follow the instructions it provides to allow this directory, or run the command yourself:
 
 ```
 target extended-remote:3333
-thbreak *0x88000040
 ```
 
 You can then do normal gdb stuff to load the image and debug it.
 
 ```
 load build/main.elf
-file build/main.elf
+disassemble
 list main
 continue
 si
+n
 x/64i 0x88000040
 ```
+
+TODO: Figure out reliable way of resetting without power cycling. `monitor halt/resume`?
+
 
 ### Support files:
 
@@ -186,8 +212,8 @@ __Note: you can skip this entire Bootloaders section and use the stock SD Card f
 **Boot stages**
 - Boot Loader stage 1 (BL1) _AP Trusted ROM_ == BOOTROM on MP2
 - Boot Loader stage 2 (BL2) _Trusted Boot Firmware_ runs at EL3 == TF-A
-- Boot Loader stage 3-1 (BL31) _EL3 Runtime Software_ aka Secure Monitor. SYSRAM -- TODO...
-- Boot Loader stage 3-2 (BL32) _Secure-EL1 Payload_ = OPTEE or maybe SP_min -- TODO...
+- Boot Loader stage 3-1 (BL31) _EL3 Runtime Software_ aka Secure Monitor. SYSRAM == also is TF-A
+- Boot Loader stage 3-2 (BL32) _Secure-EL1 Payload_ = OPTEE or SP_min, or none
 - Boot Loader stage 3-3 (BL33) _Non-trusted Firmware_ == U-boot
 
 
@@ -221,7 +247,7 @@ mp2-dev/
 
 Read the docs: https://trustedfirmware-a.readthedocs.io/en/v2.11/plat/st/stm32mp2.html
 
-TF-A is the BL2 bootloader.
+TF-A is the BL2 bootloader. It also is the BL31 bootloader.
 
 To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3 and 13.1 have been tested but
 probably any later version will also work (please open an issue if you find a version that doesn't).
@@ -257,7 +283,6 @@ make PLAT=stm32mp2 DTB_FILE_NAME=stm32mp257f-ev1.dtb STM32MP_SDMMC=1 SPD=opteed 
 
 U-boot loads to 0x84000000, max end 0x84400000
 
-
 Requires openssl 1.1.1 (does not work with 3.x)
 
 On macOS, install like this:
@@ -288,6 +313,7 @@ ls -l build-baremetal-uboot/u-boot-notdb.bin
 
 ## Building OP-TEE
 
+TODO: get a working OP-TEE build, or disable it.
 
 To build, first you will need the python prerequisites:
 
@@ -297,14 +323,10 @@ source .venv/bin/activate
 pip install cffi crytpography pyelftools pillow
 ```
 
-
-export CROSS_COMPILE=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/aarch64-none-elf-
-To build OP-TEE, you need Linux (possibly Windows, but I can't confirm).
-This requires the aarch64-linux-gnu toolchain, which is not available on macOS.
-
 You can use ST's fork of op-tee (v4.0), or our fork (which just has building instructions in the README).
 
-You need to disable the CFG_SCMI_SCPFW flag, which is not mentioned on ST's wiki.
+I had to disable the CFG_SCMI_SCPFW flag, which is not mentioned on ST's wiki, but I'm not sure
+this is the correct thing to do.
 
 ```bash
 cd optee-stm32mp25
@@ -315,14 +337,11 @@ export CROSS_COMPILE64=aarch64-linux-gnu-
 make PLATFORM=stm32mp2 CFG_EMBED_DTB_SOURCE_FILE=stm32mp257f-ev1.dts CFG_TEE_CORE_LOG_LEVEL=2 O=build CFG_SCMI_SCPFW=n all
 ```
 
-
 ST has some info here, but not all of it seems to work:
 https://wiki.st.com/stm32mpu/wiki/How_to_build_OP-TEE_components
 
 
 ## Creating a FIP
-
-TODO: figure out which op-tee binary is bl32.bin
 
 ```bash
 cd tf-a-stm32mp25
@@ -337,8 +356,7 @@ make ARCH=aarch64 PLAT=stm32mp2 \
     BL32_EXTRA2=../optee-stm32mp25/build/core/tee-pageable_v2.bin \
     BL33=../build-baremetal-uboot/u-boot-nodtb.bin \
     BL33_CFG=../build-baremetal-uboot/u-boot.dtb \
-    STM32MP_DDR_FW=../stm32-ddr-phy-binary/stm32mp2/ddr4_pmu_train.bin \
-    bl31 fip
+    fip
 
 ls -l build/release/stm32mp2/fip.bin
 ```
@@ -397,11 +415,5 @@ Copy the fip.bin to partition 5 of the sd card:
 
 ```bash
 sudo dd if=baremetal-1/fip.bin of=/dev/diskXs5 
-```
-
-If you need to clear the U-boot environment variables, you can clear partition 7:
-
-```bash
-sudo dd if=/dev/zero of=/dev/diskXs7
 ```
 
