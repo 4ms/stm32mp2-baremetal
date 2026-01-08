@@ -224,3 +224,29 @@ inline void set_cntp_cval(uint64_t cval)
 {
 	asm volatile("msr cntp_cval_el0, %0" ::"r"(cval));
 }
+
+inline void clean_dcache_address_u(uintptr_t addr)
+{
+	asm volatile("dc cvau, %0" ::"r"(addr));
+}
+
+inline void clean_dcache_address(uintptr_t addr)
+{
+	asm volatile("dc cvac, %0" ::"r"(addr));
+}
+
+inline void invalidate_dcache_address(uintptr_t addr)
+{
+	asm volatile("dc ivac, %0" ::"r"(addr));
+}
+
+inline void clean_invalidate_dcache_address(uintptr_t addr)
+{
+	asm volatile("dc civac, %0" ::"r"(addr));
+}
+
+inline void zero_dcache_address(uintptr_t addr)
+{
+	asm volatile("dc zva, %0" ::"r"(addr));
+}
+

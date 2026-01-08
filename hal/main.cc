@@ -2,10 +2,11 @@
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
 
-constexpr inline uint32_t BufferSize = 8 * 1024;
+constexpr inline uint32_t BufferWords = 8 * 1024;
 
-__attribute__((section(".ddma"))) std::array<uint32_t, BufferSize> src_buffer;
-__attribute__((section(".ddma"))) std::array<uint32_t, BufferSize> dst_buffer;
+alignas(64) std::array<uint32_t, BufferWords> src_buffer;
+alignas(64) std::array<uint32_t, BufferWords> dst_buffer;
+constexpr inline size_t BufferBytes = BufferWords * sizeof(src_buffer[0]);
 
 int main()
 {
@@ -41,32 +42,53 @@ int main()
 		print("ERROR: HAL_DMA_ConfigChannelAttributes returned ", res, "\n");
 	}
 
-	for (auto i = 0u; i < BufferSize; i++) {
-		// print("W:");
-		src_buffer[i] = i * (i * (i * 7 + 3) + 1) + 43;
-		// print(src_buffer[i], "\n");
+	print("Preparing dst buffer: 0x", Hex((uintptr_t)(dst_buffer.data())), "\n");
+	for (auto i = 0u; i < BufferWords; i += 16) {
 		dst_buffer[i] = 0x5500AAFF;
-		// print("X\n");
+	}
+
+	// Write cache to memory
+	// Cleaning dst_buffer makes sure we don't have any dirty lines that won't get invalidated later
+	for (auto i = 0u; i < BufferWords; i += 16) {
+		clean_dcache_address((uintptr_t)(&dst_buffer[i]));
+	}
+
+	print("Preparing src buffer: 0x", Hex((uintptr_t)(src_buffer.data())), "\n");
+	for (auto i = 0u; i < BufferWords; i++) {
+		src_buffer[i] = i * (i * (i * 7 + 3) + 1) + 43;
+	}
+
+	// Write cache to memory
+	for (auto i = 0u; i < BufferWords; i += 16) {
+		clean_dcache_address((uintptr_t)(&src_buffer[i]));
 	}
 
 	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 0, 0, []() {
-		print("Tick = ", HAL_GetTick(), "\n");
-		print("DMA IRQ\n");
+		print("Got DMA IRQ at tick ", HAL_GetTick(), "\n");
 
-		for (auto i = 0u; i < BufferSize; i++) {
-			if ((i % 8) == 0)
-				print("\n");
-			print(Hex{dst_buffer[i]}, " ");
+		// Check if src was copied to dst, and report errors or success
+		int misses = 0;
+		for (auto i = 0u; i < BufferWords; i++) {
+
+			// Invalidate it so cache contents will be replaced by memory when we read
+			if (i % 16 == 0)
+				invalidate_dcache_address((uintptr_t)(&dst_buffer[i]));
+
+			if (dst_buffer[i] != src_buffer[i]) {
+				misses++;
+				print("[", i, "] ", Hex{dst_buffer[i]}, " != ", Hex{src_buffer[i]}, "\n");
+			}
 		}
+
+		if (misses == 0)
+			print("DMA transfer success! dst_buffer matches src_buffer\n");
 	});
 
-	auto res = HAL_DMA_Start_IT(&hdma, (uintptr_t)src_buffer.data(), (uintptr_t)dst_buffer.data(), BufferSize);
+	auto res = HAL_DMA_Start_IT(&hdma, (uintptr_t)src_buffer.data(), (uintptr_t)dst_buffer.data(), BufferBytes);
+
 	if (res != HAL_OK) {
 		print("ERROR: HAL_DMA_Start_IT returned ", res, "\n");
 	}
-
-	// HAL_DMA_RegisterCallback(&hdma, HAL_DMA_XFER_CPLT_CB_ID, TransferComplete);
-	// HAL_DMA_RegisterCallback(&hdma, HAL_DMA_XFER_ERROR_CB_ID, TransferError);
 
 	volatile int x = 0x10000000;
 

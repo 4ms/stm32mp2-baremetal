@@ -188,6 +188,8 @@ void mmu_enable(void)
 	const uint64_t attr_device = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(0) | // MAIR idx 0: Device-nGnRnE
 								 PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
 
+	// const uint64_t attr_noncache = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(1) | // MAIR idx 1: Normal WBWA
+	// 							 PTE_SH_INNER | PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
 	zero_tables();
 
 	// L0[0] -> L1
