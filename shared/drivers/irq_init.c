@@ -9,10 +9,15 @@ void GIC_ClearActiveIRQ(IRQn_Type IRQn)
 	}
 }
 
+void IRQ_Dist_Initialize(void)
+{
+	GIC_DistInit();
+}
+
 /// Initialize interrupt controller.
 int32_t IRQ_Initialize(void)
 {
-	GIC_Enable();
+	GIC_CPUInterfaceInit();
 
 	unsigned num_irq = 32U * ((GIC_DistributorInfo() & 0x1FU) + 1U);
 	int x;
