@@ -5,11 +5,11 @@ extern "C" void aux_main()
 {
 	print("Aux is online\n");
 
-	int x = 500'000;
+	int x = 10'000'000; // stagger Core1 and Core0 print()
 	while (true) {
 		x++;
-		if (x % 1'000'000 == 0)
-			print("Core1\n");
+		if (x % 20'000'000 == 0)
+			print("T1ck\n");
 	}
 }
 
@@ -31,7 +31,7 @@ int main()
 
 	while (true) {
 		x++;
-		if (x % 10'000'000 == 0)
-			print("Core0\n");
+		if (x % 20'000'000 == 0)
+			print("T0ck\n");
 	}
 }
