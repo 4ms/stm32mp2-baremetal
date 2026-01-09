@@ -538,10 +538,10 @@ typedef  void (*pUSART_CallbackTypeDef)(USART_HandleTypeDef *husart);  /*!< poin
   */
 #define __HAL_USART_ENABLE_IT(__HANDLE__, __INTERRUPT__)\
   (((((__INTERRUPT__) & USART_CR_MASK) >> USART_CR_POS) == 1U)?\
-   ((__HANDLE__)->Instance->CR1 |= (1U << ((__INTERRUPT__) & USART_IT_MASK))): \
+   ((__HANDLE__)->Instance->CR1 |= (1UL << ((__INTERRUPT__) & USART_IT_MASK))): \
    ((((__INTERRUPT__) & USART_CR_MASK) >> USART_CR_POS) == 2U)?\
-   ((__HANDLE__)->Instance->CR2 |= (1U << ((__INTERRUPT__) & USART_IT_MASK))): \
-   ((__HANDLE__)->Instance->CR3 |= (1U << ((__INTERRUPT__) & USART_IT_MASK))))
+   ((__HANDLE__)->Instance->CR2 |= (1UL << ((__INTERRUPT__) & USART_IT_MASK))): \
+   ((__HANDLE__)->Instance->CR3 |= (1UL << ((__INTERRUPT__) & USART_IT_MASK))))
 
 /** @brief  Disable the specified USART interrupt.
   * @param  __HANDLE__ specifies the USART Handle.
@@ -563,10 +563,10 @@ typedef  void (*pUSART_CallbackTypeDef)(USART_HandleTypeDef *husart);  /*!< poin
   */
 #define __HAL_USART_DISABLE_IT(__HANDLE__, __INTERRUPT__)\
   (((((__INTERRUPT__) & USART_CR_MASK) >> USART_CR_POS) == 1U)?\
-   ((__HANDLE__)->Instance->CR1 &= ~ (1U << ((__INTERRUPT__) & USART_IT_MASK))): \
+   ((__HANDLE__)->Instance->CR1 &= ~ (1UL << ((__INTERRUPT__) & USART_IT_MASK))): \
    ((((__INTERRUPT__) & USART_CR_MASK) >> USART_CR_POS) == 2U)?\
-   ((__HANDLE__)->Instance->CR2 &= ~ (1U << ((__INTERRUPT__) & USART_IT_MASK))): \
-   ((__HANDLE__)->Instance->CR3 &= ~ (1U << ((__INTERRUPT__) & USART_IT_MASK))))
+   ((__HANDLE__)->Instance->CR2 &= ~ (1UL << ((__INTERRUPT__) & USART_IT_MASK))): \
+   ((__HANDLE__)->Instance->CR3 &= ~ (1UL << ((__INTERRUPT__) & USART_IT_MASK))))
 
 /** @brief  Check whether the specified USART interrupt has occurred or not.
   * @param  __HANDLE__ specifies the USART Handle.
@@ -721,35 +721,35 @@ typedef  void (*pUSART_CallbackTypeDef)(USART_HandleTypeDef *husart);  /*!< poin
   */
 
 #if defined (CORE_CA35) || defined (CORE_CM33)
-#define USART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__)      \
-  do {                                                        \
-        if((__HANDLE__)->Instance == USART1)                  \
-        {                                                     \
-          (__CLOCKSOURCE__) = RCC_PERIPHCLK_USART1;           \
-        }                                                     \
-        else if((__HANDLE__)->Instance == USART2)             \
-        {                                                     \
-          (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART2_4;          \
-        }                                                     \
-        else if((__HANDLE__)->Instance == USART3)             \
-        {                                                     \
-          (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART3_5;          \
-        }                                                     \
-        else if((__HANDLE__)->Instance == USART6)             \
-        {                                                     \
-          (__CLOCKSOURCE__) = RCC_PERIPHCLK_USART6;           \
-        }                                                     \
-        else                                                  \
-        {                                                     \
-          (__CLOCKSOURCE__) = 0;                              \
-        }                                                     \
+#define USART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__)  \
+  do {                                                    \
+    if((__HANDLE__)->Instance == USART1)                  \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_USART1;           \
+    }                                                     \
+    else if((__HANDLE__)->Instance == USART2)             \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART2_4;          \
+    }                                                     \
+    else if((__HANDLE__)->Instance == USART3)             \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART3_5;          \
+    }                                                     \
+    else if((__HANDLE__)->Instance == USART6)             \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_USART6;           \
+    }                                                     \
+    else                                                  \
+    {                                                     \
+      (__CLOCKSOURCE__) = 0;                              \
+    }                                                     \
   } while(0U)
 #elif defined (CORE_CM0PLUS)
-#define USART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__)      \
-  do {                                                        \
-          (__CLOCKSOURCE__) = 0;                              \
+#define USART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__) \
+  do {                                                   \
+    (__CLOCKSOURCE__) = 0;                               \
   } while(0U)
-#endif	  
+#endif /* CORE_CA35 CORE_CM33 CORE_CM0PLUS*/
 
 
 /** @brief  Check USART Baud rate.

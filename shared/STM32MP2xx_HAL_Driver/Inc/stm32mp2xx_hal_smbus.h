@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2020 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -569,14 +569,14 @@ typedef  void (*pSMBUS_AddrCallbackTypeDef)(SMBUS_HandleTypeDef *hsmbus, uint8_t
 #define IS_SMBUS_DUAL_ADDRESS(ADDRESS)                  (((ADDRESS) == SMBUS_DUALADDRESS_DISABLE) || \
                                                          ((ADDRESS) == SMBUS_DUALADDRESS_ENABLE))
 
-#define IS_SMBUS_OWN_ADDRESS2_MASK(MASK)                (((MASK) == SMBUS_OA2_NOMASK)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK01)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK02)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK03)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK04)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK05)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK06)    || \
-                                                         ((MASK) == SMBUS_OA2_MASK07))
+#define IS_SMBUS_OWN_ADDRESS2_MASK(SMBUS_MASK)           (((SMBUS_MASK) == SMBUS_OA2_NOMASK)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK01)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK02)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK03)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK04)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK05)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK06)    || \
+                                                          ((SMBUS_MASK) == SMBUS_OA2_MASK07))
 
 #define IS_SMBUS_GENERAL_CALL(CALL)                     (((CALL) == SMBUS_GENERALCALL_DISABLE) || \
                                                          ((CALL) == SMBUS_GENERALCALL_ENABLE))

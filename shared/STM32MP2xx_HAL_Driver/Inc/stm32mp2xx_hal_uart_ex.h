@@ -173,27 +173,48 @@ typedef struct
   * @}
   */
 
- /* no trigger for uarts. only lpuart have triggers on MP2 */
+/* no trigger for uarts. only lpuart have triggers on MP25 and MP23 */
+
+#if defined(STM32MP21xxxx)
+
+/** @defgroup UARTEx_Autonomous_Trigger_selection UARTEx Autonomous trigger selection
+  * @brief    UART Autonomous Trigger selection
+  * @{
+  */
+#define UART_EXTI2_LINE4_TRG       4U   /*!< UART EXTI2 line 4 Internal Trigger     */
+#define UART_EXTI2_LINE5_TRG       5U   /*!< UART EXTI2 line 5 Internal Trigger     */
+/*!< No Trigger index 6 on UART            */
+#define UART_LPTIM3_CH1_TRG        7U   /*!< UART LPTIM3 channel 1 Internal Trigger */
+#define UART_LPTIM4_CH1_TRG        8U   /*!< UART LPTIM4 channel 1 Internal Trigger */
+#define UART_LPTIM5_OUT_TRG        9U   /*!< UART LPTIM5 out Internal Trigger       */
+#define UART_RTC_ALRA_TRG          10U  /*!< UART RTC alarm Internal Trigger        */
+#define UART_RTC_WUT_TRG           11U  /*!< UART RTC wakeup Internal Trigger       */
+#define UART_EXTI1_LINE6_TRG       12U  /*!< UART EXTI1 line 6 Internal Trigger     */
+#define UART_EXTI1_LINE7_TRG       13U  /*!< UART EXTI1 line 7 Internal Trigger     */
+#define UART_LPTIM1_CH1_TRG        14U  /*!< UART LPTIM1 channel 1 Internal Trigger */
+#define UART_LPTIM2_CH1_TRG        15U  /*!< UART LPTIM2 channel 1 Internal Trigger */
 /**
   * @}
   */
 
- /** @defgroup LPUARTEx_Autonomous_Trigger_selection LPUARTEx Autonomous trigger selection
-   * @brief    LPUART Autonomous Trigger selection
-   * @{
-   */
- #define LPUART_LPDMA_CH0_TCF_TRG    0U   /*!< LPUART LPDMA channel0 Internal Trigger  */
- #define LPUART_LPDMA_CH1_TCF_TRG    1U   /*!< LPUART LPDMA channel1 Internal Trigger  */
- #define LPUART_LPDMA_CH2_TCF_TRG    2U   /*!< LPUART LPDMA channel2 Internal Trigger  */
- #define LPUART_LPDMA_CH3_TCF_TRG    3U   /*!< LPUART LPDMA channel3 Internal Trigger  */
- #define LPUART_EXTI2_LINE4_TRG      4U   /*!< LPUART EXTI2 line 4 Internal Trigger    */
- #define LPUART_EXTI2_LINE5_TRG      5U   /*!< LPUART EXTI2 line 5 Internal Trigger    */
-                                          /*!< No Trigger index 6 on LPUART            */
- #define LPUART_LPTIM3_CH1_TRG       7U   /*!< LPUART LPTIM3 channel 1 Internal Trigger*/
- #define LPUART_LPTIM4_CH1_TRG       8U   /*!< LPUART LPTIM4 channel 2 Internal Trigger*/
- #define LPUART_LPTIM5_OUT_TRG       9U   /*!< LPUART LPTIM5 out Internal Trigger      */
- #define LPUART_RTC_ALRA_TRG         10U  /*!< LPUART RTC alarm Internal Trigger       */
- #define LPUART_RTC_WUT_TRG          11U  /*!< LPUART RTC wakeup Internal Trigger      */
+#endif /* STM32MP21xxxx */
+
+/** @defgroup LPUARTEx_Autonomous_Trigger_selection LPUARTEx Autonomous trigger selection
+  * @brief    LPUART Autonomous Trigger selection
+  * @{
+  */
+#define LPUART_LPDMA_CH0_TCF_TRG    0U   /*!< LPUART LPDMA channel0 Internal Trigger  */
+#define LPUART_LPDMA_CH1_TCF_TRG    1U   /*!< LPUART LPDMA channel1 Internal Trigger  */
+#define LPUART_LPDMA_CH2_TCF_TRG    2U   /*!< LPUART LPDMA channel2 Internal Trigger  */
+#define LPUART_LPDMA_CH3_TCF_TRG    3U   /*!< LPUART LPDMA channel3 Internal Trigger  */
+#define LPUART_EXTI2_LINE4_TRG      4U   /*!< LPUART EXTI2 line 4 Internal Trigger    */
+#define LPUART_EXTI2_LINE5_TRG      5U   /*!< LPUART EXTI2 line 5 Internal Trigger    */
+/*!< No Trigger index 6 on LPUART            */
+#define LPUART_LPTIM3_CH1_TRG       7U   /*!< LPUART LPTIM3 channel 1 Internal Trigger*/
+#define LPUART_LPTIM4_CH1_TRG       8U   /*!< LPUART LPTIM4 channel 2 Internal Trigger*/
+#define LPUART_LPTIM5_OUT_TRG       9U   /*!< LPUART LPTIM5 out Internal Trigger      */
+#define LPUART_RTC_ALRA_TRG         10U  /*!< LPUART RTC alarm Internal Trigger       */
+#define LPUART_RTC_WUT_TRG          11U  /*!< LPUART RTC wakeup Internal Trigger      */
 /**
   * @}
   */
@@ -286,6 +307,7 @@ HAL_StatusTypeDef HAL_UARTEx_ClearConfigAutonomousMode(UART_HandleTypeDef *huart
   */
 
 #if defined (CORE_CA35) || defined (CORE_CM33)
+#if defined(UART8) &&  defined(UART9)
 #define UART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__)   \
   do {                                                    \
     if((__HANDLE__)->Instance == USART1)                  \
@@ -324,10 +346,45 @@ HAL_StatusTypeDef HAL_UARTEx_ClearConfigAutonomousMode(UART_HandleTypeDef *huart
       (__CLOCKSOURCE__) = 0;                              \
     }                                                     \
   } while(0U)
+#else
+#define UART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__)   \
+  do {                                                    \
+    if((__HANDLE__)->Instance == USART1)                  \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_USART1;           \
+    }                                                     \
+    else if(((__HANDLE__)->Instance == USART2) ||         \
+            ((__HANDLE__)->Instance == UART4))            \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART2_4;          \
+    }                                                     \
+    else if(((__HANDLE__)->Instance == USART3) ||         \
+            ((__HANDLE__)->Instance == UART5))            \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART3_5;          \
+    }                                                     \
+    else if((__HANDLE__)->Instance == USART6)             \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_USART6;           \
+    }                                                     \
+    else if((__HANDLE__)->Instance == UART7)              \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_UART7;            \
+    }                                                     \
+    else if((__HANDLE__)->Instance == LPUART1)            \
+    {                                                     \
+      (__CLOCKSOURCE__) = RCC_PERIPHCLK_LPUART1;          \
+    }                                                     \
+    else                                                  \
+    {                                                     \
+      (__CLOCKSOURCE__) = 0;                              \
+    }                                                     \
+  } while(0U)
+#endif /* defined(UART8) &&  defined(UART9) */
 #elif defined (CORE_CM0PLUS)
 #define UART_GETCLOCKSOURCE(__HANDLE__,__CLOCKSOURCE__)   \
   do {                                                    \
-        (__CLOCKSOURCE__) = 0;                            \
+    (__CLOCKSOURCE__) = 0;                                \
   } while(0U)
 #endif /* COREs */
 
@@ -444,8 +501,13 @@ HAL_StatusTypeDef HAL_UARTEx_ClearConfigAutonomousMode(UART_HandleTypeDef *huart
   * @param __SOURCE__ UART Trigger source selection.
   * @retval SET (__SOURCE__ is valid) or RESET (__SOURCE__ is invalid)
   */
-/* No trigger for uart on MP2 */
+#if defined(STM32MP21xxxx)
+#define IS_UART_TRIGGER_SELECTION(__SOURCE__)    ( ((__SOURCE__) >= 4U) &&\
+                                                    ((__SOURCE__) <= 15U) && ((__SOURCE__) != 6U) )
+#else
+/* No trigger for uart on MP25 and MP23 */
 #define IS_UART_TRIGGER_SELECTION(__SOURCE__)    ((__SOURCE__) <  0U)
+#endif /* STM32MP21xxxx */
 
 /**
   * @brief Ensure that LPUART Trigger source selection is valid.

@@ -22,7 +22,7 @@
 #include "stm32mp2xx_ll_bus.h"
 #if ! defined(CORE_CM0PLUS)
 #include "stm32mp2xx_ll_rcc.h"
-#endif
+#endif /* NOT DEFINED CORE_CM0PLUS */
 #ifdef  USE_FULL_ASSERT
 #include "stm32_assert.h"
 #else
@@ -33,7 +33,9 @@
   * @{
   */
 
-#if defined(SPI1) || defined(SPI2) || defined(SPI3) || defined(SPI4) || defined(SPI5) || defined(SPI6) || defined(SPI7) || defined(SPI8)
+#if defined(SPI1) || defined(SPI2) || defined(SPI3)\
+ || defined(SPI4) || defined(SPI5) || defined(SPI6)\
+ || defined(SPI7) || defined(SPI8)
 
 /** @addtogroup SPI_LL
   * @{
@@ -239,7 +241,7 @@
   *          - SUCCESS: SPI registers are de-initialized
   *          - ERROR: SPI registers are not de-initialized
   */
-ErrorStatus LL_SPI_DeInit(SPI_TypeDef *SPIx)
+ErrorStatus LL_SPI_DeInit(const SPI_TypeDef *SPIx)
 {
   ErrorStatus status = ERROR;
 
@@ -672,13 +674,21 @@ ErrorStatus LL_I2S_Init(SPI_TypeDef *SPIx, LL_I2S_InitTypeDef *I2S_InitStruct)
 #if defined(SPI2)
       if (SPIx == SPI2)
       {
+#if defined(LL_RCC_SPI2_CLKSOURCE)
+        sourceclock = LL_RCC_GetSPIClockFreq(LL_RCC_SPI2_CLKSOURCE);
+#else
         sourceclock = LL_RCC_GetSPIClockFreq(LL_RCC_SPI23_CLKSOURCE);
+#endif /* LL_RCC_SPI2_CLKSOURCE */
       }
 #endif /* SPI2 */
 #if defined(SPI3)
       if (SPIx == SPI3)
       {
+#if defined(LL_RCC_SPI3_CLKSOURCE)
+        sourceclock = LL_RCC_GetSPIClockFreq(LL_RCC_SPI3_CLKSOURCE);
+#else
         sourceclock = LL_RCC_GetSPIClockFreq(LL_RCC_SPI23_CLKSOURCE);
+#endif /* LL_RCC_SPI3_CLKSOURCE */
       }
 #endif /* SPI3 */
 
@@ -777,7 +787,9 @@ void LL_I2S_ConfigPrescaler(SPI_TypeDef *SPIx, uint32_t PrescalerLinear, uint32_
   */
 #endif /* ! CORE_CM0PLUS */
 
-#endif /* defined(SPI1) || defined(SPI2) || defined(SPI3) || defined(SPI4) || defined(SPI5) || defined(SPI6) || defined(SPI7) || defined(SPI8) */
+#endif /* defined(SPI1) || defined(SPI2) || defined(SPI3) || 
+      defined(SPI4) || defined(SPI5) || defined(SPI6) || 
+      defined(SPI7) || defined(SPI8) */
 
 /**
   * @}

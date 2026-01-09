@@ -31,7 +31,7 @@
   * @{
   */
 
-#if defined (RNG)
+#if defined (RNG) || defined (RNG1) || defined (RNG2)
 
 /** @addtogroup RNG_LL
   * @{
@@ -79,19 +79,42 @@
   *          - SUCCESS: RNG registers are de-initialized
   *          - ERROR: not applicable
   */
-ErrorStatus LL_RNG_DeInit(RNG_TypeDef *RNGx)
+ErrorStatus LL_RNG_DeInit(const RNG_TypeDef *RNGx)
 {
   ErrorStatus status = SUCCESS;
 
   /* Check the parameters */
   assert_param(IS_RNG_ALL_INSTANCE(RNGx));
+#if defined(RNG1) || defined(RNG2)
+  if ((RNGx == RNG1) || (RNGx == RNG2))
+#else
   if (RNGx == RNG)
+#endif /* RNG1 || RNG2 */
   {
+#if defined(RNG1) || defined(RNG2)
+    if (RNGx == RNG1)
+    {
+      /* Enable RNG reset state */
+      LL_RCC_RNG1_ForceReset();
+
+      /* Release RNG from reset state */
+      LL_RCC_RNG1_ReleaseReset();
+    }
+    else if (RNGx == RNG2)
+    {
+      /* Enable RNG reset state */
+      LL_RCC_RNG2_ForceReset();
+
+      /* Release RNG from reset state */
+      LL_RCC_RNG2_ReleaseReset();
+    }
+#else
     /* Enable RNG reset state */
     LL_RCC_RNG_ForceReset();
 
     /* Release RNG from reset state */
     LL_RCC_RNG_ReleaseReset();
+#endif /* RNG1 || RNG2 */
   }
   else
   {
@@ -110,7 +133,7 @@ ErrorStatus LL_RNG_DeInit(RNG_TypeDef *RNGx)
   *          - SUCCESS: RNG registers are initialized according to RNG_InitStruct content
   *          - ERROR: not applicable
   */
-ErrorStatus LL_RNG_Init(RNG_TypeDef *RNGx, LL_RNG_InitTypeDef *RNG_InitStruct)
+ErrorStatus LL_RNG_Init(RNG_TypeDef *RNGx, const LL_RNG_InitTypeDef *RNG_InitStruct)
 {
   /* Check the parameters */
   assert_param(IS_RNG_ALL_INSTANCE(RNGx));
@@ -148,7 +171,7 @@ void LL_RNG_StructInit(LL_RNG_InitTypeDef *RNG_InitStruct)
   * @}
   */
 
-#endif /* RNG */
+#endif /* RNG  || RNG1 || RNG2 */
 
 /**
   * @}

@@ -22,18 +22,18 @@
 #define STM32MP2xx_HAL_DEF
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
 #if defined (__ARM_FEATURE_CMSE) &&  (__ARM_FEATURE_CMSE == 3U)
 #include <arm_cmse.h>
-#endif
+#endif /* __ARM_FEATURE_CMSE */
 #include <stddef.h>
 #include "stm32mp2xx.h"
 #if defined(USE_HAL_LEGACY)
-  #include "Legacy/stm32_hal_legacy.h"
-#endif
+#include "Legacy/stm32_hal_legacy.h"
+#endif /* USE_HAL_LEGACY */
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -61,16 +61,18 @@ typedef enum
 
 #define HAL_MAX_DELAY      0xFFFFFFFFU
 
-#define HAL_IS_BIT_SET(REG, BIT)         (((REG) & (BIT)) != RESET)
-#define HAL_IS_BIT_CLR(REG, BIT)         (((REG) & (BIT)) == RESET)
+#define HAL_IS_BIT_SET(REG, BIT_MASK)         (((REG) & (BIT_MASK)) != (uint32_t)RESET)
+#define HAL_IS_BIT_CLR(REG, BIT_MASK)         (((REG) & (BIT_MASK)) == (uint32_t)RESET)
 
 #define __HAL_LINKDMA(__HANDLE__, __PPP_DMA_FIELD__, __DMA_HANDLE__)               \
-                        do{                                                        \
-                              (__HANDLE__)->__PPP_DMA_FIELD__ = &(__DMA_HANDLE__); \
-                              (__DMA_HANDLE__).Parent = (__HANDLE__);              \
-                          } while (0U)
+  do{                                                        \
+    (__HANDLE__)->__PPP_DMA_FIELD__ = &(__DMA_HANDLE__); \
+    (__DMA_HANDLE__).Parent = (__HANDLE__);              \
+  } while (0U)
 
-#define UNUSED(x) ((void)(x))
+#if !defined(UNUSED)
+#define UNUSED(x) ((void)(x)) /* To avoid gcc/g++ warnings */
+#endif /* UNUSED */
 
 /** @brief Reset the Handle's State field.
   * @param __HANDLE__: specifies the Peripheral Handle.
@@ -90,95 +92,95 @@ typedef enum
 #define __HAL_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = 0U)
 
 #if (USE_RTOS == 1)
-  #error " USE_RTOS should be 0 in the current HAL release "
+#error " USE_RTOS should be 0 in the current HAL release "
 #else
-  #define __HAL_LOCK(__HANDLE__)                                           \
-                                do{                                        \
-                                    if((__HANDLE__)->Lock == HAL_LOCKED)   \
-                                    {                                      \
-                                       return HAL_BUSY;                    \
-                                    }                                      \
-                                    else                                   \
-                                    {                                      \
-                                       (__HANDLE__)->Lock = HAL_LOCKED;    \
-                                    }                                      \
-                                  } while (0U)
+#define __HAL_LOCK(__HANDLE__)                                           \
+  do{                                        \
+    if((__HANDLE__)->Lock == HAL_LOCKED)   \
+    {                                      \
+      return HAL_BUSY;                    \
+    }                                      \
+    else                                   \
+    {                                      \
+      (__HANDLE__)->Lock = HAL_LOCKED;    \
+    }                                      \
+  } while (0U)
 
-  #define __HAL_UNLOCK(__HANDLE__)                                          \
-                                  do{                                       \
-                                      (__HANDLE__)->Lock = HAL_UNLOCKED;    \
-                                    } while (0U)
+#define __HAL_UNLOCK(__HANDLE__)                                          \
+  do{                                       \
+    (__HANDLE__)->Lock = HAL_UNLOCKED;    \
+  } while (0U)
 #endif /* USE_RTOS */
 
 #if defined (__GNUC__) && !defined (__CC_ARM)
-  #ifndef __weak
-    #define __weak   __attribute__((weak))
-  #endif /* __weak */
-  #ifndef __packed
-    #define __packed __attribute__((__packed__))
-  #endif /* __packed */
+#ifndef __weak
+#define __weak   __attribute__((weak))
+#endif /* __weak */
+#ifndef __packed
+#define __packed __attribute__((__packed__))
+#endif /* __packed */
 #endif /* __GNUC__ */
 
 /* Macro to get variable aligned on 4-bytes */
 #if defined(__ICCARM__)                         /*!< IAR Compiler */
-  #ifndef __ALIGN_BEGIN
-    #define __ALIGN_BEGIN    _Pragma("data_alignment=4")
-  #endif /* __ALIGN_BEGIN */
-  #ifndef __ALIGN_END
-    #define __ALIGN_END
-  #endif /* __ALIGN_END */
+#ifndef __ALIGN_BEGIN
+#define __ALIGN_BEGIN    _Pragma("data_alignment=4")
+#endif /* __ALIGN_BEGIN */
+#ifndef __ALIGN_END
+#define __ALIGN_END
+#endif /* __ALIGN_END */
 #elif defined(__GNUC__) && !defined (__CC_ARM)  /*!< GNU Compiler */
-  #ifndef __ALIGN_BEGIN
-    #define __ALIGN_BEGIN
-  #endif /* __ALIGN_BEGIN */
-  #ifndef __ALIGN_END
-    #define __ALIGN_END      __attribute__ ((aligned (4)))
-  #endif /* __ALIGN_END */
+#ifndef __ALIGN_BEGIN
+#define __ALIGN_BEGIN
+#endif /* __ALIGN_BEGIN */
+#ifndef __ALIGN_END
+#define __ALIGN_END      __attribute__ ((aligned (4)))
+#endif /* __ALIGN_END */
 #elif defined(__CC_ARM)                         /*!< ARM Compiler */
-  #ifndef __ALIGN_BEGIN
-    #define __ALIGN_BEGIN    __align(4)
-  #endif /* __ALIGN_BEGIN */
-  #ifndef __ALIGN_END
-    #define __ALIGN_END
-  #endif /* __ALIGN_END */
+#ifndef __ALIGN_BEGIN
+#define __ALIGN_BEGIN    __align(4)
+#endif /* __ALIGN_BEGIN */
+#ifndef __ALIGN_END
+#define __ALIGN_END
+#endif /* __ALIGN_END */
 #elif defined (__TASKING__)                     /*!< TASKING Compiler */
-  #ifndef __ALIGN_BEGIN
-    #define __ALIGN_BEGIN    __align(4)
-  #endif /* __ALIGN_BEGIN */
-  #ifndef __ALIGN_END
-    #define __ALIGN_END
-  #endif /* __ALIGN_END */
+#ifndef __ALIGN_BEGIN
+#define __ALIGN_BEGIN    __align(4)
+#endif /* __ALIGN_BEGIN */
+#ifndef __ALIGN_END
+#define __ALIGN_END
+#endif /* __ALIGN_END */
 #endif /* Compiler selection */
 
 /* Macro to get variable aligned on 8-bytes */
 #if defined(__ICCARM__)                         /*!< IAR Compiler */
-  #ifndef __ALIGN_8_BEGIN
-    #define __ALIGN_8_BEGIN  _Pragma("data_alignment=8")
-  #endif /* __ALIGN_8_BEGIN */
-  #ifndef __ALIGN_8_END
-    #define __ALIGN_8_END
-  #endif /* __ALIGN_8_END */
+#ifndef __ALIGN_8_BEGIN
+#define __ALIGN_8_BEGIN  _Pragma("data_alignment=8")
+#endif /* __ALIGN_8_BEGIN */
+#ifndef __ALIGN_8_END
+#define __ALIGN_8_END
+#endif /* __ALIGN_8_END */
 #elif defined(__GNUC__) && !defined (__CC_ARM)  /*!< GNU Compiler */
-  #ifndef __ALIGN_8_BEGIN
-    #define __ALIGN_8_BEGIN
-  #endif /* __ALIGN_8_BEGIN */
-  #ifndef __ALIGN_8_END
-    #define __ALIGN_8_END    __attribute__ ((aligned (8)))
-  #endif /* __ALIGN_8_END */
+#ifndef __ALIGN_8_BEGIN
+#define __ALIGN_8_BEGIN
+#endif /* __ALIGN_8_BEGIN */
+#ifndef __ALIGN_8_END
+#define __ALIGN_8_END    __attribute__ ((aligned (8)))
+#endif /* __ALIGN_8_END */
 #elif defined(__CC_ARM)                         /*!< ARM Compiler */
-  #ifndef __ALIGN_8_BEGIN
-    #define __ALIGN_8_BEGIN  __align(8)
-  #endif /* __ALIGN_8_BEGIN */
-  #ifndef __ALIGN_8_END
-    #define __ALIGN_8_END
-  #endif /* __ALIGN_8_END */
+#ifndef __ALIGN_8_BEGIN
+#define __ALIGN_8_BEGIN  __align(8)
+#endif /* __ALIGN_8_BEGIN */
+#ifndef __ALIGN_8_END
+#define __ALIGN_8_END
+#endif /* __ALIGN_8_END */
 #elif defined (__TASKING__)                     /*!< TASKING Compiler */
-  #ifndef __ALIGN_8_BEGIN
-    #define __ALIGN_8_BEGIN  __align(8)
-  #endif /* __ALIGN_8_BEGIN */
-  #ifndef __ALIGN_8_END
-    #define __ALIGN_8_END
-  #endif /* __ALIGN_8_END */
+#ifndef __ALIGN_8_BEGIN
+#define __ALIGN_8_BEGIN  __align(8)
+#endif /* __ALIGN_8_BEGIN */
+#ifndef __ALIGN_8_END
+#define __ALIGN_8_END
+#endif /* __ALIGN_8_END */
 #endif /* Compiler selection */
 
 /* Macro to get variable aligned on 32-bytes,needed for cache maintenance purpose */
@@ -225,7 +227,7 @@ typedef enum
 */
 #define __RAM_FUNC __attribute__((section(".RamFunc")))
 
-#endif
+#endif /* __CC_ARM */
 
 /**
   * @brief  __NOINLINE definition
@@ -242,7 +244,7 @@ typedef enum
 */
 #define __NOINLINE _Pragma("optimize = no_inline")
 
-#endif
+#endif /* __CC_ARM | __GNUC__ */
 
 #ifdef __cplusplus
 }

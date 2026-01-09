@@ -49,16 +49,16 @@
   * @{
   */
 /**
- * @brief STM32MP2xx HAL Driver version number
+  * @brief STM32MP2xx HAL Driver version number
    */
-#define __STM32MP2xx_HAL_VERSION_MAIN   (0x00) /*!< [31:24] main version */
-#define __STM32MP2xx_HAL_VERSION_SUB1   (0x03) /*!< [23:16] sub1 version */
-#define __STM32MP2xx_HAL_VERSION_SUB2   (0x00) /*!< [15:8]  sub2 version */
-#define __STM32MP2xx_HAL_VERSION_RC     (0x00) /*!< [7:0]  release candidate */
+#define __STM32MP2xx_HAL_VERSION_MAIN   (0x01UL) /*!< [31:24] main version */
+#define __STM32MP2xx_HAL_VERSION_SUB1   (0x02UL) /*!< [23:16] sub1 version */
+#define __STM32MP2xx_HAL_VERSION_SUB2   (0x00UL) /*!< [15:8]  sub2 version */
+#define __STM32MP2xx_HAL_VERSION_RC     (0x00UL) /*!< [7:0]  release candidate */
 #define __STM32MP2xx_HAL_VERSION         ((__STM32MP2xx_HAL_VERSION_MAIN << 24)\
-                                        |(__STM32MP2xx_HAL_VERSION_SUB1 << 16)\
-                                        |(__STM32MP2xx_HAL_VERSION_SUB2 << 8 )\
-                                        |(__STM32MP2xx_HAL_VERSION_RC))
+                                          |(__STM32MP2xx_HAL_VERSION_SUB1 << 16)\
+                                          |(__STM32MP2xx_HAL_VERSION_SUB2 << 8 )\
+                                          |(__STM32MP2xx_HAL_VERSION_RC))
 
 #define IDCODE_DEVID_MASK    ((uint32_t)0x00000FFF)
 
@@ -84,8 +84,8 @@ static __IO uint32_t uwTick;
   */
 
 /** @defgroup HAL_Exported_Functions_Group1 Initialization and de-initialization Functions
- *  @brief    Initialization and de-initialization functions
- *
+  *  @brief    Initialization and de-initialization functions
+  *
 @verbatim
  ===============================================================================
               ##### Initialization and de-initialization functions #####
@@ -134,25 +134,28 @@ static __IO uint32_t uwTick;
   */
 HAL_StatusTypeDef HAL_Init(void)
 {
-    /* Configure Flash prefetch, Instruction cache, Data cache */
-  #if (INSTRUCTION_CACHE_ENABLE != 0)
-    // __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
-  #endif /* INSTRUCTION_CACHE_ENABLE */
+  /* Configure Flash prefetch, Instruction cache, Data cache */
+#if (INSTRUCTION_CACHE_ENABLE != 0)
+  /* __HAL_FLASH_INSTRUCTION_CACHE_ENABLE(); */
+#endif /* INSTRUCTION_CACHE_ENABLE */
 
-  #if (DATA_CACHE_ENABLE != 0)
-    // __HAL_FLASH_DATA_CACHE_ENABLE();
-  #endif /* DATA_CACHE_ENABLE */
+#if (DATA_CACHE_ENABLE != 0)
+  /* __HAL_FLASH_DATA_CACHE_ENABLE(); */
+#endif /* DATA_CACHE_ENABLE */
 
-  #if (PREFETCH_ENABLE != 0)
-   // __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-  #endif /* PREFETCH_ENABLE */
+#if (PREFETCH_ENABLE != 0)
+  /* __HAL_FLASH_PREFETCH_BUFFER_ENABLE(); */
+#endif /* PREFETCH_ENABLE */
 
   /* Set Interrupt Group Priority */
 #if defined (CORE_CM33)
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-#endif
+#endif /* CORE_CM33 */
   /* Use systick as time base source and configure 1ms tick (default clock after Reset is HSI) */
-   HAL_InitTick(TICK_INT_PRIORITY);
+  if (HAL_InitTick(TICK_INT_PRIORITY) != HAL_OK)
+  {
+    return HAL_ERROR;
+  }
 
   /* Init the low level hardware */
   HAL_MspInit();
@@ -216,13 +219,13 @@ __weak void HAL_MspDeInit(void)
   * @param TickPriority: SysTick interrupt priority.
   * @retval HAL status
   */
-  /*
-   * !!!!!!!!!!!!!!
-   * Modifying this function will not be fully acceptable without additional explanations from arch/design
-   * team about M0+/M33 SysTicks source clock setting/selection
-   * So implementing a temporary version which is correct enough for current verification work
-   * !!!!!!!!!!!!!!
-   */
+/*
+ * !!!!!!!!!!!!!!
+ * Modifying this function will not be fully acceptable without additional explanations from arch/design
+ * team about M0+/M33 SysTicks source clock setting/selection
+ * So implementing a temporary version which is correct enough for current verification work
+ * !!!!!!!!!!!!!!
+ */
 __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 {
   /* Configure the SysTick to have interrupt in 1ms timebase */
@@ -251,11 +254,16 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
    * !!!!!!!!!!!!!!
    */
 #if defined (USE_STM32MP257CXX_EMU)
-  HAL_SYSTICK_Config(HSI_VALUE/1000);
-//  HAL_SYSTICK_Config(HAL_RCC_GetFreq(RCC_CK_ICN_MCU)/1000); /* when HSI_VALUE will be fixed for UART and other usage */
+  HAL_SYSTICK_Config(HSI_VALUE / 1000);
+  /* HAL_SYSTICK_Config(HAL_RCC_GetFreq(RCC_CK_ICN_MCU)/1000); when HSI_VALUE will be fixed for UART and other usage */
 #else
   /* M33 SysTick "Processor clock" is "ck_cpu2" aka "ck_icn_hs_mcu" */
-  HAL_SYSTICK_Config(HAL_RCC_GetFreq(RCC_CLOCKTYPE_ICN_HS_MCU)/1000);
+  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+  if (HAL_SYSTICK_Config(HAL_RCC_GetFreq(RCC_CLOCKTYPE_ICN_HS_MCU) / 1000U) > 0U)
+  {
+    return HAL_ERROR;
+  }
+
 #endif /* defined (USE_STM32MP257CXX_EMU) */
 
   /* Configure the SysTick IRQ priority */
@@ -276,20 +284,28 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
    *   bit 25 "C3SYSTICKSEL" (see page 1877).
    * !!!!!!!!!!!!!!
    */
-   /* Since "Processor" clock is default source clock set by HAL_SYSTICK_Config(),
-    * then use HSI frequency value on FPGA/EMU platforms */
 #if defined (USE_STM32MP257CXX_EMU) || defined (USE_STM32MP257CXX_FPGA)
-   HAL_SYSTICK_Config(HSI_VALUE/1000);
+  /* Since "Processor" clock is default source clock set by HAL_SYSTICK_Config(),
+   * then use HSI frequency value on FPGA/EMU platforms
+   */
+  HAL_SYSTICK_Config(HSI_VALUE / 1000);
 #else
-   HAL_SYSTICK_Config(200000);
+  /* Use LSI clock as reference clock for the SysTick to ensure consistent
+   * HAL delay power when domains D1 or D2 enter or exit low power states
+   */
+  HAL_SYSTICK_Config(LSI_VALUE/1000); /* Set counter to wake up every ms */
+  HAL_SYSTICK_CLKSourceConfig(0); /* Select external clock specified in C3SYSTICKSEL (LSI) */
+
 #endif /* defined (USE_STM32MP257CXX_EMU) || defined (USE_STM32MP257CXX_FPGA) */
   /* Note that in LSI/LSE "External" clock cases, HAL_SYSTICK_Config parameter
    * value shall be taken from TEN_MS (aka "ONE_MS" on MP2) bit field in M0+
    * system register SYST_CALIB.
    */
 
-  /* Configure the SysTick IRQ priority */
-  HAL_NVIC_SetPriority(SysTick_IRQn, TickPriority ,0);
+  /* Configure the SysTick IRQ priority at level 2 to not interrupt low power
+   * workaround when power domains D1 or D2 enter or exit low power states
+   */
+  HAL_NVIC_SetPriority(SysTick_IRQn, TickPriority, 2);
 #else
 #error "No core selected. Please define either CORE_CA35, CORE_CM33 or CORE_CM0PLUS"
 #endif /* defined (CORE_CA35) || defined (CORE_CM33) || defined(CORE_CM0PLUS) */
@@ -302,8 +318,8 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   */
 
 /** @defgroup HAL_Exported_Functions_Group2 HAL Control functions
- *  @brief    HAL Control functions
- *
+  *  @brief    HAL Control functions
+  *
 @verbatim
  ===============================================================================
                       ##### HAL Control functions #####
@@ -326,7 +342,7 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   *        used as application time base.
   * @note In the default implementation, this variable is incremented each 1ms
   *       in Systick ISR.
- * @note This function is declared as __weak to be overwritten in case of other
+  * @note This function is declared as __weak to be overwritten in case of other
   *      implementations in user file.
   * @retval None
   */
@@ -359,9 +375,8 @@ __weak uint32_t HAL_GetTick(void)
   */
 __weak void HAL_Delay(__IO uint32_t Delay)
 {
-  uint32_t tickstart = 0;
-  tickstart = HAL_GetTick();
-  while((HAL_GetTick() - tickstart) < Delay)
+  const uint32_t tickstart = HAL_GetTick();
+  while ((HAL_GetTick() - tickstart) < Delay)
   {
   }
 }
@@ -385,7 +400,7 @@ __weak void HAL_SuspendTick(void)
 #else /* M33 or M0PLUS */
   /* Disable Cortex-M SysTick Interrupt */
   SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
-#endif
+#endif /* CORE_CA35 */
 }
 
 /**
@@ -407,7 +422,7 @@ __weak void HAL_ResumeTick(void)
 #else /* M33 or M0PLUS */
   /* Enable SysTick Interrupt */
   SysTick->CTRL  |= SysTick_CTRL_TICKINT_Msk;
-#endif
+#endif /* CORE_CA35 */
 }
 
 /**
@@ -416,7 +431,7 @@ __weak void HAL_ResumeTick(void)
   */
 uint32_t HAL_GetHalVersion(void)
 {
- return __STM32MP2xx_HAL_VERSION;
+  return __STM32MP2xx_HAL_VERSION;
 }
 
 #if defined(CORE_CA35) || defined(CORE_CM33)
@@ -426,7 +441,7 @@ uint32_t HAL_GetHalVersion(void)
   */
 uint32_t HAL_GetREVID(void)
 {
-  return(DEVICE_REVISION());
+  return (DEVICE_REVISION());
 }
 
 /**
@@ -435,7 +450,34 @@ uint32_t HAL_GetREVID(void)
   */
 uint32_t HAL_GetDEVID(void)
 {
-  return(DEVICE_ID());
+  return (DEVICE_ID());
+}
+
+/**
+  * @brief  Return the first word of the unique device identifier (UID based on 96 bits)
+  * @retval Device identifier
+  */
+uint32_t HAL_GetUIDw0(void)
+{
+  return (READ_REG(*((uint32_t *)UID_BASE)));
+}
+
+/**
+  * @brief  Return the second word of the unique device identifier (UID based on 96 bits)
+  * @retval Device identifier
+  */
+uint32_t HAL_GetUIDw1(void)
+{
+  return (READ_REG(*((uint32_t *)(UID_BASE + 4U))));
+}
+
+/**
+  * @brief  Return the third word of the unique device identifier (UID based on 96 bits)
+  * @retval Device identifier
+  */
+uint32_t HAL_GetUIDw2(void)
+{
+  return (READ_REG(*((uint32_t *)(UID_BASE + 8U))));
 }
 
 /**
@@ -443,7 +485,7 @@ uint32_t HAL_GetDEVID(void)
   */
 
 /** @defgroup HAL_Exported_Functions_Group3 DBGMCU Peripheral Control functions
- *
+  *
   * @{
   */
 
@@ -524,7 +566,7 @@ void HAL_DBGMCU_DisableDBGStandbyMode(void)
   */
 
 /** @defgroup HAL_Exported_Functions_Group4 HDP Peripheral Control functions
- *
+  *
   * @{
   */
 
@@ -555,17 +597,16 @@ void HAL_HDP_DisableHDP(void)
   */
 void HAL_HDP_ConfigHDPMux(uint32_t HDP_Mux, uint32_t HDP_Signal)
 {
-  MODIFY_REG(HDP->MUX , HDP_Mux, HDP_Signal);
+  MODIFY_REG(HDP->MUX, HDP_Mux, HDP_Signal);
 }
 
 /**
   * @brief  Return the output of VAL register
-  * @param  None
   * @retval Value of VAL register
   */
 uint32_t HAL_HDP_ReadVAL(void)
 {
-  return  ((HDP->VAL) & (HDP_VAL_HDPVAL));
+  return ((HDP->VAL) & (HDP_VAL_HDPVAL));
 }
 /**
   * @}
@@ -573,14 +614,14 @@ uint32_t HAL_HDP_ReadVAL(void)
 
 
 /** @defgroup HAL_Exported_Functions_Group5 SYSCFG Peripheral Control functions
- *
+  *
   * @{
   */
 
 
 /**
   * @brief  Ethernet PHY Interface Selection either MII, RMII or RGMII
-  * @param  SYSCFG_ETH1Interface: Selects the Ethernet 1 PHY interface
+  * @param  SYSCFG_ETHInterface: Selects the Ethernet 1 PHY interface
   *   This parameter can be one of the following values:
   *   @arg SYSCFG_ETH_MII : Select the Media Independent Interface
   *   @arg SYSCFG_ETH_RGMII : Select the reduced gigabit media-independent interface
@@ -596,7 +637,7 @@ void HAL_SYSCFG_ETH1InterfaceSelect(uint32_t SYSCFG_ETHInterface)
 
 /**
   * @brief  Ethernet PHY Interface Selection either MII, RMII or RGMII
-  * @param  SYSCFG_ETH2Interface: Selects the Ethernet 2 PHY interface
+  * @param  SYSCFG_ETHInterface: Selects the Ethernet 2 PHY interface
   *   This parameter can be one of the following values:
   *   @arg SYSCFG_ETH_MII : Select the Media Independent Interface
   *   @arg SYSCFG_ETH_RGMII : Select the reduced gigabit media-independent interface
@@ -655,19 +696,21 @@ void HAL_SYSCFG_ETH2ClockSelect(uint32_t SYSCFG_ETHClock)
   *   @arg SYSCFG_SWITCH_PA1_CLOSE
   * @retval None
   */
-
-#ifdef USE_SYSCFG_IOCR
+#if defined(SYSCFG_IOCR_HSLVEN_TRACE)
 void HAL_SYSCFG_AnalogSwitchConfig(uint32_t SYSCFG_AnalogSwitch, uint32_t SYSCFG_SwitchState)
 {
   /* Check the parameter */
   assert_param(IS_SYSCFG_SWITCH_STATE(SYSCFG_SwitchState));
   assert_param(IS_SYSCFG_ANALOG_SWITCH(SYSCFG_AnalogSwitch));
-  if((SYSCFG_AnalogSwitch & SYSCFG_SWITCH_PA0) == SYSCFG_SWITCH_PA0)
-    MODIFY_REG(SYSCFG->IOCR, SYSCFG_IOCR_ANA0_SEL,(uint32_t)(SYSCFG_SwitchState));
+  if ((SYSCFG_AnalogSwitch & SYSCFG_SWITCH_PA0) == SYSCFG_SWITCH_PA0)
+  {
+    MODIFY_REG(SYSCFG->IOCR, SYSCFG_IOCR_ANA0_SEL, (uint32_t)(SYSCFG_SwitchState));
+  }
   if ((SYSCFG_AnalogSwitch & SYSCFG_SWITCH_PA1) == SYSCFG_SWITCH_PA1)
-    MODIFY_REG(SYSCFG->IOCR, SYSCFG_IOCR_ANA1_SEL,(uint32_t)(SYSCFG_SwitchState));
+  {
+    MODIFY_REG(SYSCFG->IOCR, SYSCFG_IOCR_ANA1_SEL, (uint32_t)(SYSCFG_SwitchState));
+  }
 }
-#endif
 
 /**
   * @brief  To Enable optimize the I/O speed when the product voltage is low.
@@ -695,12 +738,10 @@ void HAL_SYSCFG_AnalogSwitchConfig(uint32_t SYSCFG_AnalogSwitch, uint32_t SYSCFG
   *   @arg SYSCFG_HIGHSPEED_DCMI_PSSI_DCMIPP_SIGNAL
   * @retval None
   */
-#ifdef USE_SYSCFG_IOCR
-void HAL_SYSCFG_EnableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal )
+void HAL_SYSCFG_EnableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal)
 {
   SET_BIT(SYSCFG->IOCR, SYSCFG_HighSpeedSignal) ;
 }
-#endif
 
 /**
   * @brief  To Disable optimize the I/O speed when the product voltage is low.
@@ -728,19 +769,18 @@ void HAL_SYSCFG_EnableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal )
   *   @arg SYSCFG_HIGHSPEED_DCMI_PSSI_DCMIPP_SIGNAL
   * @retval None
   */
-#ifdef USE_SYSCFG_IOCR
 void HAL_SYSCFG_DisableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal)
 {
   CLEAR_BIT(SYSCFG->IOCR, SYSCFG_HighSpeedSignal) ;
 }
-#endif
+#endif /* SYSCFG_IOCR_HSLVEN_TRACE */
 
 /**
- * @brief  Lock the SYSCFG item(s).
+  * @brief  Lock the SYSCFG item(s).
   * @note   Setting lock(s) depends on privilege mode in secure/non-secure code
   *         Lock(s) cleared only at system reset
   * @param  Item Item(s) to set lock on.
-  * This parameter can be a combination of @ref SYSCFG_Lock_items:
+  * This parameter can be a combination of @ref SYSCFG_Lock_items
   *   @arg SYSCFG_SAU
   *   @arg SYSCFG_MPU_SEC
   *   @arg SYSCFG_MPU_NSEC
@@ -752,13 +792,13 @@ void HAL_SYSCFG_DisableIOSpeedOptimize(uint32_t SYSCFG_HighSpeedSignal)
 void HAL_SYSCFG_Lock(uint32_t Item)
 {
   assert_param(IS_SYSCFG_LOCK_SELECT(Item));
-  MODIFY_REG(SYSCFG->M33SSCR,SYSCFG_LOCK_ALL,Item);
+  MODIFY_REG(SYSCFG->M33SSCR, SYSCFG_LOCK_ALL, Item);
 }
 
 /**
   * @brief  Get the lock state of SYSCFG item.
   * @param  pItem pointer to return locked items
-  * the return value can be a combination of @ref SYSCFG_Lock_items:
+  * the return value can be a combination of @ref SYSCFG_Lock_items
   *   @arg SYSCFG_SAU
   *   @arg SYSCFG_MPU_SEC
   *   @arg SYSCFG_MPU_NSEC
@@ -772,13 +812,13 @@ HAL_StatusTypeDef HAL_SYSCFG_GetLock(uint32_t *pItem)
   uint32_t tmp_lock;
 
   /* Check null pointer */
-  if(pItem == NULL)
+  if (pItem == NULL)
   {
     return HAL_ERROR;
   }
 
   /* Get the non-secure lock state */
-  tmp_lock = ((READ_REG(SYSCFG->M33SSCR) >> SYSCFG_M33SSCR_LOCKSVTAIRCR_Pos) & 0x3F);
+  tmp_lock = ((READ_REG(SYSCFG->M33SSCR) >> SYSCFG_M33SSCR_LOCKSVTAIRCR_Pos) & 0x3FUL);
 
   /* Return overall lock status */
   *pItem = tmp_lock;

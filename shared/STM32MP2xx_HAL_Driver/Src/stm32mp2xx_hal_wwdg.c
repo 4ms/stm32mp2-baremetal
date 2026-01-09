@@ -33,7 +33,7 @@
         (++) max time (mS) = 1000 * (Counter - 0x40) / WWDG clock
     (+) Typical values:
         (++) Counter min (T[5;0] = 0x00) @150MHz (PCLK1) with zero prescaler:
-             max timeout before reset: approximately 27.31µs
+             max timeout before reset: approximately 27.31us
         (++) Counter max (T[5;0] = 0x3F) @150MHz (PCLK1) with prescaler dividing by 128:
              max timeout before reset: approximately 226.70ms
 
@@ -194,10 +194,10 @@ HAL_StatusTypeDef HAL_WWDG_Init(WWDG_HandleTypeDef *hwwdg)
 
   /* Init the low level hardware */
   hwwdg->MspInitCallback(hwwdg);
-#else
+#else /*USE_HAL_WWDG_REGISTER_CALLBACKS*/
   /* Init the low level hardware */
   HAL_WWDG_MspInit(hwwdg);
-#endif
+#endif /*USE_HAL_WWDG_REGISTER_CALLBACKS*/
 
   /* Set WWDG Counter and start it */
   WRITE_REG(hwwdg->Instance->CR, (WWDG_CR_WDGA | hwwdg->Init.Counter));
@@ -242,7 +242,8 @@ __weak void HAL_WWDG_MspInit(WWDG_HandleTypeDef *hwwdg)
   * @param  pCallback pointer to the Callback function
   * @retval status
   */
-HAL_StatusTypeDef HAL_WWDG_RegisterCallback(WWDG_HandleTypeDef *hwwdg, HAL_WWDG_CallbackIDTypeDef CallbackID, pWWDG_CallbackTypeDef pCallback)
+HAL_StatusTypeDef HAL_WWDG_RegisterCallback(WWDG_HandleTypeDef *hwwdg, HAL_WWDG_CallbackIDTypeDef CallbackID,
+                                            pWWDG_CallbackTypeDef pCallback)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
@@ -303,7 +304,7 @@ HAL_StatusTypeDef HAL_WWDG_UnRegisterCallback(WWDG_HandleTypeDef *hwwdg, HAL_WWD
 
   return status;
 }
-#endif
+#endif /*USE_HAL_WWDG_REGISTER_CALLBACKS*/
 
 /**
   * @}
@@ -368,10 +369,10 @@ void HAL_WWDG_IRQHandler(WWDG_HandleTypeDef *hwwdg)
 #if (USE_HAL_WWDG_REGISTER_CALLBACKS == 1)
       /* Early Wakeup registered callback */
       hwwdg->EwiCallback(hwwdg);
-#else
+#else /*USE_HAL_WWDG_REGISTER_CALLBACKS*/
       /* Early Wakeup callback */
       HAL_WWDG_EarlyWakeupCallback(hwwdg);
-#endif
+#endif /*USE_HAL_WWDG_REGISTER_CALLBACKS*/
     }
   }
 }
@@ -410,4 +411,3 @@ __weak void HAL_WWDG_EarlyWakeupCallback(WWDG_HandleTypeDef *hwwdg)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

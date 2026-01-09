@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    stm32mp25_hal_rcc.c
+  * @file    stm32mp2xx_hal_rcc.c
   * @author  MCD Application Team
   * @brief   RCC HAL module driver.
   *          This file provides firmware functions to manage the following
@@ -11,13 +11,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   @verbatim
@@ -64,26 +63,27 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
-/** @defgroup RCC_Private_Constants RCC Private Constants
-  * @{
-  */
-/**
-  * @}
-  */
 /* Private macros ------------------------------------------------------------*/
-/** @addtogroup RCC_Private_Macros
+/** @defgroup RCC_Private_Macros RCC Private Macros
   * @{
   */
-#define IS_RCC_OSCILLATORTYPE(__OSCILLATOR__) (((__OSCILLATOR__) == RCC_OSCILLATORTYPE_NONE)                        || \
-                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_HSE)   == RCC_OSCILLATORTYPE_HSE)   || \
-                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_HSI)   == RCC_OSCILLATORTYPE_HSI)   || \
-                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_MSI)   == RCC_OSCILLATORTYPE_MSI)   || \
-                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_LSI)   == RCC_OSCILLATORTYPE_LSI)   || \
-                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_LSE)   == RCC_OSCILLATORTYPE_LSE))
+#define IS_RCC_OSCILLATORTYPE(__OSCILLATOR__) (((__OSCILLATOR__) == RCC_OSCILLATORTYPE_NONE)  || \
+                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_HSE)   == \
+                                                RCC_OSCILLATORTYPE_HSE)                     || \
+                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_HSI)   == \
+                                                RCC_OSCILLATORTYPE_HSI)                     || \
+                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_MSI)   == \
+                                                RCC_OSCILLATORTYPE_MSI)                     || \
+                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_LSI)   == \
+                                                RCC_OSCILLATORTYPE_LSI)                     || \
+                                               (((__OSCILLATOR__) & RCC_OSCILLATORTYPE_LSE)   == \
+                                                RCC_OSCILLATORTYPE_LSE))
 
 #define RCC_GET_MCO_GPIO_PIN(__RCC_MCOx__)    ((__RCC_MCOx__) & GPIO_PIN_MASK)
 #define RCC_GET_MCO_GPIO_AF(__RCC_MCOx__)     (((__RCC_MCOx__) & RCC_MCO_GPIOAF_MASK) >> RCC_MCO_GPIOAF_POS)
 #define RCC_GET_MCO_GPIO_INDEX(__RCC_MCOx__)  (((__RCC_MCOx__) & RCC_MCO_GPIOPORT_MASK) >> RCC_MCO_GPIOPORT_POS)
+
+#if defined(GPIOJ) && defined(GPIOK)
 #define RCC_GET_MCO_GPIO_PORT(__RCC_MCOx__)   ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  0U) ? GPIOA : \
                                                ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  1U) ? GPIOB : \
                                                 ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  2U) ? GPIOC : \
@@ -95,14 +95,26 @@
                                                       ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  8U) ? GPIOI : \
                                                        ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  9U) ? GPIOJ : \
                                                         ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) == 10U) ? GPIOK : \
-                                                         ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) == 11U) ? GPIOZ : NULL))))))))))))
+                                                         ((RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) == 11U) ? GPIOZ : \
+                                                          NULL))))))))))))
+#else
+#define RCC_GET_MCO_GPIO_PORT(__RCC_MCOx__)   (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  0U ? GPIOA :       \
+                                               (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  1U ? GPIOB :       \
+                                                (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  2U ? GPIOC :       \
+                                                 (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  3U ? GPIOD :       \
+                                                  (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  4U ? GPIOE :       \
+                                                   (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  5U ? GPIOF :       \
+                                                    (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  6U ? GPIOG :       \
+                                                     (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  7U ? GPIOH :       \
+                                                      (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  8U ? GPIOI :       \
+                                                       (RCC_GET_MCO_GPIO_INDEX((__RCC_MCOx__)) ==  9U ? GPIOZ : NULL) \
+                                                      )))))))))
+#endif /* GPIOJ && GPIOK */
 
 /**
   * @}
   */
-/**
-  * @}
-  */
+
 
 /* Private define ------------------------------------------------------------*/
 /** @defgroup RCC_Private_Constants RCC Private Constants
@@ -130,9 +142,7 @@
 /** @defgroup RCC_Private_Functions RCC Private Functions
   * @{
   */
-/**
-  * @}
-  */
+
 void HAL_RCC_HSIMON_IRQHandler(void);
 __weak void HAL_RCC_CSSCallback(void);
 /* Private functions ---------------------------------------------------------*/
@@ -151,7 +161,7 @@ static uint32_t RCC_is_hse_in_use(void)
 
   /* Check GFG */
   gfg = RCC->MUXSELCFGR;
-
+#if defined(RCC_MUXSELCFGR_MUXSEL7)
   if ((((gfg & RCC_MUXSELCFGR_MUXSEL0_Msk) >> RCC_MUXSELCFGR_MUXSEL0_Pos) == 0x1U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL1_Msk) >> RCC_MUXSELCFGR_MUXSEL1_Pos) == 0x1U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL2_Msk) >> RCC_MUXSELCFGR_MUXSEL2_Pos) == 0x1U) ||
@@ -160,6 +170,15 @@ static uint32_t RCC_is_hse_in_use(void)
       (((gfg & RCC_MUXSELCFGR_MUXSEL5_Msk) >> RCC_MUXSELCFGR_MUXSEL5_Pos) == 0x1U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL6_Msk) >> RCC_MUXSELCFGR_MUXSEL6_Pos) == 0x1U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL7_Msk) >> RCC_MUXSELCFGR_MUXSEL7_Pos) == 0x1U))
+#else
+  if ((((gfg & RCC_MUXSELCFGR_MUXSEL0_Msk) >> RCC_MUXSELCFGR_MUXSEL0_Pos) == 0x1U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL1_Msk) >> RCC_MUXSELCFGR_MUXSEL1_Pos) == 0x1U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL2_Msk) >> RCC_MUXSELCFGR_MUXSEL2_Pos) == 0x1U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL3_Msk) >> RCC_MUXSELCFGR_MUXSEL3_Pos) == 0x1U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL4_Msk) >> RCC_MUXSELCFGR_MUXSEL4_Pos) == 0x1U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL5_Msk) >> RCC_MUXSELCFGR_MUXSEL5_Pos) == 0x1U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL6_Msk) >> RCC_MUXSELCFGR_MUXSEL6_Pos) == 0x1U))
+#endif /* RCC_MUXSELCFGR_MUXSEL7 */
   {
     return 1;
   }
@@ -192,7 +211,7 @@ static uint32_t RCC_is_hsi_in_use(void)
 
   /* Check GFG */
   gfg = RCC->MUXSELCFGR;
-
+#if defined(RCC_MUXSELCFGR_MUXSEL7)
   if ((((gfg & RCC_MUXSELCFGR_MUXSEL0_Msk) >> RCC_MUXSELCFGR_MUXSEL0_Pos) == 0x0U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL1_Msk) >> RCC_MUXSELCFGR_MUXSEL1_Pos) == 0x0U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL2_Msk) >> RCC_MUXSELCFGR_MUXSEL2_Pos) == 0x0U) ||
@@ -201,6 +220,15 @@ static uint32_t RCC_is_hsi_in_use(void)
       (((gfg & RCC_MUXSELCFGR_MUXSEL5_Msk) >> RCC_MUXSELCFGR_MUXSEL5_Pos) == 0x0U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL6_Msk) >> RCC_MUXSELCFGR_MUXSEL6_Pos) == 0x0U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL7_Msk) >> RCC_MUXSELCFGR_MUXSEL7_Pos) == 0x0U))
+#else
+  if ((((gfg & RCC_MUXSELCFGR_MUXSEL0_Msk) >> RCC_MUXSELCFGR_MUXSEL0_Pos) == 0x0U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL1_Msk) >> RCC_MUXSELCFGR_MUXSEL1_Pos) == 0x0U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL2_Msk) >> RCC_MUXSELCFGR_MUXSEL2_Pos) == 0x0U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL3_Msk) >> RCC_MUXSELCFGR_MUXSEL3_Pos) == 0x0U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL4_Msk) >> RCC_MUXSELCFGR_MUXSEL4_Pos) == 0x0U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL5_Msk) >> RCC_MUXSELCFGR_MUXSEL5_Pos) == 0x0U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL6_Msk) >> RCC_MUXSELCFGR_MUXSEL6_Pos) == 0x0U))
+#endif /* RCC_MUXSELCFGR_MUXSEL7 */
   {
     return 1;
   }
@@ -233,7 +261,7 @@ static uint32_t RCC_is_msi_in_use(void)
 
   /* Check GFG */
   gfg = RCC->MUXSELCFGR;
-
+#if defined(RCC_MUXSELCFGR_MUXSEL7)
   if ((((gfg & RCC_MUXSELCFGR_MUXSEL0_Msk) >> RCC_MUXSELCFGR_MUXSEL0_Pos) == 0x2U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL1_Msk) >> RCC_MUXSELCFGR_MUXSEL1_Pos) == 0x2U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL2_Msk) >> RCC_MUXSELCFGR_MUXSEL2_Pos) == 0x2U) ||
@@ -242,6 +270,15 @@ static uint32_t RCC_is_msi_in_use(void)
       (((gfg & RCC_MUXSELCFGR_MUXSEL5_Msk) >> RCC_MUXSELCFGR_MUXSEL5_Pos) == 0x2U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL6_Msk) >> RCC_MUXSELCFGR_MUXSEL6_Pos) == 0x2U) ||
       (((gfg & RCC_MUXSELCFGR_MUXSEL7_Msk) >> RCC_MUXSELCFGR_MUXSEL7_Pos) == 0x2U))
+#else
+  if ((((gfg & RCC_MUXSELCFGR_MUXSEL0_Msk) >> RCC_MUXSELCFGR_MUXSEL0_Pos) == 0x2U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL1_Msk) >> RCC_MUXSELCFGR_MUXSEL1_Pos) == 0x2U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL2_Msk) >> RCC_MUXSELCFGR_MUXSEL2_Pos) == 0x2U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL3_Msk) >> RCC_MUXSELCFGR_MUXSEL3_Pos) == 0x2U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL4_Msk) >> RCC_MUXSELCFGR_MUXSEL4_Pos) == 0x2U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL5_Msk) >> RCC_MUXSELCFGR_MUXSEL5_Pos) == 0x2U) ||
+      (((gfg & RCC_MUXSELCFGR_MUXSEL6_Msk) >> RCC_MUXSELCFGR_MUXSEL6_Pos) == 0x2U))
+#endif /* RCC_MUXSELCFGR_MUXSEL7 */
   {
     return 1;
   }
@@ -308,7 +345,9 @@ static uint32_t RCC_is_lse_in_use(void)
 
   return status;
 }
-
+/**
+  * @}
+  */
 /* Exported functions --------------------------------------------------------*/
 
 /** @defgroup RCC_Exported_Functions RCC Exported Functions
@@ -503,7 +542,7 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
   CLEAR_REG(RCC->C1CIESETR);
 #elif defined(CORE_CM33)
   CLEAR_REG(RCC->C2CIESETR);
-#endif
+#endif /* CORE_CA35 */
 
   /* Clear all RCC Reset Flags */
   CLEAR_REG(RCC->HWRSTSCLRR);
@@ -526,17 +565,24 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
   *         first and then HSE On or HSE Bypass.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
+HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruct)
 {
   uint32_t tickstart;
   uint32_t backup_domain;
-
+  uint32_t backupdomain_mask;
+  uint32_t backupdomain_reg;
   /* Check Null pointer */
   if (pRCC_OscInitStruct == NULL)
   {
     return HAL_ERROR;
   }
-
+#if defined(PWR_BDCR1_DBD3P)
+  backupdomain_mask = PWR_BDCR1_DBD3P;
+  backupdomain_reg  = PWR->BDCR1;
+#else
+  backupdomain_mask = PWR_BDCR_DBP;
+  backupdomain_reg  = PWR->BDCR;
+#endif /* PWR_BDCR1_DBD3P */
   /* Check the parameters */
   assert_param(IS_RCC_OSCILLATORTYPE(pRCC_OscInitStruct->OscillatorType));
 
@@ -694,17 +740,24 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
       /* Check the MSI State */
       if ((pRCC_OscInitStruct->MSIState) != RCC_MSI_OFF)
       {
-        if (HAL_IS_BIT_CLR(PWR->BDCR1, PWR_BDCR1_DBD3P))
+        if (HAL_IS_BIT_CLR(backupdomain_reg, backupdomain_mask))
         {
           backup_domain = 1;
 
           /* Enable write access to Backup domain */
+#if defined(PWR_BDCR1_DBD3P)
           HAL_PWR_EnableBkUpD3Access();
+#else
+          HAL_PWR_EnableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
 
           /* Wait for Backup domain Write protection disable */
           tickstart = HAL_GetTick();
-
-          while ((PWR->BDCR1 & PWR_BDCR1_DBD3P) == (uint32_t)RESET)
+#if defined(PWR_BDCR1_DBD3P)
+          while ((PWR->BDCR1 & backupdomain_mask) == (uint32_t)RESET)
+#else
+          while ((PWR->BDCR & backupdomain_mask) == (uint32_t)RESET)
+#endif /* PWR_BDCR1_DBD3P */
           {
             if ((HAL_GetTick() - tickstart) > DBP_TIMEOUT_VALUE)
             {
@@ -717,6 +770,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
           backup_domain = 0;
         }
 
+#if defined(RCC_BDCR_MSIFREQSEL)
         if (pRCC_OscInitStruct->MSIFrequency == RCC_MSI_4MHZ)
         {
           CLEAR_BIT(RCC->BDCR, RCC_BDCR_MSIFREQSEL);
@@ -725,9 +779,14 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
         {
           SET_BIT(RCC->BDCR, RCC_BDCR_MSIFREQSEL);
         }
+#endif /* RCC_BDCR_MSIFREQSEL */
 
         /* Enable the Internal High Speed oscillator (MSI). */
+#if defined(RCC_OCENSETR_MSION)
+        SET_BIT(RCC->OCENSETR, RCC_OCENSETR_MSION);
+#elif defined(RCC_D3DCR_MSION)
         SET_BIT(RCC->D3DCR, RCC_D3DCR_MSION);
+#endif /* RCC_OCENSETR_MSION */
 
         /* Get Start Tick*/
         tickstart = HAL_GetTick();
@@ -747,13 +806,21 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
         /* Enable backup domain write protection */
         if (backup_domain == 1U)
         {
-          HAL_PWR_DisableBkUpD3Access();
+#if defined(PWR_BDCR1_DBD3P)
+          HAL_PWR_EnableBkUpD3Access();
+#else
+          HAL_PWR_EnableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
         }
       }
       else
       {
         /* Disable the Internal High Speed oscillator (MSI) */
+#if defined(RCC_OCENSETR_MSION)
+        CLEAR_BIT(RCC->OCENCLRR, RCC_OCENCLRR_MSION);
+#elif defined(RCC_D3DCR_MSION)
         CLEAR_BIT(RCC->D3DCR, RCC_D3DCR_MSION);
+#endif /* RCC_OCENSETR_MSION */
       }
     }
   }
@@ -773,17 +840,25 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
       /* Otherwise, just the calibration is allowed */
     }
 
-    if (HAL_IS_BIT_CLR(PWR->BDCR1, PWR_BDCR1_DBD3P))
+    if (HAL_IS_BIT_CLR(backupdomain_reg, backupdomain_mask))
     {
       backup_domain = 1;
 
       /* Enable write access to Backup domain */
+#if defined(PWR_BDCR1_DBD3P)
       HAL_PWR_EnableBkUpD3Access();
+#else
+      HAL_PWR_EnableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
 
       /* Wait for Backup domain Write protection disable */
       tickstart = HAL_GetTick();
 
-      while ((PWR->BDCR1 & PWR_BDCR1_DBD3P) == (uint32_t)RESET)
+#if defined(PWR_BDCR1_DBD3P)
+      while ((PWR->BDCR1 & backupdomain_mask) == (uint32_t)RESET)
+#else
+      while ((PWR->BDCR & backupdomain_mask) == (uint32_t)RESET)
+#endif /* PWR_BDCR1_DBD3P */
       {
         if ((HAL_GetTick() - tickstart) > DBP_TIMEOUT_VALUE)
         {
@@ -837,7 +912,12 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
 
     if (backup_domain == 1U)
     {
+#if defined(PWR_BDCR1_DBD3P)
       HAL_PWR_DisableBkUpD3Access();
+#else
+      HAL_PWR_DisableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
+
     }
   }
 
@@ -859,17 +939,25 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
       /* Otherwise, just the calibration is allowed */
     }
 
-    if (HAL_IS_BIT_CLR(PWR->BDCR1, PWR_BDCR1_DBD3P))
+    if (HAL_IS_BIT_CLR(backupdomain_reg, backupdomain_mask))
     {
       backup_domain = 1;
 
       /* Enable write access to Backup domain */
+#if defined(PWR_BDCR1_DBD3P)
       HAL_PWR_EnableBkUpD3Access();
+#else
+      HAL_PWR_EnableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
 
       /* Wait for Backup domain Write protection disable */
       tickstart = HAL_GetTick();
 
-      while ((PWR->BDCR1 & PWR_BDCR1_DBD3P) == (uint32_t)RESET)
+#if defined(PWR_BDCR1_DBD3P)
+      while ((PWR->BDCR1 & backupdomain_mask) == (uint32_t)RESET)
+#else
+      while ((PWR->BDCR & backupdomain_mask) == (uint32_t)RESET)
+#endif /* PWR_BDCR1_DBD3P */
       {
         if ((HAL_GetTick() - tickstart) > DBP_TIMEOUT_VALUE)
         {
@@ -935,7 +1023,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
 
     if (backup_domain == 1U)
     {
+#if defined(PWR_BDCR1_DBD3P)
       HAL_PWR_DisableBkUpD3Access();
+#else
+      HAL_PWR_DisableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
     }
   }
 
@@ -969,6 +1061,13 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef   *const pRCC_Clk
   uint32_t tickstart;
   uint32_t backup_domain;
   UNUSED(FLatency);/*unused variable*/
+  uint32_t backupdomain_mask;
+
+#if defined(PWR_BDCR1_DBD3P)
+  backupdomain_mask = PWR_BDCR1_DBD3P;
+#else
+  backupdomain_mask = PWR_BDCR_DBP;
+#endif /* PWR_BDCR1_DBD3P */
 
   /* Check Null pointer */
   if (pRCC_ClkInitStruct == NULL)
@@ -1685,17 +1784,29 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef   *const pRCC_Clk
 
   if ((pRCC_ClkInitStruct->ClockType & RCC_CLOCKTYPE_RTC) == RCC_CLOCKTYPE_RTC)
   {
+#if defined(PWR_BDCR1_DBD3P)
     if (HAL_IS_BIT_CLR(PWR->BDCR1, PWR_BDCR1_DBD3P))
+#else
+    if (HAL_IS_BIT_CLR(PWR->BDCR, PWR_BDCR_DBP))
+#endif /* PWR_BDCR1_DBD3P */
     {
       backup_domain = 1;
 
       /* Enable write access to Backup domain */
+#if defined(PWR_BDCR1_DBD3P)
       HAL_PWR_EnableBkUpD3Access();
+#else
+      HAL_PWR_EnableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
 
       /* Wait for Backup domain Write protection disable */
       tickstart = HAL_GetTick();
 
-      while ((PWR->BDCR1 & PWR_BDCR1_DBD3P) == (uint32_t)RESET)
+#if defined(PWR_BDCR1_DBD3P)
+      while ((PWR->BDCR1 & backupdomain_mask) == (uint32_t)RESET)
+#else
+      while ((PWR->BDCR & backupdomain_mask) == (uint32_t)RESET)
+#endif /* PWR_BDCR1_DBD3P */
       {
         if ((HAL_GetTick() - tickstart) > DBP_TIMEOUT_VALUE)
         {
@@ -1727,7 +1838,11 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef   *const pRCC_Clk
 
     if (backup_domain == 1U)
     {
+#if defined(PWR_BDCR1_DBD3P)
       HAL_PWR_DisableBkUpD3Access();
+#else
+      HAL_PWR_DisableBkUpAccess();
+#endif /* PWR_BDCR1_DBD3P */
     }
   }
 
@@ -1998,7 +2113,12 @@ void HAL_RCC_GetOscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
   pRCC_OscInitStruct->HSICalibrationValue = LL_RCC_HSI_GetCalibration();
 
   /* Get MSI Config */
+#if defined(RCC_D3DCR_MSION)
   temp_reg = RCC->D3DCR;
+#else
+  temp_reg = RCC->OCENSETR;
+#endif /* RCC_D3DCR_MSION */
+
   if ((temp_reg & RCC_MSI_ON) == RCC_MSI_ON)
   {
     pRCC_OscInitStruct->MSIState = RCC_MSI_ON;
@@ -2008,12 +2128,13 @@ void HAL_RCC_GetOscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
     pRCC_OscInitStruct->MSIState = RCC_MSI_OFF;
   }
   pRCC_OscInitStruct->MSICalibrationValue = LL_RCC_MSI_GetCalibTrimming();
-
+#if defined(RCC_BDCR_MSIFREQSEL)
   if (READ_BIT(RCC->BDCR, RCC_BDCR_MSIFREQSEL) == 0U)
   {
     pRCC_OscInitStruct->MSIFrequency = RCC_MSI_4MHZ;
   }
   else
+#endif /* RCC_BDCR_MSIFREQSEL */
   {
     pRCC_OscInitStruct->MSIFrequency = RCC_MSI_16MHZ;
   }
@@ -2061,9 +2182,10 @@ void HAL_RCC_GetOscConfig(RCC_OscInitTypeDef  *pRCC_OscInitStruct)
 void HAL_RCC_GetClockConfig(RCC_ClkInitTypeDef  *pRCC_ClkInitStruct, const uint32_t *pFLatency)
 {
   pRCC_ClkInitStruct->ClockType = RCC_CLOCKTYPE_ICN_HS_MCU | RCC_CLOCKTYPE_ICN_LS_MCU | RCC_CLOCKTYPE_ICN_SDMMC |
-                                  RCC_CLOCKTYPE_ICN_DDR | RCC_CLOCKTYPE_ICN_DISPLAY | RCC_CLOCKTYPE_ICN_HCL | RCC_CLOCKTYPE_ICN_NIC |
-                                  RCC_CLOCKTYPE_ICN_VID | RCC_CLOCKTYPE_ICN_APB1 | RCC_CLOCKTYPE_ICN_APB2 | RCC_CLOCKTYPE_ICN_APB3 |
-                                  RCC_CLOCKTYPE_ICN_APB4 | RCC_CLOCKTYPE_ICN_APBDBG | RCC_CLOCKTYPE_RTC;
+                                  RCC_CLOCKTYPE_ICN_DDR | RCC_CLOCKTYPE_ICN_DISPLAY | RCC_CLOCKTYPE_ICN_HCL |
+                                  RCC_CLOCKTYPE_ICN_NIC | RCC_CLOCKTYPE_ICN_VID | RCC_CLOCKTYPE_ICN_APB1 |
+                                  RCC_CLOCKTYPE_ICN_APB2 | RCC_CLOCKTYPE_ICN_APB3 | RCC_CLOCKTYPE_ICN_APB4 |
+                                  RCC_CLOCKTYPE_ICN_APBDBG | RCC_CLOCKTYPE_RTC;
   uint32_t config;
   /* Get ICN_HS_MCU config */
   UNUSED(pFLatency); /*unused variable*/
@@ -2234,11 +2356,13 @@ uint32_t HAL_RCC_GetFreq(uint32_t clk)
       break;
 
     case RCC_XBAR_CLKSRC_MSI:
+#if defined(RCC_BDCR_MSIFREQSEL)
       if (READ_BIT(RCC->BDCR, RCC_BDCR_MSIFREQSEL) == 0U)
       {
         xbar_source_freq = RCC_MSI_4MHZ;
       }
       else
+#endif /* RCC_BDCR_MSIFREQSEL */
       {
         xbar_source_freq = RCC_MSI_16MHZ;
       }
@@ -2298,8 +2422,7 @@ uint32_t HAL_RCC_GetFreq(uint32_t clk)
 
 /**
   * @brief  Return the clock source of a peripheral
-  * @param  pPeriphClkInit  pointer to an RCC_PeriphCLKInitTypeDef structure that contains
-  *         the peripheral id which needs to be a single selection of one the following values:
+  * @param  clk_id  The parameter can be one of the following values:
   *            @arg @ref RCC_PERIPHCLK_LPTIM1_2
   *            @arg @ref RCC_PERIPHCLK_UART2_4
   *            @arg @ref RCC_PERIPHCLK_UART3_5
@@ -2316,7 +2439,7 @@ uint32_t HAL_RCC_GetFreq(uint32_t clk)
   *            @arg @ref RCC_PERIPHCLK_SPI6_7
   *            @arg @ref RCC_PERIPHCLK_USART1
   *            @arg @ref RCC_PERIPHCLK_USART6
-  *            @arg @ref RCC_PERIPHCLK_USART7_8
+  *            @arg @ref RCC_PERIPHCLK_UART7_8
   *            @arg @ref RCC_PERIPHCLK_UART9
   *            @arg @ref RCC_PERIPHCLK_SAI1_MDF1
   *            @arg @ref RCC_PERIPHCLK_SAI2
@@ -2359,7 +2482,7 @@ uint32_t HAL_RCC_GetFreq(uint32_t clk)
   *            @arg @ref RCC_PERIPHCLK_MCO1
   *            @arg @ref RCC_PERIPHCLK_MCO2
   *            @arg @ref RCC_PERIPHCLK_CPU1_EXT2F
-  * @retval clock source id
+  * @retval clock source
   */
 uint32_t HAL_RCC_GetSource(uint32_t clk_id)
 {
@@ -2481,7 +2604,7 @@ __STATIC_INLINE HAL_StatusTypeDef WAIT_MUTEX_WRITTEN_IN_RCC_RxSEMCR(uint32_t Loc
 {
   /* Therefore, we take this opportunity to check (by reading register RCC_RxCIDCFGR[i]) */
   /* that a dynamic CID filtering is effectively configured for present local resource. */
-  if ((READ_REG(RCC->R[LocalResIndex].CIDCFGR) & RCC_LOCALRES_ATTR_CID_TYPE_Msk) == RCC_LOCALRES_CID_TYPE_DYNAMIC)
+  if ((READ_REG(RCC->R[LocalResIndex].CIDCFGR) & RCC_LOCALRES_ATTR_CID_TYPE_MSK) == RCC_LOCALRES_CID_TYPE_DYNAMIC)
   {
     return HAL_OK;
   }
@@ -2519,7 +2642,7 @@ __STATIC_INLINE HAL_StatusTypeDef WAIT_MUTEX_WRITTEN_IN_RCC_RxSEMCR(uint32_t Loc
 /**
   * @brief  Configure Security/Privilege/CID Access Filtering of one RCC Local Resource
   *         Lock this configuration if requested
-  * @param  LocalResIndex Value in @ref RCC_LL_EC_RIF_LOCALRES
+  * @param  LocalResIndex Value can be 0 - 113 and ref can be found in RCC_LL_EC_RIF_LOCALRES
   * @param  LocalResAttributes Value set by an "OR" operation between :
   *         - one or none Lock configuration argument
   *           @arg RCC_LOCALRES_LOCKED
@@ -2568,12 +2691,12 @@ HAL_StatusTypeDef HAL_RCC_ConfigAttributes(uint32_t LocalResIndex, uint32_t Loca
   HAL_StatusTypeDef hal_status = HAL_BUSY;
 
   /* Split LOCK/PRIV/SEC/CID attributes */
-  uint32_t priv_attr = LocalResAttributes & RCC_LOCALRES_ATTR_PRIV_Msk;
-  uint32_t lock_attr = LocalResAttributes & RCC_LOCALRES_ATTR_LOCK_Msk;
-  uint32_t sec_attr  = LocalResAttributes & RCC_LOCALRES_ATTR_SEC_Msk;
-  uint32_t cid_attr  = LocalResAttributes & (RCC_LOCALRES_ATTR_CID_TYPE_Msk |
-                                             RCC_LOCALRES_ATTR_STATIC_CID_Msk |
-                                             RCC_LOCALRES_ATTR_DYNAMIC_CID_Msk);
+  uint32_t priv_attr = LocalResAttributes & RCC_LOCALRES_ATTR_PRIV_MSK;
+  uint32_t lock_attr = LocalResAttributes & RCC_LOCALRES_ATTR_LOCK_MSK;
+  uint32_t sec_attr  = LocalResAttributes & RCC_LOCALRES_ATTR_SEC_MSK;
+  uint32_t cid_attr  = LocalResAttributes & (RCC_LOCALRES_ATTR_CID_TYPE_MSK |
+                                             RCC_LOCALRES_ATTR_STATIC_CID_MSK |
+                                             RCC_LOCALRES_ATTR_DYNAMIC_CID_MSK);
 
   /* Check input parameters : */
   /* - valid range of LocalResIndex */
@@ -2592,10 +2715,10 @@ HAL_StatusTypeDef HAL_RCC_ConfigAttributes(uint32_t LocalResIndex, uint32_t Loca
   /* even if current CID filtering prevents to do it. */
 #if defined(CORE_CA35)
   LL_RCC_SetLocalResSCid(LocalResIndex, RCC_LOCALRES_CID_STATIC_1);
-#endif /* defined(CORE_CA35) */
+#endif /* CORE_CA35 */
 #if defined(CORE_CM33)
   LL_RCC_SetLocalResSCid(LocalResIndex, RCC_LOCALRES_CID_STATIC_2);
-#endif /* defined(CORE_CM33) */
+#endif /* CORE_CM33 */
 
   /* Manage PRIV filtering attribute */
   if (priv_attr == RCC_LOCALRES_PRIV)
@@ -2617,7 +2740,7 @@ HAL_StatusTypeDef HAL_RCC_ConfigAttributes(uint32_t LocalResIndex, uint32_t Loca
     LL_RCC_DisableLocalResSecure(LocalResIndex);
   }
   /* Manage CID filtering attributes */
-  switch (cid_attr & RCC_LOCALRES_ATTR_CID_TYPE_Msk)
+  switch (cid_attr & RCC_LOCALRES_ATTR_CID_TYPE_MSK)
   {
     case RCC_LOCALRES_CID_TYPE_STATIC:
       LL_RCC_SetLocalResSCid(LocalResIndex, cid_attr);
@@ -2649,7 +2772,7 @@ HAL_StatusTypeDef HAL_RCC_ConfigAttributes(uint32_t LocalResIndex, uint32_t Loca
 
 /**
   * @brief  Get Security/Privilege/CID Access Filtering configuration of one RCC Local Resource
-  * @param  LocalResIndex Value in @ref RCC_LL_EC_RIF_LOCALRES
+  * @param  LocalResIndex Value can be 0 - 113 and ref can be found in RCC_LL_EC_RIF_LOCALRES
   * @param  pLocalResAttributes Returned value composed of following bitfield :
   *         . bits [31:24] Locked configuration state
   *         . bits [23:16] CID whitelist (dynamic CIDs list)
@@ -2758,7 +2881,7 @@ HAL_StatusTypeDef HAL_RCC_GetConfigAttributes(uint32_t LocalResIndex, uint32_t *
 /**
   * @brief  Take semaphore to access RCC Local Resource.
   *         Check semaphore has been effectively taken.
-  * @param  LocalResIndex Value in @ref RCC_LL_EC_RIF_LOCALRES
+  * @param  LocalResIndex Value can be 0 - 113 and ref can be found in RCC_LL_EC_RIF_LOCALRES
   * @note   If operation fails, return error status.
   * @retval HAL Status in {HAL_OK; HAL_ERROR}.
   */
@@ -2788,11 +2911,11 @@ HAL_StatusTypeDef HAL_RCC_TakeLocalResSemaphore(uint32_t LocalResIndex)
   /*       - CID1 in A35 case, */
 #if defined(CORE_CA35)
   if (LL_RCC_GetLocalResSem(LocalResIndex) != RCC_LOCALRES_TAKEN_SEMCID1)
-#endif /* defined(CORE_CA35) */
+#endif /* CORE_CA35 */
     /*       - CID2 in M33 case, */
 #if defined(CORE_CM33)
     if (LL_RCC_GetLocalResSem(LocalResIndex) != RCC_LOCALRES_TAKEN_SEMCID2)
-#endif /* defined(CORE_CM33) */
+#endif /* CORE_CM33 */
     {
       /*       then output error status */
       return HAL_ERROR;
@@ -2808,7 +2931,7 @@ HAL_StatusTypeDef HAL_RCC_TakeLocalResSemaphore(uint32_t LocalResIndex)
 /**
   * @brief  Release semaphore used to access RCC Local Resource.
   *         Check semaphore has been effectively released.
-  * @param  LocalResIndex Value in @ref RCC_LL_EC_RIF_LOCALRES
+  * @param  LocalResIndex Value can be 0 - 113 and ref can be found in RCC_LL_EC_RIF_LOCALRES
   * @note   If operation fails, return error status.
   * @retval HAL Status in {HAL_OK; HAL_ERROR}.
   */
@@ -2846,11 +2969,11 @@ HAL_StatusTypeDef HAL_RCC_ReleaseLocalResSemaphore(uint32_t LocalResIndex)
   /*       - CID1 in A35 case, */
 #if defined(CORE_CA35)
   if (LL_RCC_GetLocalResSem(LocalResIndex) != RCC_LOCALRES_RELEASED_SEMCID1)
-#endif /* defined(CORE_CA35) */
+#endif /* CORE_CA35 */
     /*       - CID2 in M33 case, */
 #if defined(CORE_CM33)
     if (LL_RCC_GetLocalResSem(LocalResIndex) != RCC_LOCALRES_RELEASED_SEMCID2)
-#endif /* defined(CORE_CM33) */
+#endif /* CORE_CM33 */
     {
       /*       then output error status */
       return HAL_ERROR;
@@ -2869,22 +2992,19 @@ HAL_StatusTypeDef HAL_RCC_ReleaseLocalResSemaphore(uint32_t LocalResIndex)
 /**
   * @}
   */
-
-/* Private function prototypes -----------------------------------------------*/
-/** @addtogroup RCC_Private_Functions
-  * @{
+/**
+  * @}
   */
-
 /**
   * @}
   */
 #endif /* HAL_RCC_MODULE_ENABLED */
-/**
-  * @}
-  */
 
 /**
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/**
+  * @}
+  */
+

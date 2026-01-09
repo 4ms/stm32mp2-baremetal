@@ -14,6 +14,17 @@
   *           + IRQ handler management
   *
   *
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
   @verbatim
   ==============================================================================
                      ##### How to use this driver #####
@@ -23,7 +34,8 @@
            (++) the semaphore ID from 0 to HSEM_SEMID_MAX
            (++) the process ID from 0 to HSEM_PROCESSID_MAX
       (#) Fast Take semaphore In 1-Step mode Using function HAL_HSEM_FastTake. This function takes as parameter :
-           (++) the semaphore ID from 0_ID to HSEM_SEMID_MAX. Note that the process ID value is implicitly assumed as zero
+           (++) the semaphore ID from 0_ID to HSEM_SEMID_MAX. Note that the process ID value is implicitly assumed
+                as zero
       (#) Check if a semaphore is Taken using function HAL_HSEM_IsSemTaken. This function takes as parameter :
           (++) the semaphore ID from 0_ID to HSEM_SEMID_MAX
           (++) It returns 1 if the given semaphore is taken otherwise (Free) zero
@@ -62,7 +74,8 @@
       (+) __HAL_HSEM_SEMID_TO_MASK: Helper macro to convert a Semaphore ID to a Mask.
       [..] Example of use :
       [..] mask = __HAL_HSEM_SEMID_TO_MASK(8)  |  __HAL_HSEM_SEMID_TO_MASK(21) | __HAL_HSEM_SEMID_TO_MASK(25).
-      [..] All next macros take as parameter a semaphore Mask (bitfiled) that can be constructed using  __HAL_HSEM_SEMID_TO_MASK as the above example.
+      [..] All next macros take as parameter a semaphore Mask (bitfiled) that can be constructed using
+           __HAL_HSEM_SEMID_TO_MASK as the above example.
       (+) __HAL_HSEM_ENABLE_IT: Enable the specified semaphores Mask interrupts.
       (+) __HAL_HSEM_DISABLE_IT: Disable the specified semaphores Mask interrupts.
       (+) __HAL_HSEM_GET_IT: Checks whether the specified semaphore interrupt has occurred or not.
@@ -70,17 +83,6 @@
       (+) __HAL_HSEM_CLEAR_FLAG: Clear the semaphores status release flags.
 
   @endverbatim
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
   ******************************************************************************
   */
 
@@ -103,15 +105,15 @@
 #if defined(DUAL_CORE)
 #ifndef HSEM_R_MASTERID
 #define HSEM_R_MASTERID HSEM_R_COREID
-#endif
+#endif  /* HSEM_R_MASTERID */
 
 #ifndef HSEM_RLR_MASTERID
 #define HSEM_RLR_MASTERID HSEM_RLR_COREID
-#endif
+#endif  /* HSEM_RLR_MASTERID */
 
 #ifndef HSEM_CR_MASTERID
 #define HSEM_CR_MASTERID HSEM_CR_COREID
-#endif
+#endif  /* HSEM_CR_MASTERID */
 #endif /* DUAL_CORE */
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -119,8 +121,8 @@
 /** @defgroup HSEM_Private_Functions HSEM Private Functions
   * @{
   */
-uint32_t HSEM_Is_Running_Secure();
-uint32_t HSEM_Is_Running_Privilege();
+uint32_t HSEM_Is_Running_Secure(void);
+uint32_t HSEM_Is_Running_Privilege(void);
 /**
   * @}
   */
@@ -166,11 +168,15 @@ HAL_StatusTypeDef HAL_HSEM_Take(uint32_t SemID, uint32_t ProcessID)
 
   reg = (ProcessID | HSEM_CR_COREID_CURRENT | HSEM_R_LOCK);
 
-  if (HSEM_Is_Running_Secure() != 0)
+  if (HSEM_Is_Running_Secure() != 0U)
+  {
     reg |= HSEM_R_SEC;
+  }
 
-  if (HSEM_Is_Running_Privilege() != 0)
+  if (HSEM_Is_Running_Privilege() != 0U)
+  {
     reg |= HSEM_R_PRIV;
+  }
 
   HSEM->R[SemID] = reg;
   if ((HSEM->R[SemID] & ~HSEM_R_CFEN) == reg)
@@ -196,11 +202,15 @@ HAL_StatusTypeDef HAL_HSEM_FastTake(uint32_t SemID)
 
   reg = (HSEM_CR_COREID_CURRENT | HSEM_RLR_LOCK);
 
-  if (HSEM_Is_Running_Secure() != 0)
+  if (HSEM_Is_Running_Secure() != 0U)
+  {
     reg |= HSEM_RLR_SEC;
+  }
 
-  if (HSEM_Is_Running_Privilege() != 0)
+  if (HSEM_Is_Running_Privilege() != 0U)
+  {
     reg |= HSEM_RLR_PRIV;
+  }
 
   /* Read the RLR register to take the semaphore */
   if ((HSEM->RLR[SemID] & ~HSEM_RLR_CFEN) == reg)
@@ -239,11 +249,15 @@ void HAL_HSEM_Release(uint32_t SemID, uint32_t ProcessID)
 
   reg = (ProcessID | HSEM_CR_COREID_CURRENT);
 
-  if (HSEM_Is_Running_Secure() != 0)
+  if (HSEM_Is_Running_Secure() != 0U)
+  {
     reg |= HSEM_R_SEC;
+  }
 
-  if (HSEM_Is_Running_Privilege() != 0)
+  if (HSEM_Is_Running_Privilege() != 0U)
+  {
     reg |= HSEM_R_PRIV;
+  }
 
   HSEM->R[SemID] = reg;
 
@@ -406,8 +420,8 @@ __weak void HAL_HSEM_FreeCallback(uint32_t SemMask)
   * @}
   */
 
-/** @defgroup HSEM_Exported_Functions_Group4 HSEM RIF protection configuration
-  *  @brief    HSEM RIF protection configuration functions.
+/** @defgroup HSEM_Exported_Functions_Group4 HSEM RIF protection configuration functions
+  *  @brief   HSEM RIF protection configuration functions.
   *
 @verbatim
   ==============================================================================
@@ -425,9 +439,9 @@ __weak void HAL_HSEM_FreeCallback(uint32_t SemMask)
   * @param  SemID: semaphore ID from 0 to HSEM_SEMID_MAX
   * @param  SemAttributes RIF security and privilege protections attributes.
   *           Combination (logical OR) of
-  *             @arg HSEM_SEM_PRIV | HSEM_SEM_NPRIV | <empty>
+  *             @arg HSEM_SEM_PRIV | HSEM_SEM_NPRIV
   *           with
-  *             @arg HSEM_SEM_SEC  | HSEM_SEM_NSEC  | <empty>
+  *             @arg HSEM_SEM_SEC  | HSEM_SEM_NSEC
   * @retval HAL_OK if the configuration is successfully set, HAL_ERROR otherwise
   */
 HAL_StatusTypeDef HAL_HSEM_ConfigSemAttributes(uint32_t SemID, uint32_t SemAttributes)
@@ -436,7 +450,7 @@ HAL_StatusTypeDef HAL_HSEM_ConfigSemAttributes(uint32_t SemID, uint32_t SemAttri
   assert_param(IS_HSEM_SEMID(SemID));
 
   /* Configure privilege attribute */
-  if ((SemAttributes & HSEM_SEM_PRIV_SELECT) != 0)
+  if ((SemAttributes & HSEM_SEM_PRIV_SELECT) != 0U)
   {
     if ((SemAttributes & HSEM_SEM_PRIV) == HSEM_SEM_PRIV)
     {
@@ -449,7 +463,7 @@ HAL_StatusTypeDef HAL_HSEM_ConfigSemAttributes(uint32_t SemID, uint32_t SemAttri
   }
 
   /* Configure secure attribute */
-  if ((SemAttributes & HSEM_SEM_SEC_SELECT) != 0)
+  if ((SemAttributes & HSEM_SEM_SEC_SELECT) != 0U)
   {
     if ((SemAttributes & HSEM_SEM_SEC) == HSEM_SEM_SEC)
     {
@@ -482,10 +496,10 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigSemAttributes(uint32_t SemID, uint32_t *pSem
   {
     /* Check the parameters */
     assert_param(IS_HSEM_SEMID(SemID));
-    *pSemAttributes = 0;
+    *pSemAttributes = 0U;
 
     /* Privilege attribute */
-    if ((HSEM->PRIVCFGR & __HAL_HSEM_SEMID_TO_MASK(SemID)) != 0)
+    if ((HSEM->PRIVCFGR & __HAL_HSEM_SEMID_TO_MASK(SemID)) != 0U)
     {
       *pSemAttributes |= HSEM_SEM_PRIV;
     }
@@ -495,7 +509,7 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigSemAttributes(uint32_t SemID, uint32_t *pSem
     }
 
     /* Secure attribute */
-    if ((HSEM->SECCFGR & __HAL_HSEM_SEMID_TO_MASK(SemID)) != 0)
+    if ((HSEM->SECCFGR & __HAL_HSEM_SEMID_TO_MASK(SemID)) != 0U)
     {
       *pSemAttributes |= HSEM_SEM_SEC;
     }
@@ -542,7 +556,8 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigSemAttributes(uint32_t SemID, uint32_t *pSem
 HAL_StatusTypeDef HAL_HSEM_ConfigAttributes(uint32_t Item, uint32_t Attributes)
 {
   __IO uint32_t *regaddr;
-  uint32_t cid, sem_wlist = 0;
+  uint32_t cid;
+  uint32_t sem_wlist = 0;
 
   /* Check the parameters */
   assert_param(IS_HSEM_ITEM_CID(Item));
@@ -550,49 +565,55 @@ HAL_StatusTypeDef HAL_HSEM_ConfigAttributes(uint32_t Item, uint32_t Attributes)
   if ((Item >= HSEM_GROUP0) && (Item <= HSEM_GROUP3))
   {
     /* Configure GROUP CID attribute */
-    regaddr = &HSEM->G0CIDCFGR;
-    regaddr += Item - HSEM_GROUP0;
+    regaddr = &HSEM->G0CIDCFGR + (Item - HSEM_GROUP0);
 
-    if ((Attributes & HSEM_GROUP_CID_DISABLE_SELECT) != 0)
+    if ((Attributes & HSEM_GROUP_CID_DISABLE_SELECT) != 0U)
     {
       /* Disable */
       *regaddr &= ~HSEM_G0CIDCFGR_CFEN;
     }
-    else if ((Attributes & HSEM_GROUP_CID_STATIC_SELECT) != 0)
+    else if ((Attributes & HSEM_GROUP_CID_STATIC_SELECT) != 0U)
     {
       /* Enable with white list value */
-      if ((Attributes & (1U << HSEM_GROUP_CID_CPU1_VAL_Pos)) != 0)
+      if ((Attributes & (1UL << HSEM_GROUP_CID_CPU1_VAL_Pos)) != 0U)
       {
-        sem_wlist |= 1 << 0;
+        sem_wlist |= 1UL << 0UL;
       }
-      if ((Attributes & (1U << HSEM_GROUP_CID_CPU2_VAL_Pos)) != 0)
+      if ((Attributes & (1UL << HSEM_GROUP_CID_CPU2_VAL_Pos)) != 0U)
       {
-        sem_wlist |= 1 << 1;
+        sem_wlist |= 1UL << 1UL;
       }
-      if ((Attributes & (1U << HSEM_GROUP_CID_CPU3_VAL_Pos)) != 0)
+      if ((Attributes & (1UL << HSEM_GROUP_CID_CPU3_VAL_Pos)) != 0U)
       {
-        sem_wlist |= 1 << 2;
+        sem_wlist |= 1UL << 2UL;
       }
 
       *regaddr = HSEM_G0CIDCFGR_CFEN  | (sem_wlist << HSEM_G0CIDCFGR_SEM_WLIST_C_Pos);
+    }
+    else
+    {
+      /* Nothing to do */
     }
   }
   else
   {
     /* Configure CPU CID attribute */
-    regaddr = &HSEM->C1CIDCFGR;
-    regaddr += Item - HSEM_CPU1;
+    regaddr = &HSEM->C1CIDCFGR + (Item - HSEM_CPU1);
 
-    if ((Attributes & HSEM_CPU_CID_DISABLE_SELECT) != 0)
+    if ((Attributes & HSEM_CPU_CID_DISABLE_SELECT) != 0U)
     {
       /* Disable */
       *regaddr &= ~HSEM_C1CIDCFGR_CFEN;
     }
-    else if ((Attributes & HSEM_CPU_CID_STATIC_SELECT) != 0)
+    else if ((Attributes & HSEM_CPU_CID_STATIC_SELECT) != 0U)
     {
       /* Enable */
       cid = (Attributes & HSEM_CPU_CID_VAL_Msk) >> HSEM_CPU_CID_VAL_Pos;
       *regaddr = HSEM_C1CIDCFGR_CFEN | (cid << HSEM_C1CIDCFGR_CID_Pos);
+    }
+    else
+    {
+      /* Nothing to do */
     }
   }
 
@@ -627,9 +648,10 @@ HAL_StatusTypeDef HAL_HSEM_ConfigAttributes(uint32_t Item, uint32_t Attributes)
   */
 HAL_StatusTypeDef HAL_HSEM_GetConfigAttributes(uint32_t Item, uint32_t *pAttributes)
 {
-  __IO uint32_t *regaddr;
+  __I uint32_t *regaddr;
   HAL_StatusTypeDef err;
-  uint32_t cid, sem_wlist;
+  uint32_t cid;
+  uint32_t sem_wlist;
 
   if (pAttributes != NULL)
   {
@@ -640,25 +662,24 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigAttributes(uint32_t Item, uint32_t *pAttribu
     if ((Item >= HSEM_GROUP0) && (Item <= HSEM_GROUP3))
     {
       /* Read GROUP CID attribute */
-      regaddr = &HSEM->G0CIDCFGR;
-      regaddr += Item - HSEM_GROUP0;
+      regaddr = &HSEM->G0CIDCFGR + (Item - HSEM_GROUP0);
 
-      if ((*regaddr & HSEM_G0CIDCFGR_CFEN) == 0)
+      if ((*regaddr & HSEM_G0CIDCFGR_CFEN) == 0U)
       {
         *pAttributes = HSEM_GROUP_CID_DISABLE;
       }
       else
       {
         sem_wlist = (*regaddr & HSEM_G0CIDCFGR_SEM_WLIST_C_Msk) >> HSEM_G0CIDCFGR_SEM_WLIST_C_Pos;
-        if ((sem_wlist & (1 << 0)) != 0)
+        if ((sem_wlist & (1UL << 0UL)) != 0U)
         {
           *pAttributes |= HSEM_GROUP_CID_STATIC_1;
         }
-        if ((sem_wlist & (1 << 1)) != 0)
+        if ((sem_wlist & (1UL << 1UL)) != 0U)
         {
           *pAttributes |= HSEM_GROUP_CID_STATIC_2;
         }
-        if ((sem_wlist & (1 << 2)) != 0)
+        if ((sem_wlist & (1UL << 2UL)) != 0U)
         {
           *pAttributes |= HSEM_GROUP_CID_STATIC_3;
         }
@@ -667,10 +688,9 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigAttributes(uint32_t Item, uint32_t *pAttribu
     else
     {
       /* Read CPU CID attribute */
-      regaddr = &HSEM->C1CIDCFGR;
-      regaddr += Item - HSEM_CPU1;
+      regaddr = &HSEM->C1CIDCFGR + (Item - HSEM_CPU1);
 
-      if ((*regaddr & HSEM_C1CIDCFGR_CFEN) == 0)
+      if ((*regaddr & HSEM_C1CIDCFGR_CFEN) == 0UL)
       {
         *pAttributes = HSEM_CPU_CID_DISABLE;
       }
@@ -706,7 +726,7 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigAttributes(uint32_t Item, uint32_t *pAttribu
   * @brief  Return whether the CPU operates in Secure mode
   * @retval 1: Secure mode  -  0: Non-Secure mode
   */
-uint32_t HSEM_Is_Running_Secure()
+uint32_t HSEM_Is_Running_Secure(void)
 {
 #ifdef CORTEX_IN_SECURE_STATE
   return 1UL;
@@ -719,18 +739,26 @@ uint32_t HSEM_Is_Running_Secure()
   * @brief  Return whether the CPU operates in Privilege mode
   * @retval 1: Privilege mode  -  0: Non-Privilege mode
   */
-uint32_t HSEM_Is_Running_Privilege()
+uint32_t HSEM_Is_Running_Privilege(void)
 {
 #if defined(CORE_CM33) || defined(CORE_CM0PLUS)
-  if ((__get_CONTROL() & 0x1) == 1)
+  if ((__get_CONTROL() & 0x1U) == 1U)
+  {
     return 0UL;
+  }
   else
+  {
     return 1UL;
+  }
 #elif defined(CORE_CA35)
   if (__get_mode() == CPSR_M_USR)
+  {
     return 0UL;
+  }
   else
+  {
     return 1UL;
+  }
 #else /* CORE_xxx */
 #error "Unknown cortex"
 #endif /* CORE_xxx */
@@ -748,5 +776,3 @@ uint32_t HSEM_Is_Running_Privilege()
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

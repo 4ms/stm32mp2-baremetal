@@ -760,7 +760,7 @@ HAL_StatusTypeDef HAL_USART_Transmit(USART_HandleTypeDef *husart, const uint8_t 
     /* Process Locked */
     __HAL_LOCK(husart);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&defined(USART_DMAREQUESTS_SW_WA))
+#if defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Tx request if enabled */
     if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAT))
     {
@@ -866,7 +866,7 @@ HAL_StatusTypeDef HAL_USART_Receive(USART_HandleTypeDef *husart, uint8_t *pRxDat
     /* Process Locked */
     __HAL_LOCK(husart);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&defined(USART_DMAREQUESTS_SW_WA))
+#if defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Rx request if enabled */
     if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAR))
     {
@@ -990,7 +990,7 @@ HAL_StatusTypeDef HAL_USART_TransmitReceive(USART_HandleTypeDef *husart, const u
     /* Process Locked */
     __HAL_LOCK(husart);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&defined(USART_DMAREQUESTS_SW_WA))
+#if defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Tx request if enabled */
     if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAT))
     {
@@ -1142,7 +1142,7 @@ HAL_StatusTypeDef HAL_USART_Transmit_IT(USART_HandleTypeDef *husart, const uint8
     /* Process Locked */
     __HAL_LOCK(husart);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&defined(USART_DMAREQUESTS_SW_WA))
+#if defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Tx request if enabled */
     if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAT))
     {
@@ -1235,7 +1235,7 @@ HAL_StatusTypeDef HAL_USART_Receive_IT(USART_HandleTypeDef *husart, uint8_t *pRx
     /* Process Locked */
     __HAL_LOCK(husart);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&defined(USART_DMAREQUESTS_SW_WA))
+#if defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Rx request if enabled */
     if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAR))
     {
@@ -1357,7 +1357,7 @@ HAL_StatusTypeDef HAL_USART_TransmitReceive_IT(USART_HandleTypeDef *husart, cons
     /* Process Locked */
     __HAL_LOCK(husart);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&defined(USART_DMAREQUESTS_SW_WA))
+#if defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Tx request if enabled */
     if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAT))
     {
@@ -2187,7 +2187,7 @@ HAL_StatusTypeDef HAL_USART_Abort(USART_HandleTypeDef *husart)
   /* Abort the USART DMA Tx channel if enabled */
   if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAT))
   {
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Tx request if enabled */
     CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAT);
 
@@ -2215,7 +2215,7 @@ HAL_StatusTypeDef HAL_USART_Abort(USART_HandleTypeDef *husart)
   /* Abort the USART DMA Rx channel if enabled */
   if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAR))
   {
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Rx request if enabled */
     CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAR);
 
@@ -2324,7 +2324,7 @@ HAL_StatusTypeDef HAL_USART_Abort_IT(USART_HandleTypeDef *husart)
   /* Abort the USART DMA Tx channel if enabled */
   if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAT))
   {
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
     /* Disable DMA Tx at USART level */
     CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAT);
 
@@ -2350,7 +2350,7 @@ HAL_StatusTypeDef HAL_USART_Abort_IT(USART_HandleTypeDef *husart)
   /* Abort the USART DMA Rx channel if enabled */
   if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAR))
   {
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the USART DMA Rx request if enabled */
     CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAR);
 
@@ -2537,7 +2537,7 @@ void HAL_USART_IRQHandler(USART_HandleTypeDef *husart)
         /* Abort the USART DMA Rx channel if enabled */
         if (HAL_IS_BIT_SET(husart->Instance->CR3, USART_CR3_DMAR))
         {
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
           /* Disable the USART DMA Rx request if enabled */
           CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAR | USART_CR3_DMAR);
 
@@ -2871,7 +2871,7 @@ static void USART_DMATransmitCplt(DMA_HandleTypeDef *hdma)
 
     if (husart->State == HAL_USART_STATE_BUSY_TX)
     {
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
       /* Disable the DMA transfer for transmit request by resetting the DMAT bit
          in the USART CR3 register */
       CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAT);
@@ -2933,7 +2933,7 @@ static void USART_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
     CLEAR_BIT(husart->Instance->CR1, USART_CR1_PEIE);
     CLEAR_BIT(husart->Instance->CR3, USART_CR3_EIE);
 
-#if defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_NOT_SUPPORTED)||(defined(GENERATOR_DMA_REQUESTS_WORK_AROUND_SUPPORTED_ON_SOME_DEVICES)&&!defined(USART_DMAREQUESTS_SW_WA))
+#if !defined(USART_DMAREQUESTS_SW_WA)
     /* Disable the DMA RX transfer for the receiver request by resetting the DMAR bit
        in USART CR3 register */
     CLEAR_BIT(husart->Instance->CR3, USART_CR3_DMAR);
@@ -3194,12 +3194,9 @@ static HAL_StatusTypeDef USART_SetConfig(USART_HandleTypeDef *husart)
 {
   uint32_t tmpreg;
   uint32_t clocksource;
-  HAL_StatusTypeDef ret                = HAL_OK;
+  HAL_StatusTypeDef ret = HAL_OK;
   uint16_t brrtemp;
-  uint32_t usartdiv                    = 0x00000000;
-#if !(defined(GENERATOR_PLL2Q_NOT_AVAILABLE))&&(defined(GENERATOR_PLL2Q_AVAILABLE_ALL_DEVICES)||defined(GENERATOR_PLL2Q_AVAILABLE_SOME_DEVICES))
-  PLL2_ClocksTypeDef pll2_clocks;
-#endif
+  uint32_t usartdiv;
   uint32_t pclk;
 
   /* Check the parameters */

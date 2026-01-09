@@ -38,6 +38,77 @@ extern "C" {
   * @{
   */
 
+/**
+  * @brief HAL_DSI_DataRate enum definition
+  */
+typedef enum
+{
+  HAL_DSI_DT_80 = 0,
+  HAL_DSI_DT_90,
+  HAL_DSI_DT_100,
+  HAL_DSI_DT_110,
+  HAL_DSI_DT_120,
+  HAL_DSI_DT_130,
+  HAL_DSI_DT_140,
+  HAL_DSI_DT_150,
+  HAL_DSI_DT_160,
+  HAL_DSI_DT_170,
+  HAL_DSI_DT_180,
+  HAL_DSI_DT_190,
+  HAL_DSI_DT_205,
+  HAL_DSI_DT_220,
+  HAL_DSI_DT_235,
+  HAL_DSI_DT_250,
+  HAL_DSI_DT_275,
+  HAL_DSI_DT_300,
+  HAL_DSI_DT_325,
+  HAL_DSI_DT_350,
+  HAL_DSI_DT_400,
+  HAL_DSI_DT_450,
+  HAL_DSI_DT_500,
+  HAL_DSI_DT_550,
+  HAL_DSI_DT_600,
+  HAL_DSI_DT_650,
+  HAL_DSI_DT_700,
+  HAL_DSI_DT_750,
+  HAL_DSI_DT_800,
+  HAL_DSI_DT_850,
+  HAL_DSI_DT_900,
+  HAL_DSI_DT_950,
+  HAL_DSI_DT_1000,
+  HAL_DSI_DT_1050,
+  HAL_DSI_DT_1100,
+  HAL_DSI_DT_1150,
+  HAL_DSI_DT_1200,
+  HAL_DSI_DT_1250,
+  HAL_DSI_DT_1300,
+  HAL_DSI_DT_1350,
+  HAL_DSI_DT_1400,
+  HAL_DSI_DT_1450,
+  HAL_DSI_DT_1500,
+  HAL_DSI_DT_1550,
+  HAL_DSI_DT_1600,
+  HAL_DSI_DT_1650,
+  HAL_DSI_DT_1700,
+  HAL_DSI_DT_1750,
+  HAL_DSI_DT_1800,
+  HAL_DSI_DT_1850,
+  HAL_DSI_DT_1900,
+  HAL_DSI_DT_1950,
+  HAL_DSI_DT_2000,
+  HAL_DSI_DT_2050,
+  HAL_DSI_DT_2100,
+  HAL_DSI_DT_2150,
+  HAL_DSI_DT_2200,
+  HAL_DSI_DT_2250,
+  HAL_DSI_DT_2300,
+  HAL_DSI_DT_2350,
+  HAL_DSI_DT_2400,
+  HAL_DSI_DT_2450,
+  HAL_DSI_DT_2500,
+
+} HAL_DSI_DataRate;
+
 /* Exported types ------------------------------------------------------------*/
 /** @defgroup DSI_Exported_Types DSI Exported Types
   * @{
@@ -56,6 +127,9 @@ typedef struct
   uint32_t NumberOfLanes;                /*!< Number of lanes
                                               This parameter can be any value of @ref DSI_Number_Of_Lanes            */
 
+  HAL_DSI_DataRate PhyDataRate;          /*!< PHY Data Rate
+                                              This parameter can be any value of @ref HAL_DSI_DataRate           */
+
 } DSI_InitTypeDef;
 
 /**
@@ -65,6 +139,9 @@ typedef struct
 {
   uint32_t WrapPHYFrequency;        /*!< Wrapper PHY Frequency Range
                                          This parameter can be any value of @arg DSI_WRAP_PHY_PLL_Frequency   */
+
+  uint32_t RefClkin;                /* PHY PLL Input Reference clock frequency (in KHz)
+                                        This parameter must be in a range ( 17MHz to 27MHz )              */
 
   uint32_t PLLNDIV;                 /*!< PLL Loop Division Factor
                                          This parameter must be a value between 64 and 625                    */
@@ -290,6 +367,7 @@ typedef struct
 
 } DSI_HOST_TimeoutTypeDef;
 
+
 /**
   * @brief  DSI States Structure definition
   */
@@ -359,6 +437,7 @@ typedef  void (*pDSI_CallbackTypeDef)(DSI_HandleTypeDef *hdsi);  /*!< pointer to
 /** @defgroup DSI_Exported_Constants DSI Exported Constants
   * @{
   */
+
 /** @defgroup DSI_DCS_Command DSI DCS Command
   * @{
   */
@@ -800,26 +879,27 @@ typedef  void (*pDSI_CallbackTypeDef)(DSI_HandleTypeDef *hdsi);  /*!< pointer to
 /** @defgroup DSI_WRAP_PHY_PLL_Frequency DSI WRAP PHY PLL Frequency
   * @{
   */
-#define DSI_WRAP_PHY_PLL_Pos                  (0x8U)
-#define DSI_WRAP_PHY_PLL_100MHz_Mask          (0x20U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_100MHz               DSI_WRAP_PHY_PLL_100MHz_Mask
-#define DSI_WRAP_PHY_PLL_160MHz_Mask          (0x02U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_160MHz               DSI_WRAP_PHY_PLL_160MHz_Mask
-#define DSI_WRAP_PHY_PLL_180MHz_Mask          (0x22U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_180MHz               DSI_WRAP_PHY_PLL_180MHz_Mask
-#define DSI_WRAP_PHY_PLL_250MHz_Mask          (0x33U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_250MHz               DSI_WRAP_PHY_PLL_250MHz_Mask
-#define DSI_WRAP_PHY_PLL_500MHz_Mask          (0x26U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_500MHz               DSI_WRAP_PHY_PLL_500MHz_Mask
-#define DSI_WRAP_PHY_PLL_750MHz_Mask          (0x39U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_750MHz               DSI_WRAP_PHY_PLL_750MHz_Mask
-#define DSI_WRAP_PHY_PLL_800MHz_Mask          (0x09U << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_800MHz               DSI_WRAP_PHY_PLL_800MHz_Mask
-#define DSI_WRAP_PHY_PLL_1000MHz_Mask         (0x0AU << DSI_WRAP_PHY_PLL_Pos)
-#define DSI_WRAP_PHY_PLL_1000MHz              DSI_WRAP_PHY_PLL_1000MHz_Mask
+#define DSI_WRAP_PHY_PLL_POS                  (0x8U)
+#define DSI_WRAP_PHY_PLL_100MHZ_MASK          (0x20U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_100MHZ               DSI_WRAP_PHY_PLL_100MHZ_MASK
+#define DSI_WRAP_PHY_PLL_160MHZ_MASK          (0x02U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_160MHZ               DSI_WRAP_PHY_PLL_160MHZ_MASK
+#define DSI_WRAP_PHY_PLL_180MHZ_MASK          (0x22U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_180MHZ               DSI_WRAP_PHY_PLL_180MHZ_MASK
+#define DSI_WRAP_PHY_PLL_250MHZ_MASK          (0x33U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_250MHZ               DSI_WRAP_PHY_PLL_250MHZ_MASK
+#define DSI_WRAP_PHY_PLL_500MHZ_MASK          (0x26U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_500MHZ               DSI_WRAP_PHY_PLL_500MHZ_MASK
+#define DSI_WRAP_PHY_PLL_750MHZ_MASK          (0x39U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_750MHZ               DSI_WRAP_PHY_PLL_750MHZ_MASK
+#define DSI_WRAP_PHY_PLL_800MHZ_MASK          (0x09U << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_800MHZ               DSI_WRAP_PHY_PLL_800MHZ_MASK
+#define DSI_WRAP_PHY_PLL_1000MHZ_MASK         (0x0AU << DSI_WRAP_PHY_PLL_POS)
+#define DSI_WRAP_PHY_PLL_1000MHZ              DSI_WRAP_PHY_PLL_1000MHZ_MASK
 /**
   * @}
   */
+
 
 /** @defgroup DSI_Flags DSI Flags
   * @{
@@ -1015,7 +1095,7 @@ typedef  void (*pDSI_CallbackTypeDef)(DSI_HandleTypeDef *hdsi);  /*!< pointer to
 #define __HAL_DSI_WRAPPER_ENABLE(__HANDLE__) do { \
                                                   __IO uint32_t tmpreg = 0x00U; \
                                                   SET_BIT((__HANDLE__)->Instance->WCR, DSI_WCR_DSIEN);\
-                                                  /* Delay after an DSI warpper enabling */ \
+                                                  /* Delay after an DSI wrapper enabling */ \
                                                   tmpreg = READ_BIT((__HANDLE__)->Instance->WCR, DSI_WCR_DSIEN);\
                                                   UNUSED(tmpreg); \
                                                 } while(0U)
@@ -1028,7 +1108,7 @@ typedef  void (*pDSI_CallbackTypeDef)(DSI_HandleTypeDef *hdsi);  /*!< pointer to
 #define __HAL_DSI_WRAPPER_DISABLE(__HANDLE__) do { \
                                                    __IO uint32_t tmpreg = 0x00U; \
                                                    CLEAR_BIT((__HANDLE__)->Instance->WCR, DSI_WCR_DSIEN);\
-                                                   /* Delay after an DSI warpper disabling*/ \
+                                                   /* Delay after an DSI wrapper disabling*/ \
                                                    tmpreg = READ_BIT((__HANDLE__)->Instance->WCR, DSI_WCR_DSIEN);\
                                                    UNUSED(tmpreg); \
                                                  } while(0U)
@@ -1136,6 +1216,7 @@ typedef  void (*pDSI_CallbackTypeDef)(DSI_HandleTypeDef *hdsi);  /*!< pointer to
   * @}
   */
 
+
 /* Exported functions --------------------------------------------------------*/
 /** @defgroup DSI_Exported_Functions DSI Exported Functions
   * @{
@@ -1176,12 +1257,12 @@ void HAL_DSI_ErrorCallback(DSI_HandleTypeDef *hdsi);
   * @{
   */
 HAL_StatusTypeDef HAL_DSI_SetGenericVCID(DSI_HandleTypeDef *hdsi, uint32_t VirtualChannelID);
-HAL_StatusTypeDef HAL_DSI_ConfigVideoMode(DSI_HandleTypeDef *hdsi, DSI_VidCfgTypeDef *VidCfg);
-HAL_StatusTypeDef HAL_DSI_ConfigAdaptedCommandMode(DSI_HandleTypeDef *hdsi, DSI_CmdCfgTypeDef *CmdCfg);
-HAL_StatusTypeDef HAL_DSI_ConfigCommand(DSI_HandleTypeDef *hdsi, DSI_LPCmdTypeDef *LPCmd);
+HAL_StatusTypeDef HAL_DSI_ConfigVideoMode(DSI_HandleTypeDef *hdsi, const DSI_VidCfgTypeDef *VidCfg);
+HAL_StatusTypeDef HAL_DSI_ConfigAdaptedCommandMode(DSI_HandleTypeDef *hdsi, const DSI_CmdCfgTypeDef *CmdCfg);
+HAL_StatusTypeDef HAL_DSI_ConfigCommand(DSI_HandleTypeDef *hdsi, const DSI_LPCmdTypeDef *LPCmd);
 HAL_StatusTypeDef HAL_DSI_ConfigFlowControl(DSI_HandleTypeDef *hdsi, uint32_t FlowControl);
-HAL_StatusTypeDef HAL_DSI_ConfigPhyTimer(DSI_HandleTypeDef *hdsi, DSI_PHY_TimerTypeDef *PhyTimers);
-HAL_StatusTypeDef HAL_DSI_ConfigHostTimeouts(DSI_HandleTypeDef *hdsi, DSI_HOST_TimeoutTypeDef *HostTimeouts);
+HAL_StatusTypeDef HAL_DSI_ConfigPhyTimer(DSI_HandleTypeDef *hdsi, const DSI_PHY_TimerTypeDef *PhyTimers);
+HAL_StatusTypeDef HAL_DSI_ConfigHostTimeouts(DSI_HandleTypeDef *hdsi, const DSI_HOST_TimeoutTypeDef *HostTimeouts);
 HAL_StatusTypeDef HAL_DSI_Start(DSI_HandleTypeDef *hdsi);
 HAL_StatusTypeDef HAL_DSI_Stop(DSI_HandleTypeDef *hdsi);
 HAL_StatusTypeDef HAL_DSI_Refresh(DSI_HandleTypeDef *hdsi);
@@ -1197,7 +1278,7 @@ HAL_StatusTypeDef HAL_DSI_LongWrite(DSI_HandleTypeDef *hdsi,
                                     uint32_t Mode,
                                     uint32_t NbParams,
                                     uint32_t Param1,
-                                    uint8_t *ParametersTable);
+                                    const uint8_t *ParametersTable);
 HAL_StatusTypeDef HAL_DSI_Read(DSI_HandleTypeDef *hdsi,
                                uint32_t ChannelNbr,
                                uint8_t *Array,
@@ -1219,7 +1300,6 @@ HAL_StatusTypeDef HAL_DSI_SetPHYTimings(DSI_HandleTypeDef *hdsi, uint32_t Timing
                                         uint32_t Value);
 HAL_StatusTypeDef HAL_DSI_ForceTXStopMode(DSI_HandleTypeDef *hdsi, uint32_t Lane, FunctionalState State);
 HAL_StatusTypeDef HAL_DSI_ForceDataLanesInRX(DSI_HandleTypeDef *hdsi, FunctionalState State);
-HAL_StatusTypeDef HAL_DSI_SetContentionDetectionOff(DSI_HandleTypeDef *hdsi, FunctionalState State);
 
 /**
   * @}
@@ -1229,8 +1309,8 @@ HAL_StatusTypeDef HAL_DSI_SetContentionDetectionOff(DSI_HandleTypeDef *hdsi, Fun
   *  @brief    Peripheral State and Errors functions
   * @{
   */
-uint32_t HAL_DSI_GetError(DSI_HandleTypeDef *hdsi);
-HAL_DSI_StateTypeDef HAL_DSI_GetState(DSI_HandleTypeDef *hdsi);
+uint32_t HAL_DSI_GetError(const DSI_HandleTypeDef *hdsi);
+HAL_DSI_StateTypeDef HAL_DSI_GetState(const DSI_HandleTypeDef *hdsi);
 
 /**
   * @}
@@ -1279,8 +1359,10 @@ HAL_DSI_StateTypeDef HAL_DSI_GetState(DSI_HandleTypeDef *hdsi);
                                                      ((ODF) == DSI_PLL_OUT_DIV8))
 #define IS_DSI_AUTO_CLKLANE_CONTROL(AutoClkLane)    (((AutoClkLane) == DSI_AUTO_CLK_LANE_CTRL_DISABLE)\
                                                      || ((AutoClkLane) == DSI_AUTO_CLK_LANE_CTRL_ENABLE))
-#define IS_DSI_NUMBER_OF_LANES(NumberOfLanes)       (((NumberOfLanes) == DSI_ONE_DATA_LANE) || ((NumberOfLanes) == DSI_TWO_DATA_LANES) || \
-                                                     ((NumberOfLanes) == DSI_THREE_DATA_LANES) || ((NumberOfLanes) == DSI_FOUR_DATA_LANES))
+#define IS_DSI_NUMBER_OF_LANES(NumberOfLanes)       (((NumberOfLanes) == DSI_ONE_DATA_LANE)\
+                                                     || ((NumberOfLanes) == DSI_TWO_DATA_LANES) || \
+                                                     ((NumberOfLanes) == DSI_THREE_DATA_LANES) || \
+                                                     ((NumberOfLanes) == DSI_FOUR_DATA_LANES))
 #define IS_DSI_FLOW_CONTROL(FlowControl)            (((FlowControl) | DSI_FLOW_CONTROL_ALL) == DSI_FLOW_CONTROL_ALL)
 #define IS_DSI_COLOR_CODING(ColorCoding)            ((ColorCoding) <= 5U)
 #define IS_DSI_LOOSELY_PACKED(LooselyPacked)        (((LooselyPacked) == DSI_LOOSELY_PACKED_ENABLE)\
@@ -1361,8 +1443,9 @@ HAL_DSI_StateTypeDef HAL_DSI_GetState(DSI_HandleTypeDef *hdsi);
 #define IS_DSI_LANE_GROUP(Lane)                     (((Lane) == DSI_CLOCK_LANE) || ((Lane) == DSI_DATA_LANES))
 #define IS_DSI_CUSTOM_LANE(CustomLane)              (((CustomLane) == DSI_SWAP_LANE_PINS)\
                                                      || ((CustomLane) == DSI_INVERT_HS_SIGNAL))
-#define IS_DSI_LANE(Lane)                           (((Lane) == DSI_CLOCK_LANE) || ((Lane) == DSI_DATA_LANE0) || ((Lane) == DSI_DATA_LANE1) || \
-                                                     ((Lane) == DSI_DATA_LANE2) || ((Lane) == DSI_DATA_LANE3))
+#define IS_DSI_LANE(Lane)                           (((Lane) == DSI_CLOCK_LANE) || ((Lane) == DSI_DATA_LANE0)\
+                                                     || ((Lane) == DSI_DATA_LANE1) || ((Lane) == DSI_DATA_LANE2)\
+                                                     || ((Lane) == DSI_DATA_LANE3))
 
 #define IS_DSI_PHY_TIMING(Timing)                   (((Timing) == DSI_TCLK_POST   ) || \
                                                      ((Timing) == DSI_TLPX_CLK    ) || \
@@ -1374,6 +1457,8 @@ HAL_DSI_StateTypeDef HAL_DSI_GetState(DSI_HandleTypeDef *hdsi);
                                                      ((Timing) == DSI_TCLK_ZERO   ) || \
                                                      ((Timing) == DSI_TCLK_PREPARE))
 
+#define IS_DSI_PHY_DATARATE(DataRate)               (((DataRate) >= HAL_DSI_DT_80) && \
+                                                     ((DataRate) <= HAL_DSI_DT_2500))
 /**
   * @}
   */

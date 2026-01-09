@@ -1,13 +1,25 @@
 /**
- ******************************************************************************
- * @file    stm32mp2xx_hal_rif.c
- * @author  MCD Application Team
- * @brief   RIF HAL module driver.
- *          This file provides firmware functions to manage the following
- *          functionalities of RIF:
- *           + RISC Initialization and Configuration functions
- *           + IAC Initialization and Configuration functions
- *
+  ******************************************************************************
+  * @file    stm32mp2xx_hal_rif.c
+  * @author  MCD Application Team
+  * @brief   RIF HAL module driver.
+  *          This file provides firmware functions to manage the following
+  *          functionalities of RIF:
+  *           + RISC Initialization and Configuration functions
+  *           + IAC Initialization and Configuration functions
+  *
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  *
+  ******************************************************************************
   @verbatim
   ==============================================================================
                   ##### RIF main features #####
@@ -32,19 +44,9 @@
         and user can add his own code using HAL_IAC_Callback()
 
   @endverbatim
- ******************************************************************************
- * @attention
- *
- * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
- * All rights reserved.</center></h2>
- *
- * This software component is licensed by ST under BSD 3-Clause license,
- * the "License"; You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at:
- *                        opensource.org/licenses/BSD-3-Clause
- *
- ******************************************************************************
- */
+  ******************************************************************************
+
+  */
 #ifndef STM32MP2xx_HAL_RIF_C
 #define STM32MP2xx_HAL_RIF_C
 
@@ -52,13 +54,13 @@
 #include "stm32mp2xx_hal.h"
 
 /** @addtogroup STM32MP2xx_HAL_Driver
- * @{
- */
+  * @{
+  */
 
 /** @defgroup RIF RIF
- * @brief RIF HAL module driver
- * @{
- */
+  * @brief RIF HAL module driver
+  * @{
+  */
 
 #ifdef HAL_RIF_MODULE_ENABLED
 
@@ -70,12 +72,12 @@
 /* Exported functions --------------------------------------------------------*/
 
 /** @defgroup RIF_Exported_Functions RIF Exported Functions
- * @{
- */
+  * @{
+  */
 
 /** @defgroup RIF_Exported_Functions_Group1  RISC Configuration functions
- * @brief    RISC Configuration functions
- *
+  * @brief    RISC Configuration functions
+  *
   @verbatim
   ==============================================================================
             ##### RISC Configuration functions #####
@@ -84,17 +86,17 @@
     This section provides functions allowing to configure RISC
     RISC is Resource isolation Slave Controller
 @endverbatim
- * @{
- */
+  * @{
+  */
 #if defined(CORE_CM33) || defined(CORE_CA35)
 
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  Configure RISC on a single peripheral.
- * @param  PeriphAttributes Peripheral attributes, see @ref RIF_Periph_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISC_ConfigPeriphAttributes(RIF_Periph_Desc * PeriphAttributes)
+  * @brief  Configure RISC on a single peripheral.
+  * @param  PeriphAttributes Peripheral attributes, see @ref RIF_Periph_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISC_ConfigPeriphAttributes(RIF_Periph_Desc *PeriphAttributes)
 {
   /* Check Periph Attributes */
   if (PeriphAttributes == NULL)
@@ -163,14 +165,14 @@ HAL_StatusTypeDef HAL_RISC_ConfigPeriphAttributes(RIF_Periph_Desc * PeriphAttrib
 #endif  /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RISC configuration on a single peripheral or on all peripherals.
- * @param  PeriphId Peripheral identifier.
- *         This parameter can be a value of @ref RIF_Peripheral_Identification.
- * @param  PeriphAttributes Peripheral attribute pointer.
- *         This parameter can be a value of @ref RIF_Periph_Desc.
- *         If PeriphId target a single peripheral, pointer on a single element.
- * @retval HAL status.
- */
+  * @brief  Get RISC configuration on a single peripheral or on all peripherals.
+  * @param  PeriphId Peripheral identifier.
+  *         This parameter can be a value of @ref RIF_Peripheral_Identification.
+  * @param  PeriphAttributes Peripheral attribute pointer.
+  *         This parameter can be a value of @ref RIF_Periph_Desc.
+  *         If PeriphId target a single peripheral, pointer on a single element.
+  * @retval HAL status.
+  */
 HAL_StatusTypeDef HAL_RISC_GetConfigPeriphAttributes(uint32_t PeriphId, RIF_Periph_Desc *PeriphAttributes)
 {
   /* Check Periph Id */
@@ -199,10 +201,10 @@ HAL_StatusTypeDef HAL_RISC_GetConfigPeriphAttributes(uint32_t PeriphId, RIF_Peri
 
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  Lock RIF peripheral global configuration.
- * @param  none
- * @retval none.
- */
+  * @brief  Lock RIF peripheral global configuration.
+  * @param  none
+  * @retval none.
+  */
 void HAL_RIF_PeriphGLock()
 {
   HAL_RIF_SET_RISC_GLOCK();
@@ -210,23 +212,40 @@ void HAL_RIF_PeriphGLock()
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RIF peripheral global lock configuration.
- * @param  none
- * @retval Lock State (RIF_PERIPH_GLOCK_OFF or RIF_PERIPH_GLOCK_ON)
- */
+  * @brief  Get RIF peripheral global lock configuration.
+  * @param  none
+  * @retval Lock State (RIF_PERIPH_GLOCK_OFF or RIF_PERIPH_GLOCK_ON)
+  */
 uint32_t HAL_RIF_GetPeriphGLock()
 {
   return HAL_RIF_IS_RISC_GLOCK();
 }
 
+#if defined(RIF_LPSRAM1) && defined(RIF_LPSRAM2) && defined(RIF_LPSRAM3)
+/**
+  * @}
+  */
+
+/** @defgroup RIF_Exported_Functions_Group2 RIF RISAL configuration functions
+  * @{
+  *
+  @verbatim
+  ==============================================================================
+            ##### RISAL configuration functions #####
+  ==============================================================================
+  [..]
+    This section provides functions allowing to configure RISAL
+    RISAL is resource isolation slave unit for address space - Lite version
+@endverbatim
+  */
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  RIF RISAL memory configuration.
- * @param  MemAttributes RISAL Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisal_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAL_ConfigMemAttributes(RIF_MemRisal_Desc * MemAttributes)
+  * @brief  RIF RISAL memory configuration.
+  * @param  MemAttributes RISAL Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisal_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAL_ConfigMemAttributes(RIF_MemRisal_Desc *MemAttributes)
 {
   /* Check Mem attributes */
   if (MemAttributes == NULL)
@@ -248,203 +267,203 @@ HAL_StatusTypeDef HAL_RISAL_ConfigMemAttributes(RIF_MemRisal_Desc * MemAttribute
 
   switch (MemAttributes->Instance)
   {
-  case RIF_LPSRAM1:
-  {
-    if (MemAttributes->SubRegId == RIF_RISAL_MEM_SUBREGA) /* SubRegA */
+    case RIF_LPSRAM1:
     {
-      /* Clear registers before configuration */
-      HAL_RIF_CLEAR_RISAL1_SUBREGA_SREN();
-      HAL_RIF_CLEAR_RISAL1_SUBREGA_SEC();
-      HAL_RIF_CLEAR_RISAL1_SUBREGA_PRIV();
+      if (MemAttributes->SubRegId == RIF_RISAL_MEM_SUBREGA) /* SubRegA */
+      {
+        /* Clear registers before configuration */
+        HAL_RIF_CLEAR_RISAL1_SUBREGA_SREN();
+        HAL_RIF_CLEAR_RISAL1_SUBREGA_SEC();
+        HAL_RIF_CLEAR_RISAL1_SUBREGA_PRIV();
 
-      if (MemAttributes->SecEnable)
-      {
-        HAL_RIF_SET_RISAL1_SUBREGA_SEC();
-      }
-      if (MemAttributes->PrivEnable)
-      {
-        HAL_RIF_SET_RISAL1_SUBREGA_PRIV();
-      }
+        if (MemAttributes->SecEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGA_SEC();
+        }
+        if (MemAttributes->PrivEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGA_PRIV();
+        }
 
-      HAL_RIF_SET_RISAL1_SUBREGA_SRCID(MemAttributes->Srcid);
+        HAL_RIF_SET_RISAL1_SUBREGA_SRCID(MemAttributes->Srcid);
 
-      if (MemAttributes->SubRegEnable)
-      {
-        HAL_RIF_SET_RISAL1_SUBREGA_SREN();
+        if (MemAttributes->SubRegEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGA_SREN();
+        }
+        if (MemAttributes->LockEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGA_RLOCK();
+        }
       }
-      if (MemAttributes->LockEnable)
+      else /* SubRegB */
       {
-        HAL_RIF_SET_RISAL1_SUBREGA_RLOCK();
+        /* Clear registers before configuration */
+        HAL_RIF_CLEAR_RISAL1_SUBREGB_SREN();
+        HAL_RIF_CLEAR_RISAL1_SUBREGB_SEC();
+        HAL_RIF_CLEAR_RISAL1_SUBREGB_PRIV();
+
+        if (MemAttributes->SecEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGB_SEC();
+        }
+        if (MemAttributes->PrivEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGB_PRIV();
+        }
+
+        HAL_RIF_SET_RISAL1_SUBREGB_SRCID(MemAttributes->Srcid);
+
+        if (MemAttributes->SubRegEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGB_SREN();
+        }
+        if (MemAttributes->LockEnable)
+        {
+          HAL_RIF_SET_RISAL1_SUBREGB_RLOCK();
+        }
       }
     }
-    else /* SubRegB */
+    break;
+    case RIF_LPSRAM2:
     {
-      /* Clear registers before configuration */
-      HAL_RIF_CLEAR_RISAL1_SUBREGB_SREN();
-      HAL_RIF_CLEAR_RISAL1_SUBREGB_SEC();
-      HAL_RIF_CLEAR_RISAL1_SUBREGB_PRIV();
+      if (MemAttributes->SubRegId == RIF_RISAL_MEM_SUBREGA) /* SubRegA */
+      {
+        /* Clear registers before configuration */
+        HAL_RIF_CLEAR_RISAL2_SUBREGA_SREN();
+        HAL_RIF_CLEAR_RISAL2_SUBREGA_SEC();
+        HAL_RIF_CLEAR_RISAL2_SUBREGA_PRIV();
 
-      if (MemAttributes->SecEnable)
-      {
-        HAL_RIF_SET_RISAL1_SUBREGB_SEC();
-      }
-      if (MemAttributes->PrivEnable)
-      {
-        HAL_RIF_SET_RISAL1_SUBREGB_PRIV();
-      }
+        if (MemAttributes->SecEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGA_SEC();
+        }
+        if (MemAttributes->PrivEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGA_PRIV();
+        }
 
-      HAL_RIF_SET_RISAL1_SUBREGB_SRCID(MemAttributes->Srcid);
+        HAL_RIF_SET_RISAL2_SUBREGA_SRCID(MemAttributes->Srcid);
 
-      if (MemAttributes->SubRegEnable)
-      {
-        HAL_RIF_SET_RISAL1_SUBREGB_SREN();
+        if (MemAttributes->SubRegEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGA_SREN();
+        }
+        if (MemAttributes->LockEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGA_RLOCK();
+        }
       }
-      if (MemAttributes->LockEnable)
+      else /* SubRegB */
       {
-        HAL_RIF_SET_RISAL1_SUBREGB_RLOCK();
+        /* Clear registers before configuration */
+        HAL_RIF_CLEAR_RISAL2_SUBREGB_SREN();
+        HAL_RIF_CLEAR_RISAL2_SUBREGB_SEC();
+        HAL_RIF_CLEAR_RISAL2_SUBREGB_PRIV();
+
+        if (MemAttributes->SecEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGB_SEC();
+        }
+        if (MemAttributes->PrivEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGB_PRIV();
+        }
+
+        HAL_RIF_SET_RISAL2_SUBREGB_SRCID(MemAttributes->Srcid);
+
+        if (MemAttributes->SubRegEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGB_SREN();
+        }
+        if (MemAttributes->LockEnable)
+        {
+          HAL_RIF_SET_RISAL2_SUBREGB_RLOCK();
+        }
       }
     }
-  }
-  break;
-  case RIF_LPSRAM2:
-  {
-    if (MemAttributes->SubRegId == RIF_RISAL_MEM_SUBREGA) /* SubRegA */
+    break;
+    case RIF_LPSRAM3:
     {
-      /* Clear registers before configuration */
-      HAL_RIF_CLEAR_RISAL2_SUBREGA_SREN();
-      HAL_RIF_CLEAR_RISAL2_SUBREGA_SEC();
-      HAL_RIF_CLEAR_RISAL2_SUBREGA_PRIV();
+      if (MemAttributes->SubRegId == RIF_RISAL_MEM_SUBREGA) /* SubRegA */
+      {
+        /* Clear registers before configuration */
+        HAL_RIF_CLEAR_RISAL3_SUBREGA_SREN();
+        HAL_RIF_CLEAR_RISAL3_SUBREGA_SEC();
+        HAL_RIF_CLEAR_RISAL3_SUBREGA_PRIV();
 
-      if (MemAttributes->SecEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGA_SEC();
-      }
-      if (MemAttributes->PrivEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGA_PRIV();
-      }
+        if (MemAttributes->SecEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGA_SEC();
+        }
+        if (MemAttributes->PrivEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGA_PRIV();
+        }
 
-      HAL_RIF_SET_RISAL2_SUBREGA_SRCID(MemAttributes->Srcid);
+        HAL_RIF_SET_RISAL3_SUBREGA_SRCID(MemAttributes->Srcid);
+        HAL_RIF_SET_RISAL3_SUBREGA_SUBSTART(MemAttributes->SubRegStart / RIF_RISAL_MEM_GRANULARITY);
+        HAL_RIF_SET_RISAL3_SUBREGA_SUBLENGTH(MemAttributes->SubRegLength / RIF_RISAL_MEM_GRANULARITY);
 
-      if (MemAttributes->SubRegEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGA_SREN();
+        if (MemAttributes->SubRegEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGA_SREN();
+        }
+        if (MemAttributes->LockEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGA_RLOCK();
+        }
       }
-      if (MemAttributes->LockEnable)
+      else /* SubRegB */
       {
-        HAL_RIF_SET_RISAL2_SUBREGA_RLOCK();
+        /* Clear registers before configuration */
+        HAL_RIF_CLEAR_RISAL3_SUBREGB_SREN();
+        HAL_RIF_CLEAR_RISAL3_SUBREGB_SEC();
+        HAL_RIF_CLEAR_RISAL3_SUBREGB_PRIV();
+
+        if (MemAttributes->SecEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGB_SEC();
+        }
+        if (MemAttributes->PrivEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGB_PRIV();
+        }
+
+        HAL_RIF_SET_RISAL3_SUBREGB_SRCID(MemAttributes->Srcid);
+        HAL_RIF_SET_RISAL3_SUBREGB_SUBSTART(MemAttributes->SubRegStart / RIF_RISAL_MEM_GRANULARITY);
+        HAL_RIF_SET_RISAL3_SUBREGB_SUBLENGTH(MemAttributes->SubRegLength / RIF_RISAL_MEM_GRANULARITY);
+
+        if (MemAttributes->SubRegEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGB_SREN();
+        }
+        if (MemAttributes->LockEnable)
+        {
+          HAL_RIF_SET_RISAL3_SUBREGB_RLOCK();
+        }
       }
     }
-    else /* SubRegB */
+    break;
+    default:
     {
-      /* Clear registers before configuration */
-      HAL_RIF_CLEAR_RISAL2_SUBREGB_SREN();
-      HAL_RIF_CLEAR_RISAL2_SUBREGB_SEC();
-      HAL_RIF_CLEAR_RISAL2_SUBREGB_PRIV();
-
-      if (MemAttributes->SecEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGB_SEC();
-      }
-      if (MemAttributes->PrivEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGB_PRIV();
-      }
-
-      HAL_RIF_SET_RISAL2_SUBREGB_SRCID(MemAttributes->Srcid);
-
-      if (MemAttributes->SubRegEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGB_SREN();
-      }
-      if (MemAttributes->LockEnable)
-      {
-        HAL_RIF_SET_RISAL2_SUBREGB_RLOCK();
-      }
+      return HAL_ERROR;
     }
-  }
-  break;
-  case RIF_LPSRAM3:
-  {
-    if (MemAttributes->SubRegId == RIF_RISAL_MEM_SUBREGA) /* SubRegA */
-    {
-      /* Clear registers before configuration */
-      HAL_RIF_CLEAR_RISAL3_SUBREGA_SREN();
-      HAL_RIF_CLEAR_RISAL3_SUBREGA_SEC();
-      HAL_RIF_CLEAR_RISAL3_SUBREGA_PRIV();
-
-      if (MemAttributes->SecEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGA_SEC();
-      }
-      if (MemAttributes->PrivEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGA_PRIV();
-      }
-
-      HAL_RIF_SET_RISAL3_SUBREGA_SRCID(MemAttributes->Srcid);
-      HAL_RIF_SET_RISAL3_SUBREGA_SUBSTART(MemAttributes->SubRegStart/RIF_RISAL_MEM_GRANULARITY);
-      HAL_RIF_SET_RISAL3_SUBREGA_SUBLENGTH(MemAttributes->SubRegLength/RIF_RISAL_MEM_GRANULARITY);
-
-      if (MemAttributes->SubRegEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGA_SREN();
-      }
-      if (MemAttributes->LockEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGA_RLOCK();
-      }
-    }
-    else /* SubRegB */
-    {
-      /* Clear registers before configuration */
-      HAL_RIF_CLEAR_RISAL3_SUBREGB_SREN();
-      HAL_RIF_CLEAR_RISAL3_SUBREGB_SEC();
-      HAL_RIF_CLEAR_RISAL3_SUBREGB_PRIV();
-
-      if (MemAttributes->SecEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGB_SEC();
-      }
-      if (MemAttributes->PrivEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGB_PRIV();
-      }
-
-      HAL_RIF_SET_RISAL3_SUBREGB_SRCID(MemAttributes->Srcid);
-      HAL_RIF_SET_RISAL3_SUBREGB_SUBSTART(MemAttributes->SubRegStart/RIF_RISAL_MEM_GRANULARITY);
-      HAL_RIF_SET_RISAL3_SUBREGB_SUBLENGTH(MemAttributes->SubRegLength/RIF_RISAL_MEM_GRANULARITY);
-
-      if (MemAttributes->SubRegEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGB_SREN();
-      }
-      if (MemAttributes->LockEnable)
-      {
-        HAL_RIF_SET_RISAL3_SUBREGB_RLOCK();
-      }
-    }
-  }
-  break;
-  default:
-  {
-    return HAL_ERROR;
-  }
-  break;
+    break;
   }
   return HAL_OK;
 }
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RIF RISAL memory configuration.
- * @param  Instance RISAL Memory instance.
- * @param  SubRegId RISAL Memory sub region id.
- * @param  MemAttributes RISAL Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisal_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAL_GetConfigMemAttributes(uint32_t Instance, uint32_t SubRegId,\
+  * @brief  Get RIF RISAL memory configuration.
+  * @param  Instance RISAL Memory instance.
+  * @param  SubRegId RISAL Memory sub region id.
+  * @param  MemAttributes RISAL Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisal_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAL_GetConfigMemAttributes(uint32_t Instance, uint32_t SubRegId, \
                                                    RIF_MemRisal_Desc *MemAttributes)
 {
   /* Check RISAL instance */
@@ -490,8 +509,8 @@ HAL_StatusTypeDef HAL_RISAL_GetConfigMemAttributes(uint32_t Instance, uint32_t S
         MemAttributes->Srcid = HAL_RIF_READ_RISAL1_SUBREGB_SRCID();
         MemAttributes->SubRegStart = 0x0;
         MemAttributes->SubRegLength = 0x0;
-      }    
-    break;
+      }
+      break;
     case RIF_LPSRAM2:
       if (SubRegId == RIF_RISAL_MEM_SUBREGA)
       {
@@ -512,8 +531,8 @@ HAL_StatusTypeDef HAL_RISAL_GetConfigMemAttributes(uint32_t Instance, uint32_t S
         MemAttributes->Srcid = HAL_RIF_READ_RISAL2_SUBREGB_SRCID();
         MemAttributes->SubRegStart = 0x0;
         MemAttributes->SubRegLength = 0x0;
-      }    
-    break;
+      }
+      break;
     case RIF_LPSRAM3:
       if (SubRegId == RIF_RISAL_MEM_SUBREGA)
       {
@@ -535,22 +554,38 @@ HAL_StatusTypeDef HAL_RISAL_GetConfigMemAttributes(uint32_t Instance, uint32_t S
         MemAttributes->SubRegStart = (RIF_RISAL_MEM_GRANULARITY * HAL_RIF_READ_RISAL3_SUBREGB_SUBSTART());
         MemAttributes->SubRegLength = (RIF_RISAL_MEM_GRANULARITY * HAL_RIF_READ_RISAL3_SUBREGB_SUBLENGTH());
       }
-    break;
+      break;
     default:
-      return HAL_ERROR;    
-  break;
+      return HAL_ERROR;
+      break;
   }
   return HAL_OK;
 }
+/**
+  * @}
+  */
+#endif /* RISAL1 && RISAL2 && RISAL3 */
 
+/** @defgroup RIF_Exported_Functions_Group3 RIMC functions
+  * @{
+  *
+  @verbatim
+  ==============================================================================
+            ##### RIMC functions #####
+  ==============================================================================
+  [..]
+    This section provides functions allowing to configure RIMC
+    RIMC is resource isolation master controller.
+@endverbatim
+  */
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  RIF RIMC trusted attributes configuration.
- * @param  Attributes RIMC Trusted attribute pointer.
- *         This parameter can be a value of @ref RIF_RIMC_TrustedDesc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RIMC_ConfigTrustedAttributes(RIF_RIMC_TrustedDesc * Attributes)
+  * @brief  RIF RIMC trusted attributes configuration.
+  * @param  Attributes RIMC Trusted attribute pointer.
+  *         This parameter can be a value of @ref RIF_RIMC_TrustedDesc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RIMC_ConfigTrustedAttributes(RIF_RIMC_TrustedDesc *Attributes)
 {
   /* Check Attributes */
   if (Attributes == NULL)
@@ -581,12 +616,12 @@ HAL_StatusTypeDef HAL_RIMC_ConfigTrustedAttributes(RIF_RIMC_TrustedDesc * Attrib
 }
 
 /**
- * @brief  RIF RIMC master attributes configuration.
- * @param  Attributes RIMC Master attribute pointer.
- *         This parameter can be a value of @ref RIF_RIMC_MasterDesc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RIMC_ConfigMasterAttributes(RIF_RIMC_MasterDesc * Attributes)
+  * @brief  RIF RIMC master attributes configuration.
+  * @param  Attributes RIMC Master attribute pointer.
+  *         This parameter can be a value of @ref RIF_RIMC_MasterDesc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RIMC_ConfigMasterAttributes(RIF_RIMC_MasterDesc *Attributes)
 {
   /* Check Attributes */
   if (Attributes == NULL)
@@ -629,11 +664,11 @@ HAL_StatusTypeDef HAL_RIMC_ConfigMasterAttributes(RIF_RIMC_MasterDesc * Attribut
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RIF RIMC trusted attributes configuration.
- * @param  Attributes RIMC Trusted attribute pointer.
- *         This parameter can be a value of @ref RIF_RIMC_TrustedDesc.
- * @retval HAL status.
- */
+  * @brief  Get RIF RIMC trusted attributes configuration.
+  * @param  Attributes RIMC Trusted attribute pointer.
+  *         This parameter can be a value of @ref RIF_RIMC_TrustedDesc.
+  * @retval HAL status.
+  */
 HAL_StatusTypeDef HAL_RIMC_GetConfigTrustedAttributes(RIF_RIMC_TrustedDesc *Attributes)
 {
   /* Check Attributes */
@@ -650,12 +685,12 @@ HAL_StatusTypeDef HAL_RIMC_GetConfigTrustedAttributes(RIF_RIMC_TrustedDesc *Attr
 }
 
 /**
- * @brief  Get RIF RIMC master attributes configuration.
- * @param  MasterId RIMC Master Id.
- * @param  Attributes RIMC Master attribute pointer.
- *         This parameter can be a value of @ref RIF_RIMC_MasterDesc.
- * @retval HAL status.
- */
+  * @brief  Get RIF RIMC master attributes configuration.
+  * @param  MasterId RIMC Master Id.
+  * @param  Attributes RIMC Master attribute pointer.
+  *         This parameter can be a value of @ref RIF_RIMC_MasterDesc.
+  * @retval HAL status.
+  */
 HAL_StatusTypeDef HAL_RIMC_GetConfigMasterAttributes(uint32_t MasterId, RIF_RIMC_MasterDesc *Attributes)
 {
   /* Check Attributes */
@@ -680,10 +715,10 @@ HAL_StatusTypeDef HAL_RIMC_GetConfigMasterAttributes(uint32_t MasterId, RIF_RIMC
 
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  Lock RIMC global configuration.
- * @param  none
- * @retval none
- */
+  * @brief  Lock RIMC global configuration.
+  * @param  none
+  * @retval none
+  */
 void HAL_RIMC_GLock()
 {
   HAL_RIF_SET_RIMC_GLOCK();
@@ -691,25 +726,41 @@ void HAL_RIMC_GLock()
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RIMC global lock configuration.
- * @param  none
- * @retval Lock State (RIF_RIMC_GLOCK_OFF or RIF_RIMC_GLOCK_ON)
- */
+  * @brief  Get RIMC global lock configuration.
+  * @param  none
+  * @retval Lock State (RIF_RIMC_GLOCK_OFF or RIF_RIMC_GLOCK_ON)
+  */
 uint32_t HAL_RIMC_GetGLock()
 {
   return HAL_RIF_IS_RIMC_GLOCK();
 }
+/**
+  * @}
+  */
 
+/** @defgroup RIF_Exported_Functions_Group4 RIF RISAB functions
+  * @{
+  *
+  @verbatim
+  ==============================================================================
+            ##### RISAB functions #####
+  ==============================================================================
+  [..]
+    This section provides functions allowing to configure RISAB
+    RISAB is Resource isolation slave unit for address space protection
+  (block-based).
+@endverbatim
+  */
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  RIF RISAB memory configuration.
- * @param  PageId RISAB Memory Page Id.
- * @param  MemAttributes RISAB Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisab_Desc.
- *         Same configuration for all pages and blocks by default
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAB_ConfigMemAttributes(uint32_t PageId, RIF_MemRisab_Desc * MemAttributes)
+  * @brief  RIF RISAB memory configuration.
+  * @param  PageId RISAB Memory Page Id.
+  * @param  MemAttributes RISAB Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisab_Desc.
+  *         Same configuration for all pages and blocks by default
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAB_ConfigMemAttributes(uint32_t PageId, RIF_MemRisab_Desc *MemAttributes)
 {
   uint32_t cid;
 
@@ -807,15 +858,15 @@ HAL_StatusTypeDef HAL_RISAB_ConfigMemAttributes(uint32_t PageId, RIF_MemRisab_De
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RIF RISAB memory configuration.
- * @param  PageId RISAB Memory Page Id.
- * @param  PageId RISAB Memory Compartiment Id.
- * @param  Instance RISAB Memory instance.
- * @param  MemAttributes RISAB Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisab_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAB_GetConfigMemAttributes(uint32_t Instance, uint32_t PageId,\
+  * @brief  Get RIF RISAB memory configuration.
+  * @param  PageId RISAB Memory Page Id.
+  * @param  PageId RISAB Memory Compartiment Id.
+  * @param  Instance RISAB Memory instance.
+  * @param  MemAttributes RISAB Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisab_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAB_GetConfigMemAttributes(uint32_t Instance, uint32_t PageId, \
                                                    uint32_t Cid, RIF_MemRisab_Desc *MemAttributes)
 {
   /* Check RISAB instance */
@@ -881,10 +932,10 @@ HAL_StatusTypeDef HAL_RISAB_GetConfigMemAttributes(uint32_t Instance, uint32_t P
 
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  Lock RISAB memory global configuration.
- * @param  Instance RISAB Memory instance.
- * @retval none.
- */
+  * @brief  Lock RISAB memory global configuration.
+  * @param  Instance RISAB Memory instance.
+  * @retval none.
+  */
 void HAL_RISAB_MemGLock(uint32_t Instance)
 {
   /* Check RISAB instance */
@@ -896,10 +947,10 @@ void HAL_RISAB_MemGLock(uint32_t Instance)
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RISAB memory global lock configuration.
- * @param  Instance RISAB Memory instance.
- * @retval Lock State (RIF_RISAB_LOCK_OFF or RIF_RISAB_LOCK_ON)
- */
+  * @brief  Get RISAB memory global lock configuration.
+  * @param  Instance RISAB Memory instance.
+  * @retval Lock State (RIF_RISAB_LOCK_OFF or RIF_RISAB_LOCK_ON)
+  */
 uint32_t HAL_RISAB_GetMemGLock(uint32_t Instance)
 {
   /* Check RISAB instance */
@@ -909,17 +960,33 @@ uint32_t HAL_RISAB_GetMemGLock(uint32_t Instance)
   }
   return (RIF_HAL_ERROR);
 }
+/**
+  * @}
+  */
+/** @defgroup RIF_Exported_Functions_Group5 RIF RISAF functions
+  * @{
+  *
+  @verbatim
+  ==============================================================================
+            ##### RISAF functions #####
+  ==============================================================================
+  [..]
+    This section provides functions allowing to configure RISAF
+    RISAF is Resource isolation slave unit for address space protection
+    (full version).
+@endverbatim
+  */
 
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  RIF RISAF memory region configuration.
- * @param  RegionId RISAF Memory Region Id.
- * @param  MemAttributes RISAF Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisafReg_Desc.
- *         Same configuration for all pages and blocks by default
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAF_ConfigMemRegionAttributes(uint32_t RegionId, RIF_MemRisafReg_Desc * MemAttributes)
+  * @brief  RIF RISAF memory region configuration.
+  * @param  RegionId RISAF Memory Region Id.
+  * @param  MemAttributes RISAF Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisafReg_Desc.
+  *         Same configuration for all pages and blocks by default
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAF_ConfigMemRegionAttributes(uint32_t RegionId, RIF_MemRisafReg_Desc *MemAttributes)
 {
   /* Check RISAF RegionId */
   if (!IS_RISAF_REGIONID(RegionId))
@@ -981,13 +1048,14 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemRegionAttributes(uint32_t RegionId, RIF_Mem
   {
     /* Use absolute base address */
     HAL_RIF_SET_RISAF_REG_STARTR(MemAttributes->Instance, RegionId, MemAttributes->RegAddress);
-    HAL_RIF_SET_RISAF_REG_ENDR(MemAttributes->Instance, RegionId, MemAttributes->RegAddress+MemAttributes->RegSize-1);
+    HAL_RIF_SET_RISAF_REG_ENDR(MemAttributes->Instance, RegionId\
+                               , MemAttributes->RegAddress + MemAttributes->RegSize - 1);
   }
   else
   {
     /* Use offset base address */
     HAL_RIF_SET_RISAF_REG_STARTR(MemAttributes->Instance, RegionId, 0x0);
-    HAL_RIF_SET_RISAF_REG_ENDR(MemAttributes->Instance, RegionId, MemAttributes->RegSize-1);
+    HAL_RIF_SET_RISAF_REG_ENDR(MemAttributes->Instance, RegionId, MemAttributes->RegSize - 1);
   }
   if (MemAttributes->RegEnable)
   {
@@ -998,14 +1066,14 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemRegionAttributes(uint32_t RegionId, RIF_Mem
 }
 
 /**
- * @brief  RIF RISAF memory subregion configuration.
- * @param  RegionId RISAF Memory Region Id.
- * @param  MemAttributes RISAF Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisafSubReg_Desc.
- *         Same configuration for all pages and blocks by default
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_MemRisafSubReg_Desc * MemAttributes)
+  * @brief  RIF RISAF memory subregion configuration.
+  * @param  RegionId RISAF Memory Region Id.
+  * @param  MemAttributes RISAF Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisafSubReg_Desc.
+  *         Same configuration for all pages and blocks by default
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_MemRisafSubReg_Desc *MemAttributes)
 {
   /* Check RISAF RegionId */
   if (!IS_RISAF_REGIONID(RegionId))
@@ -1046,7 +1114,7 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_
   if (MemAttributes->SubRegId == RIF_RISAF_MEM_SUBREGA)
   {
     /* Check SubReg Resource Lock */
-    if(HAL_RIF_IS_RISAF_SUBREGA_RLOCK(MemAttributes->Instance, RegionId))
+    if (HAL_RIF_IS_RISAF_SUBREGA_RLOCK(MemAttributes->Instance, RegionId))
     {
       return HAL_ERROR;
     }
@@ -1088,14 +1156,14 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_
     {
       /* Use absolute base address */
       HAL_RIF_SET_RISAF_SUBREGA_STARTR(MemAttributes->Instance, RegionId, MemAttributes->SubRegAddress);
-      HAL_RIF_SET_RISAF_SUBREGA_ENDR(MemAttributes->Instance, RegionId,\
-                                     MemAttributes->SubRegAddress+MemAttributes->SubRegSize-1);
+      HAL_RIF_SET_RISAF_SUBREGA_ENDR(MemAttributes->Instance, RegionId, \
+                                     MemAttributes->SubRegAddress + MemAttributes->SubRegSize - 1);
     }
     else
     {
       /* Use offset base address */
       HAL_RIF_SET_RISAF_SUBREGA_STARTR(MemAttributes->Instance, RegionId, MemAttributes->SubRegAddress);
-      HAL_RIF_SET_RISAF_SUBREGA_ENDR(MemAttributes->Instance, RegionId, MemAttributes->SubRegSize-1);
+      HAL_RIF_SET_RISAF_SUBREGA_ENDR(MemAttributes->Instance, RegionId, MemAttributes->SubRegSize - 1);
     }
     if (MemAttributes->SubRegEnable)
     {
@@ -1109,7 +1177,7 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_
   else
   {
     /* Check SubReg Resource Lock */
-    if(HAL_RIF_IS_RISAF_SUBREGB_RLOCK(MemAttributes->Instance, RegionId))
+    if (HAL_RIF_IS_RISAF_SUBREGB_RLOCK(MemAttributes->Instance, RegionId))
     {
       return HAL_ERROR;
     }
@@ -1151,14 +1219,14 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_
     {
       /* Use absolute base address */
       HAL_RIF_SET_RISAF_SUBREGB_STARTR(MemAttributes->Instance, RegionId, MemAttributes->SubRegAddress);
-      HAL_RIF_SET_RISAF_SUBREGB_ENDR(MemAttributes->Instance, RegionId,\
-                                     MemAttributes->SubRegAddress+MemAttributes->SubRegSize-1);
+      HAL_RIF_SET_RISAF_SUBREGB_ENDR(MemAttributes->Instance, RegionId, \
+                                     MemAttributes->SubRegAddress + MemAttributes->SubRegSize - 1);
     }
     else
     {
       /* Use offset base address */
       HAL_RIF_SET_RISAF_SUBREGB_STARTR(MemAttributes->Instance, RegionId, MemAttributes->SubRegAddress);
-      HAL_RIF_SET_RISAF_SUBREGB_ENDR(MemAttributes->Instance, RegionId, MemAttributes->SubRegSize-1);
+      HAL_RIF_SET_RISAF_SUBREGB_ENDR(MemAttributes->Instance, RegionId, MemAttributes->SubRegSize - 1);
     }
     if (MemAttributes->SubRegEnable)
     {
@@ -1174,13 +1242,13 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemSubRegionAttributes(uint32_t RegionId, RIF_
 }
 
 /**
- * @brief  RIF RISAF memory encrypt configuration.
- * @param  RegionId RISAF Memory Region Id.
- * @param  MemAttributes RISAF Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisafEncKey_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAF_ConfigMemEncryptAttributes(RIF_MemRisafEncKey_Desc * MemAttributes)
+  * @brief  RIF RISAF memory encrypt configuration.
+  * @param  RegionId RISAF Memory Region Id.
+  * @param  MemAttributes RISAF Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisafEncKey_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAF_ConfigMemEncryptAttributes(RIF_MemRisafEncKey_Desc *MemAttributes)
 {
   /* Check Mem attributes */
   if (MemAttributes == NULL)
@@ -1215,14 +1283,14 @@ HAL_StatusTypeDef HAL_RISAF_ConfigMemEncryptAttributes(RIF_MemRisafEncKey_Desc *
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RIF RISAF memory configuration.
- * @param  Instance RISAF Memory instance.
- * @param  RegionId RISAF Memory Region Id.
- * @param  MemAttributes RISAF Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisafReg_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAF_GetConfigMemRegionAttributes(uint32_t Instance, uint32_t RegionId,\
+  * @brief  Get RIF RISAF memory configuration.
+  * @param  Instance RISAF Memory instance.
+  * @param  RegionId RISAF Memory Region Id.
+  * @param  MemAttributes RISAF Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisafReg_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAF_GetConfigMemRegionAttributes(uint32_t Instance, uint32_t RegionId, \
                                                          RIF_MemRisafReg_Desc *MemAttributes)
 {
   /* Check RISAF instance */
@@ -1258,15 +1326,15 @@ HAL_StatusTypeDef HAL_RISAF_GetConfigMemRegionAttributes(uint32_t Instance, uint
 }
 
 /**
- * @brief  Get RIF RISAF memory subregion configuration.
- * @param  Instance RISAF Memory instance.
- * @param  RegionId RISAF Memory Region Id.
- * @param  RegionId RISAF Memory SubRegion Id.
- * @param  MemAttributes RISAF Memory attribute pointer.
- *         This parameter can be a value of @ref RIF_MemRisafSubReg_Desc.
- * @retval HAL status.
- */
-HAL_StatusTypeDef HAL_RISAF_GetConfigMemSubRegionAttributes(uint32_t Instance, uint32_t RegionId,\
+  * @brief  Get RIF RISAF memory subregion configuration.
+  * @param  Instance RISAF Memory instance.
+  * @param  RegionId RISAF Memory Region Id.
+  * @param  SubRegionId RISAF Memory SubRegion Id.
+  * @param  MemAttributes RISAF Memory attribute pointer.
+  *         This parameter can be a value of @ref RIF_MemRisafSubReg_Desc.
+  * @retval HAL status.
+  */
+HAL_StatusTypeDef HAL_RISAF_GetConfigMemSubRegionAttributes(uint32_t Instance, uint32_t RegionId, \
                                                             uint32_t SubRegionId, \
                                                             RIF_MemRisafSubReg_Desc *MemAttributes)
 {
@@ -1332,10 +1400,10 @@ HAL_StatusTypeDef HAL_RISAF_GetConfigMemSubRegionAttributes(uint32_t Instance, u
 
 #if defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE)
 /**
- * @brief  Lock RISAF memory global configuration.
- * @param  Instance RISAF Memory instance.
- * @retval none.
- */
+  * @brief  Lock RISAF memory global configuration.
+  * @param  Instance RISAF Memory instance.
+  * @retval none.
+  */
 void HAL_RISAF_MemGLock(uint32_t Instance)
 {
   /* Check RISAF instance */
@@ -1347,10 +1415,10 @@ void HAL_RISAF_MemGLock(uint32_t Instance)
 #endif /* defined(CORE_CA35) || defined(CORTEX_IN_SECURE_STATE) */
 
 /**
- * @brief  Get RISAF memory global lock configuration.
- * @param  Instance RISAF Memory instance.
- * @retval Lock State (RIF_RISAF_LOCK_OFF or RIF_RISAF_LOCK_ON)
- */
+  * @brief  Get RISAF memory global lock configuration.
+  * @param  Instance RISAF Memory instance.
+  * @retval Lock State (RIF_RISAF_LOCK_OFF or RIF_RISAF_LOCK_ON)
+  */
 uint32_t HAL_RISAF_GetMemGLock(uint32_t Instance)
 {
   /* Check RISAF instance */
@@ -1363,12 +1431,12 @@ uint32_t HAL_RISAF_GetMemGLock(uint32_t Instance)
 
 
 /**
- * @}
- */
+  * @}
+  */
 
 /** @defgroup RIF_Exported_Functions_Group6 IAC Configuration and Control functions
- * @brief    IAC Configuration and Controlfunctions
- *
+  * @brief    IAC Configuration and Controlfunctions
+  *
   @verbatim
   ==============================================================================
             ##### IAC Configuration and Control functions #####
@@ -1377,16 +1445,16 @@ uint32_t HAL_RISAF_GetMemGLock(uint32_t Instance)
     This section provides functions allowing to configure and control IAC
     IAC is Illegal Access Controller
 @endverbatim
- * @{
- */
+  * @{
+  */
 
 /**
- * @brief  Disable the interrupt associated to a single IAC peripheral or on all peripherals.
- * @param  PeriphId Peripheral identifier.
- *         This parameter can be a value of @ref RIF_Peripheral_Identification.
- *         Use RIF_PERIPH_ALLIP_Msk to select all peripherals.
- * @retval HAL status.
- */
+  * @brief  Disable the interrupt associated to a single IAC peripheral or on all peripherals.
+  * @param  PeriphId Peripheral identifier.
+  *         This parameter can be a value of @ref RIF_Peripheral_Identification.
+  *         Use RIF_PERIPH_ALLIP_Msk to select all peripherals.
+  * @retval HAL status.
+  */
 HAL_StatusTypeDef HAL_IAC_DisableIT(uint32_t PeriphId)
 {
   uint32_t reg_index;
@@ -1405,20 +1473,20 @@ HAL_StatusTypeDef HAL_IAC_DisableIT(uint32_t PeriphId)
   else
   {
     /* common case where only one peripheral is configured */
-    CLEAR_BIT(IAC->IER[RIF_GET_REG_INDEX(PeriphId) % (sizeof(IAC->IER)/sizeof(IAC->IER[0]))]\
-              , 1U << RIF_GET_PERIPH_POS(PeriphId));
+    CLEAR_BIT(IAC->IER[RIF_GET_REG_INDEX(PeriphId) % (sizeof(IAC->IER) / sizeof(IAC->IER[0]))]\
+              , 1UL << RIF_GET_PERIPH_POS(PeriphId));
   }
 
   return HAL_OK;
 }
 
 /**
- * @brief  Enable the interrupt associated to a single IAC peripheral or on all peripherals.
- * @param  PeriphId Peripheral identifier.
- *         This parameter can be a value of @ref RIF_Peripheral_Identification.
- *         Use RIF_PERIPH_ALLIP_Msk to select all peripherals.
- * @retval HAL status.
- */
+  * @brief  Enable the interrupt associated to a single IAC peripheral or on all peripherals.
+  * @param  PeriphId Peripheral identifier.
+  *         This parameter can be a value of @ref RIF_Peripheral_Identification.
+  *         Use RIF_PERIPH_ALLIP_Msk to select all peripherals.
+  * @retval HAL status.
+  */
 HAL_StatusTypeDef HAL_IAC_EnableIT(uint32_t PeriphId)
 {
   uint32_t reg_index;
@@ -1438,25 +1506,25 @@ HAL_StatusTypeDef HAL_IAC_EnableIT(uint32_t PeriphId)
   {
     /* common case where only one peripheral is configured */
     SET_BIT(IAC->IER[RIF_GET_REG_INDEX(PeriphId)\
-                     % (sizeof(IAC->IER)/sizeof(IAC->IER[0]))], 1UL << RIF_GET_PERIPH_POS(PeriphId));
+                     % (sizeof(IAC->IER) / sizeof(IAC->IER[0]))], 1UL << RIF_GET_PERIPH_POS(PeriphId));
   }
 
   return HAL_OK;
 }
 
 /**
- * @brief  Get IAC flag on a single IAC peripheral or on all peripherals.
- * @param  PeriphId Peripheral identifier.
- *         This parameter can be a value of @ref RIF_Peripheral_Identification.
- *         To select all peripherals, other usable bits have to be set to 0.
- * @param  pFlag Pointer to the flags.
- *         If PeriphId target a single peripheral, pointer on a single element.
- *         If all peripherals selected (RIF_PERIPH_ALLIP_Msk) IAC_PERIPH_NUMBER-size
- *         array elements is to be provided.
- *         Element content is either IAC_NO_ILA_EVENT
- *         or IAC_ILA_EVENT_PENDING
- * @retval HAL status
- */
+  * @brief  Get IAC flag on a single IAC peripheral or on all peripherals.
+  * @param  PeriphId Peripheral identifier.
+  *         This parameter can be a value of @ref RIF_Peripheral_Identification.
+  *         To select all peripherals, other usable bits have to be set to 0.
+  * @param  Flag Pointer to the flags.
+  *         If PeriphId target a single peripheral, pointer on a single element.
+  *         If all peripherals selected (RIF_PERIPH_ALLIP_Msk) IAC_PERIPH_NUMBER-size
+  *         array elements is to be provided.
+  *         Element content is either IAC_NO_ILA_EVENT
+  *         or IAC_ILA_EVENT_PENDING
+  * @retval HAL status
+  */
 HAL_StatusTypeDef HAL_IAC_GetFlag(uint32_t PeriphId, uint32_t *Flag)
 {
   uint32_t i;
@@ -1479,7 +1547,7 @@ HAL_StatusTypeDef HAL_IAC_GetFlag(uint32_t PeriphId, uint32_t *Flag)
       reg_value = READ_REG(IAC->ISR[reg_index]);
       for (i = 0U; i < 32U; i++)
       {
-        Flag[(reg_index * 32U)+i] = (reg_value & (1UL << i)) >> i;
+        Flag[(reg_index * 32U) + i] = (reg_value & (1UL << i)) >> i;
       }
     }
   }
@@ -1487,19 +1555,20 @@ HAL_StatusTypeDef HAL_IAC_GetFlag(uint32_t PeriphId, uint32_t *Flag)
   {
     /* common case where only one peripheral is concerned */
     Flag[RIF_GET_ARRAY_INDEX(PeriphId)] = READ_BIT(IAC->ISR[RIF_GET_REG_INDEX(PeriphId)\
-                                                            % (sizeof(IAC->ISR)/sizeof(IAC->ISR[0]))], 1UL << RIF_GET_PERIPH_POS(PeriphId));
+                                                            % (sizeof(IAC->ISR) / sizeof(IAC->ISR[0]))]\
+                                                   , 1UL << RIF_GET_PERIPH_POS(PeriphId));
   }
 
   return HAL_OK;
 }
 
 /**
- * @brief  Clear IAC flag on a single IAC peripheral or on all peripherals.
- * @param  PeriphId Peripheral identifier.
- *         This parameter can be a value of @ref RIF_Peripheral_Identification.
- *         Use RIF_PERIPH_ALLIP_Msk to select all peripherals.
- * @retval HAL status.
- */
+  * @brief  Clear IAC flag on a single IAC peripheral or on all peripherals.
+  * @param  PeriphId Peripheral identifier.
+  *         This parameter can be a value of @ref RIF_Peripheral_Identification.
+  *         Use RIF_PERIPH_ALLIP_Msk to select all peripherals.
+  * @retval HAL status.
+  */
 HAL_StatusTypeDef HAL_IAC_ClearFlag(uint32_t PeriphId)
 {
   uint32_t reg_index;
@@ -1518,7 +1587,7 @@ HAL_StatusTypeDef HAL_IAC_ClearFlag(uint32_t PeriphId)
   else
   {
     /* common case where only one peripheral is configured */
-    SET_BIT((IAC->ICR[RIF_GET_REG_INDEX(PeriphId) % (sizeof(IAC->ICR)/sizeof(IAC->ICR[0]))] )\
+    SET_BIT((IAC->ICR[RIF_GET_REG_INDEX(PeriphId) % (sizeof(IAC->ICR) / sizeof(IAC->ICR[0]))])\
             , (1UL << (RIF_GET_PERIPH_POS(PeriphId))));
   }
 
@@ -1526,18 +1595,26 @@ HAL_StatusTypeDef HAL_IAC_ClearFlag(uint32_t PeriphId)
 }
 
 /**
- * @}
- */
+  * @}
+  */
 
 /** @defgroup RIF_Exported_Functions_Group7 IRQ related functions
- * @brief    IRQ related functions
- * @{
- */
+  * @brief    IRQ related functions
+  *
+  @verbatim
+  ==============================================================================
+            ##### IRQ related functions #####
+  ==============================================================================
+  [..]
+    This section provides RIF IRQ handling and Callback related function
+@endverbatim
+  * @{
+  */
 
 /**
- * @brief  This function handles RIF interrupt request.
- * @retval None.
- */
+  * @brief  This function handles RIF interrupt request.
+  * @retval None.
+  */
 void HAL_RIF_IRQHandler(void)
 {
   /* Get current IT Flags and IT sources value */
@@ -1568,9 +1645,9 @@ void HAL_RIF_IRQHandler(void)
 }
 
 /**
- * @brief  RIF IAC sub-block interrupt callback.
- * @retval None.
- */
+  * @brief  RIF IAC sub-block interrupt callback.
+  * @retval None.
+  */
 __weak void HAL_IAC_Callback(uint32_t PeriphId)
 {
   /* Prevent unused argument(s) compilation warning */
@@ -1583,22 +1660,22 @@ __weak void HAL_IAC_Callback(uint32_t PeriphId)
 #endif /* defined(CORE_CM33) || defined(CORE_CA35) */
 
 /**
- * @}
- */
+  * @}
+  */
 
 /**
- * @}
- */
+  * @}
+  */
 
 #endif /*HAL_RIF_MODULE_ENABLED*/
 
 /**
- * @}
- */
+  * @}
+  */
 
 /**
- * @}
- */
+  * @}
+  */
 
 #endif /* STM32MP2xx_HAL_RIF_C */
 

@@ -113,6 +113,8 @@
               For circular transfer, this API returns an HAL_ERROR with HAL_DMA_ERROR_NOT_SUPPORTED error code.
 
           (+) Use HAL_DMA_Abort() function to abort any ongoing DMA transfer in blocking mode.
+              When Terminate and Drain FIFO feature is available, The DMA FIFO is drained when
+              the transfer direction is memory to memory or peripheral to memory.
               This API returns HAL_ERROR when there is no ongoing transfer or timeout is reached when disabling the DMA
               channel. (This API should not be called from an interrupt service routine)
 
@@ -137,7 +139,10 @@
           (+) Use HAL_DMA_IRQHandler() called under DMA_IRQHandler() interrupt subroutine to handle any DMA interrupt.
 
           (+) Use HAL_DMA_Abort_IT() function to abort any on-going DMA transfer in non-blocking mode.
-              This API will suspend immediately the DMA channel execution. When the transfer is effectively suspended,
+              When Terminate and Drain FIFO feature is available, This API suspends the DMA channel execution
+              and drains the DMA FIFO.
+              The DMA FIFO is drained when the transfer direction is memory to memory or peripheral to memory.
+              When the transfer is effectively suspended,
               an interrupt is generated and HAL_DMA_IRQHandler() will reset the channel and execute the callback
               XferAbortCallback. (This API could be called from an interrupt service routine)
 
@@ -176,6 +181,13 @@
           (+) __HAL_DMA_DISABLE_IT    : Disable the specified DMA Channel interrupts.
           (+) __HAL_DMA_GET_IT_SOURCE : Check whether the specified DMA Channel interrupt has occurred or not.
 
+    *** Valid burst length ***
+    ==================================
+    [..]
+      HPDMA allowed AXI maximum burst length
+    (+) The maximum allowed AXI burst length shall not exceed 16.
+            (++) If either selected source source or destination length is above 16, HAL_DMA_Init will return HAL_ERROR.
+
     [..]
      (@) You can refer to the header file of the DMA HAL driver for more useful macros.
 
@@ -207,7 +219,6 @@ static void DMA_SetConfig(DMA_HandleTypeDef const *const hdma,
                           uint32_t DstAddress,
                           uint32_t SrcDataSize);
 static void DMA_Init(DMA_HandleTypeDef const *const hdma);
-
 /* Exported functions ------------------------------------------------------------------------------------------------*/
 
 /** @addtogroup DMA_Exported_Functions DMA Exported Functions
@@ -234,6 +245,8 @@ static void DMA_Init(DMA_HandleTypeDef const *const hdma);
 /**
   * @brief  Initialize the DMA channel in normal mode according to the specified parameters in the DMA_InitTypeDef and
   *         create the associated handle.
+  * @note   Warning: the maximum allowed AXI burst length shall not exceed 16.
+  *         Otherwise, an error will be returned and no initialization performed.
   * @param  hdma : Pointer to a DMA_HandleTypeDef structure that contains the configuration information for the
   *                specified DMA Channel.
   * @retval HAL status.
@@ -276,9 +289,10 @@ HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *const hdma)
     assert_param(IS_DMA_TRANSFER_ALLOCATED_PORT(hdma->Init.TransferAllocatedPort));
   }
 
+  uint32_t ccid_cfen  = (hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_CFEN);
+  uint32_t ccid_semen = (hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_SEMEN);
   /* Take Channel resource for current CID if Dynamic Resource isolation is enabled , else error */
-  if (((hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_CFEN) == DMA_CCIDCFGR_CFEN) &&
-      ((hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_SEMEN) == DMA_CCIDCFGR_SEMEN))
+  if ((ccid_cfen == DMA_CCIDCFGR_CFEN) && (ccid_semen == DMA_CCIDCFGR_SEMEN))
   {
     /* Take Semaphore*/
     hdma->Instance->CSEMCR = DMA_CSEMCR_SEMMUTEX;
@@ -290,9 +304,34 @@ HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *const hdma)
     }
   }
 
+  /* Check if the burst length may face DMA AXI limitation */
+  if (IS_HPDMA_INSTANCE(hdma->Instance) != 0U)
+  {
+    if (((hdma->Init.TransferAllocatedPort & DMA_CTR1_SAP) == DMA_SRC_ALLOCATED_PORT0) &&
+        (hdma->Init.SrcBurstLength > 16U))
+    {
+      return HAL_ERROR;
+    }
+    if (((hdma->Init.TransferAllocatedPort & DMA_CTR1_DAP) == DMA_DEST_ALLOCATED_PORT0) &&
+        (hdma->Init.DestBurstLength > 16U))
+    {
+      return HAL_ERROR;
+    }
+  }
+
   /* Allocate lock resource */
   __HAL_UNLOCK(hdma);
 
+  /* Initialize the callbacks */
+  if (hdma->State == HAL_DMA_STATE_RESET)
+  {
+    /* Clean all callbacks */
+    hdma->XferCpltCallback     = NULL;
+    hdma->XferHalfCpltCallback = NULL;
+    hdma->XferErrorCallback    = NULL;
+    hdma->XferAbortCallback    = NULL;
+    hdma->XferSuspendCallback  = NULL;
+  }
   /* Update the DMA channel state */
   hdma->State = HAL_DMA_STATE_BUSY;
 
@@ -592,11 +631,20 @@ HAL_StatusTypeDef HAL_DMA_Start_IT(DMA_HandleTypeDef *const hdma,
   *         is suspended while a data transfer is on-going, the current data will be transferred and the channel will be
   *         effectively suspended only after the transfer of any on-going data is finished.
   * @retval HAL status.
+  * @note   When Terminate and Drain FIFO feature is available,
+            The DMA internal FIFO is systematically drained before the channel stops.
+            Please refer to channel terminate and drain FIFO section of the reference manual for more information.
+            When called in interrupt mode, this function can complete part of the treatment done in HAL_DMA_IRQHandler.
   */
 HAL_StatusTypeDef HAL_DMA_Abort(DMA_HandleTypeDef *const hdma)
 {
   /* Get tick number */
   uint32_t tickstart =  HAL_GetTick();
+
+#if defined(DMA_CSR_DRAININGF)
+  uint32_t pollingflag     = DMA_CSR_TCF;
+  uint32_t abortcommandbit = (DMA_CCR_DRAINFIFO | DMA_CCR_SUSP);
+#endif /* DMA_CSR_DRAININGF */
 
   /* Check the DMA peripheral handle parameter */
   if (hdma == NULL)
@@ -617,14 +665,29 @@ HAL_StatusTypeDef HAL_DMA_Abort(DMA_HandleTypeDef *const hdma)
   }
   else
   {
+#if defined(DMA_CSR_DRAININGF)
+    if (hdma->Init.Direction == DMA_MEMORY_TO_PERIPH)
+    {
+      pollingflag     = DMA_CSR_SUSPF;
+      abortcommandbit = DMA_CCR_SUSP;
+    }
+    /* Suspend the channel and, when applicable, drain the FIFO */
+    hdma->Instance->CCR |= abortcommandbit;
+#else
     /* Suspend the channel */
     hdma->Instance->CCR |= DMA_CCR_SUSP;
+#endif /* DMA_CSR_DRAININGF */
 
     /* Update the DMA channel state */
-    hdma->State = HAL_DMA_STATE_SUSPEND;
+    hdma->State = HAL_DMA_STATE_ABORT;
 
+#if defined(DMA_CSR_DRAININGF)
+    /* Check if the DMA Channel is suspended/TransferCompleteFlag */
+    while (((hdma->Instance->CSR & pollingflag) == 0U) && hdma->State == HAL_DMA_STATE_ABORT)
+#else
     /* Check if the DMA Channel is suspended */
     while ((hdma->Instance->CSR & DMA_CSR_SUSPF) == 0U)
+#endif /* DMA_CSR_DRAININGF */
     {
       /* Check for the Timeout */
       if ((HAL_GetTick() - tickstart) > HAL_TIMEOUT_DMA_ABORT)
@@ -651,9 +714,6 @@ HAL_StatusTypeDef HAL_DMA_Abort(DMA_HandleTypeDef *const hdma)
 
     /* Reset the channel */
     hdma->Instance->CCR |= DMA_CCR_RESET;
-
-    /* Update the DMA channel state */
-    hdma->State = HAL_DMA_STATE_ABORT;
 
     /* Clear all status flags */
     __HAL_DMA_CLEAR_FLAG(hdma, (DMA_FLAG_TC | DMA_FLAG_HT | DMA_FLAG_DTE | DMA_FLAG_ULE | DMA_FLAG_USE | DMA_FLAG_SUSP |
@@ -684,6 +744,9 @@ HAL_StatusTypeDef HAL_DMA_Abort(DMA_HandleTypeDef *const hdma)
   * @param  hdma : Pointer to a DMA_HandleTypeDef structure that contains the configuration information for the
   *                specified DMA Channel.
   * @retval HAL status.
+  * @note  When Terminate and Drain FIFO feature is available,
+           The DMA internal FIFO is systematically drained before the channel stops.
+           Please refer to channel terminate and drain FIFO section of the reference manual for more information.
   */
 HAL_StatusTypeDef HAL_DMA_Abort_IT(DMA_HandleTypeDef *const hdma)
 {
@@ -705,9 +768,25 @@ HAL_StatusTypeDef HAL_DMA_Abort_IT(DMA_HandleTypeDef *const hdma)
   {
     /* Update the DMA channel state */
     hdma->State = HAL_DMA_STATE_ABORT;
+#if defined(DMA_CSR_DRAININGF)
+    if (hdma->Init.Direction == DMA_MEMORY_TO_PERIPH)
+    {
+      /* Suspend the channel and activate suspend interrupt */
+      hdma->Instance->CCR |= (DMA_CCR_SUSP | DMA_CCR_SUSPIE);
+    }
+    else
+    {
+      /* Suspend the channel, drain the FIFO and activate the transfer complete interrupt flag*/
+      hdma->Instance->CCR |= (DMA_CCR_DRAINFIFO | DMA_CCR_SUSP | DMA_CCR_TCIE);
 
+      /* Reset the channel */
+      hdma->Instance->CCR |= DMA_CCR_RESET;
+    }
+
+#else
     /* Suspend the channel and activate suspend interrupt */
     hdma->Instance->CCR |= (DMA_CCR_SUSP | DMA_CCR_SUSPIE);
+#endif /* DMA_CSR_DRAININGF */
   }
 
   return HAL_OK;
@@ -1050,32 +1129,60 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *const hdma)
     /* Check if interrupt source is enabled */
     if (__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_TC) != 0U)
     {
-      /* Check DMA channel transfer mode */
-      if ((hdma->Mode & DMA_LINKEDLIST) == DMA_LINKEDLIST)
+#if defined(DMA_CSR_DRAININGF)
+      /* Check DMA channel state */
+      if ((hdma->State == HAL_DMA_STATE_ABORT) && ((hdma->Instance->CSR & DMA_CSR_SUSPF) == DMA_CSR_SUSPF))
       {
-        /* If linked-list transfer */
-        if (hdma->Instance->CLLR == 0U)
+
+        /* Clear the block transfer complete flag */
+        __HAL_DMA_CLEAR_FLAG(hdma, DMA_FLAG_SUSP);
+
+        /* Reset the channel internal state and reset the FIFO */
+        hdma->Instance->CCR |= DMA_CCR_RESET;
+
+        /* Update the DMA channel state */
+        hdma->State = HAL_DMA_STATE_READY;
+
+        /* Check transfer abort callback */
+        if (hdma->XferAbortCallback != NULL)
         {
+          /* Transfer abort callback */
+          hdma->XferAbortCallback(hdma);
+        }
+
+        return;
+      }
+      else if ((hdma->Instance->CSR & DMA_CSR_IDLEF) != 0U)
+#else
+      if ((hdma->Instance->CSR & DMA_CSR_IDLEF) != 0U)
+#endif /* DMA_CSR_DRAININGF */
+      {
+        /* Check DMA channel transfer mode */
+        if ((hdma->Mode & DMA_LINKEDLIST) == DMA_LINKEDLIST)
+        {
+          /* If linked-list transfer */
+          if (hdma->Instance->CLLR == 0U)
+          {
+            if (hdma->Instance->CBR1 == 0U)
+            {
+              /* Update the DMA channel state */
+              hdma->State = HAL_DMA_STATE_READY;
+
+              /* Update the linked-list queue state */
+              hdma->LinkedListQueue->State = HAL_DMA_QUEUE_STATE_READY;
+            }
+          }
+        }
+        else
+        {
+          /* If normal transfer */
           if (hdma->Instance->CBR1 == 0U)
           {
             /* Update the DMA channel state */
             hdma->State = HAL_DMA_STATE_READY;
-
-            /* Update the linked-list queue state */
-            hdma->LinkedListQueue->State = HAL_DMA_QUEUE_STATE_READY;
           }
         }
       }
-      else
-      {
-        /* If normal transfer */
-        if (hdma->Instance->CBR1 == 0U)
-        {
-          /* Update the DMA channel state */
-          hdma->State = HAL_DMA_STATE_READY;
-        }
-      }
-
       /* Clear TC and HT transfer flags */
       __HAL_DMA_CLEAR_FLAG(hdma, (DMA_FLAG_TC | DMA_FLAG_HT));
 
@@ -1593,7 +1700,7 @@ HAL_StatusTypeDef HAL_DMA_LockChannelAttributes(DMA_HandleTypeDef const *const h
   */
 HAL_StatusTypeDef HAL_DMA_GetLockChannelAttributes(DMA_HandleTypeDef const *const hdma, uint32_t *const pLockState)
 {
-  DMA_TypeDef *p_dma_instance;
+  const DMA_TypeDef *p_dma_instance;
   uint32_t channel_idx;
 
   /* Check the DMA peripheral handle and lock state parameters */
@@ -1648,7 +1755,7 @@ HAL_StatusTypeDef HAL_DMA_TakeChannelSemaphore(DMA_HandleTypeDef *hdma)
     /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired
        semaphore shall be released and status error is returned
     */
-    HAL_DMA_ReleaseChannelSemaphore(hdma);
+    (void)HAL_DMA_ReleaseChannelSemaphore(hdma);
 
     return HAL_ERROR;
   }
@@ -1710,11 +1817,43 @@ static void DMA_SetConfig(DMA_HandleTypeDef const *const hdma,
   __HAL_DMA_CLEAR_FLAG(hdma, DMA_FLAG_TC | DMA_FLAG_HT | DMA_FLAG_DTE | DMA_FLAG_ULE | DMA_FLAG_USE | DMA_FLAG_SUSP |
                        DMA_FLAG_TO);
 
+#if (defined(SYSCFG_HPDMAARCR_HPDMA1AREN)||defined(SYSCFG_HPDMAARCR_HPDMA2AREN)||defined(SYSCFG_HPDMAARCR_HPDMA3AREN))
+  /* To check syscfg bit is set to 1 and src/dest port is AXI for DMA Master to see 4GB DDR */
+  if (((READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA1AREN) == SYSCFG_HPDMAARCR_HPDMA1AREN) || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA2AREN) == SYSCFG_HPDMAARCR_HPDMA2AREN)  || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA3AREN) == SYSCFG_HPDMAARCR_HPDMA3AREN)) && \
+      ((hdma->Init.TransferAllocatedPort & DMA_CTR1_SAP) == DMA_SRC_ALLOCATED_PORT0))
+  {
+    /* subtracting 0x80000000 from the source/destination address to get the actual address */
+    /* Configure DMA channel source address */
+    hdma->Instance->CSAR = (SrcAddress - 0x80000000);
+  }
+  else
+  {
+    /* Configure DMA channel source address */
+    hdma->Instance->CSAR = SrcAddress;
+  }
+  if (((READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA1AREN) == SYSCFG_HPDMAARCR_HPDMA1AREN) || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA2AREN) == SYSCFG_HPDMAARCR_HPDMA2AREN)  || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA3AREN) == SYSCFG_HPDMAARCR_HPDMA3AREN)) && \
+      ((hdma->Init.TransferAllocatedPort & DMA_CTR1_DAP) == DMA_DEST_ALLOCATED_PORT0))
+  {
+    /* subtracting 0x80000000 from the source/destination address to get the actual address */
+    /* Configure DMA channel destination address */
+    hdma->Instance->CDAR = (DstAddress - 0x80000000);
+  }
+  else
+  {
+    /* Configure DMA channel destination address */
+    hdma->Instance->CDAR = DstAddress;
+  }
+#else
   /* Configure DMA channel source address */
   hdma->Instance->CSAR = SrcAddress;
 
   /* Configure DMA channel destination address */
   hdma->Instance->CDAR = DstAddress;
+#endif /* SYSCFG_HPDMAARCR_HPDMAxAREN */
 }
 
 /**
@@ -1797,6 +1936,8 @@ static void DMA_Init(DMA_HandleTypeDef const *const hdma)
   /* Write DMA Channel linked-list address register (CLLR) ************************************************************/
   WRITE_REG(hdma->Instance->CLLR, 0U);
 }
+
+
 /**
   * @}
   */

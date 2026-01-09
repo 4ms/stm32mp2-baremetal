@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -58,6 +57,18 @@ extern "C" {
 #define LL_IPCC_C1TOC2SR_CH4F IPCC_C1TOC2SR_CH4F_Msk /*!< C1 transmit to C2 receive Channel4 status flag before masking */
 #define LL_IPCC_C1TOC2SR_CH5F IPCC_C1TOC2SR_CH5F_Msk /*!< C1 transmit to C2 receive Channel5 status flag before masking */
 #define LL_IPCC_C1TOC2SR_CH6F IPCC_C1TOC2SR_CH6F_Msk /*!< C1 transmit to C2 receive Channel6 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH7F IPCC_C1TOC2SR_CH7F_Msk /*!< C1 transmit to C2 receive Channel7 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH8F IPCC_C1TOC2SR_CH8F_Msk /*!< C1 transmit to C2 receive Channel8 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH9F IPCC_C1TOC2SR_CH9F_Msk /*!< C1 transmit to C2 receive Channel9 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH10F IPCC_C1TOC2SR_CH10F_Msk /*!< C1 transmit to C2 receive Channel10 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH11F IPCC_C1TOC2SR_CH11F_Msk /*!< C1 transmit to C2 receive Channel11 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH12F IPCC_C1TOC2SR_CH12F_Msk /*!< C1 transmit to C2 receive Channel12 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH13F IPCC_C1TOC2SR_CH13F_Msk /*!< C1 transmit to C2 receive Channel13 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH14F IPCC_C1TOC2SR_CH14F_Msk /*!< C1 transmit to C2 receive Channel14 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH15F IPCC_C1TOC2SR_CH15F_Msk /*!< C1 transmit to C2 receive Channel15 status flag before masking */
+#define LL_IPCC_C1TOC2SR_CH16F IPCC_C1TOC2SR_CH16F_Msk /*!< C1 transmit to C2 receive Channel16 status flag before masking */
+
+
 #define LL_IPCC_C2TOC1SR_CH1F IPCC_C2TOC1SR_CH1F_Msk /*!< C2 transmit to C1 receive Channel1 status flag before masking */
 #define LL_IPCC_C2TOC1SR_CH2F IPCC_C2TOC1SR_CH2F_Msk /*!< C2 transmit to C1 receive Channel2 status flag before masking */
 #define LL_IPCC_C2TOC1SR_CH3F IPCC_C2TOC1SR_CH3F_Msk /*!< C2 transmit to C1 receive Channel3 status flag before masking */
@@ -72,22 +83,22 @@ extern "C" {
 /** @defgroup IPCC_LL_EC_Channel Channel
   * @{
   */
-#define LL_IPCC_CHANNEL_1 (0x00000001U) /*!< IPCC Channel 1 */
-#define LL_IPCC_CHANNEL_2 (0x00000002U) /*!< IPCC Channel 2 */
-#define LL_IPCC_CHANNEL_3 (0x00000004U) /*!< IPCC Channel 3 */
-#define LL_IPCC_CHANNEL_4 (0x00000008U) /*!< IPCC Channel 4 */
-#define LL_IPCC_CHANNEL_5 (0x00000010U) /*!< IPCC Channel 5 */
-#define LL_IPCC_CHANNEL_6 (0x00000020U) /*!< IPCC Channel 6 */
-#define LL_IPCC_CHANNEL_7 (0x00000040U) /*!< IPCC Channel 7 */
-#define LL_IPCC_CHANNEL_8 (0x00000080U) /*!< IPCC Channel 8 */
-#define LL_IPCC_CHANNEL_9 (0x00000100U) /*!< IPCC Channel 9 */
-#define LL_IPCC_CHANNEL_10 (0x00000200U) /*!< IPCC Channel 10 */
-#define LL_IPCC_CHANNEL_11 (0x00000400U) /*!< IPCC Channel 11 */
-#define LL_IPCC_CHANNEL_12 (0x00000800U) /*!< IPCC Channel 12 */
-#define LL_IPCC_CHANNEL_13 (0x00001000U) /*!< IPCC Channel 13 */
-#define LL_IPCC_CHANNEL_14 (0x00002000U) /*!< IPCC Channel 14 */
-#define LL_IPCC_CHANNEL_15 (0x00004000U) /*!< IPCC Channel 15 */
-#define LL_IPCC_CHANNEL_16 (0x00008000U) /*!< IPCC Channel 16 */
+#define LL_IPCC_CHANNEL_1    (0x00000001U) /*!< IPCC Channel 1  */
+#define LL_IPCC_CHANNEL_2    (0x00000002U) /*!< IPCC Channel 2  */
+#define LL_IPCC_CHANNEL_3    (0x00000004U) /*!< IPCC Channel 3  */
+#define LL_IPCC_CHANNEL_4    (0x00000008U) /*!< IPCC Channel 4  */
+#define LL_IPCC_CHANNEL_5    (0x00000010U) /*!< IPCC Channel 5  */
+#define LL_IPCC_CHANNEL_6    (0x00000020U) /*!< IPCC Channel 6  */
+#define LL_IPCC_CHANNEL_7    (0x00000040U) /*!< IPCC Channel 7  */
+#define LL_IPCC_CHANNEL_8    (0x00000080U) /*!< IPCC Channel 8  */
+#define LL_IPCC_CHANNEL_9    (0x00000100U) /*!< IPCC Channel 9  */
+#define LL_IPCC_CHANNEL_10   (0x00000200U) /*!< IPCC Channel 10 */
+#define LL_IPCC_CHANNEL_11   (0x00000400U) /*!< IPCC Channel 11 */
+#define LL_IPCC_CHANNEL_12   (0x00000800U) /*!< IPCC Channel 12 */
+#define LL_IPCC_CHANNEL_13   (0x00001000U) /*!< IPCC Channel 13 */
+#define LL_IPCC_CHANNEL_14   (0x00002000U) /*!< IPCC Channel 14 */
+#define LL_IPCC_CHANNEL_15   (0x00004000U) /*!< IPCC Channel 15 */
+#define LL_IPCC_CHANNEL_16   (0x00008000U) /*!< IPCC Channel 16 */
 /**
   * @}
   */
@@ -173,6 +184,39 @@ __STATIC_INLINE uint32_t LL_C1_IPCC_IsEnabledIT_TXF(IPCC_TypeDef const *const IP
 }
 
 /**
+  * @brief  Enable Transmit channel free secure interrupt for processor 1.
+  * @rmtoll C1CR          SECTXFIE         LL_C1_IPCC_EnableIT_SECTXF
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_EnableIT_SECTXF(IPCC_TypeDef *IPCCx)
+{
+  SET_BIT(IPCCx->C1CR, IPCC_C1CR_SECTXFIE);
+}
+
+/**
+  * @brief  Disable Transmit channel free secure interrupt for processor 1.
+  * @rmtoll C1CR          SECTXFIE         LL_C1_IPCC_DisableIT_SECTXF
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_DisableIT_SECTXF(IPCC_TypeDef *IPCCx)
+{
+  CLEAR_BIT(IPCCx->C1CR, IPCC_C1CR_SECTXFIE);
+}
+
+/**
+  * @brief  Check if Transmit channel free secure interrupt for processor 1 is enabled.
+  * @rmtoll C1CR          SECTXFIE         LL_C1_IPCC_IsEnabledIT_SECTXF
+  * @param  IPCCx IPCC Instance.
+  * @retval State of bit (1 or 0).
+  */
+__STATIC_INLINE uint32_t LL_C1_IPCC_IsEnabledIT_SECTXF(IPCC_TypeDef const *const IPCCx)
+{
+  return ((READ_BIT(IPCCx->C1CR, IPCC_C1CR_SECTXFIE) == (IPCC_C1CR_SECTXFIE)) ? 1UL : 0UL);
+}
+
+/**
   * @brief  Enable Receive channel occupied interrupt for processor 1.
   * @rmtoll C1CR          RXOIE         LL_C1_IPCC_EnableIT_RXO
   * @param  IPCCx IPCC Instance.
@@ -203,6 +247,39 @@ __STATIC_INLINE void LL_C1_IPCC_DisableIT_RXO(IPCC_TypeDef *IPCCx)
 __STATIC_INLINE uint32_t LL_C1_IPCC_IsEnabledIT_RXO(IPCC_TypeDef  const *const IPCCx)
 {
   return ((READ_BIT(IPCCx->C1CR, IPCC_C1CR_RXOIE) == (IPCC_C1CR_RXOIE)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Enable Receive channel occupied secure interrupt for processor 1.
+  * @rmtoll C1CR          SECRXOIE         LL_C1_IPCC_EnableIT_SECRXO
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_EnableIT_SECRXO(IPCC_TypeDef *IPCCx)
+{
+  SET_BIT(IPCCx->C1CR, IPCC_C1CR_SECRXOIE);
+}
+
+/**
+  * @brief  Disable Receive channel occupied secure interrupt for processor 1.
+  * @rmtoll C1CR          SECRXOIE         LL_C1_IPCC_DisableIT_SECRXO
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_DisableIT_SECRXO(IPCC_TypeDef *IPCCx)
+{
+  CLEAR_BIT(IPCCx->C1CR, IPCC_C1CR_SECRXOIE);
+}
+
+/**
+  * @brief  Check if Receive channel occupied secure interrupt for processor 1 is enabled.
+  * @rmtoll C1CR          SECRXOIE         LL_C1_IPCC_IsEnabledIT_SECRXO
+  * @param  IPCCx IPCC Instance.
+  * @retval State of bit (1 or 0).
+  */
+__STATIC_INLINE uint32_t LL_C1_IPCC_IsEnabledIT_SECRXO(IPCC_TypeDef  const *const IPCCx)
+{
+  return ((READ_BIT(IPCCx->C1CR, IPCC_C1CR_SECRXOIE) == (IPCC_C1CR_SECRXOIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -239,6 +316,39 @@ __STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledIT_TXF(IPCC_TypeDef  const *const I
 }
 
 /**
+  * @brief  Enable Transmit channel free secure interrupt for processor 2.
+  * @rmtoll C2CR          SECTXFIE         LL_C2_IPCC_EnableIT_SECTXF
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_EnableIT_SECTXF(IPCC_TypeDef *IPCCx)
+{
+  SET_BIT(IPCCx->C2CR, IPCC_C2CR_SECTXFIE);
+}
+
+/**
+  * @brief  Disable Transmit channel free secure interrupt for processor 2.
+  * @rmtoll C2CR          SECTXFIE         LL_C2_IPCC_DisableIT_SECTXF
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_DisableIT_SECTXF(IPCC_TypeDef *IPCCx)
+{
+  CLEAR_BIT(IPCCx->C2CR, IPCC_C2CR_SECTXFIE);
+}
+
+/**
+  * @brief  Check if Transmit channel free secure interrupt for processor 2 is enabled.
+  * @rmtoll C2CR          SECTXFIE         LL_C2_IPCC_IsEnabledIT_SECTXF
+  * @param  IPCCx IPCC Instance.
+  * @retval State of bit (1 or 0).
+  */
+__STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledIT_SECTXF(IPCC_TypeDef  const *const IPCCx)
+{
+  return ((READ_BIT(IPCCx->C2CR, IPCC_C2CR_SECTXFIE) == (IPCC_C2CR_SECTXFIE)) ? 1UL : 0UL);
+}
+
+/**
   * @brief  Enable Receive channel occupied interrupt for processor 2.
   * @rmtoll C2CR          RXOIE         LL_C2_IPCC_EnableIT_RXO
   * @param  IPCCx IPCC Instance.
@@ -269,6 +379,39 @@ __STATIC_INLINE void LL_C2_IPCC_DisableIT_RXO(IPCC_TypeDef *IPCCx)
 __STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledIT_RXO(IPCC_TypeDef const *const IPCCx)
 {
   return ((READ_BIT(IPCCx->C2CR, IPCC_C2CR_RXOIE) == (IPCC_C2CR_RXOIE)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Enable Receive channel occupied secure interrupt for processor 2.
+  * @rmtoll C2CR          SECRXOIE         LL_C2_IPCC_EnableIT_SECRXO
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_EnableIT_SECRXO(IPCC_TypeDef *IPCCx)
+{
+  SET_BIT(IPCCx->C2CR, IPCC_C2CR_SECRXOIE);
+}
+
+/**
+  * @brief  Disable Receive channel occupied secure interrupt for processor 2.
+  * @rmtoll C2CR          SECRXOIE         LL_C2_IPCC_DisableIT_SECRXO
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_DisableIT_SECRXO(IPCC_TypeDef *IPCCx)
+{
+  CLEAR_BIT(IPCCx->C2CR, IPCC_C2CR_SECRXOIE);
+}
+
+/**
+  * @brief  Check if Receive channel occupied secure interrupt for processor 2 is enabled.
+  * @rmtoll C2CR          SECRXOIE         LL_C2_IPCC_IsEnabledIT_SECRXO
+  * @param  IPCCx IPCC Instance.
+  * @retval State of bit (1 or 0).
+  */
+__STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledIT_SECRXO(IPCC_TypeDef const *const IPCCx)
+{
+  return ((READ_BIT(IPCCx->C2CR, IPCC_C2CR_SECRXOIE) == (IPCC_C2CR_SECRXOIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -512,7 +655,7 @@ __STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledReceiveChannel(IPCC_TypeDef const *
   */
 __STATIC_INLINE void LL_C1_IPCC_ClearFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Channel)
 {
-  WRITE_REG(IPCCx->C1SCR, Channel);
+  SET_BIT(IPCCx->C1SCR, Channel);
 }
 
 /**
@@ -530,7 +673,7 @@ __STATIC_INLINE void LL_C1_IPCC_ClearFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Chan
   */
 __STATIC_INLINE void LL_C1_IPCC_SetFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Channel)
 {
-  WRITE_REG(IPCCx->C1SCR, Channel << IPCC_C1SCR_CH1S_Pos);
+  SET_BIT(IPCCx->C1SCR, Channel << IPCC_C1SCR_CH1S_Pos);
 }
 
 /**
@@ -565,7 +708,7 @@ __STATIC_INLINE uint32_t LL_C1_IPCC_IsActiveFlag_CHx(IPCC_TypeDef  const *const 
   */
 __STATIC_INLINE void LL_C2_IPCC_ClearFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Channel)
 {
-  WRITE_REG(IPCCx->C2SCR, Channel);
+  SET_BIT(IPCCx->C2SCR, Channel);
 }
 
 /**
@@ -583,7 +726,7 @@ __STATIC_INLINE void LL_C2_IPCC_ClearFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Chan
   */
 __STATIC_INLINE void LL_C2_IPCC_SetFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Channel)
 {
-  WRITE_REG(IPCCx->C2SCR, Channel << IPCC_C2SCR_CH1S_Pos);
+  SET_BIT(IPCCx->C2SCR, Channel << IPCC_C2SCR_CH1S_Pos);
 }
 
 /**
@@ -601,6 +744,256 @@ __STATIC_INLINE void LL_C2_IPCC_SetFlag_CHx(IPCC_TypeDef *IPCCx, uint32_t Channe
 __STATIC_INLINE uint32_t LL_C2_IPCC_IsActiveFlag_CHx(IPCC_TypeDef  const *const IPCCx, uint32_t Channel)
 {
   return ((READ_BIT(IPCCx->C2TOC1SR, Channel) == (Channel)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Enable Privilege Configuration.
+  * @rmtoll C1PRIVCFGR        CH1PRIV           LL_C1_IPCC_Enable_PRIVCFGR_CHx\n
+  *         ...\n
+  *         C1PRIVCFGR        CH16PRIV          LL_C1_IPCC_Enable_PRIVCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_Enable_PRIVCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  SET_BIT(IPCCx->C1PRIVCFGR, Channel);
+}
+
+/**
+  * @brief  Disable Privilege Configuration.
+  * @rmtoll C1PRIVCFGR        CH1PRIV           LL_C1_IPCC_Disable_PRIVCFGR_CHx\n
+  *         ...\n
+  *         C1PRIVCFGR        CH16PRIV          LL_C1_IPCC_Disable_PRIVCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_Disable_PRIVCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  CLEAR_BIT(IPCCx->C1PRIVCFGR, Channel);
+}
+
+/**
+  * @brief  Get channel Priv status for processor 1.
+  * @rmtoll C1PRIVCFGR        CH1PRIV           LL_C1_IPCC_IsEnabledPriv_CHx\n
+  *         ...\n
+  *         C1PRIVCFGR        CH16PRIV          LL_C1_IPCC_IsEnabledPriv_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE uint32_t LL_C1_IPCC_IsEnabledPriv_CHx(IPCC_TypeDef const *const IPCCx, uint32_t Channel)
+{
+  return ((READ_BIT(IPCCx->C1PRIVCFGR, Channel) == (Channel)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Enable Privilege Configuration.
+  * @rmtoll C2PRIVCFGR        CH1PRIV           LL_C2_IPCC_Enable_PRIVCFGR_CHx\n
+  *         ...\n
+  *         C2PRIVCFGR        CH16PRIV          LL_C2_IPCC_Enable_PRIVCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_Enable_PRIVCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  SET_BIT(IPCCx->C2PRIVCFGR, Channel);
+}
+
+/**
+  * @brief  Disable Privilege Configuration.
+  * @rmtoll C2PRIVCFGR        CH1PRIV           LL_C2_IPCC_Disable_PRIVCFGR_CHx\n
+  *         ...\n
+  *         C2PRIVCFGR        CH16PRIV          LL_C2_IPCC_Disable_PRIVCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_Disable_PRIVCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  CLEAR_BIT(IPCCx->C2PRIVCFGR, Channel);
+}
+
+/**
+  * @brief  Get channel Privilege status for processor 2.
+  * @rmtoll C2PRIVCFGR        CH1PRIV           LL_C2_IPCC_IsEnabledPriv_CHx\n
+  *         ...\n
+  *         C2PRIVCFGR        CH16PRIV          LL_C2_IPCC_IsEnabledPriv_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledPriv_CHx(IPCC_TypeDef const *const IPCCx, uint32_t Channel)
+{
+  return ((READ_BIT(IPCCx->C2PRIVCFGR, Channel) == (Channel)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Enable Secure Configuration.
+  * @rmtoll C1SECCFGR        CH1SEC           LL_C1_IPCC_Enable_SECCFGR_CHx\n
+  *         ...\n
+  *         C1SECCFGR        CH16SEC          LL_C1_IPCC_Enable_SECCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_Enable_SECCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  SET_BIT(IPCCx->C1SECCFGR, Channel);
+}
+
+/**
+  * @brief  Disable Secure Configuration.
+  * @rmtoll C1SECCFGR        CH1SEC           LL_C1_IPCC_Disable_SECCFGR_CHx\n
+  *         ...\n
+  *         C1SECCFGR        CH16SEC          LL_C1_IPCC_Disable_SECCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C1_IPCC_Disable_SECCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  CLEAR_BIT(IPCCx->C1SECCFGR, Channel);
+}
+
+/**
+  * @brief  Get channel Secure status for processor 1.
+  * @rmtoll C1SECCFGR        CH1SEC           LL_C1_IPCC_IsEnabledSec_CHx\n
+  *         ...\n
+  *         C1SECCFGR        CH16SEC          LL_C1_IPCC_IsEnabledSec_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE uint32_t LL_C1_IPCC_IsEnabledSec_CHx(IPCC_TypeDef const *const IPCCx, uint32_t Channel)
+{
+  return ((READ_BIT(IPCCx->C1SECCFGR, Channel) == (Channel)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Enable Secure configuration for processor 2.
+  * @rmtoll C2SECCFGR        CH1SEC           LL_C2_IPCC_Enable_SECCFGR_CHx\n
+  *         ...\n
+  *         C2SECCFGR        CH16SEC          LL_C2_IPCC_Enable_SECCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_Enable_SECCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  SET_BIT(IPCCx->C2SECCFGR, Channel);
+}
+
+/**
+  * @brief  Disable Secure configuration for processor 2.
+  * @rmtoll C2SECCFGR        CH1SEC           LL_C2_IPCC_Disable_SECCFGR_CHx\n
+  *         ...\n
+  *         C2SECCFGR        CH16SEC          LL_C2_IPCC_Disable_SECCFGR_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE void LL_C2_IPCC_Disable_SECCFGR_CHx(IPCC_TypeDef *const IPCCx, uint32_t Channel)
+{
+  CLEAR_BIT(IPCCx->C2SECCFGR, Channel);
+}
+
+/**
+  * @brief  Get channel Secure status for processor 2.
+  * @rmtoll C2SECCFGR        CH1SEC           LL_C1_IPCC_IsEnabledPriv_CHx\n
+  *         ...\n
+  *         C2SECCFGR        CH16SEC          LL_C1_IPCC_IsEnabledPriv_CHx
+  * @param  IPCCx IPCC Instance.
+  * @param  Channel This parameter can be a combination of the following values:
+  *         @arg @ref LL_IPCC_CHANNEL_1
+  *         ...
+  *         @arg @ref LL_IPCC_CHANNEL_16
+  * @retval None
+  */
+__STATIC_INLINE uint32_t LL_C2_IPCC_IsEnabledSec_CHx(IPCC_TypeDef const *const IPCCx, uint32_t Channel)
+{
+  return ((READ_BIT(IPCCx->C2SECCFGR, Channel) == (Channel)) ? 1UL : 0UL);
+}
+
+/**
+  * @brief  Disable Processor 1 CID filtering.
+  * @rmtoll C1CIDCFGR         IPCC          LL_IPCC_Disable_C1_CID_Filtering
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_IPCC_Disable_C1_CID_Filtering(IPCC_TypeDef *const IPCCx)
+{
+  CLEAR_BIT(IPCCx->C1CIDCFGR, IPCC_C1CIDCFGR_CFEN);
+}
+
+/**
+  * @brief  Configure CID filtering for Processor 1.
+  * @rmtoll C1CIDCFGR         IPCC          LL_IPCC_Config_C1_CID_Filtering
+  * @param  IPCCx IPCC Instance.
+  * @param  CIDDomainId Value between Min_Data=0 and Max_Data=7
+  * @retval None
+  */
+__STATIC_INLINE void LL_IPCC_Config_C1_CID_Filtering(IPCC_TypeDef *const IPCCx, uint32_t CIDDomainId)
+{
+  WRITE_REG(IPCCx->C1CIDCFGR, ((CIDDomainId << IPCC_C1CIDCFGR_CID_Pos) | IPCC_C1CIDCFGR_CFEN));
+}
+
+/**
+  * @brief  Disable Processor 2 CID filtering.
+  * @rmtoll C2CIDCFGR         IPCC          LL_IPCC_Disable_C2_CID_Filtering
+  * @param  IPCCx IPCC Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_IPCC_Disable_C2_CID_Filtering(IPCC_TypeDef *const IPCCx)
+{
+  CLEAR_BIT(IPCCx->C2CIDCFGR, IPCC_C2CIDCFGR_CFEN);
+}
+
+/**
+  * @brief  Configure CID filtering for Processor 2.
+  * @rmtoll C2CIDCFGR         IPCC          LL_IPCC_Config_C2_CID_Filtering
+  * @param  IPCCx IPCC Instance.
+  * @param  CIDDomainId Value between Min_Data=0 and Max_Data=7
+  * @retval None
+  */
+__STATIC_INLINE void LL_IPCC_Config_C2_CID_Filtering(IPCC_TypeDef *const IPCCx, uint32_t CIDDomainId)
+{
+  WRITE_REG(IPCCx->C2CIDCFGR, ((CIDDomainId << IPCC_C2CIDCFGR_CID_Pos) | IPCC_C2CIDCFGR_CFEN));
 }
 
 /**
@@ -638,5 +1031,3 @@ __STATIC_INLINE uint32_t LL_IPCC_GetChannelNumber(IPCC_TypeDef *IPCCx)
 #endif
 
 #endif /* STM32MP2xx_LL_IPCC_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

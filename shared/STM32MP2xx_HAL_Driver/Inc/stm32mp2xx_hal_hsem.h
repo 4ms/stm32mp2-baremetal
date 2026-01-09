@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -60,10 +59,10 @@ extern "C" {
 /** @defgroup HSEM_Semaphore_attributes HSEM semaphore RIF PRIV & SEC protection attributes
   * @{
   */
-#define HSEM_SEM_PRIV  (HSEM_SEM_PRIV_SELECT | (1U << HSEM_SEM_PRIV_VAL_Pos))
-#define HSEM_SEM_NPRIV (HSEM_SEM_PRIV_SELECT | (0U << HSEM_SEM_PRIV_VAL_Pos))
-#define HSEM_SEM_SEC   (HSEM_SEM_SEC_SELECT | (1U << HSEM_SEM_SEC_VAL_Pos))
-#define HSEM_SEM_NSEC  (HSEM_SEM_SEC_SELECT | (0U << HSEM_SEM_SEC_VAL_Pos))
+#define HSEM_SEM_PRIV  (HSEM_SEM_PRIV_SELECT | (1UL << HSEM_SEM_PRIV_VAL_Pos))
+#define HSEM_SEM_NPRIV (HSEM_SEM_PRIV_SELECT | (0UL << HSEM_SEM_PRIV_VAL_Pos))
+#define HSEM_SEM_SEC   (HSEM_SEM_SEC_SELECT | (1UL << HSEM_SEM_SEC_VAL_Pos))
+#define HSEM_SEM_NSEC  (HSEM_SEM_SEC_SELECT | (0UL << HSEM_SEM_SEC_VAL_Pos))
 
 /**
   * @}
@@ -73,14 +72,14 @@ extern "C" {
   * @{
   */
 #define HSEM_CPU_CID_DISABLE   (HSEM_CPU_CID_DISABLE_SELECT)
-#define HSEM_CPU_CID_STATIC_0  (HSEM_CPU_CID_STATIC_SELECT | (0U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_1  (HSEM_CPU_CID_STATIC_SELECT | (1U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_2  (HSEM_CPU_CID_STATIC_SELECT | (2U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_3  (HSEM_CPU_CID_STATIC_SELECT | (3U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_4  (HSEM_CPU_CID_STATIC_SELECT | (4U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_5  (HSEM_CPU_CID_STATIC_SELECT | (5U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_6  (HSEM_CPU_CID_STATIC_SELECT | (6U << HSEM_CPU_CID_VAL_Pos))
-#define HSEM_CPU_CID_STATIC_7  (HSEM_CPU_CID_STATIC_SELECT | (7U << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_0  (HSEM_CPU_CID_STATIC_SELECT | (0UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_1  (HSEM_CPU_CID_STATIC_SELECT | (1UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_2  (HSEM_CPU_CID_STATIC_SELECT | (2UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_3  (HSEM_CPU_CID_STATIC_SELECT | (3UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_4  (HSEM_CPU_CID_STATIC_SELECT | (4UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_5  (HSEM_CPU_CID_STATIC_SELECT | (5UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_6  (HSEM_CPU_CID_STATIC_SELECT | (6UL << HSEM_CPU_CID_VAL_Pos))
+#define HSEM_CPU_CID_STATIC_7  (HSEM_CPU_CID_STATIC_SELECT | (7UL << HSEM_CPU_CID_VAL_Pos))
 
 /**
   * @}
@@ -90,9 +89,9 @@ extern "C" {
   * @{
   */
 #define HSEM_GROUP_CID_DISABLE   (HSEM_GROUP_CID_DISABLE_SELECT)
-#define HSEM_GROUP_CID_STATIC_1  (HSEM_GROUP_CID_STATIC_SELECT | (1U << HSEM_GROUP_CID_CPU1_VAL_Pos))
-#define HSEM_GROUP_CID_STATIC_2  (HSEM_GROUP_CID_STATIC_SELECT | (1U << HSEM_GROUP_CID_CPU2_VAL_Pos))
-#define HSEM_GROUP_CID_STATIC_3  (HSEM_GROUP_CID_STATIC_SELECT | (1U << HSEM_GROUP_CID_CPU3_VAL_Pos))
+#define HSEM_GROUP_CID_STATIC_1  (HSEM_GROUP_CID_STATIC_SELECT | (1UL << HSEM_GROUP_CID_CPU1_VAL_Pos))
+#define HSEM_GROUP_CID_STATIC_2  (HSEM_GROUP_CID_STATIC_SELECT | (1UL << HSEM_GROUP_CID_CPU2_VAL_Pos))
+#define HSEM_GROUP_CID_STATIC_3  (HSEM_GROUP_CID_STATIC_SELECT | (1UL << HSEM_GROUP_CID_CPU3_VAL_Pos))
 
 /**
   * @}
@@ -112,7 +111,7 @@ extern "C" {
   * @param  __SEMID__: semaphore ID from 0 to HSEM_SEMID_MAX
   * @retval Semaphore Mask.
   */
-#define __HAL_HSEM_SEMID_TO_MASK(__SEMID__) (1 << (__SEMID__))
+#define __HAL_HSEM_SEMID_TO_MASK(__SEMID__) (1UL << (__SEMID__))
 
 /**
   * @brief  Enables the specified HSEM interrupts.
@@ -120,7 +119,7 @@ extern "C" {
   * @retval None.
   */
 #if defined(DUAL_CORE)
-#define __HAL_HSEM_ENABLE_IT(__SEM_MASK__) ((((SCB->CPUID & 0x000000F0) >> 4 )== 0x7) ? \
+#define __HAL_HSEM_ENABLE_IT(__SEM_MASK__) ((((SCB->CPUID & 0x000000F0U) >> 4U )== 0x7U) ? \
                                             (HSEM->C1IER |= (__SEM_MASK__)) : \
                                             (HSEM->C2IER |= (__SEM_MASK__)))
 #else
@@ -236,8 +235,8 @@ void HAL_HSEM_IRQHandler(void);
   * @}
   */
 
-/** @addtogroup HSEM_Exported_Functions_Group4 RIF protection configuration functions
-  * @brief    RIF protection configuration functions.
+/** @addtogroup HSEM_Exported_Functions_Group4 HSEM RIF protection configuration functions
+  * @brief      HSEM RIF protection configuration functions.
   * @{
   */
 /* HSEM Configure Semaphore Attributes (SEC & PRIV) ***************************/
@@ -290,14 +289,14 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigAttributes(uint32_t Item, uint32_t *pAttribu
 #define HSEM_CPU_CID_STATIC_SELECT_Pos      29U
 #define HSEM_CPU_CID_DISABLE_SELECT_Pos     31U
 
-#define HSEM_CPU_CID_VAL_Msk                (0x0F << HSEM_CPU_CID_VAL_Pos)
+#define HSEM_CPU_CID_VAL_Msk                (0x0FUL << HSEM_CPU_CID_VAL_Pos)
 
-#define HSEM_SEM_PRIV_SELECT                (1U << HSEM_SEM_PRIV_SELECT_Pos)
-#define HSEM_SEM_SEC_SELECT                 (1U << HSEM_SEM_SEC_SELECT_Pos)
-#define HSEM_GROUP_CID_STATIC_SELECT        (1U << HSEM_GROUP_CID_STATIC_SELECT_Pos)
-#define HSEM_GROUP_CID_DISABLE_SELECT       (1U << HSEM_GROUP_CID_DISABLE_SELECT_Pos)
-#define HSEM_CPU_CID_STATIC_SELECT          (1U << HSEM_CPU_CID_STATIC_SELECT_Pos)
-#define HSEM_CPU_CID_DISABLE_SELECT         (1U << HSEM_CPU_CID_DISABLE_SELECT_Pos)
+#define HSEM_SEM_PRIV_SELECT                (1UL << HSEM_SEM_PRIV_SELECT_Pos)
+#define HSEM_SEM_SEC_SELECT                 (1UL << HSEM_SEM_SEC_SELECT_Pos)
+#define HSEM_GROUP_CID_STATIC_SELECT        (1UL << HSEM_GROUP_CID_STATIC_SELECT_Pos)
+#define HSEM_GROUP_CID_DISABLE_SELECT       (1UL << HSEM_GROUP_CID_DISABLE_SELECT_Pos)
+#define HSEM_CPU_CID_STATIC_SELECT          (1UL << HSEM_CPU_CID_STATIC_SELECT_Pos)
+#define HSEM_CPU_CID_DISABLE_SELECT         (1UL << HSEM_CPU_CID_DISABLE_SELECT_Pos)
 
 /**
   * @}
@@ -338,5 +337,3 @@ HAL_StatusTypeDef HAL_HSEM_GetConfigAttributes(uint32_t Item, uint32_t *pAttribu
 #endif
 
 #endif /* STM32MP2xx_HAL_HSEM_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

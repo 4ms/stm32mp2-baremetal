@@ -10,7 +10,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -35,6 +35,23 @@
 #ifdef HAL_PWR_MODULE_ENABLED
 
 /* Private typedef -----------------------------------------------------------*/
+/** @addtogroup PWREx_Private_Types PWREx Private Types
+  * @{
+  */
+#if defined(CORE_CM33)||defined(CORE_CA35)
+typedef struct
+{
+  uint32_t active;
+  uint32_t ready;
+  uint32_t monitor;
+  uint32_t low;
+  uint32_t lowStandby;
+} pvmPosTypeDef;
+#endif /* defined(CORE_CM33)||defined(CORE_CA35) */
+/**
+  * @}
+  */
+
 /* Private define ------------------------------------------------------------*/
 /** @addtogroup PWREx_Private_Constants PWREx Private Constants
   * @{
@@ -62,7 +79,9 @@
 /** @defgroup PWREx_Private_Functions PWREx Private Functions
   * @{
   */
-
+#if defined(CORE_CM33)||defined(CORE_CA35)
+void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosTypeDef *pvmPos);
+#endif /* defined(CORE_CM33)||defined(CORE_CA35) */
 /** @defgroup PWREx_Group1 Peripheral Extended features functions
   *  @brief Peripheral Extended features functions
   *
@@ -142,12 +161,13 @@
   */
 
 
-
 /**
   * @brief  Enables backup ram content retention when system is in standby or Vbat mode
   *         This feature is implemented  thru  usage of backup Regulator for backup ram supply in standby/Vbat
-  * @note   After reset PWR_CR2/PWR_CR9/PWR_CR10 registers are write-protected, see HAL_PWR_EnableBkUpD3Access/HAL_PWR_DisableBkUpD3Access.
-  * @note   As this function accesses  to one of these registers, user shall check write protection is removed before calling this function
+  * @note   After reset PWR_CR2/PWR_CR9/PWR_CR10 registers are write-protected,
+  * @note   see HAL_PWR_EnableBkUpD3Access/HAL_PWR_DisableBkUpD3Access.
+  * @note   As this function accesses  to one of these registers, user shall check write protection is removed
+  * @note   before calling this function
   * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access during start of user application)
   * @retval void
   */
@@ -158,7 +178,8 @@ void HAL_PWREx_EnableBkUpRamContentStandbyRetention(void)
 
 /**
   * @brief  @brief  Disables backup ram content retention when system is in standby and Vbat mode
-  * @note   As this function accesses  to one of these registers, user shall check write protection is removed before calling this function
+  * @note   As this function accesses  to one of these registers, user shall check write protection is removed
+  * @note   before calling this function
   * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access during start of user application)
   * @retval void
   */
@@ -170,37 +191,37 @@ void HAL_PWREx_DisableBkUpRamContentStandbyRetention(void)
 /**
   * @brief  Enables retention ram content retention when system is in standby and/or Vbat mode (see param)
   *         This feature is implemented  thru  usage of backup Regulator for retention ram supply in standby/Vbat
-  * @param  RetentionRamPowerSupplyMode: Specifies mode where retention RAM is powered thru backup regualtor.
+  * @param  RetentionRamPowerSupplyMode: Specifies mode where retention RAM is powered thru backup regulator.
   *          This parameter can be one of the following values:
   *            @arg PWR_RETENTION_RAM_SUPPLY_ON_STDBYONLY i.e. powering with backup regulator in STANDBY mode only
   *            @arg PWR_RETENTION_RAM_SUPPLY_ON_STDBY_VBAT i.e. powering with backup regulator in STANDBY and VBAT mode
-  * @note   As this function access to one of this register, user shall check write protection is removed (e.g. call to HAL_PWR_EnableBkUpD3Access
-  * @note   at start of user application)
+  * @note   As this function access to one of this register, user shall check write protection is removed
+  * @note   ( e.g. call to HAL_PWR_EnableBkUpD3Access at start of user application)
   * @retval void
   */
-void HAL_PWREx_EnableRetRamContentStandbyRetention(int RetentionRamPowerSupplyMode)
+void HAL_PWREx_EnableRetRamContentStandbyRetention(uint32_t RetentionRamPowerSupplyMode)
 {
-  assert_param(IS_PWR_RETENTION_RAM_SUPPLY(RetentionRamPowerSupplyMode));
-  MODIFY_REG(PWR->CR10, PWR_CR10_RETRBSEN_Msk, RetentionRamPowerSupplyMode);
+  assert_param(IS_PWR_RETENTION_RAM_SUPPLY((uint32_t)RetentionRamPowerSupplyMode));
+  MODIFY_REG(PWR->CR10, PWR_CR10_RETRBSEN_Msk, (uint32_t)RetentionRamPowerSupplyMode);
 }
 
 /**
   * @brief  Disables retention ram content retention  when system is in standby  or vbat
-  * @note   As this function access to one of this register, user shall check write protection is removed (e.g. call to HAL_PWR_EnableBkUpD3Access
-  * @note   at start of user application)
+  * @note   As this function access to one of this register, user shall check write protection is removed
+  * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access at start of user application)
   * @retval void
   */
 void HAL_PWREx_DisableRetRamContentStandbyRetention(void)
 {
   MODIFY_REG(PWR->CR10, PWR_CR10_RETRBSEN_Msk, PWR_RETENTION_RAM_SUPPLY_OFF);
 }
-
+#if defined(PWR_CR9_LPR1BSEN)
 /**
   * @brief  Enables lpsram1 content retention when system is in standby2 and Vbat mode
   *         This feature is implemented  thru  usage of backup Regulator for lpsram ram supply in standby/Vbat
   * @note   when system is in standby1, M0P can R/W lpsram1 whatever this function is called or not.
-  * @note   As this function access to one of this register, user shall check write protection is removed (e.g. call to HAL_PWR_EnableBkUpD3Access
-  * @note   at start of user application)
+  * @note   As this function access to one of this register, user shall check write protection is removed
+  * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access at start of user application)
   * @retval void
   */
 void HAL_PWREx_EnableLpsram1ContentStandby2Retention(void)
@@ -210,16 +231,17 @@ void HAL_PWREx_EnableLpsram1ContentStandby2Retention(void)
 
 /**
   * @brief  Disables lpsram1 content retention when system is in standby2 and Vbat mode
-  * @note   As this function access to one of this register, user shall check write protection is removed (e.g. call to HAL_PWR_EnableBkUpD3Access
-  * @note   at start of user application)
+  * @note   As this function access to one of this register, user shall check write protection is removed
+  * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access at start of user application)
   * @retval void
   */
 void HAL_PWREx_DisableLpsram1ContentStandby2Retention(void)
 {
   CLEAR_BIT(PWR->CR9, PWR_CR9_LPR1BSEN);
 }
+#endif /* defined(PWR_CR9_LPR1BSEN) */
 
-
+#if defined(PWR_CR12_VDDGPURDY)
 #if defined(CORE_CM33)||defined(CORE_CA35)
 /**
   * @brief  Valid GPU supply.
@@ -227,19 +249,15 @@ void HAL_PWREx_DisableLpsram1ContentStandby2Retention(void)
   */
 HAL_StatusTypeDef HAL_PWREx_EnableGPUSupply(void)
 {
-  uint32_t tickstart = 0;
-  uint32_t maskEn, maskRdy;
+  uint32_t tickstart;
+  uint32_t maskEn;
+  uint32_t maskRdy;
 
-#if ! defined(STM32MP2XX_ASSY2_3_2)
   maskEn = PWR_CR12_GPUSV;
   maskRdy = PWR_CR12_VDDGPURDY;
-#else /* ! defined(STM32MP2XX_ASSY2_3_2) */
-  maskEn = PWR_CR12_GPUPDEN;
-  maskRdy = PWR_CR12_GPUPDRDY;
-#endif /* else ! defined(STM32MP2XX_ASSY2_3_2) */
 
   /*request monitoring of supply*/
-  HAL_PWREx_EnableGPUSupplyMonitoring();
+  (void)HAL_PWREx_EnableGPUSupplyMonitoring();
 
 
   /* Get tick */
@@ -265,14 +283,10 @@ HAL_StatusTypeDef HAL_PWREx_EnableGPUSupply(void)
   */
 void HAL_PWREx_DisableGPUSupply(void)
 {
-/* set supply isolation  */
-#if ! defined(STM32MP2XX_ASSY2_3_2)
+  /* set supply isolation  */
   CLEAR_BIT(PWR->CR12, PWR_CR12_GPUSV);
-#else /* ! defined(STM32MP2XX_ASSY2_3_2) */
-  CLEAR_BIT(PWR->CR12, PWR_CR12_GPUPDEN);
-#endif /* else ! defined(STM32MP2XX_ASSY2_3_2) */
 
-/*remove supply monitoring*/
+  /*remove supply monitoring*/
   HAL_PWREx_DisableGPUSupplyMonitoring();
 }
 
@@ -322,7 +336,7 @@ void HAL_PWREx_DisableGPULowThreshold(void)
 uint32_t HAL_PWREx_GetVDDgpuRange(void)
 {
   uint32_t regValue = PWR->CR12;
-  uint32_t result   = PWR_NO_VDDGPU_MEASUREMENT_AVAILABLE;
+  uint32_t result;   /* PWR_NO_VDDGPU_MEASUREMENT_AVAILABLE */
 
   /* check VDDgpu monitoring is ON */
   if ((regValue & PWR_CR12_GPUVMEN) != PWR_CR12_GPUVMEN)
@@ -333,23 +347,27 @@ uint32_t HAL_PWREx_GetVDDgpuRange(void)
   /* Compare the read value to the VDDCPU threshold */
   else if ((regValue & PWR_CR12_VDDGPURDY) == PWR_CR12_VDDGPURDY)
   {
-    result   =  ((PWR->CR12& PWR_CR12_GPULVTEN) == PWR_CR12_GPULVTEN) ? PWR_VDDGPU_ABOVE_EQUAL_LOW_THRESHOLD : PWR_VDDGPU_ABOVE_EQUAL_HIGH_THRESHOLD;
+    result   = ((PWR->CR12 & PWR_CR12_GPULVTEN) == PWR_CR12_GPULVTEN) ? PWR_VDDGPU_ABOVE_EQUAL_LOW_THRESHOLD : \
+               PWR_VDDGPU_ABOVE_EQUAL_HIGH_THRESHOLD;
   }
   else
   {
-    result   =  ((PWR->CR12& PWR_CR12_GPULVTEN) == PWR_CR12_GPULVTEN) ? PWR_VDDGPU_BELOW_LOW_THRESHOLD : PWR_VDDGPU_BELOW_HIGH_THRESHOLD;
+    result   = ((PWR->CR12 & PWR_CR12_GPULVTEN) == PWR_CR12_GPULVTEN) ? PWR_VDDGPU_BELOW_LOW_THRESHOLD : \
+               PWR_VDDGPU_BELOW_HIGH_THRESHOLD;
   }
   return result;
 }
 #endif /* defined(CORE_CM33)||defined(CORE_CA35) */
+#endif /* defined(PWR_CR12_VDDGPURDY) */
 
 #if defined(CORE_CM33)||defined(CORE_CA35)
 /*CPU3 cannot Write into CR2 register (but READ possible)*/
 /**
   * @brief  Enable the VBAT and temperature monitoring.
-  * @note   After reset PWR_CR2/PWR_CR9/PWR_CR10 registers are write-protected, see HAL_PWR_EnableBkUpD3Access/HAL_PWR_DisableBkUpD3Access
-  * @note   As this function accesses  to one of these registers, user shall check write protection is removed before calling this function
-  * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access during start of user application)
+  * @note   After reset PWR_CR2/PWR_CR9/PWR_CR10 registers are write-protected,
+  * @note   see HAL_PWR_EnableBkUpD3Access/HAL_PWR_DisableBkUpD3Access
+  * @note   As this function accesses  to one of these registers, user shall check write protection is removed
+  * @note   before calling this function (e.g. call to HAL_PWR_EnableBkUpD3Access during start of user application)
   * @retval HAL status
   */
 void HAL_PWREx_EnableVbatTempMonitoring(void)
@@ -361,9 +379,10 @@ void HAL_PWREx_EnableVbatTempMonitoring(void)
 
 /**
   * @brief  Disable the VBAT and temperature monitoring.
-  * @note   After reset PWR_CR2/PWR_CR9/PWR_CR10 registers are write-protected, see HAL_PWR_EnableBkUpD3Access/HAL_PWR_DisableBkUpD3Access
-  * @note   As this function accesses  to one of these registers, user shall check write protection is removed before calling this function
-  * @note   (e.g. call to HAL_PWR_EnableBkUpD3Access during start of user application)
+  * @note   After reset PWR_CR2/PWR_CR9/PWR_CR10 registers are write-protected,
+  * @note   see HAL_PWR_EnableBkUpD3Access/HAL_PWR_DisableBkUpD3Access
+  * @note   As this function accesses  to one of these registers, user shall check write protection is removed
+  * @note   before calling this function (e.g. call to HAL_PWR_EnableBkUpD3Access during start of user application)
   * @retval HAL status
   */
 void HAL_PWREx_DisableVbatTempMonitoring(void)
@@ -390,7 +409,7 @@ uint32_t HAL_PWREx_GetTemperatureLevel(void)
   }
 
   /* Compare the read value to the temperature threshold */
-  else if (((regValue & PWR_CR2_TEMPH) != PWR_CR2_TEMPH)&&((regValue & PWR_CR2_TEMPL) != PWR_CR2_TEMPL))
+  else if (((regValue & PWR_CR2_TEMPH) != PWR_CR2_TEMPH) && ((regValue & PWR_CR2_TEMPL) != PWR_CR2_TEMPL))
   {
     result = PWR_TEMP_BETWEEN_HIGH_LOW_THRESHOLD;
   }
@@ -404,6 +423,7 @@ uint32_t HAL_PWREx_GetTemperatureLevel(void)
   {
     result = PWR_TEMP_ABOVE_HIGH_THRESHOLD;
   }
+  else {}
 
   return result;
 }
@@ -426,7 +446,7 @@ uint32_t HAL_PWREx_GetVbatLevel(void)
   }
 
   /* Compare the read value to the Vbat threshold */
-  else if (((regValue & PWR_CR2_VBATH) != PWR_CR2_VBATH)&&((regValue & PWR_CR2_VBATL) != PWR_CR2_VBATL))
+  else if (((regValue & PWR_CR2_VBATH) != PWR_CR2_VBATH) && ((regValue & PWR_CR2_VBATL) != PWR_CR2_VBATL))
   {
     result   =  PWR_VBAT_BETWEEN_HIGH_LOW_THRESHOLD;
   }
@@ -440,10 +460,10 @@ uint32_t HAL_PWREx_GetVbatLevel(void)
   {
     result   =  PWR_VBAT_ABOVE_HIGH_THRESHOLD;
   }
+  else {}
 
   return result;
 }
-
 
 
 /**
@@ -536,6 +556,7 @@ __weak void HAL_PWREx_TEMP_INRANGECallback(void)
 }
 
 
+#if defined (PWR_CR6_VCPUMONEN)
 
 /* Power VDDcpu detection functions */
 
@@ -549,41 +570,41 @@ __weak void HAL_PWREx_TEMP_INRANGECallback(void)
   * @retval None
   */
 #if defined(CORE_CM33)||defined(CORE_CA35)
-void HAL_PWREx_ConfigVDDcpuD(PWREx_DetectionTypeDef *sConfigVDDcpuD)
+void HAL_PWREx_ConfigVDDcpuD(const PWREx_DetectionTypeDef *sConfigVDDcpuD)
 {
   /* Check the parameters */
-  assert_param(IS_PWR_VDDcpuD_LEVEL(sConfigVDDcpuD->Level));
-  assert_param(IS_PWR_VDDcpuD_MODE(sConfigVDDcpuD->Mode));
+  assert_param(IS_PWR_VDDCPUD_LEVEL(sConfigVDDcpuD->Level));
+  assert_param(IS_PWR_VDDCPUD_MODE(sConfigVDDcpuD->Mode));
 
   /* update the VCPULLS bit according to Level value */
   MODIFY_REG(PWR->CR6, PWR_CR6_VCPUH, sConfigVDDcpuD->Level);
 
 
   /* Clear any previous config. Keep it clear if no IT mode is selected */
-  __HAL_PWR_VDDcpuD_EXTI_DISABLE_IT();
-  __HAL_PWR_VDDcpuD_EXTI_DISABLE_RISING_FALLING_EDGE();
+  __HAL_PWR_VDDCPUD_EXTI_DISABLE_IT();
+  __HAL_PWR_VDDCPUD_EXTI_DISABLE_RISING_FALLING_EDGE();
 
 
   /* Configure the interrupt mode */
-  if (IS_AN_INTERRUPT_PWR_VDDcpuD_MODE(sConfigVDDcpuD->Mode))
+  if (IS_AN_INTERRUPT_PWR_VDDCPUD_MODE(sConfigVDDcpuD->Mode))
   {
-    __HAL_PWR_VDDcpuD_EXTI_ENABLE_IT();
+    __HAL_PWR_VDDCPUD_EXTI_ENABLE_IT();
   }
 
   /* Configure the edge */
-  if ((sConfigVDDcpuD->Mode ) == PWR_VDDcpuD_MODE_IT_RISING)
+  if ((sConfigVDDcpuD->Mode) == PWR_VDDCPUD_MODE_IT_RISING)
   {
-    __HAL_PWR_VDDcpuD_EXTI_ENABLE_RISING_EDGE();
+    __HAL_PWR_VDDCPUD_EXTI_ENABLE_RISING_EDGE();
   }
 
-  if ((sConfigVDDcpuD->Mode ) == PWR_VDDcpuD_MODE_IT_FALLING)
+  if ((sConfigVDDcpuD->Mode) == PWR_VDDCPUD_MODE_IT_FALLING)
   {
-    __HAL_PWR_VDDcpuD_EXTI_ENABLE_FALLING_EDGE();
+    __HAL_PWR_VDDCPUD_EXTI_ENABLE_FALLING_EDGE();
   }
 
-  if ((sConfigVDDcpuD->Mode ) == PWR_VDDcpuD_MODE_IT_RISING_FALLING)
+  if ((sConfigVDDcpuD->Mode) == PWR_VDDCPUD_MODE_IT_RISING_FALLING)
   {
-    __HAL_PWR_VDDcpuD_EXTI_ENABLE_RISING_FALLING_EDGE();
+    __HAL_PWR_VDDCPUD_EXTI_ENABLE_RISING_FALLING_EDGE();
   }
 }
 
@@ -621,7 +642,7 @@ uint32_t HAL_PWREx_GetVDDcpuRange(void)
   }
 
   /* Compare the read value to the VDDCPU threshold */
-  else if (((regValue & PWR_CR6_VCPUH) != PWR_CR6_VCPUH)&&((regValue & PWR_CR6_VCPUL) != PWR_CR6_VCPUL))
+  else if (((regValue & PWR_CR6_VCPUH) != PWR_CR6_VCPUH) && ((regValue & PWR_CR6_VCPUL) != PWR_CR6_VCPUL))
   {
     result   =  PWR_VDDCPU_BETWEEN_HIGH_LOW_THRESHOLD;
   }
@@ -635,10 +656,10 @@ uint32_t HAL_PWREx_GetVDDcpuRange(void)
   {
     result   =  PWR_VDDCPU_ABOVE_HIGH_THRESHOLD;
   }
+  else {}
 
   return result;
 }
-
 
 /**
   * @brief  This function handles the PWR VDDcpu interrupt request.
@@ -666,7 +687,7 @@ void HAL_PWREx_VDDcpuD_IRQHandler(void)
   }
 
   /* Clear PWR VDDcpuD EXTI pending bit */
-  __HAL_PWR_VDDcpuD_EXTI_CLEAR_FLAG();
+  __HAL_PWR_VDDCPUD_EXTI_CLEAR_FLAG();
 }
 
 /**
@@ -693,9 +714,11 @@ __weak void HAL_PWREx_VDDcpuD_INRANGECallback(void)
    */
 }
 
+#endif /* PWR_CR6_VCPUMONEN */
+
 
 /* Power VDDcore detection functions */
-
+#if defined (PWR_CR5_VCOREMONEN)
 /**
   * @brief  Configure the VDDcore threshold detection
   * @param  sConfigVDDcoreD: pointer to an PWREx_DetectionTypeDef structure that contains the configuration
@@ -705,35 +728,35 @@ __weak void HAL_PWREx_VDDcpuD_INRANGECallback(void)
   * @retval None
   */
 #if defined(CORE_CM33)||defined(CORE_CA35)
-void HAL_PWREx_ConfigVDDcoreD(PWREx_DetectionTypeDef *sConfigVDDcoreD)
+void HAL_PWREx_ConfigVDDcoreD(const PWREx_DetectionTypeDef *sConfigVDDcoreD)
 {
   /* Check the parameters, no level threshold parameter for VDDcore */
-  assert_param(IS_PWR_VDDcoreD_MODE(sConfigVDDcoreD->Mode));
+  assert_param(IS_PWR_VDDCORED_MODE(sConfigVDDcoreD->Mode));
 
   /* Clear any previous config. Keep it clear if no IT mode is selected */
-  __HAL_PWR_VDDcoreD_EXTI_DISABLE_IT();
-  __HAL_PWR_VDDcoreD_EXTI_DISABLE_RISING_FALLING_EDGE();
+  __HAL_PWR_VDDCORED_EXTI_DISABLE_IT();
+  __HAL_PWR_VDDCORED_EXTI_DISABLE_RISING_FALLING_EDGE();
 
   /* Configure the interrupt mode */
-  if (IS_AN_INTERRUPT_PWR_VDDcoreD_MODE(sConfigVDDcoreD->Mode))
+  if (IS_AN_INTERRUPT_PWR_VDDCORED_MODE(sConfigVDDcoreD->Mode))
   {
-    __HAL_PWR_VDDcoreD_EXTI_ENABLE_IT();
+    __HAL_PWR_VDDCORED_EXTI_ENABLE_IT();
   }
 
   /* Configure the edge */
-  if ((sConfigVDDcoreD->Mode ) == PWR_VDDcoreD_MODE_IT_RISING)
+  if ((sConfigVDDcoreD->Mode) == PWR_VDDCORED_MODE_IT_RISING)
   {
-    __HAL_PWR_VDDcoreD_EXTI_ENABLE_RISING_EDGE();
+    __HAL_PWR_VDDCORED_EXTI_ENABLE_RISING_EDGE();
   }
 
-  if ((sConfigVDDcoreD->Mode ) == PWR_VDDcoreD_MODE_IT_FALLING)
+  if ((sConfigVDDcoreD->Mode) == PWR_VDDCORED_MODE_IT_FALLING)
   {
-    __HAL_PWR_VDDcoreD_EXTI_ENABLE_FALLING_EDGE();
+    __HAL_PWR_VDDCORED_EXTI_ENABLE_FALLING_EDGE();
   }
 
-  if ((sConfigVDDcoreD->Mode ) == PWR_VDDcoreD_MODE_IT_RISING_FALLING)
+  if ((sConfigVDDcoreD->Mode) == PWR_VDDCORED_MODE_IT_RISING_FALLING)
   {
-    __HAL_PWR_VDDcoreD_EXTI_ENABLE_RISING_FALLING_EDGE();
+    __HAL_PWR_VDDCORED_EXTI_ENABLE_RISING_FALLING_EDGE();
   }
 }
 
@@ -771,7 +794,7 @@ uint32_t HAL_PWREx_GetVDDcoreRange(void)
   }
 
   /* Compare the read value to the VDDCORE threshold */
-  else if (((regValue & PWR_CR5_VCOREH) != PWR_CR5_VCOREH)&&((regValue & PWR_CR5_VCOREL) != PWR_CR5_VCOREL))
+  else if (((regValue & PWR_CR5_VCOREH) != PWR_CR5_VCOREH) && ((regValue & PWR_CR5_VCOREL) != PWR_CR5_VCOREL))
   {
     result   =  PWR_VDDCORE_BETWEEN_HIGH_LOW_THRESHOLD;
   }
@@ -785,6 +808,7 @@ uint32_t HAL_PWREx_GetVDDcoreRange(void)
   {
     result   =  PWR_VDDCORE_ABOVE_HIGH_THRESHOLD;
   }
+  else {}
 
   return result;
 }
@@ -816,7 +840,7 @@ void HAL_PWREx_VDDcoreD_IRQHandler(void)
   }
 
   /* Clear PWR VDDcoreD EXTI pending bit */
-  __HAL_PWR_VDDcoreD_EXTI_CLEAR_FLAG();
+  __HAL_PWR_VDDCORED_EXTI_CLEAR_FLAG();
 }
 
 /**
@@ -843,20 +867,12 @@ __weak void HAL_PWREx_VDDcoreD_INRANGECallback(void)
    */
 }
 
+#endif /* PWR_CR5_VCOREMONEN */
 
 
 #if defined(CORE_CM33)||defined(CORE_CA35)
-typedef struct
-{
-  uint32_t activ;
-  uint32_t ready;
-  uint32_t monitor;
-  uint32_t low;
-  uint32_t lowStandby;
-} pvmPosType;
 
-
-void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosType *pvmPos)
+void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosTypeDef *pvmPos)
 {
   assert_param(IS_PWR_PVM_PERIPH(periph));
 
@@ -864,7 +880,7 @@ void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosType *pvmPos)
   {
     case PWR_PVM_VDDIO1 :
       *regPtr = &PWR->CR8;
-      pvmPos->activ      = PWR_CR8_VDDIO1SV_Pos;
+      pvmPos->active      = PWR_CR8_VDDIO1SV_Pos;
       pvmPos->ready      = PWR_CR8_VDDIO1RDY_Pos;
       pvmPos->monitor    = PWR_CR8_VDDIO1VMEN_Pos;
       pvmPos->low        = PWR_CR8_VDDIO1VRSEL_Pos;
@@ -872,7 +888,7 @@ void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosType *pvmPos)
       break;
     case PWR_PVM_VDDIO2 :
       *regPtr = &PWR->CR7;
-      pvmPos->activ      = PWR_CR7_VDDIO2SV_Pos;
+      pvmPos->active      = PWR_CR7_VDDIO2SV_Pos;
       pvmPos->ready      = PWR_CR7_VDDIO2RDY_Pos;
       pvmPos->monitor    = PWR_CR7_VDDIO2VMEN_Pos;
       pvmPos->low        = PWR_CR7_VDDIO2VRSEL_Pos;
@@ -880,38 +896,44 @@ void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosType *pvmPos)
       break;
     case PWR_PVM_VDDIO3 :
       *regPtr = &PWR->CR1;
-      pvmPos->activ   = PWR_CR1_VDDIO3SV_Pos;
+      pvmPos->active   = PWR_CR1_VDDIO3SV_Pos;
       pvmPos->ready   = PWR_CR1_VDDIO3RDY_Pos;
       pvmPos->monitor = PWR_CR1_VDDIO3VMEN_Pos;
       break;
+#if defined(PWR_CR1_VDDIO4SV)
     case PWR_PVM_VDDIO4 :
       *regPtr = &PWR->CR1;
-      pvmPos->activ   = PWR_CR1_VDDIO4SV_Pos;
+      pvmPos->active   = PWR_CR1_VDDIO4SV_Pos;
       pvmPos->ready   = PWR_CR1_VDDIO4RDY_Pos;
       pvmPos->monitor = PWR_CR1_VDDIO4VMEN_Pos;
       break;
+#endif /* PWR_CR1_VDDIO4SV */
+#if defined(PWR_CR1_USB33SV)
     case PWR_PVM_USB33 :
       *regPtr = &PWR->CR1;
-      pvmPos->activ   = PWR_CR1_USB33SV_Pos;
+      pvmPos->active   = PWR_CR1_USB33SV_Pos;
       pvmPos->ready   = PWR_CR1_USB33RDY_Pos;
       pvmPos->monitor = PWR_CR1_USB33VMEN_Pos;
       break;
+#endif /* PWR_CR1_USB33SV */
+#if defined(PWR_CR1_UCPDSV)
     case PWR_PVM_UCPD :
       *regPtr = &PWR->CR1;
-      pvmPos->activ   = PWR_CR1_UCPDSV_Pos;
+      pvmPos->active   = PWR_CR1_UCPDSV_Pos;
       pvmPos->ready   = PWR_CR1_UCPDRDY_Pos;
       pvmPos->monitor = PWR_CR1_UCPDVMEN_Pos;
       break;
+#endif /* PWR_CR1_UCPDSV */
     case PWR_PVM_A :
       *regPtr = &PWR->CR1;
-      pvmPos->activ   = PWR_CR1_ASV_Pos;
+      pvmPos->active   = PWR_CR1_ASV_Pos;
       pvmPos->ready   = PWR_CR1_ARDY_Pos;
       pvmPos->monitor = PWR_CR1_AVMEN_Pos;
       break;
     default :
       *regPtr = NULL;
       break;
-    }
+  }
 }
 
 
@@ -920,8 +942,10 @@ void pvmPosition(uint32_t periph, __IO uint32_t **regPtr, pvmPosType *pvmPos)
   * @param  mode: indicates if an interruption is raised when PVM status changes.
   *          This parameter can be one of the following values:
   *            @arg PWR_PVM_MODE_NORMAL                              no interruption
-  *            @arg PWR_PVM_MODE_IT_RISING                           interruption when all PVM periph voltage become equals or higher than PVM threshold
-  *            @arg PWR_PVM_MODE_IT_FALLING                          interruption when at least one  PVM periph voltage become lower  than PVM threshold
+  *            @arg PWR_PVM_MODE_IT_RISING                           interruption when all PVM periph voltage become
+                                                                     equals or higher than PVM threshold
+  *            @arg PWR_PVM_MODE_IT_FALLING                          interruption when at least one  PVM periph voltage
+                                                                     become lower  than PVM threshold
   *            @arg PWR_PVM_MODE_IT_RISING_FALLING                   combined cases
   * @note   Voltage threshold is 1.6 volt whatever periph is.
   * @retval None
@@ -941,17 +965,17 @@ void HAL_PWREx_ConfigurePVM(uint32_t mode)
   }
 
   /* Configure the edge */
-  if ((mode ) == PWR_PVM_MODE_IT_RISING)
+  if ((mode) == PWR_PVM_MODE_IT_RISING)
   {
     __HAL_PWR_PVM_EXTI_ENABLE_RISING_EDGE();
   }
 
-  if ((mode ) == PWR_PVM_MODE_IT_FALLING)
+  if ((mode) == PWR_PVM_MODE_IT_FALLING)
   {
     __HAL_PWR_PVM_EXTI_ENABLE_FALLING_EDGE();
   }
 
-  if ((mode ) == PWR_PVM_MODE_IT_RISING_FALLING)
+  if ((mode) == PWR_PVM_MODE_IT_RISING_FALLING)
   {
     __HAL_PWR_PVM_EXTI_ENABLE_RISING_FALLING_EDGE();
   }
@@ -960,37 +984,43 @@ void HAL_PWREx_ConfigurePVM(uint32_t mode)
 /**
   * @brief  Set  voltage  for VDDIO1/2.
   * @param  periph (single), should be IO1 or IO2
-  * @param  setLow , if true low voltage is requested (1.8) else high voltage (3.3, default)
-  * @param  setLowStandby , if true low voltage is requested (1.8) in standby and standby exit else high voltage (3.3, default)
+  * @param  setLow if true low voltage is requested (1.8) else high voltage (3.3, default)
+  *                @arg need to paas the address of uint32_t type variable
+  * @param  setLowStandby  if true low voltage is requested (1.8) in standby and standby exit else high voltage
+  *                        (3.3, default)
+  *                        @arg need to paas the address of uint32_t type variable
   * @retval None
   */
 void HAL_PWREx_Set_IO_Voltage(uint32_t periph, uint32_t setLow, uint32_t setLowStandby)
 {
   __IO uint32_t *regPtr;
-  pvmPosType pvmPos;
+  pvmPosTypeDef pvmPos;
 
   assert_param(IS_PWR_CONFIGURABLE_IO(periph));
-  pvmPosition( periph, &regPtr, &pvmPos);
-  setLow        ? (SET_BIT(*regPtr, 1U << (pvmPos.low)))        : (CLEAR_BIT(*regPtr, 1U << (pvmPos.low)));
-  setLowStandby ? (SET_BIT(*regPtr, 1U << (pvmPos.lowStandby))) : (CLEAR_BIT(*regPtr, 1U << (pvmPos.lowStandby)));
+  pvmPosition(periph, &regPtr, &pvmPos);
+  (setLow != 0U)        ? (SET_BIT(*regPtr, 1UL << (pvmPos.low)))        : (CLEAR_BIT(*regPtr, 1UL << (pvmPos.low)));
+  (setLowStandby != 0U) ? (SET_BIT(*regPtr, 1UL << (pvmPos.lowStandby))) : \
+  (CLEAR_BIT(*regPtr, 1UL << (pvmPos.lowStandby)));
 }
 
 /**
   * @brief  Get  voltage  for VDDIO1/2.
   * @param  periph (single), should be IO1 or IO2
-  * @param  isLow , true if low voltage is set  (1.8) else high voltage (3.3, default)
-  * @param  isLowStandby , true low voltage is set (1.8) in standby and standby exit else high voltage (3.3, default)
+  * @param  isLow  true if low voltage is set  (1.8) else high voltage (3.3, default)
+  *                @arg need to paas the address of uint32_t type variable
+  * @param  isLowStandby true low voltage is set (1.8) in standby and standby exit else high voltage (3.3, default)
+  *                      @arg need to paas the address of uint32_t type variable
   * @retval None
   */
 void HAL_PWREx_Get_IO_Voltage(uint32_t periph, uint32_t *isLow, uint32_t *isLowStandby)
 {
   __IO uint32_t *regPtr;
-  pvmPosType pvmPos;
+  pvmPosTypeDef pvmPos;
 
   assert_param(IS_PWR_CONFIGURABLE_IO(periph));
-  pvmPosition( periph, &regPtr, &pvmPos);
-  *isLow        = READ_BIT(*regPtr, 1U << (pvmPos.low))        ? 1 : 0;
-  *isLowStandby = READ_BIT(*regPtr, 1U << (pvmPos.lowStandby)) ? 1 : 0;
+  pvmPosition(periph, &regPtr, &pvmPos);
+  *isLow        = (READ_BIT(*regPtr, 1UL << (pvmPos.low))        != 0U) ? 1U : 0U;
+  *isLowStandby = (READ_BIT(*regPtr, 1UL << (pvmPos.lowStandby)) != 0U) ? 1U : 0U;
 }
 
 /**
@@ -1002,8 +1032,9 @@ void HAL_PWREx_Get_IO_Voltage(uint32_t periph, uint32_t *isLow, uint32_t *isLowS
 HAL_StatusTypeDef HAL_PWREx_EnableSupply(uint32_t periph)
 {
   __IO uint32_t *regPtr;
-  uint32_t tickstart, mskRdy;
-  pvmPosType pvmPos = {0,0,0,0,0};
+  uint32_t tickstart;
+  uint32_t mskRdy;
+  pvmPosTypeDef pvmPos = {0, 0, 0, 0, 0};
 
   assert_param(IS_PWR_PVM_PERIPH(periph));
 
@@ -1011,8 +1042,8 @@ HAL_StatusTypeDef HAL_PWREx_EnableSupply(uint32_t periph)
   HAL_PWREx_EnableSupplyMonitoring(periph);
 
   /* Wait until regulator ready flag is set */
-  pvmPosition( periph, &regPtr, &pvmPos);
-  mskRdy = 1U << pvmPos.ready ;
+  pvmPosition(periph, &regPtr, &pvmPos);
+  mskRdy = 1UL << pvmPos.ready ;
   tickstart = HAL_GetTick();
 
   while ((*regPtr & mskRdy) != mskRdy)
@@ -1024,13 +1055,13 @@ HAL_StatusTypeDef HAL_PWREx_EnableSupply(uint32_t periph)
   }
 
   /* remove isolation */
-  SET_BIT(*regPtr, 1U << (pvmPos.activ));
+  SET_BIT(*regPtr, (1UL << (pvmPos.active)));
   return HAL_OK;
 }
 
 
 /**
-  * @brief  unValidate a Peripheral Supply Voltage (PVS)
+  * @brief  invalidate a Peripheral Supply Voltage (PVS)
   * @note   After  using a PVM peripheral, its supply shall be de-validated (set electrical and logical isolation)
   * @param  periph (single), for all PVM periph value, see  macro IS_PWR_PVM_PERIPH
   * @retval None
@@ -1038,12 +1069,12 @@ HAL_StatusTypeDef HAL_PWREx_EnableSupply(uint32_t periph)
 void HAL_PWREx_DisableSupply(uint32_t periph)
 {
   __IO uint32_t *regPtr;
-  pvmPosType pvmPos = {0,0,0,0,0};
+  pvmPosTypeDef pvmPos = {0, 0, 0, 0, 0};
 
   assert_param(IS_PWR_PVM_PERIPH(periph));
-  pvmPosition( periph, &regPtr, &pvmPos);
+  pvmPosition(periph, &regPtr, &pvmPos);
   /*set supply isolation */
-  CLEAR_BIT(*regPtr, 1U << (pvmPos.activ));
+  CLEAR_BIT(*regPtr, 1U << (pvmPos.active));
   /*remove supply monitoring*/
   HAL_PWREx_EnableSupplyMonitoring(periph);
 }
@@ -1058,11 +1089,11 @@ void HAL_PWREx_DisableSupply(uint32_t periph)
 void HAL_PWREx_EnableSupplyMonitoring(uint32_t periph)
 {
   __IO uint32_t *regPtr;
-  pvmPosType pvmPos = {0,0,0,0,0};
+  pvmPosTypeDef pvmPos = {0, 0, 0, 0, 0};
 
   assert_param(IS_PWR_PVM_PERIPH(periph));
-  pvmPosition( periph, &regPtr, &pvmPos);
-  SET_BIT(*regPtr, 1U << (pvmPos.monitor));
+  pvmPosition(periph, &regPtr, &pvmPos);
+  SET_BIT(*regPtr, 1UL << (pvmPos.monitor));
 }
 
 
@@ -1075,10 +1106,10 @@ void HAL_PWREx_EnableSupplyMonitoring(uint32_t periph)
 void HAL_PWREx_DisableSupplyMonitoring(uint32_t periph)
 {
   __IO uint32_t *regPtr;
-  pvmPosType pvmPos = {0,0,0,0,0};
+  pvmPosTypeDef pvmPos = {0, 0, 0, 0, 0};
 
   assert_param(IS_PWR_PVM_PERIPH(periph));
-  pvmPosition( periph, &regPtr, &pvmPos);
+  pvmPosition(periph, &regPtr, &pvmPos);
   CLEAR_BIT(*regPtr, 1U << (pvmPos.monitor));
 }
 
@@ -1092,12 +1123,12 @@ void HAL_PWREx_DisableSupplyMonitoring(uint32_t periph)
 uint32_t HAL_PWREx_PVM_IsBelowThreshold(uint32_t periph)
 {
   __IO uint32_t *regPtr;
-  pvmPosType pvmPos = {0,0,0,0,0};
+  pvmPosTypeDef pvmPos = {0, 0, 0, 0, 0};
 
   assert_param(IS_PWR_PVM_PERIPH(periph));
-  pvmPosition( periph, &regPtr, &pvmPos);
+  pvmPosition(periph, &regPtr, &pvmPos);
   /*return true if Ready bit not set*/
-  return (*regPtr & (1U << pvmPos.ready)) != (1U << (pvmPos.ready)) ;
+  return (((*regPtr & (1UL << (pvmPos.ready))) != (1UL << (pvmPos.ready))) ? 1UL : 0UL) ;
 }
 
 
@@ -1109,14 +1140,14 @@ uint32_t HAL_PWREx_PVM_IsBelowThreshold(uint32_t periph)
 void HAL_PWREx_PVM_IRQHandler(void)
 {
   if (((EXTI1->FPR1 & PWR_EXTI_LINE_PVM) == PWR_EXTI_LINE_PVM))
-  /*interruption on falling  edge, thus one (or several) supply is lower than PVM threshold*/
+    /*interruption on falling  edge, thus one (or several) supply is lower than PVM threshold*/
   {
     HAL_PWREx_PVM_LowerCallback();
   }
 
   if (((EXTI1->RPR1 & PWR_EXTI_LINE_PVM) == PWR_EXTI_LINE_PVM))
   {
-  /*interruption on rising  edge, thus all supplies are equal or greater under PVM threshold*/
+    /*interruption on rising  edge, thus all supplies are equal or greater under PVM threshold*/
     HAL_PWREx_PVM_EqualHigherCallback();
   }
   /* Clear PWR PVD EXTI pending bit */
@@ -1128,7 +1159,7 @@ void HAL_PWREx_PVM_IRQHandler(void)
   *@note  This function is called if :
            -PVM interruption on rising edge has been requested
            -one (or several)  monitored PVM periph power supply  becomes lower than PVM threshold
-  *@note  If needed, it is under user responsability to handle level of each PVM periph  thru state variables.
+  *@note  If needed, it is under user responsibility to handle level of each PVM periph  thru state variables.
        HAL_PWREx_PVM_LowerCallback and HAL_PWREx_PVM_EqualHigherCallback  callback enable such processing.
   *@retval None
   */
@@ -1144,7 +1175,7 @@ __weak void HAL_PWREx_PVM_LowerCallback(void)
            -PVM interruption on falling edge has been requested
            -power supply of one (or several) monitored PVM periph becomes greater or equal  than PVM threshold
            and power supply for all other monitored PVM peripherals is also greater or equal  than PVM threshold
-  *@note  If needed, it is under user responsability to handle level of each PVM periph  thru state variables.
+  *@note  If needed, it is under user responsibility to handle level of each PVM periph  thru state variables.
        HAL_PWREx_PVM_LowerCallback and HAL_PWREx_PVM_EqualHigherCallback  callback enable such processing.
   *@retval None
   */
@@ -1154,7 +1185,7 @@ __weak void HAL_PWREx_PVM_EqualHigherCallback(void)
             the HAL_PWREx_PVM_EqualHigherCallback could be implemented in the user file */
 }
 
-
+#if defined(PWR_CR12_VDDGPURDY)
 /**
   * @brief  This function handles the PWR_VDDGPU_VD interrupt request.
   * @note   This API should be called under the VDDGPU_VD_IRQHandler().
@@ -1171,7 +1202,7 @@ void HAL_PWREx_GPU_IRQHandler(void)
     HAL_PWREx_GPU_EqualHigherCallback();
   }
   /* Clear PWR GPU EXTI pending bit */
-  __HAL_PWR_VDDgpuD_EXTI_CLEAR_FLAG();
+  __HAL_PWR_VDDGPUD_EXTI_CLEAR_FLAG();
 }
 
 /**
@@ -1193,15 +1224,15 @@ __weak void HAL_PWREx_GPU_EqualHigherCallback(void)
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PWREx_GPU_EqualHigherCallback could be implemented in the user file */
 }
-
+#endif /* defined(PWR_CR12_VDDGPURDY) */
 #endif /*defined(CORE_CM33)||defined(CORE_CA35)*/
 
 /**
   * @brief  PWR WKUP interrupt callback
   * @note   In case of M0+ wakeup from tamper, Callback shall manage wakeup tamper event
-  *         (which one has trigged, clear operation, ..)
+  *         (which one has triggered, clear operation, ..)
   *         Not managed  at PWR level as power module.
-  * @param  PWR wakeup line number (only case M33 or A35 wakeup)
+  * @param  line wakeup line number (only case M33 or A35 wakeup)
   * @retval None
   */
 #if defined(CORE_CM33)||defined(CORE_CA35)
@@ -1226,17 +1257,19 @@ void HAL_PWREx_WAKEUP_PIN_IRQHandler(void)
 {
 #define WKUPCR_ADD_OFFSET      0x01u
 
-  /* Wakeup event  for current CPU detected on a (or several) PWR line(s), line shall be identified, associated flag cleared and callback invoked */
+  /* Wakeup event  for current CPU detected on a (or several) PWR line(s), line shall be identified,
+     associated flag cleared and callback invoked */
   __IO uint32_t *regaddr;
 
   for (uint16_t index = PWR_WAKEUP_PIN_ID1; index <= PWR_WAKEUP_PIN_ID6; index++)
   {
-    regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET*index);        /* Selected register corresponding to input wakeup line*/
-    if (READ_BIT(*regaddr, PWR_WKUPCR1_WKUPF) != RESET)
+    /* Selected register corresponding to input wakeup line*/
+    regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET * index);
+    if (READ_BIT(*regaddr, PWR_WKUPCR1_WKUPF) != (uint32_t)RESET)
     {
-    /* Clear PWR WKUPF#i flag */
+      /* Clear PWR WKUPF#i flag */
       SET_BIT(*regaddr, PWR_WKUPCR1_WKUPC);
-    /* PWR WKUP#i interrupt user callback */
+      /* PWR WKUP#i interrupt user callback */
       HAL_PWREx_WKUP_Callback(index);
     }
   }
@@ -1263,8 +1296,6 @@ void HAL_PWREx_EnterCSTOPAllowSTOP(uint32_t Regulator, uint8_t STOPEntry)
 }
 
 
-
-
 #if defined(CORE_CM33)||defined(CORE_CA35)
 /**
   * @brief Enters MPU  CSTOP allowing system Standby mode (1 or 2 see param)
@@ -1278,7 +1309,7 @@ void HAL_PWREx_EnterCSTOPAllowSTANDBY(uint8_t STANDBYType)
 {
   HAL_PWR_EnterSTANDBYMode(STANDBYType);
 }
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CA35) */
 
 
 /**
@@ -1286,17 +1317,17 @@ void HAL_PWREx_EnterCSTOPAllowSTANDBY(uint8_t STANDBYType)
   * @note   before entering standby user shall call this function other flag may not be relevant
   * @retval None
   */
-void HAL_PWREx_ClearStatusFlag (void)
+void HAL_PWREx_ClearStatusFlag(void)
 {
 #if defined(CORE_CA35)
   CLEAR_BIT(PWR->CPU1CR, PWR_CPU1CR_CSSF);
-#endif
+#endif /* CORE_CA35 */
 #if defined(CORE_CM33)
   CLEAR_BIT(PWR->CPU2CR, PWR_CPU2CR_CSSF);
-#endif
+#endif /* CORE_CM33 */
 #if defined(CORE_CM0PLUS)
   CLEAR_BIT(PWR->CPU3CR, PWR_CPU3CR_CSSF);
-#endif
+#endif /* CORE_CM0PLUS */
 }
 
 /**
@@ -1316,6 +1347,3 @@ void HAL_PWREx_ClearStatusFlag (void)
   * @}
   */
 
-
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

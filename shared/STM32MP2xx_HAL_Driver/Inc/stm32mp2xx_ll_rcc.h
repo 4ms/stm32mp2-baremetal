@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    stm32mp25xx_ll_rcc.h
+  * @file    stm32mp2xx_ll_rcc.h
   * @author  MCD Application Team
   * @version $VERSION$
   * @date    $DATE$
@@ -20,13 +20,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -48,7 +47,31 @@ extern "C" {
 
 #if defined(RCC)
 
+/** @defgroup RCC_LL RCC
+  * @{
+  */
+
+/* Private types -------------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+
+
+/* Private constants ---------------------------------------------------------*/
+/** @defgroup RCC_LL_Private_Constants RCC Private Constants
+  * @{
+  */
+
+/* Define all reset flags mask */
+#define LL_RCC_HWRSTSCLRR_ALL  0x000F7FFFU
+/**
+  * @}
+  */
+
+/* Exported types ------------------------------------------------------------*/
 #if defined(USE_FULL_LL_DRIVER)
+/** @defgroup RCC_LL_Exported_Types RCC Exported Types
+  * @{
+  */
 
 /**
   * @brief  RCC Clocks Frequency Structure
@@ -68,49 +91,13 @@ typedef struct
   uint32_t APB2_Frequency;   /*!< APB2 clock frequency */
   uint32_t APB3_Frequency;   /*!< APB3 clock frequency */
   uint32_t APB4_Frequency;   /*!< APB4 clock frequency */
+#if defined(RCC_APB5DIVR_APB5DIV)
+  uint32_t APB5_Frequency;   /*!< APB5 clock frequency */
+#endif /* RCC_APB5DIVR_APB5DIV */
   uint32_t APBSR_Frequency;  /*!< APBSR clock frequency */
   uint32_t APBDBG_Frequency; /*!< APBDBG clock frequency */
 } LL_RCC_ClocksTypeDef;
-/**
-  * @}
-  */
 
-/**
-  * @}
-  */
-
-#endif /* USE_FULL_LL_DRIVER */
-
-/** @defgroup RCC_LL RCC
-  * @{
-  */
-
-/* Private types -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/** @defgroup RCC_LL_Private_Variables RCC Private Variables
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/* Private constants ---------------------------------------------------------*/
-/** @defgroup RCC_LL_Private_Constants RCC Private Constants
-  * @{
-  */
-
-/* Define all reset flags mask */
-#define LL_RCC_HWRSTSCLRR_ALL  0x000F7FFFU
-/**
-  * @}
-  */
-
-/* Exported types ------------------------------------------------------------*/
-#if defined(USE_FULL_LL_DRIVER)
-/** @defgroup RCC_LL_Exported_Types RCC Exported Types
-  * @{
-  */
 
 /** @defgroup LL_ES_CLOCK_FREQ Clocks Frequency Structure
   * @{
@@ -126,11 +113,15 @@ typedef struct
 /**
   * @}
   */
+
+/**
+  * @}
+  */
 #endif /* USE_FULL_LL_DRIVER */
 
 #if defined(CORE_CA35)
-#define PLL1_Typedef CA35SSC_TypeDef;
-#endif
+#define PLL1_TYPEDEF CA35SSC_TypeDef;
+#endif /* CORE_CA35 */
 
 /* Exported constants --------------------------------------------------------*/
 /** @defgroup RCC_LL_Exported_Constants RCC Exported Constants
@@ -179,11 +170,11 @@ typedef struct
   * @brief    Clock Sources defines which can be used with all the clocksource functions
   * @{
   */
-#define LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV     (0x0U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL4 FOUTPOSTDIV clock is selected */
-#define LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV     (0x1U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL5 FOUTPOSTDIV clock is selected */
-#define LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV     (0x2U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL6 FOUTPOSTDIV clock is selected */
-#define LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV     (0x3U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL7 FOUTPOSTDIV clock is selected */
-#define LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV     (0x4U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL8 FOUTPOSTDIV clock is selected */
+#define LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV     (0x0U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL4 FOUTPOSTDIV is selected */
+#define LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV     (0x1U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL5 FOUTPOSTDIV is selected */
+#define LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV     (0x2U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL6 FOUTPOSTDIV is selected */
+#define LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV     (0x3U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL7 FOUTPOSTDIV is selected */
+#define LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV     (0x4U << RCC_XBARxCFGR_XBARxSEL_Pos) /* PLL8 FOUTPOSTDIV is selected */
 #define LL_RCC_XBAR_CLKSRC_HSI                  (0x5U << RCC_XBARxCFGR_XBARxSEL_Pos) /* hsi_ck is selected */
 #define LL_RCC_XBAR_CLKSRC_HSE                  (0x6U << RCC_XBARxCFGR_XBARxSEL_Pos) /* hse_ck is selected */
 #define LL_RCC_XBAR_CLKSRC_MSI                  (0x7U << RCC_XBARxCFGR_XBARxSEL_Pos) /* msi_ck is selected */
@@ -191,7 +182,11 @@ typedef struct
 #define LL_RCC_XBAR_CLKSRC_HSEKER               (0x9U << RCC_XBARxCFGR_XBARxSEL_Pos) /* hse_ker_ck is selected */
 #define LL_RCC_XBAR_CLKSRC_MSIKER               (0xAU << RCC_XBARxCFGR_XBARxSEL_Pos) /* msi_ker_ck is selected */
 #define LL_RCC_XBAR_CLKSRC_SPDIF                (0xBU << RCC_XBARxCFGR_XBARxSEL_Pos) /* spdif_ck_symb is selected */
+#if !defined(RCC_DERIVATIVE1_CK_IN)
 #define LL_RCC_XBAR_CLKSRC_I2S                  (0xCU << RCC_XBARxCFGR_XBARxSEL_Pos) /* i2s_ck is selected */
+#else
+#define LL_RCC_XBAR_CLKSRC_CK_IN                (0xCU << RCC_XBARxCFGR_XBARxSEL_Pos) /* CK_IN is selected */
+#endif /* RCC_DERIVATIVE1_CK_IN */
 #define LL_RCC_XBAR_CLKSRC_LSI                  (0xDU << RCC_XBARxCFGR_XBARxSEL_Pos) /* lsi_ck is selected */
 #define LL_RCC_XBAR_CLKSRC_LSE                  (0xEU << RCC_XBARxCFGR_XBARxSEL_Pos) /* lse_ck is selected */
 /**
@@ -221,7 +216,9 @@ typedef struct
 #define LL_CIFCLRR_MSIRDYC      RCC_C2CIFCLRR_MSIRDYF /*!< MSI Ready Interrupt Clear */
 #define LL_CIFCLRR_PLL1RDYC     RCC_C2CIFCLRR_PLL1RDYF /*!< PLL1 Ready Interrupt Clear */
 #define LL_CIFCLRR_PLL2RDYC     RCC_C2CIFCLRR_PLL2RDYF /*!< PLL2 Ready Interrupt Clear */
+#if defined(RCC_C2CIFCLRR_PLL3RDYF)
 #define LL_CIFCLRR_PLL3RDYC     RCC_C2CIFCLRR_PLL3RDYF /*!< PLL3 Ready Interrupt Clear */
+#endif /* RCC_C2CIFCLRR_PLL3RDYF */
 #define LL_CIFCLRR_PLL4RDYC     RCC_C2CIFCLRR_PLL4RDYF /*!< PLL4 Ready Interrupt Clear */
 #define LL_CIFCLRR_PLL5RDYC     RCC_C2CIFCLRR_PLL5RDYF /*!< PLL5 Ready Interrupt Clear */
 #define LL_CIFCLRR_PLL6RDYC     RCC_C2CIFCLRR_PLL6RDYF /*!< PLL6 Ready Interrupt Clear */
@@ -244,7 +241,9 @@ typedef struct
 #define LL_CIFCLRR_MSIRDYF      RCC_C2CIFCLRR_MSIRDYF /*!< MSI Ready Interrupt flag */
 #define LL_CIFCLRR_PLL1RDYF     RCC_C2CIFCLRR_PLL1RDYF /*!< PLL1 Ready Interrupt flag */
 #define LL_CIFCLRR_PLL2RDYF     RCC_C2CIFCLRR_PLL2RDYF /*!< PLL2 Ready Interrupt flag */
+#if defined(RCC_C2CIFCLRR_PLL3RDYF)
 #define LL_CIFCLRR_PLL3RDYF     RCC_C2CIFCLRR_PLL3RDYF /*!< PLL3 Ready Interrupt flag */
+#endif /* RCC_C2CIFCLRR_PLL3RDYF */
 #define LL_CIFCLRR_PLL4RDYF     RCC_C2CIFCLRR_PLL4RDYF /*!< PLL4 Ready Interrupt flag */
 #define LL_CIFCLRR_PLL5RDYF     RCC_C2CIFCLRR_PLL5RDYF /*!< PLL5 Ready Interrupt Clear */
 #define LL_CIFCLRR_PLL6RDYF     RCC_C2CIFCLRR_PLL6RDYF /*!< PLL6 Ready Interrupt Clear */
@@ -267,7 +266,9 @@ typedef struct
 #define LL_RCC_CIESETR_MSIRDYIE      RCC_C2CIESETR_MSIRDYIE /*!< MSI Ready Interrupt Enable */
 #define LL_RCC_CIESETR_PLL1RDYIE     RCC_C2CIESETR_PLL1DYIE /*!< PLL1 Ready Interrupt Enable */
 #define LL_RCC_CIESETR_PLL2RDYIE     RCC_C2CIESETR_PLL2DYIE /*!< PLL2 Ready Interrupt Enable */
+#if defined(RCC_C2CIESETR_PLL3DYIE)
 #define LL_RCC_CIESETR_PLL3RDYIE     RCC_C2CIESETR_PLL3DYIE /*!< PLL3 Ready Interrupt Enable */
+#endif /* RCC_C2CIESETR_PLL3DYIE */
 #define LL_RCC_CIESETR_PLL4RDYIE     RCC_C2CIESETR_PLL4DYIE /*!< PLL4 Ready Interrupt Enable */
 #define LL_RCC_CIESETR_PLL5RDYIE     RCC_C2CIESETR_PLL5DYIE /*!< PLL5 Ready Interrupt Enable */
 #define LL_RCC_CIESETR_PLL6RDYIE     RCC_C2CIESETR_PLL6DYIE /*!< PLL6 Ready Interrupt Enable */
@@ -397,7 +398,19 @@ typedef struct
 /**
   * @}
   */
-
+#if defined(RCC_APB5DIVR_APB5DIV)
+/** @defgroup RCC_APB5_DIV  APB5 prescaler
+  * @{
+  */
+#define LL_RCC_APB5_DIV_1                   (0x0U << RCC_APB5DIVR_APB5DIV_Pos)  /*!< apb5clk not divided (default after reset) */
+#define LL_RCC_APB5_DIV_2                   (0x1U << RCC_APB5DIVR_APB5DIV_Pos)  /*!< apb5clk divided by 2 */
+#define LL_RCC_APB5_DIV_4                   (0x2U << RCC_APB5DIVR_APB5DIV_Pos)  /*!< apb5clk divided by 4 */
+#define LL_RCC_APB5_DIV_8                   (0x3U << RCC_APB5DIVR_APB5DIV_Pos)  /*!< apb5clk divided by 8 */
+#define LL_RCC_APB5_DIV_16                  (0x4U << RCC_APB5DIVR_APB5DIV_Pos)  /*!< apb5clk divided by 16 */
+/**
+  * @}
+  */
+#endif /* RCC_APB5DIVR_APB5DIV */
 /** @defgroup RCC_APBDBG_DIV  APBDBG prescaler
   * @{
   */
@@ -423,8 +436,8 @@ typedef struct
   * @{
   */
 #define LL_RCC_LSEDRIVE_LOW                     (0x0U << RCC_BDCR_LSEDRV_Pos) /*!< Xtal mode lower driving capability */
-#define LL_RCC_LSEDRIVE_MEDIUMLOW               (0x1U << RCC_BDCR_LSEDRV_Pos) /*!< Xtal mode medium low driving capability */
-#define LL_RCC_LSEDRIVE_MEDIUMHIGH              (0x2U << RCC_BDCR_LSEDRV_Pos) /*!< Xtal mode medium high driving capability */
+#define LL_RCC_LSEDRIVE_MEDIUMHIGH              (0x1U << RCC_BDCR_LSEDRV_Pos) /*!< Xtal mode medium high driving capability */
+#define LL_RCC_LSEDRIVE_MEDIUMLOW               (0x2U << RCC_BDCR_LSEDRV_Pos) /*!< Xtal mode medium low driving capability */
 #define LL_RCC_LSEDRIVE_HIGH                    (0x3U << RCC_BDCR_LSEDRV_Pos) /*!< Xtal mode higher driving capability */
 /**
   * @}
@@ -462,7 +475,7 @@ typedef struct
   */
 #endif /*DSI*/
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL1 entry clock source
+/** @defgroup RCC_LL_EC_PLL1SOURCE  PLL1 entry clock source
   * @{
   */
 #define LL_RCC_PLL1SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL5_Pos)  /*!< HSI clock selected as PLL1 entry clock source */
@@ -473,7 +486,7 @@ typedef struct
   * @}
   */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL2 entry clock source
+/** @defgroup RCC_LL_EC_PLL2SOURCE  PLL2 entry clock source
   * @{
   */
 #define LL_RCC_PLL2SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL6_Pos)  /*!< HSI clock selected as PLL2 entry clock source */
@@ -484,7 +497,8 @@ typedef struct
   * @}
   */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL3 entry clock source
+#if defined(RCC_MUXSELCFGR_MUXSEL7_Pos)
+/** @defgroup RCC_LL_EC_PLL3SOURCE  PLL3 entry clock source
   * @{
   */
 #define LL_RCC_PLL3SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL7_Pos)  /*!< HSI clock selected as PLL3 entry clock source */
@@ -494,58 +508,85 @@ typedef struct
 /**
   * @}
   */
+#endif /* RCC_MUXSELCFGR_MUXSEL7_Pos */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL4 entry clock source
+/** @defgroup RCC_LL_EC_PLL4SOURCE  PLL4 entry clock source
   * @{
   */
 #define LL_RCC_PLL4SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< HSI clock selected as PLL4 entry clock source */
 #define LL_RCC_PLL4SOURCE_HSE         (0x1U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< HSE clock selected as PLL4 entry clock source */
 #define LL_RCC_PLL4SOURCE_MSI         (0x2U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< MSI clock selected as PLL4 entry clock source */
+#if defined(LL_RCC_XBAR_CLKSRC_CK_IN)
+#define LL_RCC_PLL4SOURCE_CKIN        (0x5U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< CKIN clock selected as PLL4 entry clock source */
+#define LL_RCC_PLL4SOURCE_NONE        (0x6U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#else
 #define LL_RCC_PLL4SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#endif /* LL_RCC_XBAR_CLKSRC_CK_IN */
 /**
   * @}
   */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL5 entry clock source
+/** @defgroup RCC_LL_EC_PLL5SOURCE  PLL5 entry clock source
   * @{
   */
 #define LL_RCC_PLL5SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL1_Pos)  /*!< HSI clock selected as PLL5 entry clock source */
 #define LL_RCC_PLL5SOURCE_HSE         (0x1U << RCC_MUXSELCFGR_MUXSEL1_Pos)  /*!< HSE clock selected as PLL5 entry clock source */
 #define LL_RCC_PLL5SOURCE_MSI         (0x2U << RCC_MUXSELCFGR_MUXSEL1_Pos)  /*!< MSI clock selected as PLL5 entry clock source */
-#define LL_RCC_PLL5SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL1_Pos)  /*!< No clock */
+#if defined(LL_RCC_XBAR_CLKSRC_CK_IN)
+#define LL_RCC_PLL5SOURCE_CKIN        (0x5U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< CKIN clock selected as PLL4 entry clock source */
+#define LL_RCC_PLL5SOURCE_NONE        (0x6U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#else
+#define LL_RCC_PLL5SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#endif /* LL_RCC_XBAR_CLKSRC_CK_IN */
+
 /**
   * @}
   */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL6 entry clock source
+/** @defgroup RCC_LL_EC_PLL6SOURCE  PLL6 entry clock source
   * @{
   */
 #define LL_RCC_PLL6SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL2_Pos)  /*!< HSI clock selected as PLL6 entry clock source */
 #define LL_RCC_PLL6SOURCE_HSE         (0x1U << RCC_MUXSELCFGR_MUXSEL2_Pos)  /*!< HSE clock selected as PLL6 entry clock source */
 #define LL_RCC_PLL6SOURCE_MSI         (0x2U << RCC_MUXSELCFGR_MUXSEL2_Pos)  /*!< MSI clock selected as PLL6 entry clock source */
-#define LL_RCC_PLL6SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL2_Pos)  /*!< No clock */
+#if defined(LL_RCC_XBAR_CLKSRC_CK_IN)
+#define LL_RCC_PLL6SOURCE_CKIN        (0x5U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< CKIN clock selected as PLL4 entry clock source */
+#define LL_RCC_PLL6SOURCE_NONE        (0x6U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#else
+#define LL_RCC_PLL6SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#endif /* LL_RCC_XBAR_CLKSRC_CK_IN */
 /**
   * @}
   */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL7 entry clock source
+/** @defgroup RCC_LL_EC_PLL7SOURCE  PLL7 entry clock source
   * @{
   */
 #define LL_RCC_PLL7SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL3_Pos)  /*!< HSI clock selected as PLL7 entry clock source */
 #define LL_RCC_PLL7SOURCE_HSE         (0x1U << RCC_MUXSELCFGR_MUXSEL3_Pos)  /*!< HSE clock selected as PLL7 entry clock source */
 #define LL_RCC_PLL7SOURCE_MSI         (0x2U << RCC_MUXSELCFGR_MUXSEL3_Pos)  /*!< MSI clock selected as PLL7 entry clock source */
-#define LL_RCC_PLL7SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL3_Pos)  /*!< No clock */
+#if defined(LL_RCC_XBAR_CLKSRC_CK_IN)
+#define LL_RCC_PLL7SOURCE_CKIN        (0x5U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< CKIN clock selected as PLL4 entry clock source */
+#define LL_RCC_PLL7SOURCE_NONE        (0x6U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#else
+#define LL_RCC_PLL7SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#endif /* LL_RCC_XBAR_CLKSRC_CK_IN */
 /**
   * @}
   */
 
-/** @defgroup RCC_LL_EC_PLLSOURCE  PLL8 entry clock source
+/** @defgroup RCC_LL_EC_PLL8SOURCE  PLL8 entry clock source
   * @{
   */
 #define LL_RCC_PLL8SOURCE_HSI         (0x0U << RCC_MUXSELCFGR_MUXSEL4_Pos)  /*!< HSI clock selected as PLL8 entry clock source */
 #define LL_RCC_PLL8SOURCE_HSE         (0x1U << RCC_MUXSELCFGR_MUXSEL4_Pos)  /*!< HSE clock selected as PLL8 entry clock source */
 #define LL_RCC_PLL8SOURCE_MSI         (0x2U << RCC_MUXSELCFGR_MUXSEL4_Pos)  /*!< MSI clock selected as PLL8 entry clock source */
-#define LL_RCC_PLL8SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL4_Pos)  /*!< No clock */
+#if defined(LL_RCC_XBAR_CLKSRC_CK_IN)
+#define LL_RCC_PLL8SOURCE_CKIN        (0x5U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< CKIN clock selected as PLL4 entry clock source */
+#define LL_RCC_PLL8SOURCE_NONE        (0x6U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#else
+#define LL_RCC_PLL8SOURCE_NONE        (0x3U << RCC_MUXSELCFGR_MUXSEL0_Pos)  /*!< No clock */
+#endif /* LL_RCC_XBAR_CLKSRC_CK_IN */
 /**
   * @}
   */
@@ -559,12 +600,41 @@ typedef struct
   * @}
   */
 
+#if defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_SPI1_CLKSOURCE                 0x0U
+#define  LL_RCC_SPI2_CLKSOURCE                 0x1U
+#define  LL_RCC_SPI3_CLKSOURCE                 0x2U
+#define  LL_RCC_SPI45_CLKSOURCE                0x3U
+#define  LL_RCC_SPI6_CLKSOURCE                 0x4U
+#elif defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_SPI1_CLKSOURCE                 0x0U
+#define  LL_RCC_SPI23_CLKSOURCE                0x1U
+#define  LL_RCC_SPI45_CLKSOURCE                0x2U
+#define  LL_RCC_SPI8_CLKSOURCE                 0x3U
+#else
 #define  LL_RCC_SPI1_CLKSOURCE                 0x0U
 #define  LL_RCC_SPI23_CLKSOURCE                0x1U
 #define  LL_RCC_SPI45_CLKSOURCE                0x2U
 #define  LL_RCC_SPI67_CLKSOURCE                0x3U
-#define  LL_RCC_SPI8_CLKSOURCE                0x4U
+#define  LL_RCC_SPI8_CLKSOURCE                 0x4U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+#if defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_USART1_CLKSOURCE               0x0U
+#define  LL_RCC_UART24_CLKSOURCE               0x1U
+#define  LL_RCC_USART35_CLKSOURCE              0x2U
+#define  LL_RCC_USART6_CLKSOURCE               0x3U
+#define  LL_RCC_UART7_CLKSOURCE                0x4U
+#define  LL_RCC_LPUART1_CLKSOURCE              0x5U
+#define  LL_RCC_UART78_CLKSOURCE               LL_RCC_UART7_CLKSOURCE    /* backward compatibility */
+#elif defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_USART1_CLKSOURCE               0x0U
+#define  LL_RCC_UART24_CLKSOURCE               0x1U
+#define  LL_RCC_USART35_CLKSOURCE              0x2U
+#define  LL_RCC_USART6_CLKSOURCE               0x3U
+#define  LL_RCC_UART78_CLKSOURCE               0x4U
+#define  LL_RCC_LPUART1_CLKSOURCE              0x5U
+#else
 #define  LL_RCC_USART1_CLKSOURCE               0x0U
 #define  LL_RCC_UART24_CLKSOURCE               0x1U
 #define  LL_RCC_USART35_CLKSOURCE              0x2U
@@ -572,27 +642,58 @@ typedef struct
 #define  LL_RCC_UART78_CLKSOURCE               0x4U
 #define  LL_RCC_UART9_CLKSOURCE                0x5U
 #define  LL_RCC_LPUART1_CLKSOURCE              0x6U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_SAI1_MDF1_CLKSOURCE            0x0U
+#else
 #define  LL_RCC_SAI1_CLKSOURCE                 0x0U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 #define  LL_RCC_SAI2_CLKSOURCE                 0x1U
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 #define  LL_RCC_SAI34_CLKSOURCE                0x2U
+#else
+#define  LL_RCC_SAI3_CLKSOURCE                 0x2U
+#define  LL_RCC_SAI4_CLKSOURCE                 0x3U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+#if defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_I2C12_CLKSOURCE                0x0U
+#define  LL_RCC_I2C3_CLKSOURCE                 0x1U
+#define  LL_RCC_I3C12_CLKSOURCE                0x0U
+#define  LL_RCC_I3C3_CLKSOURCE                 0x1U
+#elif defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#define  LL_RCC_I2C12_I3C12_CLKSOURCE          0x0U
+#define  LL_RCC_I2C7_CLKSOURCE                 0x1U
+#define  LL_RCC_I3C4_CLKSOURCE                 0x2U
+#define  LL_RCC_I2C8_CLKSOURCE                 0x3U
+#else
 #define  LL_RCC_I2C12_I3C12_CLKSOURCE          0x0U
 #define  LL_RCC_I2C46_CLKSOURCE                0x1U
 #define  LL_RCC_I2C35_I3C3_CLKSOURCE           0x2U
 #define  LL_RCC_I2C7_CLKSOURCE                 0x3U
 #define  LL_RCC_I3C4_CLKSOURCE                 0x4U
+#define  LL_RCC_I2C8_CLKSOURCE                 0x5U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 #define  LL_RCC_SDMMC1_CLKSOURCE               0x0U
 #define  LL_RCC_SDMMC2_CLKSOURCE               0x1U
 #define  LL_RCC_SDMMC3_CLKSOURCE               0x2U
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 #define  LL_RCC_ETH1_ETHSW_CLKSOURCE           0x0U
 #define  LL_RCC_ETH2_CLKSOURCE                 0x1U
 #define  LL_RCC_ETH1PTP_ETH2PTP_CLKSOURCE      0x2U
+#else
+#define  LL_RCC_ETH1_CLKSOURCE                 0x0U
+#define  LL_RCC_ETH2_CLKSOURCE                 0x1U
+#define  LL_RCC_ETH1PTP_ETH2PTP_CLKSOURCE      0x2U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 #define  LL_RCC_OSPI1_CLKSOURCE                0x0U
+#if defined(RCC_OSPI2CFGR_OSPI2EN)
 #define  LL_RCC_OSPI2_CLKSOURCE                0x1U
+#endif /* RCC_OSPI2CFGR_OSPI2EN */
 
 #define  LL_RCC_FMC_CLKSOURCE                  0x0U
 
@@ -602,24 +703,38 @@ typedef struct
 
 #define  LL_RCC_USB2PHY1_CLKSOURCE             0x0U
 #define  LL_RCC_USB2PHY2_CLKSOURCE             0x1U
+#if defined(USB3PCIEPHY)
 #define  LL_RCC_USB3PCIEPHY_CLKSOURCE          0x2U
+#endif /* USB3PCIEPHY */
 
 #define  LL_RCC_STGEN_CLKSOURCE                0x0U
 
 #define  LL_RCC_DSIBLANE_CLKSOURCE             0x0U
 #define  LL_RCC_DSIPHY_CLKSOURCE               0x1U
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 #define  LL_RCC_ADC12_CLKSOURCE                0x0U
 #define  LL_RCC_ADC3_CLKSOURCE                 0x1U
+#else
+#define  LL_RCC_ADC1_CLKSOURCE                 0x0U
+#define  LL_RCC_ADC2_CLKSOURCE                 0x1U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 #define  LL_RCC_LPTIM12_CLKSOURCE              0x0U
 #define  LL_RCC_LPTIM3_CLKSOURCE               0x1U
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 #define  LL_RCC_LPTIM45_CLKSOURCE              0x2U
+#else
+#define  LL_RCC_LPTIM4_CLKSOURCE               0x2U
+#define  LL_RCC_LPTIM5_CLKSOURCE               0x3U
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @}
   */
-
+/**
+  * @}
+  */
 /* Exported macro ------------------------------------------------------------*/
 /** @defgroup RCC_LL_Exported_Macros RCC Exported Macros
   * @{
@@ -1047,7 +1162,11 @@ __STATIC_INLINE uint32_t LL_RCC_LSE_IsCSSDetected(void)
   */
 __STATIC_INLINE void LL_RCC_LSI_Enable(void)
 {
+#if defined(RCC_BDCR_LSION)
   SET_BIT(RCC->BDCR, RCC_BDCR_LSION);
+#else
+  SET_BIT(RCC->LSICR, RCC_LSICR_LSION);
+#endif /* RCC_LSICR_LSION */
 }
 
 /**
@@ -1057,7 +1176,11 @@ __STATIC_INLINE void LL_RCC_LSI_Enable(void)
   */
 __STATIC_INLINE void LL_RCC_LSI_Disable(void)
 {
+#if defined(RCC_BDCR_LSION)
   CLEAR_BIT(RCC->BDCR, RCC_BDCR_LSION);
+#else
+  CLEAR_BIT(RCC->LSICR, RCC_LSICR_LSION);
+#endif /* RCC_LSICR_LSION */
 }
 
 /**
@@ -1067,7 +1190,11 @@ __STATIC_INLINE void LL_RCC_LSI_Disable(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_LSI_IsReady(void)
 {
+#if defined(RCC_BDCR_LSIRDY)
   return ((READ_BIT(RCC->BDCR, RCC_BDCR_LSIRDY) == RCC_BDCR_LSIRDY) ? 1UL : 0UL);
+#else
+  return ((READ_BIT(RCC->LSICR, RCC_LSICR_LSIRDY) == RCC_LSICR_LSIRDY) ? 1UL : 0UL);
+#endif /* RCC_LSICR_LSIRDY */
 }
 
 /**
@@ -1077,7 +1204,11 @@ __STATIC_INLINE uint32_t LL_RCC_LSI_IsReady(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_MSI_IsReady(void)
 {
+#if defined(RCC_D3DCR_MSIRDY)
   return ((READ_BIT(RCC->D3DCR, RCC_D3DCR_MSIRDY) == RCC_D3DCR_MSIRDY) ? 1UL : 0UL);
+#else
+  return ((READ_BIT(RCC->OCRDYR, RCC_OCRDYR_MSIRDY) == RCC_OCRDYR_MSIRDY) ? 1UL : 0UL);
+#endif /* RCC_OCRDYR_MSIRDY */
 }
 
 /**
@@ -1098,23 +1229,16 @@ __STATIC_INLINE void LL_RCC_Set_LSMCUDIVR(uint32_t lsmcudiv)
 {
   MODIFY_REG(RCC->LSMCUDIVR, RCC_LSMCUDIVR_LSMCUDIV_Msk, lsmcudiv);
 }
-/**
-  * @}
-  */
 
 /**
   * @brief  Get LSMCU divider Value
-  * @param  None
-            Value parameter can be LL_RCC_LSMCUDIV_1 or LL_RCC_LSMCUDIV_2
   * @retval LL_RCC_LSMCUDIV_1 or LL_RCC_LSMCUDIV_2
   */
 __STATIC_INLINE uint32_t LL_RCC_Get_LSMCUDIVR(void)
 {
   return (READ_BIT(RCC->LSMCUDIVR, RCC_LSMCUDIVR_LSMCUDIV));
 }
-/**
-  * @}
-  */
+
 
 /**
   * @brief  Check if LSMCU is Ready
@@ -1125,14 +1249,12 @@ __STATIC_INLINE uint32_t LL_RCC_LSMCUDIV_IsReady(void)
 {
   return ((READ_BIT(RCC->LSMCUDIVR, RCC_LSMCUDIVR_LSMCUDIVRDY) == RCC_LSMCUDIVR_LSMCUDIVRDY) ? 1UL : 0UL);
 }
-/**
-  * @}
-  */
+
 
 /**
   * @brief  Set channel pre divider Value
-  * @param  flexId number of the channel to be configured (0 to 63)
-            Value parameter can be 0, 1, 3 or 0x3FF
+  * @param  flexid number of the channel to be configured (0 to 63)
+  * @param  Value  parameter can be 0, 1, 3 or 0x3FF
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_Set_PREDIVx(uint32_t flexid, uint32_t Value)
@@ -1142,25 +1264,25 @@ __STATIC_INLINE void LL_RCC_Set_PREDIVx(uint32_t flexid, uint32_t Value)
 
 /**
   * @brief  Check PREDIV state (ready or not)
-  * @param  flexId number of the channel to be checked (0 to 63)
+  * @param  flexid number of the channel to be checked (0 to 63)
   * @retval State of divider (0 for ready, 1 if change is on going)
   */
 __STATIC_INLINE uint32_t LL_RCC_PREDIVxIsReady(uint32_t flexid)
 {
-  if (flexid <= 31)
+  if (flexid <= 31U)
   {
-    return ((READ_BIT(RCC->PREDIVSR1, (1 << flexid)) == (1 << flexid)) ? 1UL : 0UL);
+    return ((READ_BIT(RCC->PREDIVSR1, (1UL << flexid)) == (1UL << flexid)) ? 1UL : 0UL);
   }
   else
   {
-    return ((READ_BIT(RCC->PREDIVSR2, (1 << (flexid % 32))) == (1 << (flexid % 32))) ? 1UL : 0UL);
+    return ((READ_BIT(RCC->PREDIVSR2, (1UL << (flexid % 32U))) == (1UL << (flexid % 32U))) ? 1UL : 0UL);
   }
 }
 
 /**
   * @brief  Set channel final divider Value
-  * @param  flexId number of the channel to be configured (0 to 63)
-            Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @param  flexid number of the channel to be configured (0 to 63)
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_Set_FINDIVx(uint32_t flexid, uint32_t Value)
@@ -1170,18 +1292,18 @@ __STATIC_INLINE void LL_RCC_Set_FINDIVx(uint32_t flexid, uint32_t Value)
 
 /**
   * @brief  Check FINDIV state (ready or not)
-  * @param  flexId number of the channel to be checked (0 to 63)
+  * @param  flexid number of the channel to be checked (0 to 63)
   * @retval State of divider (0 for ready, 1 if change is on going)
   */
 __STATIC_INLINE uint32_t LL_RCC_FINDIVxIsReady(uint32_t flexid)
 {
-  if (flexid <= 31)
+  if (flexid <= 31U)
   {
-    return ((READ_BIT(RCC->FINDIVSR1, (1 << flexid)) == (1 << flexid)) ? 1UL : 0UL);
+    return ((READ_BIT(RCC->FINDIVSR1, (1UL << flexid)) == (1UL << flexid)) ? 1UL : 0UL);
   }
   else
   {
-    return ((READ_BIT(RCC->FINDIVSR2, (1 << (flexid % 32))) == (1 << (flexid % 32))) ? 1UL : 0UL);
+    return ((READ_BIT(RCC->FINDIVSR2, (1UL << (flexid % 32U))) == (1UL << (flexid % 32U))) ? 1UL : 0UL);
   }
 }
 
@@ -1248,7 +1370,24 @@ __STATIC_INLINE void LL_RCC_SetAPB4Prescaler(uint32_t Prescaler)
 {
   MODIFY_REG(RCC->APB4DIVR, RCC_APB4DIVR_APB4DIV, Prescaler);
 }
+#if defined(RCC_APB5DIVR_APB5DIV)
+/**
+  * @brief  Set the APB5 prescaler
+  * @rmtoll APB5DIVR         APB5            LL_RCC_SetAPB5Prescaler
+  * @param  Prescaler This parameter can be one of the following values:
+  *         @arg @ref LL_RCC_APB5_DIV_1
+  *         @arg @ref LL_RCC_APB5_DIV_2
+  *         @arg @ref LL_RCC_APB5_DIV_4
+  *         @arg @ref LL_RCC_APB5_DIV_8
+  *         @arg @ref LL_RCC_APB5_DIV_16
+  * @retval None
+  */
 
+__STATIC_INLINE void LL_RCC_SetAPB5Prescaler(uint32_t Prescaler)
+{
+  MODIFY_REG(RCC->APB5DIVR, RCC_APB5DIVR_APB5DIV, Prescaler);
+}
+#endif /* RCC_APB5DIVR_APB5DIV */
 /**
   * @brief  Set the APBDBG prescaler
   * @rmtoll APBDBGDIVR         APBDBG            LL_RCC_SetAPB3Prescaler
@@ -1324,6 +1463,24 @@ __STATIC_INLINE uint32_t LL_RCC_GetAPB4Prescaler(void)
 {
   return (uint32_t)(READ_BIT(RCC->APB4DIVR, RCC_APB4DIVR_APB4DIV));
 }
+#if defined(RCC_APB5DIVR_APB5DIV)
+/**
+  * @brief  Get the APB5 prescaler
+  * @rmtoll APB5DIVR         APB5           LL_RCC_GetAPB5Prescaler
+  * @retval Returned value can be one of the following values:
+  *         @arg @ref LL_RCC_APB5_DIV_1
+  *         @arg @ref LL_RCC_APB5_DIV_2
+  *         @arg @ref LL_RCC_APB5_DIV_4
+  *         @arg @ref LL_RCC_APB5_DIV_8
+  *         @arg @ref LL_RCC_APB5_DIV_16
+  */
+
+
+__STATIC_INLINE uint32_t LL_RCC_GetAPB5Prescaler(void)
+{
+  return (uint32_t)(READ_BIT(RCC->APB5DIVR, RCC_APB5DIVR_APB5DIV));
+}
+#endif /* RCC_APB5DIVR_APB5DIV */
 
 /**
   * @brief  Get the APBDBG prescaler
@@ -1340,10 +1497,6 @@ __STATIC_INLINE uint32_t LL_RCC_GetAPBDBGPrescaler(void)
   return (uint32_t)(READ_BIT(RCC->APBDBGDIVR, RCC_APBDBGDIVR_APBDBGDIV));
 }
 
-/**
-  * @}
-  */
-
 /** @defgroup RCC_LL_EF_Peripheral_Clock_Source Peripheral Clock Source
   * @{
   */
@@ -1351,6 +1504,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetAPBDBGPrescaler(void)
 /**
   * @brief  Set Cross Bar Clock Source
   * @rmtoll XBARxCFGR         XBARxSEL        LL_RCC_SetCrossbarSource
+  * @param  xbar_id This parameter value can be between 0-63
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
@@ -1371,13 +1525,14 @@ __STATIC_INLINE uint32_t LL_RCC_GetAPBDBGPrescaler(void)
   */
 __STATIC_INLINE void LL_RCC_SetCrossbarSource(uint32_t xbar_id, uint32_t Source)
 {
-  WRITE_REG(RCC->XBARxCFGR[xbar_id], (Source & RCC_XBARxCFGR_XBARxSEL_Msk) | (1 << 6));
+  WRITE_REG(RCC->XBARxCFGR[xbar_id], (Source & RCC_XBARxCFGR_XBARxSEL_Msk) | (1U << 6));
 }
 
 /**
   * @brief  Get Cross Bar Clock Source
   * @rmtoll XBARxCFGR         XBARxSEL        LL_RCC_GetCrossbarSource
-  * @param  Source This parameter can be one of the following values:
+  * @param  xbar_id This parameter value can be between 0-63
+  * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
@@ -1613,6 +1768,7 @@ __STATIC_INLINE void LL_RCC_DisableUSART3_5_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[9], RCC_XBARxCFGR_XBARxEN);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get UART7_8 clock source select
   * @rmtoll XBAR21CFGR      XBAR21SEL      LL_RCC_GetUART7_8ClockSource
@@ -1638,6 +1794,35 @@ __STATIC_INLINE uint32_t LL_RCC_GetUART7_8ClockSource(void)
   return (uint32_t)(READ_BIT(RCC->XBARxCFGR[21], RCC_XBARxCFGR_XBARxSEL_Msk));
 }
 
+#else
+
+/**
+  * @brief  Get UART7 clock source select
+  * @rmtoll XBAR21CFGR      XBAR21SEL      LL_RCC_GetUART7ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUART7ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[20], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPI2_3 clock source select
   * @rmtoll XBAR10CFGR      XBAR10SEL      LL_RCC_GetSPI2_3ClockSource
@@ -1708,7 +1893,151 @@ __STATIC_INLINE void LL_RCC_DisableSPI2_3_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[10], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get SPI2 clock source select
+  * @rmtoll XBAR10CFGR      XBAR10SEL      LL_RCC_GetSPI2ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI2ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[10], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set SPI Clock Source
+  * @rmtoll XBAR10CFGR         XBAR10SEL        LL_RCC_SetSPI2ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI2ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[10], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SPI2 kernel clock
+  * @rmtoll XBAR10CFGR         XBAR10EN         LL_RCC_EnableSPI2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPI2_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[10], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SPI2 kernel clock
+  * @rmtoll XBAR10CFGR         XBAR10EN         LL_RCC_DisableSPI2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPI2_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[10], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Get SPI3 clock source select
+  * @rmtoll XBAR11CFGR      XBAR11SEL      LL_RCC_GetSPI3ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI3ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[11], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set SPI3 Clock Source
+  * @rmtoll XBAR11CFGR         XBAR11SEL        LL_RCC_SetSPI3ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI3ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[11], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SPI3 kernel clock
+  * @rmtoll XBAR11CFGR         XBAR11EN         LL_RCC_EnableSPI3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPI3_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[11], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SPI3 kernel clock
+  * @rmtoll XBAR11CFGR         XBAR11EN         LL_RCC_DisableSPI3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPI3_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[11], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /*RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined (RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPDIFRX clock source select
   * @rmtoll XBAR11CFGR      XBAR11SEL      LL_RCC_GetSPDIFRXClockSource
@@ -1779,7 +2108,80 @@ __STATIC_INLINE void LL_RCC_DisableSPDIFRX_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[11], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get SPDIFRX clock source select
+  * @rmtoll XBAR12CFGR      XBAR12SEL      LL_RCC_GetSPDIFRXClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPDIFRXClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[12], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set SPDIFRX Clock Source
+  * @rmtoll XBAR12CFGR         XBAR12SEL        LL_RCC_SetSPDIFRXClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPDIFRXClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[12], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SPDIFRX kernel clock
+  * @rmtoll XBAR12CFGR         XBAR12EN         LL_RCC_EnableSPDIFRX
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPDIFRX_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[12], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SPDIFRX kernel clock
+  * @rmtoll XBAR12CFGR         XBAR12EN         LL_RCC_DisableSPDIFRX
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPDIFRX_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[12], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I2C1_2_I3C1_2 clock source select
   * @rmtoll XBAR12CFGR      XBAR12SEL      LL_RCC_GetI2C1_2_I3C1_2ClockSource
@@ -1850,6 +2252,154 @@ __STATIC_INLINE void LL_RCC_DisableI2C1_2_I3C1_2_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[12], RCC_XBARxCFGR_XBARxEN);
 }
+
+#else
+
+/**
+  * @brief  Get I2C1_2 clock source select
+  * @rmtoll XBAR13CFGR      XBAR13SEL      LL_RCC_GetI2C1_2ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI2C1_2ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[13], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set I2C1_2 Clock Source
+  * @rmtoll XBAR13CFGR         XBAR13SEL        LL_RCC_SetI2C1_2ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI2C1_2ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[13], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable I2C1_2 kernel clock
+  * @rmtoll XBAR13CFGR         XBAR13EN         LL_RCC_EnableI2C1_2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI2C1_2_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[13], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable I2C1_2 kernel clock
+  * @rmtoll XBAR13CFGR         XBAR13EN         LL_RCC_DisableI2C1_2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI2C1_2_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[13], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Get I3C1_2 clock source select
+  * @rmtoll XBAR14CFGR      XBAR14SEL      LL_RCC_GetI3C1_2ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI3C1_2ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[14], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set I3C1_2 Clock Source
+  * @rmtoll XBAR14CFGR         XBAR14SEL        LL_RCC_SetI3C1_2ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI3C1_2ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[14], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable I3C1_2 kernel clock
+  * @rmtoll XBAR14CFGR         XBAR14EN         LL_RCC_EnableI3C1_2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI3C1_2_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[14], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable I3C1_2 kernel clock
+  * @rmtoll XBAR14CFGR         XBAR14EN         LL_RCC_DisableI3C1_2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI3C1_2_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[14], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 
 /**
   * @brief  Get I2C3_5_I3C3 clock source select
@@ -1922,6 +2472,155 @@ __STATIC_INLINE void LL_RCC_DisableI2C3_5_I3C3_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[13], RCC_XBARxCFGR_XBARxEN);
 }
 
+#else
+
+/**
+  * @brief  Get I2C3 clock source select
+  * @rmtoll XBAR38CFGR      XBAR38SEL      LL_RCC_GetI2C3ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI2C3ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[38], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set I2C3 Clock Source
+  * @rmtoll XBAR38CFGR         XBAR38SEL        LL_RCC_SetI2C3ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI2C3ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[38], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable I2C3 kernel clock
+  * @rmtoll XBAR38CFGR         XBAR38EN         LL_RCC_EnableI2C3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI2C3_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[38], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable I2C3 kernel clock
+  * @rmtoll XBAR38CFGR         XBAR38EN         LL_RCC_DisableI2C3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI2C3_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[38], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Get I3C3 clock source select
+  * @rmtoll XBAR36CFGR      XBAR36SEL      LL_RCC_GetI3C3ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI3C3ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[36], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set I3C3 Clock Source
+  * @rmtoll XBAR36CFGR         XBAR36SEL        LL_RCC_SetI3C3ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI3C3ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[36], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable I3C3 kernel clock
+  * @rmtoll XBAR36CFGR         XBAR36EN         LL_RCC_EnableI3C3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI3C3_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[36], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable I3C3 kernel clock
+  * @rmtoll XBAR36CFGR         XBAR36EN         LL_RCC_DisableI3C3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI3C3_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[36], RCC_XBARxCFGR_XBARxEN);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+#endif /* RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+#if !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I2C4_6 clock source select
   * @rmtoll XBAR14CFGR      XBAR14SEL      LL_RCC_GetI2C4_6ClockSource
@@ -1993,6 +2692,8 @@ __STATIC_INLINE void LL_RCC_DisableI2C4_6_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[14], RCC_XBARxCFGR_XBARxEN);
 }
 
+#endif /* RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING */
+
 /**
   * @brief  Get I2C7 clock source select
   * @rmtoll XBAR15CFGR      XBAR15SEL      LL_RCC_GetI2C7ClockSource
@@ -2063,6 +2764,8 @@ __STATIC_INLINE void LL_RCC_DisableI2C7_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[15], RCC_XBARxCFGR_XBARxEN);
 }
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @brief  Get SPI1 clock source select
@@ -2206,6 +2909,8 @@ __STATIC_INLINE void LL_RCC_DisableSPI4_5_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[17], RCC_XBARxCFGR_XBARxEN);
 }
 
+#if !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPI6_7 clock source select
   * @rmtoll XBAR18CFGR      XBAR18SEL      LL_RCC_GetSPI6_7ClockSource
@@ -2276,7 +2981,81 @@ __STATIC_INLINE void LL_RCC_DisableSPI6_7_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[18], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get SPI6 clock source select
+  * @rmtoll XBAR37CFGR      XBAR37SEL      LL_RCC_GetSPI6ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI6ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[37], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set SPI6 Clock Source
+  * @rmtoll XBAR37CFGR         XBAR37SEL        LL_RCC_SetSPI6ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI6ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[37], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SPI6 kernel clock
+  * @rmtoll XBAR37CFGR         XBAR37EN         LL_RCC_EnableSPI6
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPI6_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[37], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SPI6 kernel clock
+  * @rmtoll XBAR37CFGR         XBAR37EN         LL_RCC_DisableSPI6
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPI6_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[37], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+#endif /* RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART1 clock source select
   * @rmtoll XBAR19CFGR      XBAR19SEL      LL_RCC_GetUSART1ClockSource
@@ -2347,7 +3126,78 @@ __STATIC_INLINE void LL_RCC_DisableUSART1_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[19], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get USART1 clock source select
+  * @rmtoll XBAR18CFGR      XBAR18SEL      LL_RCC_GetUSART1ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART1ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[18], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set USART1 Clock Source
+  * @rmtoll XBAR18CFGR         XBAR18SEL        LL_RCC_SetUSART1ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART1ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[18], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable USART1 kernel clock
+  * @rmtoll XBAR18CFGR         XBAR18EN         LL_RCC_EnableUSART1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableUSART1_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[18], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable USART1 kernel clock
+  * @rmtoll XBAR18CFGR         XBAR18EN         LL_RCC_DisableUSART1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableUSART1_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[18], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 /**
   * @brief  Get UART2_4 clock source select
   * @rmtoll XBAR8CFGR      XBAR8SEL      LL_RCC_GetUART24ClockSource
@@ -2398,6 +3248,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUART3_5ClockSource(void)
   return (uint32_t)(READ_BIT(RCC->XBARxCFGR[9], RCC_XBARxCFGR_XBARxSEL_Msk));
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART6 clock source select
   * @rmtoll XBAR20CFGR      XBAR20SEL      LL_RCC_GetUSART6ClockSource
@@ -2468,7 +3319,80 @@ __STATIC_INLINE void LL_RCC_DisableUSART6_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[20], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get USART6 clock source select
+  * @rmtoll XBAR19CFGR      XBAR19SEL      LL_RCC_GetUSART6ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART6ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[19], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set USART6 Clock Source
+  * @rmtoll XBAR19CFGR         XBAR19SEL        LL_RCC_SetUSART6ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART6ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[19], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable USART6 kernel clock
+  * @rmtoll XBAR19CFGR         XBAR19EN         LL_RCC_EnableUSART6
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableUSART6_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[19], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable USART6 kernel clock
+  * @rmtoll XBAR19CFGR         XBAR19EN         LL_RCC_DisableUSART6
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableUSART6_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[19], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART7_8 clock source select
   * @rmtoll XBAR21CFGR      XBAR21SEL      LL_RCC_GetUSART7_8ClockSource
@@ -2540,6 +3464,82 @@ __STATIC_INLINE void LL_RCC_DisableUSART7_8_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[21], RCC_XBARxCFGR_XBARxEN);
 }
 
+#else
+
+/**
+  * @brief  Get USART7 clock source select
+  * @rmtoll XBAR20CFGR      XBAR20SEL      LL_RCC_GetUSART7ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART7ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[20], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set USART7 Clock Source
+  * @rmtoll XBAR20CFGR         XBAR20SEL        LL_RCC_SetUSART7ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART7ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[20], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable USART7 kernel clock
+  * @rmtoll XBAR20CFGR         XBAR20EN         LL_RCC_EnableUSART7
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableUSART7_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[20], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable USART7 kernel clock
+  * @rmtoll XBAR20CFGR         XBAR20EN         LL_RCC_DisableUSART7
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableUSART7_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[20], RCC_XBARxCFGR_XBARxEN);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING) && !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get UART9 clock source select
   * @rmtoll XBAR22CFGR      XBAR22SEL      LL_RCC_GetUART9ClockSource
@@ -2610,7 +3610,10 @@ __STATIC_INLINE void LL_RCC_DisableUART9_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[22], RCC_XBARxCFGR_XBARxEN);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SAI1_MDF1 clock source select
   * @rmtoll XBAR23CFGR      XBAR23SEL      LL_RCC_GetSAI1_MDF1ClockSource
@@ -2682,6 +3685,153 @@ __STATIC_INLINE void LL_RCC_DisableSAI1_MDF1_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[23], RCC_XBARxCFGR_XBARxEN);
 }
 
+#else
+
+/**
+  * @brief  Get MDF1 clock source select
+  * @rmtoll XBAR21CFGR      XBAR21SEL      LL_RCC_GetMDF1ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetMDF1ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[21], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set MDF1 Clock Source
+  * @rmtoll XBAR21CFGR         XBAR21SEL        LL_RCC_SetMDF1ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetMDF1ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[21], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable MDF1 kernel clock
+  * @rmtoll XBAR21CFGR         XBAR21EN         LL_RCC_EnableMDF1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableMDF1_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[21], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable MDF1 kernel clock
+  * @rmtoll XBAR21CFGR         XBAR21EN         LL_RCC_DisableMDF1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableMDF1_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[21], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Get SAI1 clock source select
+  * @rmtoll XBAR22CFGR      XBAR22SEL      LL_RCC_GetSAI1ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI1ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[22], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set SAI1 Clock Source
+  * @rmtoll XBAR22CFGR         XBAR22SEL        LL_RCC_SetSAI1ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI1ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[22], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SAI1 kernel clock
+  * @rmtoll XBAR22CFGR         XBAR22EN         LL_RCC_EnableSAI1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI1_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[22], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SAI1 kernel clock
+  * @rmtoll XBAR22CFGR         XBAR22EN         LL_RCC_DisableSAI1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI1_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[22], RCC_XBARxCFGR_XBARxEN);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SAI2 clock source select
   * @rmtoll XBAR24CFGR      XBAR24SEL      LL_RCC_GetSAI2ClockSource
@@ -2752,7 +3902,80 @@ __STATIC_INLINE void LL_RCC_DisableSAI2_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[24], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get SAI2 clock source select
+  * @rmtoll XBAR23CFGR      XBAR23SEL      LL_RCC_GetSAI2ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI2ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[23], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set SAI2 Clock Source
+  * @rmtoll XBAR23CFGR         XBAR23SEL        LL_RCC_SetSAI2ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI2ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[23], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SAI2 kernel clock
+  * @rmtoll XBAR23CFGR         XBAR23EN         LL_RCC_EnableSAI2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI2_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[23], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SAI2 kernel clock
+  * @rmtoll XBAR23CFGR         XBAR23EN         LL_RCC_DisableSAI2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI2_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[23], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SAI3_4 clock source select
   * @rmtoll XBAR25CFGR      XBAR25SEL      LL_RCC_GetSAI3_4ClockSource
@@ -2823,7 +4046,148 @@ __STATIC_INLINE void LL_RCC_DisableSAI3_4_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[25], RCC_XBARxCFGR_XBARxEN);
 }
+#else
+/**
+  * @brief  Get SAI3 clock source select
+  * @rmtoll XBAR24CFGR      XBAR24SEL      LL_RCC_GetSAI3ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI3ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[24], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
 
+/**
+  * @brief  Set SAI3 Clock Source
+  * @rmtoll XBAR24CFGR         XBAR24SEL        LL_RCC_SetSAI3ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI3ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[24], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SAI3 kernel clock
+  * @rmtoll XBAR24CFGR         XBAR24EN         LL_RCC_EnableSAI3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI3_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[24], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SAI3 kernel clock
+  * @rmtoll XBAR24CFGR         XBAR24EN         LL_RCC_DisableSAI3
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI3_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[24], RCC_XBARxCFGR_XBARxEN);
+}
+/**
+  * @brief  Get SAI4 clock source select
+  * @rmtoll XBAR25CFGR      XBAR25SEL      LL_RCC_GetSAI4ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI4ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[25], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set SAI4 Clock Source
+  * @rmtoll XBAR25CFGR         XBAR25SEL        LL_RCC_SetSAI4ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI4ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[25], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable SAI4 kernel clock
+  * @rmtoll XBAR25CFGR         XBAR25EN         LL_RCC_EnableSAI4
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI4_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[25], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable SAI4 kernel clock
+  * @rmtoll XBAR25CFGR         XBAR25EN         LL_RCC_DisableSAI4
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI4_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[25], RCC_XBARxCFGR_XBARxEN);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 /**
   * @brief  Get FDCAN clock source select
   * @rmtoll XBAR26CFGR      XBAR26SEL      LL_RCC_GetFDCANClockSource
@@ -3392,6 +4756,7 @@ __STATIC_INLINE void LL_RCC_DisableSTGEN_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[33], RCC_XBARxCFGR_XBARxEN);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USB3PCIEPHY clock source select
   * @rmtoll XBAR34CFGR      XBAR34SEL      LL_RCC_GetUSB3PCIEPHYClockSource
@@ -3462,7 +4827,9 @@ __STATIC_INLINE void LL_RCC_DisableUSB3PCIEPHY_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[34], RCC_XBARxCFGR_XBARxEN);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get UCPD1 clock source select
   * @rmtoll XBAR35CFGR      XBAR35SEL      LL_RCC_GetUCPD1ClockSource
@@ -3534,6 +4901,10 @@ __STATIC_INLINE void LL_RCC_DisableUCPD1_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[35], RCC_XBARxCFGR_XBARxEN);
 }
 
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I3C4 clock source select
   * @rmtoll XBAR36CFGR      XBAR36SEL      LL_RCC_GetI3C4ClockSource
@@ -3604,7 +4975,10 @@ __STATIC_INLINE void LL_RCC_DisableI3C4_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[36], RCC_XBARxCFGR_XBARxEN);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPI8 clock source select
   * @rmtoll XBAR37CFGR      XBAR37SEL      LL_RCC_GetSPI8ClockSource
@@ -3675,7 +5049,10 @@ __STATIC_INLINE void LL_RCC_DisableSPI8_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[37], RCC_XBARxCFGR_XBARxEN);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I2C8 clock source select
   * @rmtoll XBAR38CFGR      XBAR38SEL      LL_RCC_GetI2C8ClockSource
@@ -3746,6 +5123,7 @@ __STATIC_INLINE void LL_RCC_DisableI2C8_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[38], RCC_XBARxCFGR_XBARxEN);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @brief  Get LPUART1 clock source select
@@ -3889,6 +5267,8 @@ __STATIC_INLINE void LL_RCC_DisableLPTIM3_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[40], RCC_XBARxCFGR_XBARxEN);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+
 /**
   * @brief  Get LPTIM4_5 clock source select
   * @rmtoll XBAR41CFGR      XBAR41SEL      LL_RCC_GetLPTIM4_5ClockSource
@@ -3960,9 +5340,11 @@ __STATIC_INLINE void LL_RCC_DisableLPTIM4_5_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[41], RCC_XBARxCFGR_XBARxEN);
 }
 
+#else
+
 /**
-  * @brief  Get MDF2 clock source select
-  * @rmtoll XBAR42CFGR      XBAR42SEL      LL_RCC_GetMDF2ClockSource
+  * @brief  Get LPTIM4 clock source select
+  * @rmtoll XBAR41CFGR      XBAR41SEL      LL_RCC_GetLPTIM4ClockSource
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
@@ -3980,14 +5362,14 @@ __STATIC_INLINE void LL_RCC_DisableLPTIM4_5_KerClk(void)
   *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
   *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
   */
-__STATIC_INLINE uint32_t LL_RCC_GetMDF2ClockSource(void)
+__STATIC_INLINE uint32_t LL_RCC_GetLPTIM4ClockSource(void)
 {
-  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxSEL_Msk));
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[41], RCC_XBARxCFGR_XBARxSEL_Msk));
 }
 
 /**
-  * @brief  Set MDF2 Clock Source
-  * @rmtoll XBAR42CFGR         XBAR42SEL        LL_RCC_SetMDF2ClockSource
+  * @brief  Set LPTIM4 Clock Source
+  * @rmtoll XBAR41CFGR         XBAR41SEL        LL_RCC_SetLPTIM4ClockSource
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
   *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
@@ -4006,30 +5388,177 @@ __STATIC_INLINE uint32_t LL_RCC_GetMDF2ClockSource(void)
   *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_SetMDF2ClockSource(uint32_t Source)
+__STATIC_INLINE void LL_RCC_SetLPTIM4ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[41], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable LPTIM4 kernel clock
+  * @rmtoll XBAR41CFGR         XBAR41EN         LL_RCC_EnableLPTIM4
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableLPTIM4_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[41], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable LPTIM4 kernel clock
+  * @rmtoll XBAR41CFGR         XBAR41EN         LL_RCC_DisableLPTIM4
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableLPTIM4_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[41], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Get LPTIM5 clock source select
+  * @rmtoll XBAR42CFGR      XBAR42SEL      LL_RCC_GetLPTIM5ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetLPTIM5ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set LPTIM5 Clock Source
+  * @rmtoll XBAR42CFGR         XBAR42SEL        LL_RCC_SetLPTIM5ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetLPTIM5ClockSource(uint32_t Source)
 {
   MODIFY_REG(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
 }
 
 /**
-  * @brief  Enable MDF2 kernel clock
-  * @rmtoll XBAR42CFGR         XBAR42EN         LL_RCC_EnableMDF2
+  * @brief  Enable LPTIM5 kernel clock
+  * @rmtoll XBAR42CFGR         XBAR42EN         LL_RCC_EnableLPTIM5
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_EnableMDF2_KerClk(void)
+__STATIC_INLINE void LL_RCC_EnableLPTIM5_KerClk(void)
 {
   SET_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxEN);
 }
 
 /**
-  * @brief  Disable MDF2 kernel clock
-  * @rmtoll XBAR42CFGR         XBAR42EN         LL_RCC_DisableMDF2
+  * @brief  Disable LPTIM5 kernel clock
+  * @rmtoll XBAR42CFGR         XBAR42EN         LL_RCC_DisableLPTIM5
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_DisableMDF2_KerClk(void)
+__STATIC_INLINE void LL_RCC_DisableLPTIM5_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxEN);
 }
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING) && !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+/**
+  * @brief  Get ADF1 clock source select
+  * @rmtoll XBAR42CFGR      XBAR42SEL      LL_RCC_GetADF1ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADF1ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set ADF1 Clock Source
+  * @rmtoll XBAR42CFGR         XBAR42SEL        LL_RCC_SetADF1ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADF1ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable ADF1 kernel clock
+  * @rmtoll XBAR42CFGR         XBAR42EN         LL_RCC_EnableADF1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableADF1_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable ADF1 kernel clock
+  * @rmtoll XBAR42CFGR         XBAR42EN         LL_RCC_DisableADF1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableADF1_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[42], RCC_XBARxCFGR_XBARxEN);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @brief  Get TSDBG clock source select
@@ -4244,6 +5773,7 @@ __STATIC_INLINE void LL_RCC_DisableATB_METR_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[45], RCC_XBARxCFGR_XBARxEN);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get ADC12 clock source select
   * @rmtoll XBAR46CFGR      XBAR46SEL      LL_RCC_GetADC12ClockSource
@@ -4386,6 +5916,152 @@ __STATIC_INLINE void LL_RCC_DisableADC3_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[47], RCC_XBARxCFGR_XBARxEN);
 }
 
+#else
+
+/**
+  * @brief  Get ADC1 clock source select
+  * @rmtoll XBAR46CFGR      XBAR46SEL      LL_RCC_GetADC1ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADC1ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[46], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set ADC1 Clock Source
+  * @rmtoll XBAR46CFGR         XBAR46SEL        LL_RCC_SetADC1ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADC1ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[46], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable ADC1 kernel clock
+  * @rmtoll XBAR46CFGR         XBAR46EN         LL_RCC_EnableADC1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableADC1_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[46], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable ADC1 kernel clock
+  * @rmtoll XBAR46CFGR         XBAR46EN         LL_RCC_DisableADC1
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableADC1_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[46], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Get ADC2 clock source select
+  * @rmtoll XBAR47CFGR      XBAR47SEL      LL_RCC_GetADC2ClockSource
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADC2ClockSource(void)
+{
+  return (uint32_t)(READ_BIT(RCC->XBARxCFGR[47], RCC_XBARxCFGR_XBARxSEL_Msk));
+}
+
+/**
+  * @brief  Set ADC2 Clock Source
+  * @rmtoll XBAR47CFGR         XBAR47SEL        LL_RCC_SetADC2ClockSource
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL4_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL5_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL6_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL7_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_PLL8_FOUTPOSTDIV
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSE
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_HSEKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_MSIKER
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_SPDIF
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_I2S
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSI
+  *        @arg @ref LL_RCC_XBAR_CLKSRC_LSE
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADC2ClockSource(uint32_t Source)
+{
+  MODIFY_REG(RCC->XBARxCFGR[47], RCC_XBARxCFGR_XBARxSEL_Msk, Source);
+}
+
+/**
+  * @brief  Enable ADC2 kernel clock
+  * @rmtoll XBAR47CFGR         XBAR47EN         LL_RCC_EnableADC2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableADC2_KerClk(void)
+{
+  SET_BIT(RCC->XBARxCFGR[47], RCC_XBARxCFGR_XBARxEN);
+}
+
+/**
+  * @brief  Disable ADC2 kernel clock
+  * @rmtoll XBAR47CFGR         XBAR47EN         LL_RCC_DisableADC2
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableADC2_KerClk(void)
+{
+  CLEAR_BIT(RCC->XBARxCFGR[47], RCC_XBARxCFGR_XBARxEN);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
 /**
   * @brief  Get OSPI1 clock source select
   * @rmtoll XBAR48CFGR      XBAR48SEL      LL_RCC_GetOSPI1ClockSource
@@ -4457,6 +6133,7 @@ __STATIC_INLINE void LL_RCC_DisableOSPI1_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[48], RCC_XBARxCFGR_XBARxEN);
 }
 
+#if defined(LL_RCC_OSPI2_CLKSOURCE)
 /**
   * @brief  Get OSPI2 clock source select
   * @rmtoll XBAR49CFGR      XBAR49SEL      LL_RCC_GetOSPI2ClockSource
@@ -4527,6 +6204,7 @@ __STATIC_INLINE void LL_RCC_DisableOSPI2_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[49], RCC_XBARxCFGR_XBARxEN);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @brief  Get FMC clock source select
@@ -5167,6 +6845,7 @@ __STATIC_INLINE void LL_RCC_DisableUSB2PHY2_KerClk(void)
   CLEAR_BIT(RCC->XBARxCFGR[58], RCC_XBARxCFGR_XBARxEN);
 }
 
+
 /**
   * @brief  Get ETHSWCFG clock source select
   * @rmtoll XBAR59CFGR      XBAR59SEL      LL_RCC_GetETHSWCFGClockSource
@@ -5308,6 +6987,7 @@ __STATIC_INLINE void LL_RCC_DisableETHSWMSG_KerClk(void)
 {
   CLEAR_BIT(RCC->XBARxCFGR[60], RCC_XBARxCFGR_XBARxEN);
 }
+
 
 /**
   * @brief  Get MCO1 clock source select
@@ -5535,7 +7215,7 @@ __STATIC_INLINE void LL_RCC_DisableCPU1EXT2F_KerClk(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetLPTIM1_2_PREDIV(void)
@@ -5549,7 +7229,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetLPTIM1_2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -5607,7 +7287,7 @@ __STATIC_INLINE void LL_RCC_DisableLPTIM1_2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSART2_4_PREDIV(void)
@@ -5621,7 +7301,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSART2_4_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -5679,7 +7359,7 @@ __STATIC_INLINE void LL_RCC_DisableUSART2_4_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSART3_5_PREDIV(void)
@@ -5693,7 +7373,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSART3_5_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -5745,13 +7425,14 @@ __STATIC_INLINE void LL_RCC_DisableUSART3_5_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[9], RCC_FINDIVxCFGR_FINDIVxEN);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get UART7_8 channel pre divided Value
   * @rmtoll PREDIV21CFGR      PREDIV21      LL_RCC_GetUART7_8_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUART7_8_PREDIV(void)
@@ -5769,13 +7450,42 @@ __STATIC_INLINE uint32_t LL_RCC_GetUART7_8_FINDIV(void)
   return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVx_Msk));
 }
 
+#else
+
+/**
+  * @brief  Get UART7 channel pre divided Value
+  * @rmtoll PREDIV21CFGR      PREDIV21      LL_RCC_GetUART7_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUART7_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[21], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Get UART7 channel fin divided Value
+  * @rmtoll FINDIV21CFGR      FINDIV21      LL_RCC_GetUSART7_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUART7_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING) && !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get UART9 channel pre divided Value
   * @rmtoll PREDIV22CFGR      PREDIV22      LL_RCC_GetUART9_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUART9_PREDIV(void)
@@ -5793,13 +7503,16 @@ __STATIC_INLINE uint32_t LL_RCC_GetUART9_FINDIV(void)
   return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[22], RCC_FINDIVxCFGR_FINDIVx_Msk));
 }
 
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPI2_3 channel pre divided Value
   * @rmtoll PREDIV10CFGR      PREDIV10      LL_RCC_GetSPI2_3_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSPI2_3_PREDIV(void)
@@ -5813,7 +7526,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSPI2_3_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -5864,14 +7577,160 @@ __STATIC_INLINE void LL_RCC_DisableSPI2_3_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[10], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get SPI2 channel pre divided Value
+  * @rmtoll PREDIV10CFGR      PREDIV10      LL_RCC_GetSPI2_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI2_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[10], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
 
+/**
+  * @brief  Set SPI2 channel pre divided Value
+  * @rmtoll PREDIV10CFGR         PREDIV10        LL_RCC_SetSPI2_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI2_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[10], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SPI2 channel pre divided Value
+  * @rmtoll FINDIV10CFGR      FINDIV10      LL_RCC_GetSPI2_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI2_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[10], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SPI2 channel pre divided Value
+  * @rmtoll FINDIV10CFGR         FINDIV10        LL_RCC_SetSPI2_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI2_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[10], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SPI2 final divider channel
+  * @rmtoll FINDIV10CFGR         FINDIV10EN         LL_RCC_EnableSPI2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPI2_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[10], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SPI2 final divider channel
+  * @rmtoll FINDIV10CFGR         FINDIV10EN         LL_RCC_DisableSPI2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPI2_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[10], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get SPI3 channel pre divided Value
+  * @rmtoll PREDIV11CFGR      PREDIV11      LL_RCC_GetSPI3_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI3_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[11], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set SPI3 channel pre divided Value
+  * @rmtoll PREDIV11CFGR         PREDIV11        LL_RCC_SetSPI3_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI3_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[11], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SPI3 channel pre divided Value
+  * @rmtoll FINDIV11CFGR      FINDIV11      LL_RCC_GetSPI3_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI3_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[11], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SPI3 channel pre divided Value
+  * @rmtoll FINDIV11CFGR         FINDIV11        LL_RCC_SetSPI3_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI3_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[11], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SPI3 final divider channel
+  * @rmtoll FINDIV11CFGR         FINDIV11EN         LL_RCC_EnableSPI3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPI3_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[11], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SPI3 final divider channel
+  * @rmtoll FINDIV11CFGR         FINDIV11EN         LL_RCC_DisableSPI3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPI3_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[11], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined (RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPIDFRX channel pre divided Value
   * @rmtoll PREDIV11CFGR      PREDIV11      LL_RCC_GetSPIDFRX_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSPDIFRX_PREDIV(void)
@@ -5885,7 +7744,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSPDIFRX_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -5936,14 +7795,88 @@ __STATIC_INLINE void LL_RCC_DisableSPDIFRX_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[11], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get SPIDFRX channel pre divided Value
+  * @rmtoll PREDIV12CFGR      PREDIV12      LL_RCC_GetSPIDFRX_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPDIFRX_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[12], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
 
+/**
+  * @brief  Set SPIDFRX channel pre divided Value
+  * @rmtoll PREDIV12CFGR         PREDIV12        LL_RCC_SetSPIDFRX_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPDIFRX_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[12], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SPIDFRX channel pre divided Value
+  * @rmtoll FINDIV12CFGR      FINDIV12      LL_RCC_GetSPIDFRX_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPDIFRX_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[12], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SPIDFRX channel pre divided Value
+  * @rmtoll FINDIV12CFGR         FINDIV12        LL_RCC_SetSPIDFRX_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPIDFRX_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[12], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SPIDFRX final divider channel
+  * @rmtoll FINDIV12CFGR         FINDIV12EN         LL_RCC_EnableSPIDFRX_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPIDFRX_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[12], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SPIDFRX final divider channel
+  * @rmtoll FINDIV12CFGR         FINDIV12EN         LL_RCC_DisableSPIDFRX_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPDIFRX_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[12], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I2C1_2_I3C1_2 channel pre divided Value
   * @rmtoll PREDIV12CFGR      PREDIV12      LL_RCC_GetI2C1_2_I3C1_2_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetI2C1_2_I3C1_2_PREDIV(void)
@@ -5957,7 +7890,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetI2C1_2_I3C1_2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6009,13 +7942,163 @@ __STATIC_INLINE void LL_RCC_DisableI2C1_2_I3C1_2_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[12], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#else
+
+/**
+  * @brief  Get I2C1_2 channel pre divided Value
+  * @rmtoll PREDIV13CFGR      PREDIV13      LL_RCC_GetI2C1_2_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI2C1_2_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[13], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set I2C1_2 channel pre divided Value
+  * @rmtoll PREDIV13CFGR         PREDIV13        LL_RCC_SetI2C1_2_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI2C1_2_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[13], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get I2C1_2 channel pre divided Value
+  * @rmtoll FINDIV13CFGR      FINDIV13      LL_RCC_GetI2C1_2_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI2C1_2_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[13], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set I2C1_2 channel pre divided Value
+  * @rmtoll FINDIV13CFGR         FINDIV13        LL_RCC_SetI2C1_2_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI2C1_2_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[13], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable I2C1_2 final divider channel
+  * @rmtoll FINDIV13CFGR         FINDIV13EN         LL_RCC_EnableI2C1_2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI2C1_2_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[13], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable I2C1_2 final divider channel
+  * @rmtoll FINDIV13CFGR         FINDIV13EN         LL_RCC_DisableI2C1_2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI2C1_2_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[13], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get I3C1_2 channel pre divided Value
+  * @rmtoll PREDIV14CFGR      PREDIV14      LL_RCC_GetI3C1_2_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI3C1_2_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[14], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set I3C1_2 channel pre divided Value
+  * @rmtoll PREDIV14CFGR         PREDIV14        LL_RCC_SetI3C1_2_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI3C1_2_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[14], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get I3C1_2 channel pre divided Value
+  * @rmtoll FINDIV14CFGR      FINDIV14      LL_RCC_GetI3C1_2_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI3C1_2_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[14], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set I3C1_2 channel pre divided Value
+  * @rmtoll FINDIV14CFGR         FINDIV14        LL_RCC_SetI3C1_2_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI3C1_2_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[14], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable I3C1_2 final divider channel
+  * @rmtoll FINDIV14CFGR         FINDIV14EN         LL_RCC_EnableI3C1_2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI3C1_2_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[14], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable I3C1_2 final divider channel
+  * @rmtoll FINDIV14CFGR         FINDIV14EN         LL_RCC_DisableI3C1_2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI3C1_2_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[14], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I2C3_5_I3C3 channel pre divided Value
   * @rmtoll PREDIV13CFGR      PREDIV13      LL_RCC_GetI2C3_5_I3C3_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetI2C3_5_I3C3_PREDIV(void)
@@ -6029,7 +8112,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetI2C3_5_I3C3_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6081,13 +8164,165 @@ __STATIC_INLINE void LL_RCC_DisableI2C3_5_I3C3_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[13], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#else
+
+/**
+  * @brief  Get I2C3 channel pre divided Value
+  * @rmtoll PREDIV38CFGR      PREDIV38      LL_RCC_GetI2C3_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI2C3_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[38], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set I2C3 channel pre divided Value
+  * @rmtoll PREDIV38CFGR         PREDIV38        LL_RCC_SetI2C3_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI2C3_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[38], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get I2C3 channel pre divided Value
+  * @rmtoll FINDIV38CFGR      FINDIV38      LL_RCC_GetI2C3_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI2C3_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[38], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set I2C3 channel pre divided Value
+  * @rmtoll FINDIV38CFGR         FINDIV38        LL_RCC_SetI2C3_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI2C3_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[38], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable I2C3 final divider channel
+  * @rmtoll FINDIV38CFGR         FINDIV38EN         LL_RCC_EnableI2C3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI2C3_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[38], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable I2C3 final divider channel
+  * @rmtoll FINDIV38CFGR         FINDIV38EN         LL_RCC_DisableI2C3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI2C3_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[38], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get I3C3 channel pre divided Value
+  * @rmtoll PREDIV36CFGR      PREDIV36      LL_RCC_GetI3C3_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI3C3_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[36], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set I3C3 channel pre divided Value
+  * @rmtoll PREDIV36CFGR         PREDIV36        LL_RCC_SetI3C3_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI3C3_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[36], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get I3C3 channel pre divided Value
+  * @rmtoll FINDIV36CFGR      FINDIV36      LL_RCC_GetI3C3_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetI3C3_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[36], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set I3C3 channel pre divided Value
+  * @rmtoll FINDIV36CFGR         FINDIV36        LL_RCC_SetI3C3_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetI3C3_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[36], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable I3C3 final divider channel
+  * @rmtoll FINDIV36CFGR         FINDIV36EN         LL_RCC_EnableI3C3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableI3C3_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[36], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable I3C3 final divider channel
+  * @rmtoll FINDIV36CFGR         FINDIV36EN         LL_RCC_DisableI3C3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableI3C3_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[36], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+#endif /* RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING */
+
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING) && !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+
 /**
   * @brief  Get I2C4_6 channel pre divided Value
   * @rmtoll PREDIV14CFGR      PREDIV14      LL_RCC_GetI2C4_6_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetI2C4_6_PREDIV(void)
@@ -6101,7 +8336,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetI2C4_6_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6159,7 +8394,7 @@ __STATIC_INLINE void LL_RCC_DisableI2C4_6_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetI2C7_PREDIV(void)
@@ -6173,7 +8408,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetI2C7_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6225,13 +8460,15 @@ __STATIC_INLINE void LL_RCC_DisableI2C7_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[15], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
 /**
   * @brief  Get SPI1 channel pre divided Value
   * @rmtoll PREDIV16CFGR      PREDIV16      LL_RCC_GetSPI1_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSPI1_PREDIV(void)
@@ -6245,7 +8482,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSPI1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6303,7 +8540,7 @@ __STATIC_INLINE void LL_RCC_DisableSPI1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSPI4_5_PREDIV(void)
@@ -6317,7 +8554,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSPI4_5_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6369,13 +8606,16 @@ __STATIC_INLINE void LL_RCC_DisableSPI4_5_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[17], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#if !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+
 /**
   * @brief  Get SPI6_7 channel pre divided Value
   * @rmtoll PREDIV18CFGR      PREDIV18      LL_RCC_GetSPI6_7_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSPI6_7_PREDIV(void)
@@ -6389,7 +8629,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSPI6_7_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6440,14 +8680,89 @@ __STATIC_INLINE void LL_RCC_DisableSPI6_7_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[18], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get SPI6 channel pre divided Value
+  * @rmtoll PREDIV37CFGR      PREDIV37      LL_RCC_GetSPI6_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI6_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[37], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
 
+/**
+  * @brief  Set SPI6 channel pre divided Value
+  * @rmtoll PREDIV37CFGR         PREDIV37        LL_RCC_SetSPI6_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI6_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[37], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SPI6 channel pre divided Value
+  * @rmtoll FINDIV37CFGR      FINDIV37      LL_RCC_GetSPI6_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSPI6_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[37], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SPI6 channel pre divided Value
+  * @rmtoll FINDIV37CFGR         FINDIV37        LL_RCC_SetSPI6_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSPI6_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[37], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SPI6 final divider channel
+  * @rmtoll FINDIV37CFGR         FINDIV37EN         LL_RCC_EnableSPI6_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSPI6_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[37], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SPI6 final divider channel
+  * @rmtoll FINDIV37CFGR         FINDIV37EN         LL_RCC_DisableSPI6_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSPI6_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[37], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+#endif /* RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART1 channel pre divided Value
   * @rmtoll PREDIV19CFGR      PREDIV19      LL_RCC_GetUSART1_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSART1_PREDIV(void)
@@ -6461,7 +8776,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSART1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6512,6 +8827,79 @@ __STATIC_INLINE void LL_RCC_DisableUSART1_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[19], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get USART1 channel pre divided Value
+  * @rmtoll PREDIV18CFGR      PREDIV18      LL_RCC_GetUSART1_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART1_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[18], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set USART1 channel pre divided Value
+  * @rmtoll PREDIV18CFGR         PREDIV18        LL_RCC_SetUSART1_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART1_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[18], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get USART1 channel pre divided Value
+  * @rmtoll FINDIV18CFGR      FINDIV18      LL_RCC_GetUSART1_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART1_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[18], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set USART1 channel pre divided Value
+  * @rmtoll FINDIV18CFGR         FINDIV18        LL_RCC_SetUSART1_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART1_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[18], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable USART1 final divider channel
+  * @rmtoll FINDIV18CFGR         FINDIV18EN         LL_RCC_EnableUSART1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableUSART1_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[18], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable USART1 final divider channel
+  * @rmtoll FINDIV18CFGR         FINDIV18EN         LL_RCC_DisableUSART1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableUSART1_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[18], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @brief  Get UART2_4 channel pre divided Value
@@ -6519,7 +8907,7 @@ __STATIC_INLINE void LL_RCC_DisableUSART1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUART2_4_PREDIV(void)
@@ -6536,14 +8924,14 @@ __STATIC_INLINE uint32_t LL_RCC_GetUART2_4_FINDIV(void)
 {
   return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[8], RCC_FINDIVxCFGR_FINDIVx_Msk));
 }
-
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART6 channel pre divided Value
   * @rmtoll PREDIV20CFGR      PREDIV20      LL_RCC_GetUSART6_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSART6_PREDIV(void)
@@ -6557,7 +8945,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSART6_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6608,14 +8996,88 @@ __STATIC_INLINE void LL_RCC_DisableUSART6_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[20], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get USART6 channel pre divided Value
+  * @rmtoll PREDIV19CFGR      PREDIV19      LL_RCC_GetUSART6_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART6_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[19], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
 
+/**
+  * @brief  Set USART6 channel pre divided Value
+  * @rmtoll PREDIV19CFGR         PREDIV19        LL_RCC_SetUSART6_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART6_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[19], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get USART6 channel pre divided Value
+  * @rmtoll FINDIV19CFGR      FINDIV19      LL_RCC_GetUSART6_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART6_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[19], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set USART6 channel pre divided Value
+  * @rmtoll FINDIV19CFGR         FINDIV19        LL_RCC_SetUSART6_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART6_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[19], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable USART6 final divider channel
+  * @rmtoll FINDIV19CFGR         FINDIV19EN         LL_RCC_EnableUSART6_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableUSART6_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[19], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable USART6 final divider channel
+  * @rmtoll FINDIV19CFGR         FINDIV19EN         LL_RCC_DisableUSART6_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableUSART6_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[19], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART7_8 channel pre divided Value
   * @rmtoll PREDIV21CFGR      PREDIV21      LL_RCC_GetUSART7_8_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSART7_8_PREDIV(void)
@@ -6629,7 +9091,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSART7_8_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6681,13 +9143,90 @@ __STATIC_INLINE void LL_RCC_DisableUSART7_8_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#else
+
+/**
+  * @brief  Get USART7 channel pre divided Value
+  * @rmtoll PREDIV20CFGR      PREDIV20      LL_RCC_GetUSART7_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART7_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[20], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set USART7 channel pre divided Value
+  * @rmtoll PREDIV20CFGR         PREDIV20        LL_RCC_SetUSART7_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART7_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[20], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get USART7 channel pre divided Value
+  * @rmtoll FINDIV20CFGR      FINDIV20      LL_RCC_GetUSART7_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetUSART7_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[20], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set USART7 channel pre divided Value
+  * @rmtoll FINDIV20CFGR         FINDIV20        LL_RCC_SetUSART7_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetUSART7_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[20], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable USART7 final divider channel
+  * @rmtoll FINDIV20CFGR         FINDIV20EN         LL_RCC_EnableUSART7_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableUSART7_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[20], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable USART7 final divider channel
+  * @rmtoll FINDIV20CFGR         FINDIV20EN         LL_RCC_DisableUSART7_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableUSART7_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[20], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING) && !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USART9 channel pre divided Value
   * @rmtoll PREDIV22CFGR      PREDIV22      LL_RCC_GetUSART9_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSART9_PREDIV(void)
@@ -6701,7 +9240,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSART9_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6753,13 +9292,17 @@ __STATIC_INLINE void LL_RCC_DisableUSART9_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[22], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SAI1_MDF1 channel pre divided Value
   * @rmtoll PREDIV23CFGR      PREDIV23      LL_RCC_GetSAI1_MDF1_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSAI1_MDF1_PREDIV(void)
@@ -6773,7 +9316,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSAI1_MDF1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6825,13 +9368,161 @@ __STATIC_INLINE void LL_RCC_DisableSAI1_MDF1_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[23], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#else
+
+/**
+  * @brief  Get MDF1 channel pre divided Value
+  * @rmtoll PREDIV21CFGR      PREDIV21      LL_RCC_GetMDF1_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetMDF1_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[21], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set MDF1 channel pre divided Value
+  * @rmtoll PREDIV21CFGR         PREDIV21        LL_RCC_SetMDF1_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetMDF1_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[21], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get MDF1 channel pre divided Value
+  * @rmtoll FINDIV21CFGR      FINDIV21      LL_RCC_GetMDF1_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetMDF1_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set MDF1 channel pre divided Value
+  * @rmtoll FINDIV21CFGR         FINDIV21        LL_RCC_SetMDF1_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetMDF1_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable MDF1 final divider channel
+  * @rmtoll FINDIV21CFGR         FINDIV21EN         LL_RCC_EnableMDF1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableMDF1_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable MDF1 final divider channel
+  * @rmtoll FINDIV21CFGR         FINDIV21EN         LL_RCC_DisableMDF1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableMDF1_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[21], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get SAI1 channel pre divided Value
+  * @rmtoll PREDIV22CFGR      PREDIV22      LL_RCC_GetSAI1_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI1_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[22], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI1 channel pre divided Value
+  * @rmtoll PREDIV22CFGR         PREDIV22        LL_RCC_SetSAI1_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI1_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[22], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SAI1 channel pre divided Value
+  * @rmtoll FINDIV22CFGR      FINDIV22      LL_RCC_GetSAI1_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI1_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[22], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI1 channel pre divided Value
+  * @rmtoll FINDIV22CFGR         FINDIV22        LL_RCC_SetSAI1_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI1_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[22], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SAI1 final divider channel
+  * @rmtoll FINDIV22CFGR         FINDIV22EN         LL_RCC_EnableSAI1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI1_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[22], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SAI1 final divider channel
+  * @rmtoll FINDIV22CFGR         FINDIV22EN         LL_RCC_DisableSAI1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI1_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[22], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SAI2 channel pre divided Value
   * @rmtoll PREDIV24CFGR      PREDIV24      LL_RCC_GetSAI2_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSAI2_PREDIV(void)
@@ -6845,7 +9536,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSAI2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6896,14 +9587,88 @@ __STATIC_INLINE void LL_RCC_DisableSAI2_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[24], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get SAI2 channel pre divided Value
+  * @rmtoll PREDIV23CFGR      PREDIV23      LL_RCC_GetSAI2_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI2_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[23], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
 
+/**
+  * @brief  Set SAI2 channel pre divided Value
+  * @rmtoll PREDIV23CFGR         PREDIV23        LL_RCC_SetSAI2_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI2_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[23], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SAI2 channel pre divided Value
+  * @rmtoll FINDIV23CFGR      FINDIV23      LL_RCC_GetSAI2_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI2_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[23], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI2 channel pre divided Value
+  * @rmtoll FINDIV23CFGR         FINDIV23        LL_RCC_SetSAI2_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI2_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[23], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SAI2 final divider channel
+  * @rmtoll FINDIV23CFGR         FINDIV23EN         LL_RCC_EnableSAI2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI2_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[23], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SAI2 final divider channel
+  * @rmtoll FINDIV23CFGR         FINDIV23EN         LL_RCC_DisableSAI2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI2_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[23], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SAI3_4 channel pre divided Value
   * @rmtoll PREDIV25CFGR      PREDIV25      LL_RCC_GetSAI3_4_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSAI3_4_PREDIV(void)
@@ -6917,7 +9682,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSAI3_4_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -6968,6 +9733,151 @@ __STATIC_INLINE void LL_RCC_DisableSAI3_4_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[25], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#else
+/**
+  * @brief  Get SAI3 channel pre divided Value
+  * @rmtoll PREDIV24CFGR      PREDIV24      LL_RCC_GetSAI3_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI3_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[24], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI3 channel pre divided Value
+  * @rmtoll PREDIV24CFGR         PREDIV24        LL_RCC_SetSAI3_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI3_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[24], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SAI3 channel pre divided Value
+  * @rmtoll FINDIV24CFGR      FINDIV24      LL_RCC_GetSAI3_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI3_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[24], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI3 channel pre divided Value
+  * @rmtoll FINDIV24CFGR         FINDIV24        LL_RCC_SetSAI3_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI3_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[24], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SAI3 final divider channel
+  * @rmtoll FINDIV24CFGR         FINDIV24EN         LL_RCC_EnableSAI3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI3_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[24], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SAI3 final divider channel
+  * @rmtoll FINDIV24CFGR         FINDIV24EN         LL_RCC_DisableSAI3_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI3_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[24], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get SAI4 channel pre divided Value
+  * @rmtoll PREDIV25CFGR      PREDIV25      LL_RCC_GetSAI4_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI4_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[25], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI4 channel pre divided Value
+  * @rmtoll PREDIV25CFGR         PREDIV25        LL_RCC_SetSAI4_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI4_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[25], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get SAI4 channel pre divided Value
+  * @rmtoll FINDIV25CFGR      FINDIV25      LL_RCC_GetSAI4_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetSAI4_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[25], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set SAI4 channel pre divided Value
+  * @rmtoll FINDIV25CFGR         FINDIV25        LL_RCC_SetSAI4_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetSAI4_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[25], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable SAI4 final divider channel
+  * @rmtoll FINDIV25CFGR         FINDIV25EN         LL_RCC_EnableSAI4_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableSAI4_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[25], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable SAI4 final divider channel
+  * @rmtoll FINDIV25CFGR         FINDIV25EN         LL_RCC_DisableSAI4_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableSAI4_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[25], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
 /**
   * @brief  Get FDCAN channel pre divided Value
@@ -6975,7 +9885,7 @@ __STATIC_INLINE void LL_RCC_DisableSAI3_4_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetFDCAN_PREDIV(void)
@@ -6989,7 +9899,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetFDCAN_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7047,7 +9957,7 @@ __STATIC_INLINE void LL_RCC_DisableFDCAN_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetDSIBLANE_PREDIV(void)
@@ -7061,7 +9971,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetDSIBLANE_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7119,7 +10029,7 @@ __STATIC_INLINE void LL_RCC_DisableDSIBLANE_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetDSIPHY_PREDIV(void)
@@ -7133,7 +10043,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetDSIPHY_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7191,7 +10101,7 @@ __STATIC_INLINE void LL_RCC_DisableDSIPHY_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetCSI2_PREDIV(void)
@@ -7205,7 +10115,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetCSI2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7263,7 +10173,7 @@ __STATIC_INLINE void LL_RCC_DisableCSI2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetCSI2TXESC_PREDIV(void)
@@ -7277,7 +10187,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetCSI2TXESC_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7335,7 +10245,7 @@ __STATIC_INLINE void LL_RCC_DisableCSI2TXESC_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetCSI2PHY_PREDIV(void)
@@ -7349,7 +10259,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetCSI2PHY_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7407,7 +10317,7 @@ __STATIC_INLINE void LL_RCC_DisableCSI2PHY_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetLVDPHY_PREDIV(void)
@@ -7421,7 +10331,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetLVDPHY_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7479,7 +10389,7 @@ __STATIC_INLINE void LL_RCC_DisableLVDPHY_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSTGEN_PREDIV(void)
@@ -7493,7 +10403,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSTGEN_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7545,13 +10455,14 @@ __STATIC_INLINE void LL_RCC_DisableSTGEN_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[33], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get USB3PCIEPHY channel pre divided Value
   * @rmtoll PREDIV34CFGR      PREDIV34      LL_RCC_GetUSB3PCIEPHY_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSB3PCIEPHY_PREDIV(void)
@@ -7565,7 +10476,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSB3PCIEPHY_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7616,14 +10527,14 @@ __STATIC_INLINE void LL_RCC_DisableUSB3PCIEPHY_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[34], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
-
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 /**
   * @brief  Get UCPD1 channel pre divided Value
   * @rmtoll PREDIV35CFGR      PREDIV35      LL_RCC_GetUCPD1_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUCPD1_PREDIV(void)
@@ -7637,7 +10548,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUCPD1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7689,13 +10600,14 @@ __STATIC_INLINE void LL_RCC_DisableUCPD1_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[35], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I3C4 channel pre divided Value
   * @rmtoll PREDIV36CFGR      PREDIV36      LL_RCC_GetI3C4_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetI3C4_PREDIV(void)
@@ -7709,7 +10621,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetI3C4_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7761,13 +10673,16 @@ __STATIC_INLINE void LL_RCC_DisableI3C4_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[36], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get SPI8 channel pre divided Value
   * @rmtoll PREDIV37CFGR      PREDIV37      LL_RCC_GetSPI8_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSPI8_PREDIV(void)
@@ -7781,7 +10696,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSPI8_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7832,14 +10747,16 @@ __STATIC_INLINE void LL_RCC_DisableSPI8_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[37], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get I2C8 channel pre divided Value
   * @rmtoll PREDIV38CFGR      PREDIV38      LL_RCC_GetI2C8_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetI2C8_PREDIV(void)
@@ -7853,7 +10770,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetI2C8_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7905,13 +10822,16 @@ __STATIC_INLINE void LL_RCC_DisableI2C8_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[38], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+
 /**
   * @brief  Get LPUART1 channel pre divided Value
   * @rmtoll PREDIV39CFGR      PREDIV39      LL_RCC_GetLPUART1_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetLPUART1_PREDIV(void)
@@ -7925,7 +10845,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetLPUART1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -7983,7 +10903,7 @@ __STATIC_INLINE void LL_RCC_DisableLPUART1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetLPTIM3_PREDIV(void)
@@ -7997,7 +10917,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetLPTIM3_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8049,18 +10969,20 @@ __STATIC_INLINE void LL_RCC_DisableLPTIM3_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[40], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+
 /**
   * @brief  Get LPTIM4_5 channel pre divided Value
   * @rmtoll PREDIV40CFGR      PREDIV40      LL_RCC_GetLPTIM4_5_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetLPTIM4_5_PREDIV(void)
 {
-  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[40], RCC_PREDIVxCFGR_PREDIVx_Msk));
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[41], RCC_PREDIVxCFGR_PREDIVx_Msk));
 }
 
 /**
@@ -8069,13 +10991,13 @@ __STATIC_INLINE uint32_t LL_RCC_GetLPTIM4_5_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_SetLPTIM4_5_PREDIV(uint32_t Source)
 {
-  MODIFY_REG(RCC->PREDIVxCFGR[40], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+  MODIFY_REG(RCC->PREDIVxCFGR[41], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
 }
 
 /* FINDIV part */
@@ -8087,7 +11009,7 @@ __STATIC_INLINE void LL_RCC_SetLPTIM4_5_PREDIV(uint32_t Source)
   */
 __STATIC_INLINE uint32_t LL_RCC_GetLPTIM4_5_FINDIV(void)
 {
-  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[40], RCC_FINDIVxCFGR_FINDIVx_Msk));
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVx_Msk));
 }
 
 /**
@@ -8098,7 +11020,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetLPTIM4_5_FINDIV(void)
   */
 __STATIC_INLINE void LL_RCC_SetLPTIM4_5_FINDIV(uint32_t Value)
 {
-  MODIFY_REG(RCC->FINDIVxCFGR[40], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+  MODIFY_REG(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
 }
 
 /**
@@ -8108,7 +11030,7 @@ __STATIC_INLINE void LL_RCC_SetLPTIM4_5_FINDIV(uint32_t Value)
   */
 __STATIC_INLINE void LL_RCC_EnableLPTIM4_5_FINDIV(void)
 {
-  SET_BIT(RCC->FINDIVxCFGR[40], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+  SET_BIT(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
 /**
@@ -8118,34 +11040,108 @@ __STATIC_INLINE void LL_RCC_EnableLPTIM4_5_FINDIV(void)
   */
 __STATIC_INLINE void LL_RCC_DisableLPTIM4_5_FINDIV(void)
 {
-  CLEAR_BIT(RCC->FINDIVxCFGR[40], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+  CLEAR_BIT(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#else
+
 /**
-  * @brief  Get MDF2 channel pre divided Value
-  * @rmtoll PREDIV42CFGR      PREDIV42      LL_RCC_GetMDF2_PREDIV
+  * @brief  Get LPTIM4 channel pre divided Value
+  * @rmtoll PREDIV41CFGR      PREDIV41      LL_RCC_GetLPTIM4_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
-__STATIC_INLINE uint32_t LL_RCC_GetMDF2_PREDIV(void)
+__STATIC_INLINE uint32_t LL_RCC_GetLPTIM4_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[41], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set LPTIM4 channel pre divided Value
+  * @rmtoll PREDIV41CFGR         PREDIV41        LL_RCC_SetLPTIM4_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetLPTIM4_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[41], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get LPTIM4 channel pre divided Value
+  * @rmtoll FINDIV41CFGR      FINDIV41      LL_RCC_GetLPTIM4_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetLPTIM4_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set LPTIM4 channel pre divided Value
+  * @rmtoll FINDIV41CFGR         FINDIV41        LL_RCC_SetLPTIM4_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetLPTIM4_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable LPTIM4 final divider channel
+  * @rmtoll FINDIV41CFGR         FINDIV41EN         LL_RCC_EnableLPTIM4_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableLPTIM4_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable LPTIM4 final divider channel
+  * @rmtoll FINDIV41CFGR         FINDIV41EN         LL_RCC_DisableLPTIM4_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableLPTIM4_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[41], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get LPTIM5 channel pre divided Value
+  * @rmtoll PREDIV42CFGR      PREDIV42      LL_RCC_GetLPTIM5_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetLPTIM5_PREDIV(void)
 {
   return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[42], RCC_PREDIVxCFGR_PREDIVx_Msk));
 }
 
 /**
-  * @brief  Set MDF2 channel pre divided Value
-  * @rmtoll PREDIV42CFGR         PREDIV42        LL_RCC_SetMDF2_PREDIV
+  * @brief  Set LPTIM5 channel pre divided Value
+  * @rmtoll PREDIV42CFGR         PREDIV42        LL_RCC_SetLPTIM5_PREDIV
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_SetMDF2_PREDIV(uint32_t Source)
+__STATIC_INLINE void LL_RCC_SetLPTIM5_PREDIV(uint32_t Source)
 {
   MODIFY_REG(RCC->PREDIVxCFGR[42], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
 }
@@ -8153,45 +11149,122 @@ __STATIC_INLINE void LL_RCC_SetMDF2_PREDIV(uint32_t Source)
 /* FINDIV part */
 
 /**
-  * @brief  Get MDF2 channel pre divided Value
-  * @rmtoll FINDIV42CFGR      FINDIV42      LL_RCC_GetMDF2_FINDIV
+  * @brief  Get LPTIM5 channel pre divided Value
+  * @rmtoll FINDIV42CFGR      FINDIV42      LL_RCC_GetLPTIM5_FINDIV
   * @retval A value between 0 and 63, div1 up to div64 step
   */
-__STATIC_INLINE uint32_t LL_RCC_GetMDF2_FINDIV(void)
+__STATIC_INLINE uint32_t LL_RCC_GetLPTIM5_FINDIV(void)
 {
   return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVx_Msk));
 }
 
 /**
-  * @brief  Set MDF2 channel pre divided Value
-  * @rmtoll FINDIV42CFGR         FINDIV42        LL_RCC_SetMDF2_FINDIV
+  * @brief  Set LPTIM5 channel pre divided Value
+  * @rmtoll FINDIV42CFGR         FINDIV42        LL_RCC_SetLPTIM5_FINDIV
   * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_SetMDF2_FINDIV(uint32_t Value)
+__STATIC_INLINE void LL_RCC_SetLPTIM5_FINDIV(uint32_t Value)
 {
   MODIFY_REG(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
 }
 
 /**
-  * @brief  Enable MDF2 final divider channel
-  * @rmtoll FINDIV42CFGR         FINDIV42EN         LL_RCC_EnableMDF2_FINDIV
+  * @brief  Enable LPTIM5 final divider channel
+  * @rmtoll FINDIV42CFGR         FINDIV42EN         LL_RCC_EnableLPTIM5_FINDIV
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_EnableMDF2_FINDIV(void)
+__STATIC_INLINE void LL_RCC_EnableLPTIM5_FINDIV(void)
 {
   SET_BIT(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
 /**
-  * @brief  Disable MDF2 final divider channel
-  * @rmtoll FINDIV42CFGR         FINDIV42EN         LL_RCC_DisableMDF2_FINDIV
+  * @brief  Disable LPTIM5 final divider channel
+  * @rmtoll FINDIV42CFGR         FINDIV42EN         LL_RCC_DisableLPTIM5_FINDIV
   * @retval None
   */
-__STATIC_INLINE void LL_RCC_DisableMDF2_FINDIV(void)
+__STATIC_INLINE void LL_RCC_DisableLPTIM5_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING) && !defined(RCC_DERIVATIVE2_FLEXGEN_CHANNEL_MAPPING)
+/**
+  * @brief  Get ADF1 channel pre divided Value
+  * @rmtoll PREDIV42CFGR      PREDIV42      LL_RCC_GetADF1_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADF1_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[42], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set ADF1 channel pre divided Value
+  * @rmtoll PREDIV42CFGR         PREDIV42        LL_RCC_SetADF1_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADF1_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[42], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get ADF1 channel pre divided Value
+  * @rmtoll FINDIV42CFGR      FINDIV42      LL_RCC_GetADF1_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADF1_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set ADF1 channel pre divided Value
+  * @rmtoll FINDIV42CFGR         FINDIV42        LL_RCC_SetADF1_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADF1_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable ADF1 final divider channel
+  * @rmtoll FINDIV42CFGR         FINDIV42EN         LL_RCC_EnableADF1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableADF1_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable ADF1 final divider channel
+  * @rmtoll FINDIV42CFGR         FINDIV42EN         LL_RCC_DisableADF1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableADF1_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[42], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
+
 
 /**
   * @brief  Get TSDBG channel pre divided Value
@@ -8199,7 +11272,7 @@ __STATIC_INLINE void LL_RCC_DisableMDF2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetTSDBG_PREDIV(void)
@@ -8213,7 +11286,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetTSDBG_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8271,7 +11344,7 @@ __STATIC_INLINE void LL_RCC_DisableTSDBG_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetTPIU_PREDIV(void)
@@ -8285,7 +11358,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetTPIU_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8343,7 +11416,7 @@ __STATIC_INLINE void LL_RCC_DisableTPIU_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetATB_METR_PREDIV(void)
@@ -8357,7 +11430,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetATB_METR_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8409,13 +11482,15 @@ __STATIC_INLINE void LL_RCC_DisableATB_METR_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[45], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
+
 /**
   * @brief  Get ADC12 channel pre divided Value
   * @rmtoll PREDIV46CFGR      PREDIV46      LL_RCC_GetADC12_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetADC12_PREDIV(void)
@@ -8429,7 +11504,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetADC12_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8487,7 +11562,7 @@ __STATIC_INLINE void LL_RCC_DisableADC12_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetADC3_PREDIV(void)
@@ -8501,7 +11576,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetADC3_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8553,13 +11628,160 @@ __STATIC_INLINE void LL_RCC_DisableADC3_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[47], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#else
+
+/**
+  * @brief  Get ADC1 channel pre divided Value
+  * @rmtoll PREDIV46CFGR      PREDIV46      LL_RCC_GetADC1_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADC1_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[46], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set ADC1 channel pre divided Value
+  * @rmtoll PREDIV46CFGR         PREDIV46        LL_RCC_SetADC1_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADC1_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[46], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get ADC1 channel pre divided Value
+  * @rmtoll FINDIV46CFGR      FINDIV46      LL_RCC_GetADC1_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADC1_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[46], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set ADC1 channel pre divided Value
+  * @rmtoll FINDIV46CFGR         FINDIV46        LL_RCC_SetADC1_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADC1_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[46], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable ADC1 final divider channel
+  * @rmtoll FINDIV46CFGR         FINDIV46EN         LL_RCC_EnableADC1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableADC1_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[46], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable ADC1 final divider channel
+  * @rmtoll FINDIV46CFGR         FINDIV46EN         LL_RCC_DisableADC1_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableADC1_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[46], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Get ADC2 channel pre divided Value
+  * @rmtoll PREDIV47CFGR      PREDIV47      LL_RCC_GetADC2_PREDIV
+  * @retval Returned value can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADC2_PREDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->PREDIVxCFGR[47], RCC_PREDIVxCFGR_PREDIVx_Msk));
+}
+
+/**
+  * @brief  Set ADC2 channel pre divided Value
+  * @rmtoll PREDIV47CFGR         PREDIV47        LL_RCC_SetADC2_PREDIV
+  * @param  Source This parameter can be one of the following values:
+  *        @arg @ref LL_RCC_PREDIV_DIV1
+  *        @arg @ref LL_RCC_PREDIV_DIV2
+  *        @arg @ref LL_RCC_PREDIV_DIV4
+  *        @arg @ref LL_RCC_PREDIV_DIV1024
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADC2_PREDIV(uint32_t Source)
+{
+  MODIFY_REG(RCC->PREDIVxCFGR[47], RCC_PREDIVxCFGR_PREDIVx_Msk, Source);
+}
+
+/* FINDIV part */
+
+/**
+  * @brief  Get ADC2 channel pre divided Value
+  * @rmtoll FINDIV47CFGR      FINDIV47      LL_RCC_GetADC2_FINDIV
+  * @retval A value between 0 and 63, div1 up to div64 step
+  */
+__STATIC_INLINE uint32_t LL_RCC_GetADC2_FINDIV(void)
+{
+  return (uint32_t)(READ_BIT(RCC->FINDIVxCFGR[47], RCC_FINDIVxCFGR_FINDIVx_Msk));
+}
+
+/**
+  * @brief  Set ADC2 channel pre divided Value
+  * @rmtoll FINDIV47CFGR         FINDIV47        LL_RCC_SetADC2_FINDIV
+  * @param  Value parameter can be a value between 0 and 63 to divide from 1 up to 64
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_SetADC2_FINDIV(uint32_t Value)
+{
+  MODIFY_REG(RCC->FINDIVxCFGR[47], RCC_FINDIVxCFGR_FINDIVx_Msk, Value);
+}
+
+/**
+  * @brief  Enable ADC2 final divider channel
+  * @rmtoll FINDIV47CFGR         FINDIV47EN         LL_RCC_EnableADC2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_EnableADC2_FINDIV(void)
+{
+  SET_BIT(RCC->FINDIVxCFGR[47], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+/**
+  * @brief  Disable ADC2 final divider channel
+  * @rmtoll FINDIV47CFGR         FINDIV47EN         LL_RCC_DisableADC2_FINDIV
+  * @retval None
+  */
+__STATIC_INLINE void LL_RCC_DisableADC2_FINDIV(void)
+{
+  CLEAR_BIT(RCC->FINDIVxCFGR[47], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
+}
+
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 /**
   * @brief  Get OSPI1 channel pre divided Value
   * @rmtoll PREDIV48CFGR      PREDIV48      LL_RCC_GetOSPI1_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetOSPI1_PREDIV(void)
@@ -8573,7 +11795,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetOSPI1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8625,13 +11847,14 @@ __STATIC_INLINE void LL_RCC_DisableOSPI1_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[48], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+#if !defined(RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING)
 /**
   * @brief  Get OSPI2 channel pre divided Value
   * @rmtoll PREDIV49CFGR      PREDIV49      LL_RCC_GetOSPI2_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetOSPI2_PREDIV(void)
@@ -8645,7 +11868,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetOSPI2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8696,14 +11919,14 @@ __STATIC_INLINE void LL_RCC_DisableOSPI2_FINDIV(void)
 {
   CLEAR_BIT(RCC->FINDIVxCFGR[49], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
-
+#endif /* RCC_DERIVATIVE1_FLEXGEN_CHANNEL_MAPPING */
 /**
   * @brief  Get FMCCLOCK channel pre divided Value
   * @rmtoll PREDIV50CFGR      PREDIV50      LL_RCC_GetFMCCLOCK_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetFMC_PREDIV(void)
@@ -8717,7 +11940,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetFMC_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8775,7 +11998,7 @@ __STATIC_INLINE void LL_RCC_DisableFMC_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSDMMC1_PREDIV(void)
@@ -8789,7 +12012,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSDMMC1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8847,7 +12070,7 @@ __STATIC_INLINE void LL_RCC_DisableSDMMC1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSDMMC2_PREDIV(void)
@@ -8861,7 +12084,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSDMMC2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8919,7 +12142,7 @@ __STATIC_INLINE void LL_RCC_DisableSDMMC2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetSDMMC3_PREDIV(void)
@@ -8933,7 +12156,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetSDMMC3_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -8991,7 +12214,7 @@ __STATIC_INLINE void LL_RCC_DisableSDMMC3_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetETH1_PREDIV(void)
@@ -9005,7 +12228,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetETH1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9063,7 +12286,7 @@ __STATIC_INLINE void LL_RCC_DisableETH1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetETH2_PREDIV(void)
@@ -9077,7 +12300,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetETH2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9135,7 +12358,7 @@ __STATIC_INLINE void LL_RCC_DisableETH2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetETH1_2_PTP_PREDIV(void)
@@ -9149,7 +12372,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetETH1_2_PTP_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9207,7 +12430,7 @@ __STATIC_INLINE void LL_RCC_DisableETH1_2_PTP_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSB2PHY1_PREDIV(void)
@@ -9221,7 +12444,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSB2PHY1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9279,7 +12502,7 @@ __STATIC_INLINE void LL_RCC_DisableUSB2PHY1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetUSB2PHY2_PREDIV(void)
@@ -9293,7 +12516,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetUSB2PHY2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9351,7 +12574,7 @@ __STATIC_INLINE void LL_RCC_DisableUSB2PHY2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetETHSWCFG_PREDIV(void)
@@ -9365,7 +12588,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetETHSWCFG_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9417,13 +12640,14 @@ __STATIC_INLINE void LL_RCC_DisableETHSWCFG_FINDIV(void)
   CLEAR_BIT(RCC->FINDIVxCFGR[59], RCC_FINDIVxCFGR_FINDIVxEN_Msk);
 }
 
+
 /**
   * @brief  Get ETHSWMSG channel pre divided Value
   * @rmtoll PREDIV60CFGR      PREDIV60      LL_RCC_GetETHSWMSG_PREDIV
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetETHSWMSG_PREDIV(void)
@@ -9437,7 +12661,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetETHSWMSG_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9495,7 +12719,7 @@ __STATIC_INLINE void LL_RCC_DisableETHSWMSG_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetMCO1_PREDIV(void)
@@ -9509,7 +12733,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetMCO1_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9567,7 +12791,7 @@ __STATIC_INLINE void LL_RCC_DisableMCO1_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetMCO2_PREDIV(void)
@@ -9581,7 +12805,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetMCO2_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -9639,7 +12863,7 @@ __STATIC_INLINE void LL_RCC_DisableMCO2_FINDIV(void)
   * @retval Returned value can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   */
 __STATIC_INLINE uint32_t LL_RCC_GetCPU1EXT2F_PREDIV(void)
@@ -9653,7 +12877,7 @@ __STATIC_INLINE uint32_t LL_RCC_GetCPU1EXT2F_PREDIV(void)
   * @param  Source This parameter can be one of the following values:
   *        @arg @ref LL_RCC_PREDIV_DIV1
   *        @arg @ref LL_RCC_PREDIV_DIV2
-  *        @arg @ref LL_RCC_PREDIV_DIV3
+  *        @arg @ref LL_RCC_PREDIV_DIV4
   *        @arg @ref LL_RCC_PREDIV_DIV1024
   * @retval None
   */
@@ -10080,9 +13304,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL2_IsReady(void)
   * @brief  Set Fractional part of the PLL2 VCO multiplication factor
   * @rmtoll PLL2CFGR1      CKREFST          LL_RCC_PLL2_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL2_SetCKREFST(uint32_t CKREFST)
@@ -10333,12 +13557,12 @@ __STATIC_INLINE void LL_RCC_PLL2_DSMEN_Disable(void)
 /** @brief  Configure the PLL2 Clock Spreading Generator
   * @rmtoll PLL2CSGR    DIVVAL, SPREAD  LL_RCC_PLL2_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL2
+  * @param  ModFreq:  Modulation frequency adjustment for PLL2
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL2
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL2_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -10347,7 +13571,6 @@ __STATIC_INLINE void LL_RCC_PLL2_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
              (ModFreq | (IncStep << RCC_PLL2CFGR5_SPREAD_Pos)));
 }
 
-//Todo: add function PLLxCFGR6 and PLLxCFGR7 (4)
 /**
   * @brief  Get  PLL2 VCO frequency divide level 1
   * @rmtoll PLL2CFGR6      POSTDIV1          LL_RCC_PLL2_ConfigFREQDIV_L1
@@ -10388,6 +13611,7 @@ __STATIC_INLINE uint32_t LL_RCC_PLL2_GetFREQDIV_L2(void)
   return (uint32_t)(READ_BIT(RCC->PLL2CFGR7, RCC_PLL2CFGR7_POSTDIV2) >>  RCC_PLL2CFGR7_POSTDIV2_Pos);
 }
 
+#if defined(RCC_PLL3CFGR1_PLLEN)
 /**
   * @brief  Set the oscillator used as PLL3 clock source.
   * @note   PLLSRC can be written only when all PLL3 is disabled.
@@ -10485,9 +13709,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL3_IsReady(void)
   * @brief  Set Fractional part of the PLL3 VCO multiplication factor
   * @rmtoll PLL3CFGR1      CKREFST          LL_RCC_PLL3_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL3_SetCKREFST(uint32_t CKREFST)
@@ -10738,12 +13962,12 @@ __STATIC_INLINE void LL_RCC_PLL3_DSMEN_Disable(void)
 /** @brief  Configure the PLL3 Clock Spreading Generator
   * @rmtoll PLL3CSGR    DIVVAL, SPREAD  LL_RCC_PLL3_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL3
+  * @param  ModFreq:  Modulation frequency adjustment for PLL3
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL3
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL3_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -10791,6 +14015,7 @@ __STATIC_INLINE uint32_t LL_RCC_PLL3_GetFREQDIV_L2(void)
 {
   return (uint32_t)(READ_BIT(RCC->PLL3CFGR7, RCC_PLL3CFGR7_POSTDIV2) >>  RCC_PLL3CFGR7_POSTDIV2_Pos);
 }
+#endif /* RCC_PLL3CFGR1_PLLEN */
 
 /**
   * @brief  Set the oscillator used as PLL4 clock source.
@@ -10889,9 +14114,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL4_IsReady(void)
   * @brief  Set Fractional part of the PLL4 VCO multiplication factor
   * @rmtoll PLL4CFGR1      CKREFST          LL_RCC_PLL4_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL4_SetCKREFST(uint32_t CKREFST)
@@ -11142,12 +14367,12 @@ __STATIC_INLINE void LL_RCC_PLL4_DSMEN_Disable(void)
 /** @brief  Configure the PLL4 Clock Spreading Generator
   * @rmtoll PLL4CSGR    DIVVAL, SPREAD  LL_RCC_PLL4_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL4
+  * @param  ModFreq:  Modulation frequency adjustment for PLL4
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL4
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL4_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -11293,9 +14518,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL5_IsReady(void)
   * @brief  Set Fractional part of the PLL5 VCO multiplication factor
   * @rmtoll PLL5CFGR1      CKREFST          LL_RCC_PLL5_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL5_SetCKREFST(uint32_t CKREFST)
@@ -11546,12 +14771,12 @@ __STATIC_INLINE void LL_RCC_PLL5_DSMEN_Disable(void)
 /** @brief  Configure the PLL5 Clock Spreading Generator
   * @rmtoll PLL5CSGR    DIVVAL, SPREAD  LL_RCC_PLL5_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL5
+  * @param  ModFreq:  Modulation frequency adjustment for PLL5
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL5
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL5_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -11697,9 +14922,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL6_IsReady(void)
   * @brief  Set Fractional part of the PLL6 VCO multiplication factor
   * @rmtoll PLL6CFGR1      CKREFST          LL_RCC_PLL6_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL6_SetCKREFST(uint32_t CKREFST)
@@ -11950,12 +15175,12 @@ __STATIC_INLINE void LL_RCC_PLL6_DSMEN_Disable(void)
 /** @brief  Configure the PLL6 Clock Spreading Generator
   * @rmtoll PLL6CSGR    DIVVAL, SPREAD  LL_RCC_PLL6_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL6
+  * @param  ModFreq:  Modulation frequency adjustment for PLL6
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL6
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL6_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -12101,9 +15326,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL7_IsReady(void)
   * @brief  Set Fractional part of the PLL7 VCO multiplication factor
   * @rmtoll PLL7CFGR1      CKREFST          LL_RCC_PLL7_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL7_SetCKREFST(uint32_t CKREFST)
@@ -12354,12 +15579,12 @@ __STATIC_INLINE void LL_RCC_PLL7_DSMEN_Disable(void)
 /** @brief  Configure the PLL7 Clock Spreading Generator
   * @rmtoll PLL7CSGR    DIVVAL, SPREAD  LL_RCC_PLL7_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL7
+  * @param  ModFreq:  Modulation frequency adjustment for PLL7
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL7
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL7_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -12505,9 +15730,9 @@ __STATIC_INLINE uint32_t LL_RCC_PLL8_IsReady(void)
   * @brief  Set Fractional part of the PLL8 VCO multiplication factor
   * @rmtoll PLL8CFGR1      CKREFST          LL_RCC_PLL8_SetCKREFST
   * @param  CKREFST parameter can be a value between 0 and 1 (0x1)
-  * 0: Reading '0' means that the PLL{x} reference clock is not running, writing ‘0’ resets the
+  * 0: Reading 0 means that the PLL{x} reference clock is not running, writing 0 resets the
   * reference clock running detector.
-  * 1: Reading '1' means that the PLL{x} reference clock is running, writing ‘1’ resets the
+  * 1: Reading 1 means that the PLL{x} reference clock is running, writing 1 resets the
   * reference clock running detector.
   */
 __STATIC_INLINE void LL_RCC_PLL8_SetCKREFST(uint32_t CKREFST)
@@ -12758,12 +15983,12 @@ __STATIC_INLINE void LL_RCC_PLL8_DSMEN_Disable(void)
 /** @brief  Configure the PLL8 Clock Spreading Generator
   * @rmtoll PLL8CSGR    DIVVAL, SPREAD  LL_RCC_PLL8_ConfigCSG
   *
-  * @param  ModPeriod:  Modulation frequency adjustment for PLL8
+  * @param  ModFreq:  Modulation frequency adjustment for PLL8
   *         This parameter must have a value between 0 and 15
   *
   * @param  IncStep: Modulation Depth Adjustment for PLL8
   *         This parameter must have a value between 0 and 31
-  * @note   ModPeriod x IncStep shall not exceed (2^4)-1
+  * @note   ModFreq x IncStep shall not exceed (2^4)-1
   * @retval None
   */
 __STATIC_INLINE void LL_RCC_PLL8_ConfigCSG(uint32_t ModFreq, uint32_t IncStep)
@@ -12812,9 +16037,7 @@ __STATIC_INLINE uint32_t LL_RCC_PLL8_GetFREQDIV_L2(void)
   return (uint32_t)(READ_BIT(RCC->PLL8CFGR7, RCC_PLL8CFGR7_POSTDIV2) >>  RCC_PLL8CFGR7_POSTDIV2_Pos);
 }
 
-/**
-  * @}
-  */
+
 #if defined(CORE_CA35)
 __STATIC_INLINE void LL_CA35SS_SetCA35SSClockSourceExt(void)
 {
@@ -12917,7 +16140,11 @@ __STATIC_INLINE void LL_CA35SS_PLL1_SetPostDiv2(uint32_t POSTDIV2)
 {
   MODIFY_REG(CA35SSC->PLL_FREQ2_RW, CA35SSC_PLL_FREQ2_RW_POSTDIV2, POSTDIV2 << CA35SSC_PLL_FREQ2_RW_POSTDIV2_Pos);
 }
-#endif
+#endif /* CORE_CA35 */
+
+/**
+  * @}
+  */
 
 /** @defgroup RCC_LL_EF_FLAG_Management FLAG Management
   * @{
@@ -12993,6 +16220,7 @@ __STATIC_INLINE void LL_RCC_ClearFlag_PLL2RDY(void)
   WRITE_REG(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL2RDYF);
 }
 
+#if defined(RCC_C2CIFCLRR_PLL3RDYF)
 /**
   * @brief  Clear PLL3 ready interrupt flag
   * @rmtoll C2CIFCLRR      PLL3DYF       LL_RCC_ClearFlag_PLL3RDY
@@ -13002,6 +16230,7 @@ __STATIC_INLINE void LL_RCC_ClearFlag_PLL3RDY(void)
 {
   WRITE_REG(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL3RDYF);
 }
+#endif /* RCC_C2CIFCLRR_PLL3RDYF */
 
 /**
   * @brief  Clear PLL4 ready interrupt flag
@@ -13080,7 +16309,7 @@ __STATIC_INLINE void LL_RCC_ClearFlag_WKUP(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_LSIRDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_LSIRDYF) == (RCC_C2CIFCLRR_LSIRDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_LSIRDYF) == (RCC_C2CIFCLRR_LSIRDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13090,7 +16319,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_LSIRDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_LSERDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_LSERDYF) == (RCC_C2CIFCLRR_LSERDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_LSERDYF) == (RCC_C2CIFCLRR_LSERDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13100,7 +16329,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_LSERDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_HSIRDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_HSIRDYF) == (RCC_C2CIFCLRR_HSIRDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_HSIRDYF) == (RCC_C2CIFCLRR_HSIRDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13110,7 +16339,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_HSIRDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_HSERDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_HSERDYF) == (RCC_C2CIFCLRR_HSERDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_HSERDYF) == (RCC_C2CIFCLRR_HSERDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13120,7 +16349,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_HSERDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_MSIRDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_MSIRDYF) == (RCC_C2CIFCLRR_MSIRDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_MSIRDYF) == (RCC_C2CIFCLRR_MSIRDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13130,7 +16359,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_MSIRDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL1RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL1RDYF) == (RCC_C2CIFCLRR_PLL1RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL1RDYF) == (RCC_C2CIFCLRR_PLL1RDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13140,9 +16369,10 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL1RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL2RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL2RDYF) == (RCC_C2CIFCLRR_PLL2RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL2RDYF) == (RCC_C2CIFCLRR_PLL2RDYF)) ? 1UL : 0UL);
 }
 
+#if defined(RCC_C2CIFCLRR_PLL3RDYF)
 /**
   * @brief  Check if PLL3 ready interrupt occurred or not
   * @rmtoll C2CIFCLRR      PLL3DYF       LL_RCC_IsActiveFlag_PLL3RDY
@@ -13150,8 +16380,9 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL2RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL3RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL3RDYF) == (RCC_C2CIFCLRR_PLL3RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL3RDYF) == (RCC_C2CIFCLRR_PLL3RDYF)) ? 1UL : 0UL);
 }
+#endif /* RCC_C2CIFCLRR_PLL3RDYF */
 
 /**
   * @brief  Check if PLL4 ready interrupt occurred or not
@@ -13160,7 +16391,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL3RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL4RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL4RDYF) == (RCC_C2CIFCLRR_PLL4RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL4RDYF) == (RCC_C2CIFCLRR_PLL4RDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13170,7 +16401,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL4RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL5RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL5RDYF) == (RCC_C2CIFCLRR_PLL5RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL5RDYF) == (RCC_C2CIFCLRR_PLL5RDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13180,7 +16411,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL5RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL6RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL6RDYF) == (RCC_C2CIFCLRR_PLL6RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL6RDYF) == (RCC_C2CIFCLRR_PLL6RDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13190,7 +16421,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL6RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL7RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL7RDYF) == (RCC_C2CIFCLRR_PLL7RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL7RDYF) == (RCC_C2CIFCLRR_PLL7RDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13200,7 +16431,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL7RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL8RDY(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL8RDYF) == (RCC_C2CIFCLRR_PLL8RDYF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_PLL8RDYF) == (RCC_C2CIFCLRR_PLL8RDYF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13210,7 +16441,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PLL8RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_LSECSS(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_LSECSSF) == (RCC_C2CIFCLRR_LSECSSF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_LSECSSF) == (RCC_C2CIFCLRR_LSECSSF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13220,10 +16451,8 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_LSECSS(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_WKUP(void)
 {
-  return (READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_WKUPF) == (RCC_C2CIFCLRR_WKUPF));
+  return ((READ_BIT(RCC->C2CIFCLRR, RCC_C2CIFCLRR_WKUPF) == (RCC_C2CIFCLRR_WKUPF)) ? 1UL : 0UL);
 }
-
-//Todo: some HWRSTSCLRR functions must me added
 
 /**
   * @brief  Check if RCC flag Window Watchdog 1 reset is set or not.
@@ -13232,7 +16461,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_WKUP(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_IWDG3SYSRST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_IWDG3SYSRSTF) == (RCC_HWRSTSCLRR_IWDG3SYSRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_IWDG3SYSRSTF) == (RCC_HWRSTSCLRR_IWDG3SYSRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13242,7 +16471,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_IWDG3SYSRST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_IWDG2RST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_IWDG2SYSRSTF) == (RCC_HWRSTSCLRR_IWDG2SYSRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_IWDG2SYSRSTF) == (RCC_HWRSTSCLRR_IWDG2SYSRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13252,7 +16481,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_IWDG2RST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_IWDG1RST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_IWDG1SYSRSTF) == (RCC_HWRSTSCLRR_IWDG1SYSRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_IWDG1SYSRSTF) == (RCC_HWRSTSCLRR_IWDG1SYSRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13262,7 +16491,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_IWDG1RST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_SYSC2RST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_SYSC2RSTF) == (RCC_HWRSTSCLRR_SYSC2RSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_SYSC2RSTF) == (RCC_HWRSTSCLRR_SYSC2RSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13272,7 +16501,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_SYSC2RST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_SYSC1RST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_SYSC1RSTF) == (RCC_HWRSTSCLRR_SYSC1RSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_SYSC1RSTF) == (RCC_HWRSTSCLRR_SYSC1RSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13282,7 +16511,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_SYSC1RST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_MCURST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_C1HWRSTSCLRR_VCPURSTF) == (RCC_C1HWRSTSCLRR_VCPURSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_C1HWRSTSCLRR_VCPURSTF) == (RCC_C1HWRSTSCLRR_VCPURSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13292,7 +16521,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_MCURST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_VCORERST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_VCORERSTF) == (RCC_HWRSTSCLRR_VCORERSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_VCORERSTF) == (RCC_HWRSTSCLRR_VCORERSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13302,7 +16531,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_VCORERST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_HCSSRST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_HCSSRSTF) == (RCC_HWRSTSCLRR_HCSSRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_HCSSRSTF) == (RCC_HWRSTSCLRR_HCSSRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13312,7 +16541,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_HCSSRST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PADRST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_PADRSTF) == (RCC_HWRSTSCLRR_PADRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_PADRSTF) == (RCC_HWRSTSCLRR_PADRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13322,7 +16551,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PADRST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_BORRST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_BORRSTF) == (RCC_HWRSTSCLRR_BORRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_BORRSTF) == (RCC_HWRSTSCLRR_BORRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13332,7 +16561,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_BORRST(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsActiveFlag_PORRST(void)
 {
-  return (READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_PORRSTF) == (RCC_HWRSTSCLRR_PORRSTF));
+  return ((READ_BIT(RCC->HWRSTSCLRR, RCC_HWRSTSCLRR_PORRSTF) == (RCC_HWRSTSCLRR_PORRSTF)) ? 1UL : 0UL);
 }
 
 /**
@@ -13423,6 +16652,7 @@ __STATIC_INLINE void LL_RCC_EnableIT_PLL2RDY(void)
   SET_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL2RDYIE);
 }
 
+#if defined(RCC_C2CIESETR_PLL3RDYIE)
 /**
   * @brief  Enable PLL3 ready interrupt
   * @rmtoll C2CIESETR      PLLR3DYIE      LL_RCC_EnableIT_PLL3RDY
@@ -13432,6 +16662,7 @@ __STATIC_INLINE void LL_RCC_EnableIT_PLL3RDY(void)
 {
   SET_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL3RDYIE);
 }
+#endif /* RCC_C2CIESETR_PLL3RDYIE */
 
 /**
   * @brief  Enable PLL4 ready interrupt
@@ -13573,6 +16804,7 @@ __STATIC_INLINE void LL_RCC_DisableIT_PLL2RDY(void)
   CLEAR_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL2RDYIE);
 }
 
+#if defined(RCC_C2CIESETR_PLL3RDYIE)
 /**
   * @brief  Disable PLL3 ready interrupt
   * @rmtoll C2CIESETR      PLLR3DYIE      LL_RCC_DisableIT_PLL3RDY
@@ -13582,6 +16814,7 @@ __STATIC_INLINE void LL_RCC_DisableIT_PLL3RDY(void)
 {
   CLEAR_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL3RDYIE);
 }
+#endif /* RCC_C2CIESETR_PLL3RDYIE */
 
 /**
   * @brief  Disable PLL4 ready interrupt
@@ -13660,7 +16893,7 @@ __STATIC_INLINE void LL_RCC_DisableIT_WKUP(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_LSIRDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_LSIRDYIE) == (RCC_C2CIESETR_LSIRDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_LSIRDYIE) == (RCC_C2CIESETR_LSIRDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13670,7 +16903,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_LSIRDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_LSERDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_LSERDYIE) == (RCC_C2CIESETR_LSERDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_LSERDYIE) == (RCC_C2CIESETR_LSERDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13680,7 +16913,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_LSERDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_HSIRDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_HSIRDYIE) == (RCC_C2CIESETR_HSIRDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_HSIRDYIE) == (RCC_C2CIESETR_HSIRDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13690,7 +16923,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_HSIRDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_HSERDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_HSERDYIE) == (RCC_C2CIESETR_HSERDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_HSERDYIE) == (RCC_C2CIESETR_HSERDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13700,7 +16933,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_HSERDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_MSIRDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_MSIRDYIE) == (RCC_C2CIESETR_MSIRDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_MSIRDYIE) == (RCC_C2CIESETR_MSIRDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13710,7 +16943,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_MSIRDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL1RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL1RDYIE) == (RCC_C2CIESETR_PLL1RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL1RDYIE) == (RCC_C2CIESETR_PLL1RDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13720,9 +16953,10 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL1RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL2RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL2RDYIE) == (RCC_C2CIESETR_PLL2RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL2RDYIE) == (RCC_C2CIESETR_PLL2RDYIE)) ? 1UL : 0UL);
 }
 
+#if defined(RCC_C2CIESETR_PLL3RDYIE)
 /**
   * @brief  Checks if PLL3 ready interrupt source is enabled or disabled.
   * @rmtoll C2CIESETR      PLL3DYIE      LL_RCC_IsEnabledIT_PLL3RDY
@@ -13730,8 +16964,9 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL2RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL3RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL3RDYIE) == (RCC_C2CIESETR_PLL3RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL3RDYIE) == (RCC_C2CIESETR_PLL3RDYIE)) ? 1UL : 0UL);
 }
+#endif /* RCC_C2CIESETR_PLL3RDYIE */
 
 /**
   * @brief  Checks if PLL4 ready interrupt source is enabled or disabled.
@@ -13740,7 +16975,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL3RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL4RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL4RDYIE) == (RCC_C2CIESETR_PLL4RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL4RDYIE) == (RCC_C2CIESETR_PLL4RDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13750,7 +16985,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL4RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL5RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL5RDYIE) == (RCC_C2CIESETR_PLL5RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL5RDYIE) == (RCC_C2CIESETR_PLL5RDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13760,7 +16995,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL5RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL6RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL6RDYIE) == (RCC_C2CIESETR_PLL6RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL6RDYIE) == (RCC_C2CIESETR_PLL6RDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13770,7 +17005,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL6RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL7RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL7RDYIE) == (RCC_C2CIESETR_PLL7RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL7RDYIE) == (RCC_C2CIESETR_PLL7RDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13780,7 +17015,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL7RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL8RDY(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL8RDYIE) == (RCC_C2CIESETR_PLL8RDYIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_PLL8RDYIE) == (RCC_C2CIESETR_PLL8RDYIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13790,7 +17025,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_PLL8RDY(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_LSECSS(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_LSECSSIE) == (RCC_C2CIESETR_LSECSSIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_LSECSSIE) == (RCC_C2CIESETR_LSECSSIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13800,7 +17035,7 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_LSECSS(void)
   */
 __STATIC_INLINE uint32_t LL_RCC_IsEnabledIT_WKUP(void)
 {
-  return (READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_WKUPIE) == (RCC_C2CIESETR_WKUPIE));
+  return ((READ_BIT(RCC->C2CIESETR, RCC_C2CIESETR_WKUPIE) == (RCC_C2CIESETR_WKUPIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -13820,7 +17055,9 @@ ErrorStatus LL_RCC_DeInit(void);
   * @{
   */
 void        LL_RCC_GetPLL2ClockFreq(LL_PLL_ClocksTypeDef *PLL_Clocks);
+#if defined(RCC_PLL3CFGR1_PLLEN)
 void        LL_RCC_GetPLL3ClockFreq(LL_PLL_ClocksTypeDef *PLL_Clocks);
+#endif /* RCC_PLL3CFGR1_PLLEN */
 void        LL_RCC_GetPLL4ClockFreq(LL_PLL_ClocksTypeDef *PLL_Clocks);
 void        LL_RCC_GetPLL5ClockFreq(LL_PLL_ClocksTypeDef *PLL_Clocks);
 void        LL_RCC_GetPLL6ClockFreq(LL_PLL_ClocksTypeDef *PLL_Clocks);
@@ -13865,11 +17102,7 @@ uint32_t    LL_RCC_GetTIMGClockFreq(uint32_t TIMGxPrescaler);
   */
 /* End of RCC_LL_Exported_Functions */
 
-/**
-  * @}
-  */
-
-#endif /* defined(RCC) */
+#endif /* RCC */
 
 /***** MP2 RIF SPECIFIC : TO BE MERGED TO DIFFERENT "defgroup" HERE ABOVE *****/
 /** @defgroup RCC_RIF_LL RCC_RIF
@@ -14022,11 +17255,11 @@ uint32_t    LL_RCC_GetTIMGClockFreq(uint32_t TIMGxPrescaler);
 #define RCC_LOCALRES_CID_STATIC_5      0x00000051U /*!< RIF Local Resource Access : CID5 static filtering */
 #define RCC_LOCALRES_CID_STATIC_6      0x00000061U /*!< RIF Local Resource Access : CID6 static filtering */
 #define RCC_LOCALRES_CID_STATIC_7      0x00000071U /*!< RIF Local Resource Access : CID7 static filtering */
-#define RCC_LOCALRES_CID_STATIC_Msk    RCC_LOCALRES_CID_STATIC_7
+#define RCC_LOCALRES_CID_STATIC_MSK    RCC_LOCALRES_CID_STATIC_7
 
 #define RCC_LOCALRES_CID_DYNAMIC_NONE  0x00000003U /*!< RIF Local Resource Access : No CID dynamic filtering */
 #define RCC_LOCALRES_CID_DYNAMIC_ALL   0x00FF0003U /*!< RIF Local Resource Access : All CID dynamic filtering */
-#define RCC_LOCALRES_CID_DYNAMIC_Msk   RCC_LOCALRES_CID_DYNAMIC_ALL
+#define RCC_LOCALRES_CID_DYNAMIC_MSK   RCC_LOCALRES_CID_DYNAMIC_ALL
 /* Use following values to compose CID whitelist */
 #define RCC_LOCALRES_CID_DYNAMIC_0     0x00010003U /*!< RIF Local Resource Access : CID0 dynamic filtering */
 #define RCC_LOCALRES_CID_DYNAMIC_1     0x00020003U /*!< RIF Local Resource Access : CID1 dynamic filtering */
@@ -14111,7 +17344,7 @@ __STATIC_INLINE void LL_RCC_DisableLocalResSecure(uint32_t LocalResIndex)
   /* Clear bit j in register RCC_SECCFGR[i] */
   CLEAR_BIT(RCC->SECCFGR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F));
 }
-#endif /* defined(CORTEX_IN_SECURE_STATE) */
+#endif /* CORTEX_IN_SECURE_STATE */
 
 /**
   * @brief  Check whether Security Filtering of RCC Local Resource Access is enabled or not.
@@ -14126,7 +17359,8 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledLocalResSecure(uint32_t LocalResIndex)
   /* Compute bit position j (LocalResIndex % 32) */
   /* Read bit j in register RCC_SECCFGR[i] */
   /* Return 1 when bit j is set and else 0 */
-  return ((READ_BIT(RCC->SECCFGR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F)) == (1 << (LocalResIndex & 0x1F))) ? 1UL : 0UL);
+  return ((READ_BIT(RCC->SECCFGR[LocalResIndex >> 5], 1UL << (LocalResIndex & 0x1FU)) == \
+           (1UL << (LocalResIndex & 0x1FU))) ? 1UL : 0UL);
 }
 
 /* Manage RCC_PRIVCFGR0 - RCC_PRIVCFGR3 registers */
@@ -14142,7 +17376,7 @@ __STATIC_INLINE void LL_RCC_EnableLocalResPrivilege(uint32_t LocalResIndex)
   /* Compute register index i (LocalResIndex / 32) */
   /* Compute bit position j (LocalResIndex % 32) */
   /* Set bit j in register RCC_PRIVCFGR[i] */
-  SET_BIT(RCC->PRIVCFGR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F));
+  SET_BIT(RCC->PRIVCFGR[LocalResIndex >> 5], 1UL << (LocalResIndex & 0x1FU));
 }
 
 /**
@@ -14157,7 +17391,7 @@ __STATIC_INLINE void LL_RCC_DisableLocalResPrivilege(uint32_t LocalResIndex)
   /* Compute register index i (LocalResIndex / 32) */
   /* Compute bit position j (LocalResIndex % 32) */
   /* Clear bit j in register RCC_PRIVCFGR[i] */
-  CLEAR_BIT(RCC->PRIVCFGR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F));
+  CLEAR_BIT(RCC->PRIVCFGR[LocalResIndex >> 5], 1UL << (LocalResIndex & 0x1FU));
 }
 
 /**
@@ -14173,7 +17407,8 @@ __STATIC_INLINE uint32_t LL_RCC_IsEnabledLocalResPrivilege(uint32_t LocalResInde
   /* Compute bit position j (LocalResIndex % 32) */
   /* Read bit j in register RCC_PRIVCFGR[i] */
   /* Return 1 when bit j is set and else 0 */
-  return ((READ_BIT(RCC->PRIVCFGR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F)) == (1 << (LocalResIndex & 0x1F))) ? 1UL : 0UL);
+  return ((READ_BIT(RCC->PRIVCFGR[LocalResIndex >> 5], 1UL << (LocalResIndex & 0x1FU)) == \
+           (1UL << (LocalResIndex & 0x1FU))) ? 1UL : 0UL);
 }
 
 /* Manage RCC_RCFGLOCKR0 - RCC_RCFGLOCKR3 registers */
@@ -14192,7 +17427,7 @@ __STATIC_INLINE void LL_RCC_LockLocalResConfig(uint32_t LocalResIndex)
   /* Set bit j in register RCC_RCFGLOCKR[i] */
   SET_BIT(RCC->RCFGLOCKR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F));
 }
-#endif /* defined(CORTEX_IN_SECURE_STATE) */
+#endif /* CORTEX_IN_SECURE_STATE */
 
 /**
   * @brief  Check whether RCC Local Resource RIF configuration is locked or not.
@@ -14207,7 +17442,8 @@ __STATIC_INLINE uint32_t LL_RCC_IsLockedLocalResConfig(uint32_t LocalResIndex)
   /* Compute bit position j (LocalResIndex % 32) */
   /* Read bit j in register RCC_RCFGLOCKR[i] */
   /* Return 1 when bit j is set and else 0 */
-  return ((READ_BIT(RCC->RCFGLOCKR[LocalResIndex >> 5], 1 << (LocalResIndex & 0x1F)) == (1 << (LocalResIndex & 0x1F))) ? 1UL : 0UL);
+  return ((READ_BIT(RCC->RCFGLOCKR[LocalResIndex >> 5], 1UL << (LocalResIndex & 0x1FU)) == \
+           (1UL << (LocalResIndex & 0x1FU))) ? 1UL : 0UL);
 }
 
 /* Manage RCC_R0CIDCFGR - RCC_R113CIDCFGR registers */
@@ -14236,7 +17472,7 @@ __STATIC_INLINE void LL_RCC_SetLocalResSCid(uint32_t LocalResIndex, uint32_t Sta
   /* - clear SEMWLC[7:0] (set to 0x00) and SEM_EN (set to 0b0) */
   /* - set SCID[2:0] according to input CID */
   /* - set CFEN to 0b1 */
-  WRITE_REG(RCC->R[LocalResIndex].CIDCFGR, (StaticCid & RCC_LOCALRES_CID_STATIC_Msk));
+  WRITE_REG(RCC->R[LocalResIndex].CIDCFGR, (StaticCid & RCC_LOCALRES_CID_STATIC_MSK));
 }
 
 /**
@@ -14246,7 +17482,7 @@ __STATIC_INLINE void LL_RCC_SetLocalResSCid(uint32_t LocalResIndex, uint32_t Sta
   * @rmtoll RCC_RxCIDCFGR      SEM_EN  LL_RCC_SetLocalResWLCid\n
   * @rmtoll RCC_RxCIDCFGR      CFEN    LL_RCC_SetLocalResWLCid
   * @param  LocalResIndex Value in @ref RCC_LL_EC_RIF_LOCALRES
-  * @param  CidWhiteList Value shall be composed (through "or" operation) of the following :
+  * @param  DynamicCid Value shall be composed (through "or" operation) of the following :
   *         @arg @ref RCC_LOCALRES_CID_DYNAMIC_0
   *         @arg @ref RCC_LOCALRES_CID_DYNAMIC_1
   *         @arg @ref RCC_LOCALRES_CID_DYNAMIC_2
@@ -14266,7 +17502,7 @@ __STATIC_INLINE void LL_RCC_SetLocalResWLCid(uint32_t LocalResIndex, uint32_t Dy
   /* - set SEMWLC[7:0] according to input CID whitelist */
   /* - clear SCID[2:0] (set to 0b000) */
   /* - set CFEN and SEM_EN to 0b1 */
-  WRITE_REG(RCC->R[LocalResIndex].CIDCFGR, (DynamicCid & RCC_LOCALRES_CID_DYNAMIC_Msk));
+  WRITE_REG(RCC->R[LocalResIndex].CIDCFGR, (DynamicCid & RCC_LOCALRES_CID_DYNAMIC_MSK));
 }
 
 /**
@@ -14285,7 +17521,7 @@ __STATIC_INLINE void LL_RCC_SetLocalResNoCid(uint32_t LocalResIndex)
   /* - clear SCID[2:0] (set to 0b000) and CFEN (set to 0b0) */
   WRITE_REG(RCC->R[LocalResIndex].CIDCFGR, RCC_LOCALRES_CID_TYPE_NONE);
 }
-#endif /* defined(CORTEX_IN_SECURE_STATE) */
+#endif /* CORTEX_IN_SECURE_STATE */
 
 /**
   * @brief  Get CID filtering configuration of RCC Local Resource Access
@@ -14324,10 +17560,11 @@ __STATIC_INLINE uint32_t LL_RCC_GetLocalResCid(uint32_t LocalResIndex)
   /* else if CID filtering is Dynamic (SEM_EN = 1 and CFEN = 1), */
   /* return dynamic CID filtering configuration (SEMWLC, SCID=0b000, SEM_EN=1, CFEN=1) */
   /* else return RCC_LOCALRES_CID_TYPE_NONE */
-#define SEM_EN_AND_CFEN_Msk (RCC_RxCIDCFGR_CFEN_Msk | RCC_RxCIDCFGR_SEM_EN_Msk)
-  return ((READ_BIT(rcc_rxcidcfgr, SEM_EN_AND_CFEN_Msk) == SEM_EN_AND_CFEN_Msk) ? (rcc_rxcidcfgr & RCC_LOCALRES_CID_DYNAMIC_Msk) :
-          (READ_BIT(rcc_rxcidcfgr, SEM_EN_AND_CFEN_Msk) == RCC_RxCIDCFGR_CFEN) ? (rcc_rxcidcfgr & RCC_LOCALRES_CID_STATIC_Msk) :
-          RCC_LOCALRES_CID_TYPE_NONE);
+#define SEM_EN_AND_CFEN_MSK (RCC_RxCIDCFGR_CFEN_Msk | RCC_RxCIDCFGR_SEM_EN_Msk)
+  return ((READ_BIT(rcc_rxcidcfgr, SEM_EN_AND_CFEN_MSK) == SEM_EN_AND_CFEN_MSK) ? \
+          (rcc_rxcidcfgr & RCC_LOCALRES_CID_DYNAMIC_MSK) :
+          (READ_BIT(rcc_rxcidcfgr, SEM_EN_AND_CFEN_MSK) == RCC_RxCIDCFGR_CFEN) ? \
+          (rcc_rxcidcfgr & RCC_LOCALRES_CID_STATIC_MSK) : RCC_LOCALRES_CID_TYPE_NONE);
 }
 
 /* Manage RCC_R0SEMCR - RCC_R113SEMCR registers */
@@ -14405,10 +17642,15 @@ __STATIC_INLINE uint32_t LL_RCC_GetLocalResSem(uint32_t LocalResIndex)
   * @}
   */
 
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* STM32MP2xx_LL_RCC_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

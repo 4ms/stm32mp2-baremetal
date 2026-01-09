@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -48,22 +47,22 @@ extern "C" {
 /** @defgroup IPCC_Channel IPCC Channel
   * @{
   */
-#define IPCC_CHANNEL_1 0x00000000U
-#define IPCC_CHANNEL_2 0x00000001U
-#define IPCC_CHANNEL_3 0x00000002U
-#define IPCC_CHANNEL_4 0x00000003U
-#define IPCC_CHANNEL_5 0x00000004U
-#define IPCC_CHANNEL_6 0x00000005U
-#define IPCC_CHANNEL_7 0x00000006U
-#define IPCC_CHANNEL_8 0x00000007U
-#define IPCC_CHANNEL_9 0x00000008U
-#define IPCC_CHANNEL_10 0x00000009U
-#define IPCC_CHANNEL_11 0x00000010U
-#define IPCC_CHANNEL_12 0x00000011U
-#define IPCC_CHANNEL_13 0x00000012U
-#define IPCC_CHANNEL_14 0x00000013U
-#define IPCC_CHANNEL_15 0x00000014U
-#define IPCC_CHANNEL_16 0x00000015U
+#define IPCC_CHANNEL_1    0x00000000U
+#define IPCC_CHANNEL_2    0x00000001U
+#define IPCC_CHANNEL_3    0x00000002U
+#define IPCC_CHANNEL_4    0x00000003U
+#define IPCC_CHANNEL_5    0x00000004U
+#define IPCC_CHANNEL_6    0x00000005U
+#define IPCC_CHANNEL_7    0x00000006U
+#define IPCC_CHANNEL_8    0x00000007U
+#define IPCC_CHANNEL_9    0x00000008U
+#define IPCC_CHANNEL_10   0x00000009U
+#define IPCC_CHANNEL_11   0x0000000AU
+#define IPCC_CHANNEL_12   0x0000000BU
+#define IPCC_CHANNEL_13   0x0000000CU
+#define IPCC_CHANNEL_14   0x0000000DU
+#define IPCC_CHANNEL_15   0x0000000EU
+#define IPCC_CHANNEL_16   0x0000000FU
 /**
   * @}
   */
@@ -80,10 +79,10 @@ extern "C" {
 /** @defgroup IPCC_Channel_attributes IPCC channel RIF protection attributes
   * @{
   */
-#define IPCC_CHANNEL_PRIV  (IPCC_CHANNEL_PRIV_SELECT | (1U << IPCC_CHANNEL_PRIV_VAL_Pos))
-#define IPCC_CHANNEL_NPRIV (IPCC_CHANNEL_PRIV_SELECT | (0U << IPCC_CHANNEL_PRIV_VAL_Pos))
-#define IPCC_CHANNEL_SEC   (IPCC_CHANNEL_SEC_SELECT | (1U << IPCC_CHANNEL_SEC_VAL_Pos))
-#define IPCC_CHANNEL_NSEC  (IPCC_CHANNEL_SEC_SELECT | (0U << IPCC_CHANNEL_SEC_VAL_Pos))
+#define IPCC_CHANNEL_PRIV  (IPCC_CHANNEL_PRIV_SELECT | (1UL << IPCC_CHANNEL_PRIV_VAL_Pos))
+#define IPCC_CHANNEL_NPRIV (IPCC_CHANNEL_PRIV_SELECT | (0UL << IPCC_CHANNEL_PRIV_VAL_Pos))
+#define IPCC_CHANNEL_SEC   (IPCC_CHANNEL_SEC_SELECT | (1UL << IPCC_CHANNEL_SEC_VAL_Pos))
+#define IPCC_CHANNEL_NSEC  (IPCC_CHANNEL_SEC_SELECT | (0UL << IPCC_CHANNEL_SEC_VAL_Pos))
 
 /**
   * @}
@@ -93,14 +92,14 @@ extern "C" {
   * @{
   */
 #define IPCC_CPU_CID_DISABLE   (IPCC_CPU_CID_DISABLE_SELECT)
-#define IPCC_CPU_CID_STATIC_0  (IPCC_CPU_CID_STATIC_SELECT | (00U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_1  (IPCC_CPU_CID_STATIC_SELECT | (01U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_2  (IPCC_CPU_CID_STATIC_SELECT | (02U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_3  (IPCC_CPU_CID_STATIC_SELECT | (03U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_4  (IPCC_CPU_CID_STATIC_SELECT | (04U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_5  (IPCC_CPU_CID_STATIC_SELECT | (05U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_6  (IPCC_CPU_CID_STATIC_SELECT | (06U << IPCC_CPU_CID_VAL_Pos))
-#define IPCC_CPU_CID_STATIC_7  (IPCC_CPU_CID_STATIC_SELECT | (07U << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_0  (IPCC_CPU_CID_STATIC_SELECT | (00UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_1  (IPCC_CPU_CID_STATIC_SELECT | (01UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_2  (IPCC_CPU_CID_STATIC_SELECT | (02UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_3  (IPCC_CPU_CID_STATIC_SELECT | (03UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_4  (IPCC_CPU_CID_STATIC_SELECT | (04UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_5  (IPCC_CPU_CID_STATIC_SELECT | (05UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_6  (IPCC_CPU_CID_STATIC_SELECT | (06UL << IPCC_CPU_CID_VAL_Pos))
+#define IPCC_CPU_CID_STATIC_7  (IPCC_CPU_CID_STATIC_SELECT | (07UL << IPCC_CPU_CID_VAL_Pos))
 
 /**
   * @}
@@ -172,83 +171,83 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
   */
 
 #define __HAL_IPCC_ENABLE_IT_C2(__HANDLE__, __CHDIRECTION__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C2CR |= IPCC_C2CR_RXOIE) : \
-                ((__HANDLE__)->Instance->C2CR |= IPCC_C2CR_TXFIE))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C2CR |= IPCC_C2CR_RXOIE) : \
+   ((__HANDLE__)->Instance->C2CR |= IPCC_C2CR_TXFIE))
 
 #define __HAL_IPCC_ENABLE_IT_C1(__HANDLE__, __CHDIRECTION__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C1CR |= IPCC_C1CR_RXOIE) : \
-                ((__HANDLE__)->Instance->C1CR |= IPCC_C1CR_TXFIE))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C1CR |= IPCC_C1CR_RXOIE) : \
+   ((__HANDLE__)->Instance->C1CR |= IPCC_C1CR_TXFIE))
 
 #define __HAL_IPCC_DISABLE_IT_C2(__HANDLE__, __CHDIRECTION__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C2CR &= ~IPCC_C2CR_RXOIE) : \
-                ((__HANDLE__)->Instance->C2CR &= ~IPCC_C2CR_TXFIE))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C2CR &= ~IPCC_C2CR_RXOIE) : \
+   ((__HANDLE__)->Instance->C2CR &= ~IPCC_C2CR_TXFIE))
 
 #define __HAL_IPCC_DISABLE_IT_C1(__HANDLE__, __CHDIRECTION__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C1CR &= ~IPCC_C1CR_RXOIE) : \
-                ((__HANDLE__)->Instance->C1CR &= ~IPCC_C1CR_TXFIE))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C1CR &= ~IPCC_C1CR_RXOIE) : \
+   ((__HANDLE__)->Instance->C1CR &= ~IPCC_C1CR_TXFIE))
 
 #define __HAL_IPCC_MASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C2MR |= (IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
-                ((__HANDLE__)->Instance->C2MR |= (IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C2MR |= (IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
+   ((__HANDLE__)->Instance->C2MR |= (IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
 
 #define __HAL_IPCC_MASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C1MR |= (IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
-                ((__HANDLE__)->Instance->C1MR |= (IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C1MR |= (IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
+   ((__HANDLE__)->Instance->C1MR |= (IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
 
 #define __HAL_IPCC_UNMASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C2MR &= ~(IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
-                ((__HANDLE__)->Instance->C2MR &= ~(IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C2MR &= ~(IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
+   ((__HANDLE__)->Instance->C2MR &= ~(IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
 
 #define __HAL_IPCC_UNMASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
-                ((__HANDLE__)->Instance->C1MR &= ~(IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
-                ((__HANDLE__)->Instance->C1MR &= ~(IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
+  (((__CHDIRECTION__) == IPCC_CHANNEL_DIR_RX) ? \
+   ((__HANDLE__)->Instance->C1MR &= ~(IPCC_C1MR_CH1OM_Msk << (__CHINDEX__))) : \
+   ((__HANDLE__)->Instance->C1MR &= ~(IPCC_C1MR_CH1FM_Msk << (__CHINDEX__))))
 
 #if defined(CORE_CM33)
 #define __HAL_IPCC_ENABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_ENABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_ENABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_DISABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_DISABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_DISABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_MASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_MASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+  __HAL_IPCC_MASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
 #define __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_UNMASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
-#else
+  __HAL_IPCC_UNMASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+#else   /* CORE_CM33 */
 #define __HAL_IPCC_ENABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_ENABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_ENABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_DISABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_DISABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_DISABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_MASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_MASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+  __HAL_IPCC_MASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
 #define __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_UNMASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
-#endif
+  __HAL_IPCC_UNMASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+#endif  /* CORE_CM33 */
 #if defined (CORE_CA35) || defined(CORE_CM33)
 #define __HAL_IPCC_ENABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_ENABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_ENABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_DISABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_DISABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_DISABLE_IT_C2(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_MASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_MASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+  __HAL_IPCC_MASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
 #define __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_UNMASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
-#else
+  __HAL_IPCC_UNMASK_CHANNEL_IT_C2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+#else   /* (CORE_CA35) || (CORE_CM33) */
 #define __HAL_IPCC_ENABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_ENABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_ENABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_DISABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_DISABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_DISABLE_IT_C1(__HANDLE__, __CHDIRECTION__)
 #define __HAL_IPCC_MASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_MASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+  __HAL_IPCC_MASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
 #define __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_UNMASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
-#endif
+  __HAL_IPCC_UNMASK_CHANNEL_IT_C1(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+#endif  /* (CORE_CA35) || (CORE_CM33) */
 
 /**
   * @}
@@ -269,12 +268,12 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
   */
 #if !defined(IPCC1)
 #define __HAL_IPCC_ENABLE_IT(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_ENABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_ENABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__)
 #else /* !IPCC1 */
 #define __HAL_IPCC_ENABLE_IT(__HANDLE__, __CHDIRECTION__) \
-            (((__HANDLE__)->Instance == IPCC1) ? \
-                __HAL_IPCC_ENABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) : \
-                __HAL_IPCC_ENABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__))
+  (((__HANDLE__)->Instance == IPCC1) ? \
+   __HAL_IPCC_ENABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) : \
+   __HAL_IPCC_ENABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__))
 #endif /* !IPCC1 */
 
 /**
@@ -287,12 +286,12 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
   */
 #if !defined(IPCC1)
 #define __HAL_IPCC_DISABLE_IT(__HANDLE__, __CHDIRECTION__) \
-            __HAL_IPCC_DISABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__)
+  __HAL_IPCC_DISABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__)
 #else /* ! IPCC1 */
 #define __HAL_IPCC_DISABLE_IT(__HANDLE__, __CHDIRECTION__) \
-            (((__HANDLE__)->Instance == IPCC1) ? \
-                __HAL_IPCC_DISABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) : \
-                __HAL_IPCC_DISABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__))
+  (((__HANDLE__)->Instance == IPCC1) ? \
+   __HAL_IPCC_DISABLE_IT_IPCC1(__HANDLE__, __CHDIRECTION__) : \
+   __HAL_IPCC_DISABLE_IT_IPCC2(__HANDLE__, __CHDIRECTION__))
 #endif /* ! IPCC1 */
 
 /**
@@ -310,12 +309,12 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
   */
 #if !defined(IPCC1)
 #define __HAL_IPCC_MASK_CHANNEL_IT(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_MASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+  __HAL_IPCC_MASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
 #else /* !IPCC1 */
 #define __HAL_IPCC_MASK_CHANNEL_IT(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            (((__HANDLE__)->Instance == IPCC1) ? \
-                __HAL_IPCC_MASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) : \
-                __HAL_IPCC_MASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__))
+  (((__HANDLE__)->Instance == IPCC1) ? \
+   __HAL_IPCC_MASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) : \
+   __HAL_IPCC_MASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__))
 #endif /* !IPCC1 */
 
 /**
@@ -333,12 +332,12 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
   */
 #if !defined(IPCC1)
 #define __HAL_IPCC_UNMASK_CHANNEL_IT(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
+  __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__)
 #else /* !IPCC1 */
 #define __HAL_IPCC_UNMASK_CHANNEL_IT(__HANDLE__, __CHDIRECTION__, __CHINDEX__) \
-            (((__HANDLE__)->Instance == IPCC1) ? \
-                __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) : \
-                __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__))
+  (((__HANDLE__)->Instance == IPCC1) ? \
+   __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC1(__HANDLE__, __CHDIRECTION__, __CHINDEX__) : \
+   __HAL_IPCC_UNMASK_CHANNEL_IT_IPCC2(__HANDLE__, __CHDIRECTION__, __CHINDEX__))
 #endif /* !IPCC1 */
 
 /**
@@ -349,20 +348,20 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
 /** @defgroup IPCC_Private_Constants IPCC Private Constants
   * @{
   */
-#define IPCC_CHANNEL_PRIV_VAL_Pos        00U
-#define IPCC_CHANNEL_SEC_VAL_Pos         01U
-#define IPCC_CPU_CID_VAL_Pos             02U
+#define IPCC_CHANNEL_PRIV_VAL_Pos         0U
+#define IPCC_CHANNEL_SEC_VAL_Pos          1U
+#define IPCC_CPU_CID_VAL_Pos              2U
 #define IPCC_CHANNEL_PRIV_SELECT_Pos     24U
 #define IPCC_CHANNEL_SEC_SELECT_Pos      25U
 #define IPCC_CPU_CID_STATIC_SELECT_Pos   29U
 #define IPCC_CPU_CID_DISABLE_SELECT_Pos  31U
 
-#define IPCC_CPU_CID_VAL_Msk             (0x0F << IPCC_CPU_CID_VAL_Pos)
+#define IPCC_CPU_CID_VAL_Msk             (0x0FU << IPCC_CPU_CID_VAL_Pos)
 
-#define IPCC_CHANNEL_PRIV_SELECT         (01U << IPCC_CHANNEL_PRIV_SELECT_Pos)
-#define IPCC_CHANNEL_SEC_SELECT          (01U << IPCC_CHANNEL_SEC_SELECT_Pos)
-#define IPCC_CPU_CID_STATIC_SELECT       (01U << IPCC_CPU_CID_STATIC_SELECT_Pos)
-#define IPCC_CPU_CID_DISABLE_SELECT      (01U << IPCC_CPU_CID_DISABLE_SELECT_Pos)
+#define IPCC_CHANNEL_PRIV_SELECT         (1UL << IPCC_CHANNEL_PRIV_SELECT_Pos)
+#define IPCC_CHANNEL_SEC_SELECT          (1UL << IPCC_CHANNEL_SEC_SELECT_Pos)
+#define IPCC_CPU_CID_STATIC_SELECT       (1UL << IPCC_CPU_CID_STATIC_SELECT_Pos)
+#define IPCC_CPU_CID_DISABLE_SELECT      (1UL << IPCC_CPU_CID_DISABLE_SELECT_Pos)
 
 /**
   * @}
@@ -375,8 +374,8 @@ typedef void ChannelCb(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CH
 
 /* Initialization and de-initialization functions *******************************/
 /** @defgroup IPCC_Exported_Functions_Group1 Initialization and deinitialization functions
- *  @{
- */
+  *  @{
+  */
 HAL_StatusTypeDef HAL_IPCC_Init(IPCC_HandleTypeDef *hipcc);
 HAL_StatusTypeDef HAL_IPCC_DeInit(IPCC_HandleTypeDef *hipcc);
 void HAL_IPCC_MspInit(IPCC_HandleTypeDef *hipcc);
@@ -386,30 +385,34 @@ void HAL_IPCC_MspDeInit(IPCC_HandleTypeDef *hipcc);
   */
 
 /** @defgroup IPCC_Exported_Functions_Group2 Communication functions
- *  @{
- */
+  *  @{
+  */
 /* IO operation functions  *****************************************************/
-HAL_StatusTypeDef HAL_IPCC_ActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir, ChannelCb cb);
-HAL_StatusTypeDef HAL_IPCC_DeActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir);
-IPCC_CHANNELStatusTypeDef HAL_IPCC_GetChannelStatus(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir);
-HAL_StatusTypeDef HAL_IPCC_NotifyCPU(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir);
+HAL_StatusTypeDef HAL_IPCC_ActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex,
+                                                IPCC_CHANNELDirTypeDef ChannelDir, ChannelCb cb);
+HAL_StatusTypeDef HAL_IPCC_DeActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex,
+                                                  IPCC_CHANNELDirTypeDef ChannelDir);
+IPCC_CHANNELStatusTypeDef HAL_IPCC_GetChannelStatus(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex,
+                                                    IPCC_CHANNELDirTypeDef ChannelDir);
+HAL_StatusTypeDef HAL_IPCC_NotifyCPU(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex,
+                                     IPCC_CHANNELDirTypeDef ChannelDir);
 /**
   * @}
   */
 
 /** @defgroup IPCC_Exported_Functions_Group3 Peripheral State and Error functions
- *  @{
- */
+  *  @{
+  */
 /* Peripheral State and Error functions ****************************************/
 HAL_IPCC_StateTypeDef HAL_IPCC_GetState(IPCC_HandleTypeDef const *const hipcc);
-uint32_t HAL_IPCC_GetChannelNumber(IPCC_HandleTypeDef *hipcc);
+uint32_t HAL_IPCC_GetChannelNumber(const IPCC_HandleTypeDef *hipcc);
 /**
   * @}
   */
 
 /** @defgroup IPCC_IRQ_Handler_and_Callbacks Peripheral IRQ Handler and Callbacks
- *  @{
- */
+  *  @{
+  */
 /* IRQHandler and Callbacks used in non blocking modes  ************************/
 void HAL_IPCC_TX_IRQHandler(IPCC_HandleTypeDef   *const hipcc);
 void HAL_IPCC_RX_IRQHandler(IPCC_HandleTypeDef *const hipcc);
@@ -420,13 +423,15 @@ void HAL_IPCC_RxCallback(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_
   */
 
 /** @defgroup IPCC_Exported_Functions_Group4 RIF protection configuration functions
- *  @{
- */
+  *  @{
+  */
 /* RIF protection configuration functions **************************************/
-HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId, uint32_t ChannelIndex, uint32_t ChannelAttributes);
-HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId, uint32_t ChannelIndex, uint32_t *pChannelAttributes);
-HAL_StatusTypeDef HAL_IPCC_ConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t Attributes);
-HAL_StatusTypeDef HAL_IPCC_GetConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t *pAttributes);
+HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId,
+                                                   uint32_t ChannelIndex, uint32_t ChannelAttributes);
+HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId,
+                                                      uint32_t ChannelIndex, uint32_t *pChannelAttributes);
+HAL_StatusTypeDef HAL_IPCC_ConfigAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t Attributes);
+HAL_StatusTypeDef HAL_IPCC_GetConfigAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t *pAttributes);
 
 /**
   * @}
@@ -451,4 +456,3 @@ HAL_StatusTypeDef HAL_IPCC_GetConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32
 
 #endif /* STM32MP2xx_HAL_IPCC_H */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

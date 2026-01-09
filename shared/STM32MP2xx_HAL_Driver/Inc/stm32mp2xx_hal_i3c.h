@@ -98,6 +98,20 @@ typedef struct
                                        when receiving a hot join request from target.
                                        This parameter can be set to ENABLE or DISABLE                                 */
 
+#if defined(I3C_TIMINGR2_STALLL)
+  FunctionalState ACKI2CAddrState;  /*!< Specifies the Enable/Disable state of the controller clock stall
+                                         on data ACK/NACK bit of legacy I2C address phase.
+                                         This parameter can be set to ENABLE or DISABLE                               */
+
+  FunctionalState ACKI2CWriteState; /*!< Specifies the Enable/Disable state of the controller clock stall
+                                         on ACK/NACK bit of legacy I2C write message phase.
+                                         This parameter can be set to ENABLE or DISABLE                               */
+
+  FunctionalState ACKI2CReadState;  /*!< Specifies the Enable/Disable state of the controller clock stall
+                                         on ACK/NACK bit of legacy I2C read message phase.
+                                         This parameter can be set to ENABLE or DISABLE                               */
+
+#endif /* I3C_TIMINGR2_STALLL */
   FunctionalState ACKStallState;  /*!< Specifies the Enable/Disable state of the controller clock stall
                                        on the ACK phase.
                                        This parameter can be set to ENABLE or DISABLE                                 */
@@ -248,15 +262,16 @@ typedef enum
   */
 typedef enum
 {
-  HAL_I3C_STATE_RESET      = 0x00U,   /*!< Peripheral is not yet Initialized                   */
-  HAL_I3C_STATE_READY      = 0x10U,   /*!< Peripheral Initialized and ready for use            */
-  HAL_I3C_STATE_BUSY       = 0x20U,   /*!< An internal process is ongoing                      */
-  HAL_I3C_STATE_BUSY_TX    = 0x21U,   /*!< Data Transmission process is ongoing                */
-  HAL_I3C_STATE_BUSY_RX    = 0x22U,   /*!< Data Reception process is ongoing                   */
-  HAL_I3C_STATE_BUSY_DAA   = 0x24U,   /*!< Dynamic address assignment process is ongoing       */
-  HAL_I3C_STATE_LISTEN     = 0x30U,   /*!< Listen process is ongoing                           */
-  HAL_I3C_STATE_ABORT      = 0x60U,   /*!< Abort user request ongoing                          */
-  HAL_I3C_STATE_ERROR      = 0xE0U,   /*!< Error                                               */
+  HAL_I3C_STATE_RESET       = 0x00U,   /*!< Peripheral is not yet Initialized                   */
+  HAL_I3C_STATE_READY       = 0x10U,   /*!< Peripheral Initialized and ready for use            */
+  HAL_I3C_STATE_BUSY        = 0x20U,   /*!< An internal process is ongoing                      */
+  HAL_I3C_STATE_BUSY_TX     = 0x21U,   /*!< Data Transmission process is ongoing                */
+  HAL_I3C_STATE_BUSY_RX     = 0x22U,   /*!< Data Reception process is ongoing                   */
+  HAL_I3C_STATE_BUSY_TX_RX  = 0x23U,   /*!< Data Multiple Transfer process is ongoing           */
+  HAL_I3C_STATE_BUSY_DAA    = 0x24U,   /*!< Dynamic address assignment process is ongoing       */
+  HAL_I3C_STATE_LISTEN      = 0x30U,   /*!< Listen process is ongoing                           */
+  HAL_I3C_STATE_ABORT       = 0x60U,   /*!< Abort user request ongoing                          */
+  HAL_I3C_STATE_ERROR       = 0xE0U,   /*!< Error                                               */
 
 } HAL_I3C_StateTypeDef;
 /**
@@ -428,40 +443,43 @@ typedef struct __I3C_HandleTypeDef
 #if (USE_HAL_I3C_REGISTER_CALLBACKS == 1U)
 
   void (* CtrlTxCpltCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Controller private data and CCC Tx Transfer complete callback    */
+  /*!< I3C Controller private data and CCC Tx Transfer complete callback                           */
 
   void (* CtrlRxCpltCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Controller private data and CCC Rx Transfer completed callback   */
+  /*!< I3C Controller private data and CCC Rx Transfer completed callback                          */
+
+  void (* CtrlMultipleXferCpltCallback)(struct __I3C_HandleTypeDef *hi3c);
+  /*!< I3C Controller multiple Direct CCC, I3C private or I2C Transfer completed callback          */
 
   void (* CtrlDAACpltCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Controller Dynamic Address Assignment completed callback         */
+  /*!< I3C Controller Dynamic Address Assignment completed callback                                */
 
   void (* TgtReqDynamicAddrCallback)(struct __I3C_HandleTypeDef *hi3c, uint64_t targetPayload);
   /*!< I3C Controller request dynamic address callback during Dynamic Address Assignment processus */
 
   void (* TgtTxCpltCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Target private data Tx Transfer completed callback               */
+  /*!< I3C Target private data Tx Transfer completed callback                                      */
 
   void (* TgtRxCpltCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Target private data Rx Transfer completed callback               */
+  /*!< I3C Target private data Rx Transfer completed callback                                      */
 
   void (* TgtHotJoinCallback)(struct __I3C_HandleTypeDef *hi3c, uint8_t dynamicAddress);
-  /*!< I3C Target Hot-Join callback                                         */
+  /*!< I3C Target Hot-Join callback                                                                */
 
   void (* NotifyCallback)(struct __I3C_HandleTypeDef *hi3c, uint32_t eventId);
-  /*!< I3C Target or Controller asynchronous events callback                */
+  /*!< I3C Target or Controller asynchronous events callback                                       */
 
   void (* ErrorCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Error callback                                                   */
+  /*!< I3C Error callback                                                                          */
 
   void (* AbortCpltCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Abort complete callback                                          */
+  /*!< I3C Abort complete callback                                                                 */
 
   void (* MspInitCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Msp Init callback                                                */
+  /*!< I3C Msp Init callback                                                                       */
 
   void (* MspDeInitCallback)(struct __I3C_HandleTypeDef *hi3c);
-  /*!< I3C Msp DeInit callback                                              */
+  /*!< I3C Msp DeInit callback                                                                     */
 
 #endif /* USE_HAL_I3C_REGISTER_CALLBACKS == 1U */
 
@@ -477,18 +495,32 @@ typedef struct __I3C_HandleTypeDef
   */
 typedef enum
 {
-  HAL_I3C_CTRL_TX_COMPLETE_CB_ID     = 0x00U,  /*!< I3C Controller Tx Transfer completed callback ID                  */
-  HAL_I3C_CTRL_RX_COMPLETE_CB_ID     = 0x01U,  /*!< I3C Controller Rx Transfer completed callback ID                  */
-  HAL_I3C_CTRL_DAA_COMPLETE_CB_ID    = 0x02U,  /*!< I3C Controller Dynamic Address Assignment completed callback ID   */
-  HAL_I3C_TGT_REQ_DYNAMIC_ADDR_CB_ID = 0x03U,  /*!< I3C Controller request dynamic address completed callback ID      */
-  HAL_I3C_TGT_TX_COMPLETE_CB_ID      = 0x04U,  /*!< I3C Target Tx Transfer completed callback ID                      */
-  HAL_I3C_TGT_RX_COMPLETE_CB_ID      = 0x05U,  /*!< I3C Target Rx Transfer completed callback ID                      */
-  HAL_I3C_TGT_HOTJOIN_CB_ID          = 0x06U,  /*!< I3C Target Hot-join notification callback ID                      */
-  HAL_I3C_NOTIFY_CB_ID               = 0x07U,  /*!< I3C Target or Controller receive notification callback ID         */
-  HAL_I3C_ERROR_CB_ID                = 0x08U,  /*!< I3C Error callback ID                                             */
-  HAL_I3C_ABORT_CB_ID                = 0x09U,  /*!< I3C Abort callback ID                                             */
-  HAL_I3C_MSPINIT_CB_ID              = 0x0AU,  /*!< I3C Msp Init callback ID                                          */
-  HAL_I3C_MSPDEINIT_CB_ID            = 0x0BU   /*!< I3C Msp DeInit callback ID                                        */
+  /*!< I3C Controller Tx Transfer completed callback ID                  */
+  HAL_I3C_CTRL_TX_COMPLETE_CB_ID               = 0x00U,
+  /*!< I3C Controller Rx Transfer completed callback ID                  */
+  HAL_I3C_CTRL_RX_COMPLETE_CB_ID               = 0x01U,
+  /*!< I3C Controller Multiple Transfer completed callback ID            */
+  HAL_I3C_CTRL_MULTIPLE_XFER_COMPLETE_CB_ID    = 0x02U,
+  /*!< I3C Controller Dynamic Address Assignment completed callback ID   */
+  HAL_I3C_CTRL_DAA_COMPLETE_CB_ID              = 0x03U,
+  /*!< I3C Controller request dynamic address completed callback ID      */
+  HAL_I3C_TGT_REQ_DYNAMIC_ADDR_CB_ID           = 0x04U,
+  /*!< I3C Target Tx Transfer completed callback ID                      */
+  HAL_I3C_TGT_TX_COMPLETE_CB_ID                = 0x05U,
+  /*!< I3C Target Rx Transfer completed callback ID                      */
+  HAL_I3C_TGT_RX_COMPLETE_CB_ID                = 0x06U,
+  /*!< I3C Target Hot-join notification callback ID                      */
+  HAL_I3C_TGT_HOTJOIN_CB_ID                    = 0x07U,
+  /*!< I3C Target or Controller receive notification callback ID         */
+  HAL_I3C_NOTIFY_CB_ID                         = 0x08U,
+  /*!< I3C Error callback ID                                             */
+  HAL_I3C_ERROR_CB_ID                          = 0x09U,
+  /*!< I3C Abort callback ID                                             */
+  HAL_I3C_ABORT_CB_ID                          = 0x0AU,
+  /*!< I3C Msp Init callback ID                                          */
+  HAL_I3C_MSPINIT_CB_ID                        = 0x0BU,
+  /*!< I3C Msp DeInit callback ID                                        */
+  HAL_I3C_MSPDEINIT_CB_ID                      = 0x0CU
 
 } HAL_I3C_CallbackIDTypeDef;
 /**
@@ -694,6 +726,10 @@ typedef  void (*pI3C_TgtReqDynamicAddrCallbackTypeDef)(I3C_HandleTypeDef *hi3c, 
   */
 #define HAL_I3C_SDA_HOLD_TIME_0_5  LL_I3C_SDA_HOLD_TIME_0_5 /*!< SDA hold time equal to 0.5 x ti3cclk */
 #define HAL_I3C_SDA_HOLD_TIME_1_5  LL_I3C_SDA_HOLD_TIME_1_5 /*!< SDA hold time equal to 1.5 x ti3cclk */
+#if defined(I3C_TIMINGR1_SDA_HD_1)
+#define HAL_I3C_SDA_HOLD_TIME_2_5  LL_I3C_SDA_HOLD_TIME_2_5 /*!< SDA hold time equal to 2.5 x ti3cclk */
+#define HAL_I3C_SDA_HOLD_TIME_3_5  LL_I3C_SDA_HOLD_TIME_3_5 /*!< SDA hold time equal to 3.5 x ti3cclk */
+#endif /* I3C_TIMINGR1_SDA_HD_1 */
 /**
   * @}
   */
@@ -892,7 +928,61 @@ typedef  void (*pI3C_TgtReqDynamicAddrCallbackTypeDef)(I3C_HandleTypeDef *hi3c, 
 /**
   * @}
   */
+#if defined(I3C_MISR_CFNFMIS)
 
+/** @defgroup I3C_COMMON_INTERRUPT_MASKS I3C COMMON INTERRUPT MASKS
+  * @{
+  */
+#define HAL_I3C_IT_MASKS_TXFNFMIS      LL_I3C_MISR_TXFNFMIS /*!< Tx FIFO not full interrupt mask      */
+#define HAL_I3C_IT_MASKS_RXFNEMIS      LL_I3C_MISR_RXFNEMIS /*!< Rx FIFO not empty interrupt mask     */
+#define HAL_I3C_IT_MASKS_FCMIS         LL_I3C_MISR_FCMIS    /*!< Frame complete interrupt mask        */
+#define HAL_I3C_IT_MASKS_ERRMIS        LL_I3C_MISR_ERRMIS   /*!< Error interrupt mask                 */
+#define HAL_I3C_ALL_COMMON_ITS_MASK    (uint32_t)(LL_I3C_MISR_TXFNFMIS | LL_I3C_MISR_RXFNEMIS | \
+                                                  LL_I3C_MISR_FCMIS    | LL_I3C_MISR_ERRMIS)
+/**
+  * @}
+  */
+
+/** @defgroup I3C_TARGET_INTERRUPT_MASKS I3C TARGET INTERRUPT MASKS
+  * @{
+  */
+#define HAL_I3C_IT_MASKS_IBIENDMIS     LL_I3C_MISR_IBIENDMIS /*!< IBI end interrupt mask                    */
+#define HAL_I3C_IT_MASKS_CRUPDMIS      LL_I3C_MISR_CRUPDMIS  /*!< controller-role update interrupt mask     */
+#define HAL_I3C_IT_MASKS_WKPMIS        LL_I3C_MISR_WKPMIS    /*!< wakeup interrupt mask                     */
+#define HAL_I3C_IT_MASKS_GETMIS        LL_I3C_MISR_GETMIS    /*!< GETxxx CCC interrupt mask                 */
+#define HAL_I3C_IT_MASKS_STAMIS        LL_I3C_MISR_STAMIS    /*!< GETSTATUS CCC interrupt mask              */
+#define HAL_I3C_IT_MASKS_DAUPDMIS      LL_I3C_MISR_DAUPDMIS  /*!< ENTDAA/RSTDAA/SETNEWDA CCC interrupt mask */
+#define HAL_I3C_IT_MASKS_MWLUPDMIS     LL_I3C_MISR_MWLUPDMIS /*!< SETMWL CCC interrupt mask                 */
+#define HAL_I3C_IT_MASKS_MRLUPDMIS     LL_I3C_MISR_MRLUPDMIS /*!< SETMRL CCC interrupt mask                 */
+#define HAL_I3C_IT_MASKS_RSTMIS        LL_I3C_MISR_RSTMIS    /*!< reset pattern interrupt mask              */
+#define HAL_I3C_IT_MASKS_ASUPDMIS      LL_I3C_MISR_ASUPDMIS  /*!< ENTASx CCC interrupt mask                 */
+#define HAL_I3C_IT_MASKS_INTUPDMIS     LL_I3C_MISR_INTUPDMIS /*!< ENEC/DISEC CCC interrupt mask             */
+#define HAL_I3C_IT_MASKS_DEFMIS        LL_I3C_MISR_DEFMIS    /*!< DEFTGTS CCC interrupt mask                */
+#define HAL_I3C_IT_GRPMIS              LL_I3C_MISR_GRPMIS    /*!< DEFGRPA CCC interrupt mask                */
+#define HAL_I3C_ALL_TGT_ITS_MASK     (uint32_t)(LL_I3C_MISR_IBIENDMIS | LL_I3C_MISR_CRUPDMIS  | LL_I3C_MISR_WKPMIS   | \
+                                                LL_I3C_MISR_GETMIS    | LL_I3C_MISR_STAMIS    | LL_I3C_MISR_DAUPDMIS | \
+                                                LL_I3C_MISR_MWLUPDMIS | LL_I3C_MISR_MRLUPDMIS | LL_I3C_MISR_RSTMIS   | \
+                                                LL_I3C_MISR_ASUPDMIS  | LL_I3C_MISR_INTUPDMIS | LL_I3C_MISR_DEFMIS   | \
+                                                LL_I3C_MISR_GRPMIS)
+/**
+  * @}
+  */
+
+/** @defgroup I3C_CONTROLLER_INTERRUPT I3C CONTROLLER INTERRUPT
+  * @{
+  */
+#define HAL_I3C_IT_CFNFMIS              LL_I3C_MISR_CFNFMIS     /*!< Control FIFO not full interrupt mask     */
+#define HAL_I3C_IT_SFNEMIS              LL_I3C_MISR_SFNEMIS     /*!< Status FIFO not empty interrupt mask     */
+#define HAL_I3C_IT_HJMIS                LL_I3C_MISR_HJMIS       /*!< Hot-join interrupt mask                  */
+#define HAL_I3C_IT_CRMIS                LL_I3C_MISR_CRMIS       /*!< Controller-role request interrupt mask   */
+#define HAL_I3C_IT_IBIMIS               LL_I3C_MISR_IBIMIS      /*!< IBI request interrupt mask               */
+#define HAL_I3C_IT_RXTGTENDMIS          LL_I3C_MISR_RXTGTENDMIS /*!< Target-initiated read end interrupt mask */
+#define HAL_I3C_ALL_CTRL_ITS_MASK       (uint32_t)(LL_I3C_MISR_CFNFMIS | LL_I3C_MISR_SFNEMIS | LL_I3C_MISR_HJMIS | \
+                                                   LL_I3C_MISR_CRMIS   | LL_I3C_MISR_IBIMIS  | LL_I3C_MISR_RXTGTENDMIS)
+/**
+  * @}
+  */
+#endif
 /** @defgroup I3C_BCR_IN_PAYLOAD I3C BCR IN PAYLOAD
   * @{
   */
@@ -1028,6 +1118,7 @@ HAL_StatusTypeDef HAL_I3C_ActivateNotification(I3C_HandleTypeDef *hi3c, I3C_Xfer
 HAL_StatusTypeDef HAL_I3C_DeactivateNotification(I3C_HandleTypeDef *hi3c, uint32_t interruptMask);
 void HAL_I3C_CtrlTxCpltCallback(I3C_HandleTypeDef *hi3c);
 void HAL_I3C_CtrlRxCpltCallback(I3C_HandleTypeDef *hi3c);
+void HAL_I3C_CtrlMultipleXferCpltCallback(I3C_HandleTypeDef *hi3c);
 void HAL_I3C_CtrlDAACpltCallback(I3C_HandleTypeDef *hi3c);
 void HAL_I3C_TgtReqDynamicAddrCallback(I3C_HandleTypeDef *hi3c, uint64_t targetPayload);
 void HAL_I3C_TgtTxCpltCallback(I3C_HandleTypeDef *hi3c);
@@ -1118,6 +1209,12 @@ HAL_StatusTypeDef HAL_I3C_Ctrl_Receive_IT(I3C_HandleTypeDef   *hi3c,
 HAL_StatusTypeDef HAL_I3C_Ctrl_Receive_DMA(I3C_HandleTypeDef   *hi3c,
                                            I3C_XferTypeDef     *pXferData);
 
+/* Controller multiple Direct CCC Command, I3C private or I2C transfer APIs */
+HAL_StatusTypeDef HAL_I3C_Ctrl_MultipleTransfer_IT(I3C_HandleTypeDef   *hi3c,
+                                                   I3C_XferTypeDef     *pXferData);
+HAL_StatusTypeDef HAL_I3C_Ctrl_MultipleTransfer_DMA(I3C_HandleTypeDef   *hi3c,
+                                                    I3C_XferTypeDef     *pXferData);
+
 /* Controller assign dynamic address APIs */
 HAL_StatusTypeDef HAL_I3C_Ctrl_SetDynAddr(I3C_HandleTypeDef *hi3c, uint8_t devAddress);
 HAL_StatusTypeDef HAL_I3C_Ctrl_DynAddrAssign_IT(I3C_HandleTypeDef *hi3c, uint32_t dynOption);
@@ -1125,6 +1222,15 @@ HAL_StatusTypeDef HAL_I3C_Ctrl_DynAddrAssign(I3C_HandleTypeDef *hi3c,
                                              uint64_t          *target_payload,
                                              uint32_t           dynOption,
                                              uint32_t           timeout);
+/* Controller check device ready APIs */
+HAL_StatusTypeDef HAL_I3C_Ctrl_IsDeviceI3C_Ready(I3C_HandleTypeDef *hi3c,
+                                                 uint8_t            devAddress,
+                                                 uint32_t           trials,
+                                                 uint32_t           timeout);
+HAL_StatusTypeDef HAL_I3C_Ctrl_IsDeviceI2C_Ready(I3C_HandleTypeDef *hi3c,
+                                                 uint8_t            devAddress,
+                                                 uint32_t           trials,
+                                                 uint32_t           timeout);
 /**
   * @}
   */
@@ -1142,8 +1248,9 @@ HAL_StatusTypeDef HAL_I3C_Tgt_ControlRoleReq(I3C_HandleTypeDef *hi3c, uint32_t t
 HAL_StatusTypeDef HAL_I3C_Tgt_ControlRoleReq_IT(I3C_HandleTypeDef *hi3c);
 HAL_StatusTypeDef HAL_I3C_Tgt_HotJoinReq(I3C_HandleTypeDef *hi3c, uint8_t *pAddress, uint32_t timeout);
 HAL_StatusTypeDef HAL_I3C_Tgt_HotJoinReq_IT(I3C_HandleTypeDef *hi3c);
-HAL_StatusTypeDef HAL_I3C_Tgt_IBIReq(I3C_HandleTypeDef *hi3c, uint8_t *pPayload, uint8_t payloadSize, uint32_t timeout);
-HAL_StatusTypeDef HAL_I3C_Tgt_IBIReq_IT(I3C_HandleTypeDef *hi3c, uint8_t *pPayload, uint8_t payloadSize);
+HAL_StatusTypeDef HAL_I3C_Tgt_IBIReq(I3C_HandleTypeDef *hi3c, const uint8_t *pPayload,
+                                     uint8_t payloadSize, uint32_t timeout);
+HAL_StatusTypeDef HAL_I3C_Tgt_IBIReq_IT(I3C_HandleTypeDef *hi3c, const uint8_t *pPayload, uint8_t payloadSize);
 /**
   * @}
   */
@@ -1152,9 +1259,9 @@ HAL_StatusTypeDef HAL_I3C_Tgt_IBIReq_IT(I3C_HandleTypeDef *hi3c, uint8_t *pPaylo
   * @{
   */
 HAL_StatusTypeDef HAL_I3C_Abort_IT(I3C_HandleTypeDef *hi3c);
-HAL_I3C_StateTypeDef HAL_I3C_GetState(I3C_HandleTypeDef *hi3c);
-HAL_I3C_ModeTypeDef HAL_I3C_GetMode(I3C_HandleTypeDef *hi3c);
-uint32_t HAL_I3C_GetError(I3C_HandleTypeDef *hi3c);
+HAL_I3C_StateTypeDef HAL_I3C_GetState(const I3C_HandleTypeDef *hi3c);
+HAL_I3C_ModeTypeDef HAL_I3C_GetMode(const I3C_HandleTypeDef *hi3c);
+uint32_t HAL_I3C_GetError(const I3C_HandleTypeDef *hi3c);
 HAL_StatusTypeDef HAL_I3C_GetCCCInfo(I3C_HandleTypeDef *hi3c,
                                      uint32_t notifyId,
                                      I3C_CCCInfoTypeDef *pCCCInfo);
@@ -1192,8 +1299,15 @@ HAL_StatusTypeDef HAL_I3C_GetCCCInfo(I3C_HandleTypeDef *hi3c,
 #define IS_I3C_ENTDAA_OPTION(__OPTION__) (((__OPTION__) == I3C_RSTDAA_THEN_ENTDAA) || \
                                           ((__OPTION__) == I3C_ONLY_ENTDAA))
 
+#if defined(I3C_TIMINGR1_SDA_HD_1)
+#define IS_I3C_SDAHOLDTIME_VALUE(__VALUE__) (((__VALUE__) == HAL_I3C_SDA_HOLD_TIME_0_5) || \
+                                             ((__VALUE__) == HAL_I3C_SDA_HOLD_TIME_1_5) || \
+                                             ((__VALUE__) == HAL_I3C_SDA_HOLD_TIME_2_5) || \
+                                             ((__VALUE__) == HAL_I3C_SDA_HOLD_TIME_3_5))
+#else
 #define IS_I3C_SDAHOLDTIME_VALUE(__VALUE__) (((__VALUE__) == HAL_I3C_SDA_HOLD_TIME_0_5) || \
                                              ((__VALUE__) == HAL_I3C_SDA_HOLD_TIME_1_5))
+#endif /* I3C_TIMINGR1_SDA_HD_1 */
 
 #define IS_I3C_WAITTIME_VALUE(__VALUE__) (((__VALUE__) == HAL_I3C_OWN_ACTIVITY_STATE_0) || \
                                           ((__VALUE__) == HAL_I3C_OWN_ACTIVITY_STATE_1) || \

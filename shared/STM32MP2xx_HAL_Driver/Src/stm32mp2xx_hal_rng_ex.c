@@ -28,9 +28,9 @@
   * @{
   */
 
-#if defined(RNG)
+#if defined (RNG) || defined (RNG1) || defined (RNG2)
 
-/** @addtogroup RNG_Ex
+/** @addtogroup RNGEx
   * @brief RNG Extended HAL module driver.
   * @{
   */
@@ -41,7 +41,7 @@
 /* Private defines -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
-/** @defgroup RNG_Ex_Private_Constants RNGEx Private Constants
+/** @addtogroup RNGEx_Private_Constants
   * @{
   */
 #define RNG_TIMEOUT_VALUE     2U
@@ -53,11 +53,11 @@
 /* Private functions  --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
-/** @addtogroup RNG_Ex_Exported_Functions
+/** @defgroup RNGEx_Exported_Functions RNGEx Exported Functions
   * @{
   */
 
-/** @addtogroup RNG_Ex_Exported_Functions_Group1
+/** @defgroup RNGEx_Exported_Functions_Group1 Configuration and lock functions
   *  @brief   Configuration functions
   *
 @verbatim
@@ -77,12 +77,12 @@
   *         RNG_ConfigTypeDef.
   * @param  hrng pointer to a RNG_HandleTypeDef structure that contains
   *          the configuration information for RNG.
-  * @param  pConf: pointer to a RNG_ConfigTypeDef structure that contains
+  * @param  pConf pointer to a RNG_ConfigTypeDef structure that contains
   *         the configuration information for RNG module
 
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_RNGEx_SetConfig(RNG_HandleTypeDef *hrng, RNG_ConfigTypeDef *pConf)
+HAL_StatusTypeDef HAL_RNGEx_SetConfig(RNG_HandleTypeDef *hrng, const RNG_ConfigTypeDef *pConf)
 {
   uint32_t tickstart;
   uint32_t cr_value;
@@ -123,11 +123,18 @@ HAL_StatusTypeDef HAL_RNGEx_SetConfig(RNG_HandleTypeDef *hrng, RNG_ConfigTypeDef
                           | (pConf->Config3 << RNG_CR_RNG_CONFIG3_Pos));
 
     MODIFY_REG(hrng->Instance->CR, RNG_CR_NISTC | RNG_CR_CLKDIV | RNG_CR_RNG_CONFIG1
-               | RNG_CR_RNG_CONFIG2 | RNG_CR_RNG_CONFIG3,
+               | RNG_CR_RNG_CONFIG2 | RNG_CR_RNG_CONFIG3 | RNG_CR_ARDIS,
                (uint32_t)(RNG_CR_CONDRST | cr_value));
-
+#if defined(RNG_HTCR0_HTCFG) && defined(RNG_HTCR1_HTCFG) && defined(RNG_HTCR2_HTCFG) && defined(RNG_HTCR3_HTCFG)
+    /* RNG health test control in accordance with NIST */
+    WRITE_REG(hrng->Instance->HTCR[0], pConf->HealthTest[0]);
+    WRITE_REG(hrng->Instance->HTCR[1], 0x0000FFFF);
+    WRITE_REG(hrng->Instance->HTCR[2], 0x0000FFFF);
+    WRITE_REG(hrng->Instance->HTCR[3], 0x0000FFFF);
+#else
     /* RNG health test control in accordance with NIST */
     WRITE_REG(hrng->Instance->HTCR, pConf->HealthTest);
+#endif /* RNG_HTCR0_HTCFG && RNG_HTCR1_HTCFG && RNG_HTCR2_HTCFG && RNG_HTCR3_HTCFG */
 
     /* Writing bit CONDRST=0*/
     CLEAR_BIT(hrng->Instance->CR, RNG_CR_CONDRST);
@@ -173,7 +180,7 @@ HAL_StatusTypeDef HAL_RNGEx_SetConfig(RNG_HandleTypeDef *hrng, RNG_ConfigTypeDef
   *         RNG_ConfigTypeDef.
   * @param  hrng pointer to a RNG_HandleTypeDef structure that contains
   *          the configuration information for RNG.
-  * @param  pConf: pointer to a RNG_ConfigTypeDef structure that contains
+  * @param  pConf pointer to a RNG_ConfigTypeDef structure that contains
   *         the configuration information for RNG module
 
   * @retval HAL status
@@ -182,7 +189,9 @@ HAL_StatusTypeDef HAL_RNGEx_GetConfig(RNG_HandleTypeDef *hrng, RNG_ConfigTypeDef
 {
 
   HAL_StatusTypeDef status ;
-
+#if (defined(RNG_HTCR0_HTCFG) && defined(RNG_HTCR1_HTCFG) && defined(RNG_HTCR2_HTCFG) && defined(RNG_HTCR3_HTCFG))
+  uint8_t htcr_count;
+#endif /* RNG_HTCR0_HTCFG && RNG_HTCR1_HTCFG && RNG_HTCR2_HTCFG && RNG_HTCR3_HTCFG */
   /* Check the RNG handle allocation */
   if ((hrng == NULL) || (pConf == NULL))
   {
@@ -202,7 +211,14 @@ HAL_StatusTypeDef HAL_RNGEx_GetConfig(RNG_HandleTypeDef *hrng, RNG_ConfigTypeDef
     pConf->ClockDivider   = (hrng->Instance->CR & RNG_CR_CLKDIV);
     pConf->NistCompliance = (hrng->Instance->CR & RNG_CR_NISTC);
     pConf->AutoReset      = (hrng->Instance->CR & RNG_CR_ARDIS);
-    pConf->HealthTest     = (hrng->Instance->HTCR);
+#if (defined(RNG_HTCR0_HTCFG) && defined(RNG_HTCR1_HTCFG) && defined(RNG_HTCR2_HTCFG) && defined(RNG_HTCR3_HTCFG) )
+    for (htcr_count = 0 ; htcr_count < 4 ; htcr_count++)
+    {
+      pConf->HealthTest[htcr_count] = (hrng->Instance->HTCR[htcr_count]);
+    }
+#else
+    pConf->HealthTest = (hrng->Instance->HTCR);
+#endif /* RNG_HTCR0_HTCFG && RNG_HTCR1_HTCFG && RNG_HTCR2_HTCFG && RNG_HTCR3_HTCFG */
 
     /* Initialize the RNG state */
     hrng->State = HAL_RNG_STATE_READY;
@@ -269,12 +285,12 @@ HAL_StatusTypeDef HAL_RNGEx_LockConfig(RNG_HandleTypeDef *hrng)
   * @}
   */
 
-/** @addtogroup RNG_Ex_Exported_Functions_Group2
+/** @defgroup RNGEx_Exported_Functions_Group2 Recover from seed error function
   *  @brief   Recover from seed error function
   *
 @verbatim
  ===============================================================================
-          ##### Configuration and lock functions #####
+          ##### Recover from seed error function #####
  ===============================================================================
     [..]  This section provide function allowing to:
       (+) Recover from a seed error
@@ -306,6 +322,11 @@ HAL_StatusTypeDef HAL_RNGEx_RecoverSeedError(RNG_HandleTypeDef *hrng)
 
     /* sequence to fully recover from a seed error */
     status = RNG_RecoverSeedError(hrng);
+    if (status == HAL_ERROR)
+    {
+      /* Update the error code */
+      hrng->ErrorCode = HAL_RNG_ERROR_RECOVERSEED;
+    }
   }
   else
   {
@@ -331,7 +352,7 @@ HAL_StatusTypeDef HAL_RNGEx_RecoverSeedError(RNG_HandleTypeDef *hrng)
   * @}
   */
 
-#endif /* RNG */
+#endif /* RNG  || RNG1 || RNG2 */
 
 /**
   * @}

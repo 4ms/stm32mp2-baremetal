@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -26,11 +26,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32mp2xx.h"
-#ifdef  USE_FULL_ASSERT
-#include "stm32_assert.h"
-#else
-#define assert_param(expr) ((void)0U)
-#endif /* USE_FULL_ASSERT */
 
 /** @addtogroup STM32MP2xx_LL_Driver
   * @{
@@ -93,86 +88,96 @@ extern "C" {
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_LINE_0_31(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_LINE_0_31( (__VALUE__) ) ) \
-     ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_0_31( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_LINE_0_31( (__VALUE__) ) ) \
+      ||                                                                        \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_0_31( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_LINE_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_0_31(__VALUE__))
+#define IS_LL_EXTI_LINE_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                            IS_LL_EXTI2_LINE_0_31(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_LINE_32_63(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_LINE_32_63( (__VALUE__) ) ) \
-     ||                                                                         \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_32_63( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_LINE_32_63( (__VALUE__) ) ) \
+      ||                                                                         \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_32_63( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_LINE_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_32_63(__VALUE__))
+#define IS_LL_EXTI_LINE_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                             IS_LL_EXTI2_LINE_32_63(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_LINE_64_95(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_LINE_64_95( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_LINE_64_95( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_64_95( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_64_95( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_LINE_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_LINE_64_95(__VALUE__))
+#define IS_LL_EXTI_LINE_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                             IS_LL_EXTI2_LINE_64_95(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_DIRECT_LINE_0_31(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_DIRECT_EXTI1_LINE_0_31( (__VALUE__) ) ) \
-     ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_DIRECT_EXTI2_LINE_0_31( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_DIRECT_EXTI1_LINE_0_31( (__VALUE__) ) ) \
+      ||                                                                        \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_DIRECT_EXTI2_LINE_0_31( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_DIRECT_LINE_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_DIRECT_LINE_0_31(__VALUE__))
+#define IS_LL_EXTI_DIRECT_LINE_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                                   IS_LL_EXTI2_DIRECT_LINE_0_31(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_DIRECT_LINE_32_63(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_DIRECT_EXTI1_LINE_32_63( (__VALUE__) ) ) \
-     ||                                                                         \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_DIRECT_EXTI2_LINE_32_63( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_DIRECT_EXTI1_LINE_32_63( (__VALUE__) ) ) \
+      ||                                                                         \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_DIRECT_EXTI2_LINE_32_63( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_DIRECT_LINE_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_DIRECT_LINE_32_63(__VALUE__))
+#define IS_LL_EXTI_DIRECT_LINE_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                                    IS_LL_EXTI2_DIRECT_LINE_32_63(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_DIRECT_LINE_64_95(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_DIRECT_LINE_64_95( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_DIRECT_LINE_64_95( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_DIRECT_LINE_64_95( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_DIRECT_LINE_64_95( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_DIRECT_LINE_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_DIRECT_LINE_64_95(__VALUE__))
+#define IS_LL_EXTI_DIRECT_LINE_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                                    IS_LL_EXTI2_DIRECT_LINE_64_95(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_CONFIG_LINE_0_31(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_CONFIG_LINE_0_31( (__VALUE__) ) ) \
-     ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_0_31( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_CONFIG_LINE_0_31( (__VALUE__) ) ) \
+      ||                                                                        \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_0_31( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_CONFIG_LINE_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_0_31(__VALUE__))
+#define IS_LL_EXTI_CONFIG_LINE_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                                   IS_LL_EXTI2_CONFIG_LINE_0_31(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_CONFIG_LINE_32_63(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_CONFIG_LINE_32_63( (__VALUE__) ) ) \
-     ||                                                                         \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_32_63( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_CONFIG_LINE_32_63( (__VALUE__) ) ) \
+      ||                                                                         \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_32_63( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_CONFIG_LINE_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_32_63(__VALUE__))
+#define IS_LL_EXTI_CONFIG_LINE_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                                    IS_LL_EXTI2_CONFIG_LINE_32_63(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_CONFIG_LINE_64_95(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_CONFIG_LINE_64_95( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_CONFIG_LINE_64_95( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_64_95( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_64_95( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_CONFIG_LINE_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_CONFIG_LINE_64_95(__VALUE__))
+#define IS_LL_EXTI_CONFIG_LINE_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                                    IS_LL_EXTI2_CONFIG_LINE_64_95(__VALUE__))
 #endif /* EXTI1 */
 
-//cast to int is required to prevent warning when using some compilers ( pointless comparison of unsigned integer with zero)
+/* type cast to int is required to prevent warning when using some compilers (pointless comparison of
+ * unsigned integer with zero) */
 #if defined (EXTI1)
 #define IS_EXTI1_EVT_CID_VALID(__VALUE__)               \
   ( ( ((__VALUE__) >=  0U) && ( (__VALUE__) <= 19U) ) || \
@@ -182,35 +187,35 @@ extern "C" {
     ( ((__VALUE__) >= 59U) && ( (__VALUE__) <= 62U) ) || \
     ( ((__VALUE__) >= 64U) && ( (__VALUE__) <= 65U) ) || \
     ( ((__VALUE__) >= 67U) && ( (__VALUE__) <= 68U) ) || \
-      ((__VALUE__) == 70U)                            || \
+    ((__VALUE__) == 70U)                            || \
     ( ((__VALUE__) >= 72U) && ( (__VALUE__) <= 84U)) )
 #endif /* EXTI1 */
 
 #define IS_EXTI2_EVT_CID_VALID(__VALUE__)                 \
-    ( ( ((__VALUE__) >=  0U) && ( (__VALUE__) <= 27U)) || \
-      ( ((__VALUE__) >= 29U) && ( (__VALUE__) <= 31U)) || \
-      ( ((__VALUE__) >= 33U) && ( (__VALUE__) <= 38U)) || \
-      ( ((__VALUE__) >= 40U) && ( (__VALUE__) <= 44U)) || \
-      ( ((__VALUE__) >= 46U) && ( (__VALUE__) <= 56U)) || \
-      ( ((__VALUE__) >= 59U) && ( (__VALUE__) <= 70U)) || \
-        ((__VALUE__) == 76U) )
+  ( ( ((__VALUE__) >=  0U) && ( (__VALUE__) <= 27U)) || \
+    ( ((__VALUE__) >= 29U) && ( (__VALUE__) <= 31U)) || \
+    ( ((__VALUE__) >= 33U) && ( (__VALUE__) <= 38U)) || \
+    ( ((__VALUE__) >= 40U) && ( (__VALUE__) <= 44U)) || \
+    ( ((__VALUE__) >= 46U) && ( (__VALUE__) <= 56U)) || \
+    ( ((__VALUE__) >= 59U) && ( (__VALUE__) <= 70U)) || \
+    ((__VALUE__) == 76U) )
 
 #if defined (EXTI1)
 #define IS_EXTI_EVT_CID_VALID(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_EXTI1_EVT_CID_VALID( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_EXTI1_EVT_CID_VALID( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_EXTI2_EVT_CID_VALID( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_EXTI2_EVT_CID_VALID( (__VALUE__) ) ) )
 #else
-#define IS_EXTI_EVT_CID_VALID(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_EXTI2_EVT_CID_VALID(__VALUE__))
+#define IS_EXTI_EVT_CID_VALID(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                             IS_EXTI2_EVT_CID_VALID(__VALUE__))
 #endif /* EXTI1 */
-
 
 
 #if defined (EXTI1)
 #define IS_LL_EXTI1_EVT_0_31(__VALUE__)              (0U)
 #define IS_LL_EXTI1_EVT_32_63(__VALUE__)             (0U)
 #define IS_LL_EXTI1_EVT_64_95(__VALUE__)             (( (__VALUE__) & ~LL_EXTI1_EVT_ALL_64_95) == 0x00000000U)
-#endif
+#endif  /* EXTI1 */
 
 #define IS_LL_EXTI2_EVT_0_31(__VALUE__)              (( (__VALUE__) & ~LL_EXTI2_EVT_ALL_0_31 ) == 0x00000000U)
 #define IS_LL_EXTI2_EVT_32_63(__VALUE__)             (( (__VALUE__) & ~LL_EXTI2_EVT_ALL_32_63) == 0x00000000U)
@@ -218,29 +223,31 @@ extern "C" {
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_EVT_0_31(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_EVT_0_31( (__VALUE__) ) ) \
-     ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_0_31( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_EVT_0_31( (__VALUE__) ) ) \
+      ||                                                                        \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_0_31( (__VALUE__) ) ) )
 #else
 #define IS_LL_EXTI_EVT_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_0_31(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_EVT_32_63(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_EVT_32_63( (__VALUE__) ) ) \
-     ||                                                                         \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_32_63( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_EVT_32_63( (__VALUE__) ) ) \
+      ||                                                                         \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_32_63( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_EVT_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_32_63(__VALUE__))
+#define IS_LL_EXTI_EVT_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                            IS_LL_EXTI2_EVT_32_63(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_EVT_64_95(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_EVT_64_95( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_EVT_64_95( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_64_95( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_64_95( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_EVT_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_EVT_64_95(__VALUE__))
+#define IS_LL_EXTI_EVT_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                            IS_LL_EXTI2_EVT_64_95(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
@@ -255,29 +262,31 @@ extern "C" {
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_SEC_0_31(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_SEC_0_31( (__VALUE__) ) ) \
-     ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_0_31( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_SEC_0_31( (__VALUE__) ) ) \
+      ||                                                                        \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_0_31( (__VALUE__) ) ) )
 #else
 #define IS_LL_EXTI_SEC_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_0_31(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_SEC_32_63(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_SEC_32_63( (__VALUE__) ) ) \
-     ||                                                                         \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_32_63( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_SEC_32_63( (__VALUE__) ) ) \
+      ||                                                                         \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_32_63( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_SEC_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_32_63(__VALUE__))
+#define IS_LL_EXTI_SEC_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                            IS_LL_EXTI2_SEC_32_63(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_SEC_64_95(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_SEC_64_95( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_SEC_64_95( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_64_95( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_64_95( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_SEC_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_SEC_64_95(__VALUE__))
+#define IS_LL_EXTI_SEC_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                            IS_LL_EXTI2_SEC_64_95(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
@@ -292,31 +301,33 @@ extern "C" {
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_PRIV_0_31(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_PRIV_0_31( (__VALUE__) ) ) \
-     ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_0_31( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_PRIV_0_31( (__VALUE__) ) ) \
+      ||                                                                        \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_0_31( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_PRIV_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_0_31(__VALUE__))
+#define IS_LL_EXTI_PRIV_0_31(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                            IS_LL_EXTI2_PRIV_0_31(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_PRIV_32_63(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_PRIV_32_63( (__VALUE__) ) ) \
-     ||                                                                         \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_32_63( (__VALUE__) ) ) )
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_PRIV_32_63( (__VALUE__) ) ) \
+      ||                                                                         \
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_32_63( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_PRIV_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_32_63(__VALUE__))
+#define IS_LL_EXTI_PRIV_32_63(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                             IS_LL_EXTI2_PRIV_32_63(__VALUE__))
 #endif /* EXTI1 */
 
 #if defined (EXTI1)
 #define IS_LL_EXTI_PRIV_64_95(__INSTANCE__, __VALUE__)                          \
-    (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_PRIV_64_95( (__VALUE__) ) ) \
+  (   ( ( (__INSTANCE__) == EXTI1) && IS_LL_EXTI1_PRIV_64_95( (__VALUE__) ) ) \
       ||                                                                        \
-        ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_64_95( (__VALUE__) ) ) )
+      ( ( (__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_64_95( (__VALUE__) ) ) )
 #else
-#define IS_LL_EXTI_PRIV_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) && IS_LL_EXTI2_PRIV_64_95(__VALUE__))
+#define IS_LL_EXTI_PRIV_64_95(__INSTANCE__, __VALUE__)      (((__INSTANCE__) == EXTI2) &&\
+                                                             IS_LL_EXTI2_PRIV_64_95(__VALUE__))
 #endif /* EXTI1 */
-
 
 
 /**
@@ -331,14 +342,17 @@ extern "C" {
 typedef struct
 {
 
-  uint32_t Line_0_31;           /*!< Specifies the EXTI lines to be enabled or disabled for Lines in range 0 to 31
-                                     This parameter can be any combination of @ref EXTI_LL_EC_LINE */
+  uint32_t Line_0_31;           /*!< Specifies the EXTI lines to be enabled or disabled for Lines in range 0 to 31.
+                                     This parameter can be any combination of @ref LL_EXTI1_LINE_x or
+                                     @ref LL_EXTI2_LINE_x */
 
-  uint32_t Line_32_63;          /*!< Specifies the EXTI lines to be enabled or disabled for Lines in range 32 to 63
-                                     This parameter can be any combination of @ref EXTI_LL_EC_LINE */
+  uint32_t Line_32_63;          /*!< Specifies the EXTI lines to be enabled or disabled for Lines in range 32 to 63.
+                                     This parameter can be any combination of @ref LL_EXTI1_LINE_x or
+                                     @ref LL_EXTI2_LINE_x */
 
-  uint32_t Line_64_95;          /*!< Specifies the EXTI lines to be enabled or disabled for Lines in range 64 to 95
-                                     This parameter can be any combination of @ref EXTI_LL_EC_LINE */
+  uint32_t Line_64_95;          /*!< Specifies the EXTI lines to be enabled or disabled for Lines in range 64 to 95.
+                                     This parameter can be any combination of @ref LL_EXTI1_LINE_x or
+                                     @ref LL_EXTI2_LINE_x */
 
   FunctionalState LineCommand;  /*!< Specifies the new state of the selected EXTI lines.
                                      This parameter can be set either to ENABLE or DISABLE */
@@ -361,7 +375,7 @@ typedef struct
   */
 
 #if defined(EXTI1)
-/** @defgroup LL_EXTI1_LINE_x
+/** @defgroup LL_EXTI1_LINE_x EXTI1 Line x
   * @{
   */
 #define LL_EXTI1_LINE_0                  EXTI1_IMR1_IM0    /*!< Extended line 0  */
@@ -407,7 +421,7 @@ typedef struct
     LL_EXTI1_LINE_24 | LL_EXTI1_LINE_25 | LL_EXTI1_LINE_26 | \
     LL_EXTI1_LINE_27 | LL_EXTI1_LINE_28 | LL_EXTI1_LINE_29 | \
     LL_EXTI1_LINE_30 | LL_EXTI1_LINE_31)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI1_DIRECT_LINE_ALL_0_31 \
   ( LL_EXTI1_LINE_19 | \
@@ -415,7 +429,7 @@ typedef struct
     LL_EXTI1_LINE_24 | LL_EXTI1_LINE_25 | LL_EXTI1_LINE_26 | \
     LL_EXTI1_LINE_27 | LL_EXTI1_LINE_28 | LL_EXTI1_LINE_29 | \
     LL_EXTI1_LINE_30 | LL_EXTI1_LINE_31)
-  /*!< All direct lines*/
+/*!< All direct lines*/
 
 #define LL_EXTI1_CONFIG_LINE_ALL_0_31 \
   ( LL_EXTI1_LINE_0  | LL_EXTI1_LINE_1  | LL_EXTI1_LINE_2 | \
@@ -425,7 +439,7 @@ typedef struct
     LL_EXTI1_LINE_12 | LL_EXTI1_LINE_13 | LL_EXTI1_LINE_14 | \
     LL_EXTI1_LINE_15 | LL_EXTI1_LINE_16 | LL_EXTI1_LINE_17 | \
     LL_EXTI1_LINE_18 )
-  /*!< All configurable lines */
+/*!< All configurable lines */
 
 #define LL_EXTI1_LINE_32                 EXTI1_IMR2_IM32   /*!< Extended line 32 */
 #define LL_EXTI1_LINE_33                 EXTI1_IMR2_IM33   /*!< Extended line 33 */
@@ -515,21 +529,25 @@ typedef struct
     LL_EXTI1_LINE_77 | LL_EXTI1_LINE_78 | LL_EXTI1_LINE_79 | \
     LL_EXTI1_LINE_80 | LL_EXTI1_LINE_81 | LL_EXTI1_LINE_82 | \
     LL_EXTI1_LINE_83 | LL_EXTI1_LINE_84)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI1_DIRECT_LINE_ALL_64_95 \
   ( LL_EXTI1_LINE_68 | LL_EXTI1_LINE_70 | \
     LL_EXTI1_LINE_72 | LL_EXTI1_LINE_74 | LL_EXTI1_LINE_75 | LL_EXTI1_LINE_76 | \
     LL_EXTI1_LINE_77 | LL_EXTI1_LINE_78 | LL_EXTI1_LINE_79 | LL_EXTI1_LINE_80 | \
     LL_EXTI1_LINE_81 | LL_EXTI1_LINE_82 )
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI1_CONFIG_LINE_ALL_64_95 \
   ( LL_EXTI1_LINE_64 | LL_EXTI1_LINE_65 | LL_EXTI1_LINE_67 | \
     LL_EXTI1_LINE_73 | LL_EXTI1_LINE_83 | LL_EXTI1_LINE_84)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
-/** @defgroup LL_EXTI1_SEC_x
+/**
+  * @}
+  */
+
+/** @defgroup LL_EXTI1_SEC_x EXTI1 Secure x
   * @{
   */
 #define LL_EXTI1_SEC_0              EXTI1_SECCFGR1_SEC0   /*!< Secure Line 0 */
@@ -577,7 +595,7 @@ typedef struct
     LL_EXTI1_SEC_24 | LL_EXTI1_SEC_25 | LL_EXTI1_SEC_26 | \
     LL_EXTI1_SEC_27 | LL_EXTI1_SEC_28 | LL_EXTI1_SEC_29 | \
     LL_EXTI1_SEC_30 | LL_EXTI1_SEC_31)
-  /*!< All Extended secure line not reserved*/
+/*!< All Extended secure line not reserved*/
 
 
 #define LL_EXTI1_SEC_32             EXTI1_SECCFGR2_SEC32   /*!< Secure Line 0 */
@@ -655,9 +673,13 @@ typedef struct
     LL_EXTI1_SEC_77 | LL_EXTI1_SEC_78 | LL_EXTI1_SEC_79 | \
     LL_EXTI1_SEC_80 | LL_EXTI1_SEC_81 | LL_EXTI1_SEC_82 | \
     LL_EXTI1_SEC_83 | LL_EXTI1_SEC_84)
-  /*!< All Extended secure line not reserved*/
+/*!< All Extended secure line not reserved*/
 
-/** @defgroup LL_EXTI1_PRIV_x
+/**
+  * @}
+  */
+
+/** @defgroup LL_EXTI1_PRIV_x EXTI1 Privilege x
   * @{
   */
 #define LL_EXTI1_PRIV_0              EXTI1_PRIVCFGR1_PRIV0   /*!< Secure Line 0 */
@@ -705,7 +727,7 @@ typedef struct
     LL_EXTI1_PRIV_24 | LL_EXTI1_PRIV_25 | LL_EXTI1_PRIV_26 | \
     LL_EXTI1_PRIV_27 | LL_EXTI1_PRIV_28 | LL_EXTI1_PRIV_29 | \
     LL_EXTI1_PRIV_30 | LL_EXTI1_PRIV_31)
-  /*!< All Extended secure line not reserved*/
+/*!< All Extended secure line not reserved*/
 
 #define LL_EXTI1_PRIV_32             EXTI1_PRIVCFGR2_PRIV32   /*!< Secure Line 0 */
 #define LL_EXTI1_PRIV_33             EXTI1_PRIVCFGR2_PRIV33   /*!< Secure Line 1 */
@@ -782,9 +804,13 @@ typedef struct
     LL_EXTI1_PRIV_77 | LL_EXTI1_PRIV_78 | LL_EXTI1_PRIV_79 | \
     LL_EXTI1_PRIV_80 | LL_EXTI1_PRIV_81 | LL_EXTI1_PRIV_82 | \
     LL_EXTI1_PRIV_83 | LL_EXTI1_PRIV_84)
-  /*!< All Extended secure line not reserved*/
+/*!< All Extended secure line not reserved*/
 
-/** @defgroup LL_EXTI1_EVT_x
+/**
+  * @}
+  */
+
+/** @defgroup LL_EXTI1_EVT_x EXTI1 Event x
   * @{
   */
 
@@ -795,10 +821,14 @@ typedef struct
 
 #define LL_EXTI1_EVT_ALL_64_95 \
   ( LL_EXTI1_EVT_65)
-  /*!< All Extended EVT not reserved*/
+/*!< All Extended EVT not reserved*/
+
+/**
+  * @}
+  */
 
 
-/** @defgroup LL_EXTI1_EnCIDCFGR_x
+/** @defgroup LL_EXTI1_EnCIDCFGR_x EXTI1 EnCIDCFGR x
   * @{
   */
 #define LL_EXTI1_EnCIDCFGR_0                  (0U)    /*!< E0CIDCFGR */
@@ -888,8 +918,12 @@ typedef struct
 #define LL_EXTI1_EnCIDCFGR_84                 (84U)   /*!< E84CIDCFGR */
 #endif /* EXTI1 */
 
+/**
+  * @}
+  */
 
-/** @defgroup LL_EXTI2_LINE_x
+
+/** @defgroup LL_EXTI2_LINE_x EXTI2 Line x
   * @{
   */
 #define LL_EXTI2_LINE_0                  EXTI2_IMR1_IM0   /*!< Extended line 0 */
@@ -935,7 +969,7 @@ typedef struct
     LL_EXTI2_LINE_22 | LL_EXTI2_LINE_23 | LL_EXTI2_LINE_24 | \
     LL_EXTI2_LINE_25 | LL_EXTI2_LINE_26 | LL_EXTI2_LINE_27 | \
     LL_EXTI2_LINE_29 | LL_EXTI2_LINE_30 | LL_EXTI2_LINE_31)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_DIRECT_LINE_ALL_0_31 \
   ( LL_EXTI2_LINE_16 | LL_EXTI2_LINE_17 | LL_EXTI2_LINE_18 | \
@@ -943,7 +977,7 @@ typedef struct
     LL_EXTI2_LINE_22 | LL_EXTI2_LINE_23 | LL_EXTI2_LINE_24 | \
     LL_EXTI2_LINE_25 | LL_EXTI2_LINE_26 | LL_EXTI2_LINE_27 | \
     LL_EXTI2_LINE_29 | LL_EXTI2_LINE_30 | LL_EXTI2_LINE_31)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_CONFIG_LINE_ALL_0_31 \
   ( LL_EXTI2_LINE_0 | LL_EXTI2_LINE_1 | LL_EXTI2_LINE_2 | LL_EXTI2_LINE_3 | \
@@ -951,7 +985,7 @@ typedef struct
     LL_EXTI2_LINE_7 | LL_EXTI2_LINE_8 | LL_EXTI2_LINE_9 | \
     LL_EXTI2_LINE_10 | LL_EXTI2_LINE_11 | LL_EXTI2_LINE_12 | \
     LL_EXTI2_LINE_13 | LL_EXTI2_LINE_14 | LL_EXTI2_LINE_15 )
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_LINE_33                 EXTI2_IMR2_IM33   /*!< Extended line 33 */
 #define LL_EXTI2_LINE_34                 EXTI2_IMR2_IM34   /*!< Extended line 34 */
@@ -991,7 +1025,7 @@ typedef struct
     LL_EXTI2_LINE_52 | LL_EXTI2_LINE_53 | LL_EXTI2_LINE_54 | \
     LL_EXTI2_LINE_55 | LL_EXTI2_LINE_56 | LL_EXTI2_LINE_59 | \
     LL_EXTI2_LINE_60 | LL_EXTI2_LINE_61 | LL_EXTI2_LINE_62 | LL_EXTI2_LINE_63)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_DIRECT_LINE_ALL_32_63 \
   ( LL_EXTI2_LINE_46 | LL_EXTI2_LINE_47 | LL_EXTI2_LINE_48 | \
@@ -999,7 +1033,7 @@ typedef struct
     LL_EXTI2_LINE_52 | LL_EXTI2_LINE_53 | LL_EXTI2_LINE_54 | \
     LL_EXTI2_LINE_55 | LL_EXTI2_LINE_56 | LL_EXTI2_LINE_62 | \
     LL_EXTI2_LINE_63)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_CONFIG_LINE_ALL_32_63 \
   ( LL_EXTI2_LINE_33 | LL_EXTI2_LINE_34 | \
@@ -1012,7 +1046,7 @@ typedef struct
     LL_EXTI2_LINE_55 | LL_EXTI2_LINE_56 | LL_EXTI2_LINE_59 | \
     LL_EXTI2_LINE_60 | LL_EXTI2_LINE_61 | LL_EXTI2_LINE_62 | \
     LL_EXTI2_LINE_63)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_LINE_64                 EXTI2_IMR3_IM64   /*!< Extended line 64 */
 #define LL_EXTI2_LINE_65                 EXTI2_IMR3_IM65   /*!< Extended line 65 */
@@ -1027,18 +1061,22 @@ typedef struct
   ( LL_EXTI2_LINE_64 | LL_EXTI2_LINE_65 | LL_EXTI2_LINE_66 | \
     LL_EXTI2_LINE_67 | LL_EXTI2_LINE_68 | LL_EXTI2_LINE_69 | \
     LL_EXTI2_LINE_70 | LL_EXTI2_LINE_76)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_DIRECT_LINE_ALL_64_95 \
   ( LL_EXTI2_LINE_67 | LL_EXTI2_LINE_68 | LL_EXTI2_LINE_69 | \
     LL_EXTI2_LINE_70 | LL_EXTI2_LINE_76)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_CONFIG_LINE_ALL_64_95 \
   ( LL_EXTI2_LINE_64 | LL_EXTI2_LINE_65 | LL_EXTI2_LINE_66 )
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
-/** @defgroup LL_EXTI2_EVT_x
+/**
+  * @}
+  */
+
+/** @defgroup LL_EXTI2_EVT_x EXTI2 Event x
   * @{
   */
 #define LL_EXTI2_EVT_0                  EXTI2_EMR1_EM0   /*!< Extended EVT 0 */
@@ -1064,7 +1102,7 @@ typedef struct
     LL_EXTI2_EVT_7 | LL_EXTI2_EVT_8 | LL_EXTI2_EVT_9 | \
     LL_EXTI2_EVT_10 | LL_EXTI2_EVT_11 | LL_EXTI2_EVT_12 | \
     LL_EXTI2_EVT_13 | LL_EXTI2_EVT_14 | LL_EXTI2_EVT_15)
-  /*!< All Extended EVT not reserved*/
+/*!< All Extended EVT not reserved*/
 
 #define LL_EXTI2_EVT_59                 EXTI2_EMR2_EM59   /*!< Extended EVT 59 */
 #define LL_EXTI2_EVT_60                 EXTI2_EMR2_EM60   /*!< Extended EVT 60 */
@@ -1072,11 +1110,15 @@ typedef struct
 
 #define LL_EXTI2_EVT_ALL_32_63 \
   ( LL_EXTI2_EVT_59 | LL_EXTI2_EVT_60 | LL_EXTI2_EVT_61)
-  /*!< All Extended EVT not reserved*/
+/*!< All Extended EVT not reserved*/
+
+/**
+  * @}
+  */
 
 /* no CxEMR3 */
 
-/** @defgroup LL_EXTI2_EnCIDCFGR_x
+/** @defgroup LL_EXTI2_EnCIDCFGR_x EXTI2 EnCIDCFGR x
   * @{
   */
 #define LL_EXTI2_EnCIDCFGR_0                  (0U)    /*!< E0CIDCFGR */
@@ -1146,9 +1188,11 @@ typedef struct
 #define LL_EXTI2_EnCIDCFGR_70                 (70U)   /*!< E70CIDCFGR */
 #define LL_EXTI2_EnCIDCFGR_76                 (76U)   /*!< E76CIDCFGR */
 
+/**
+  * @}
+  */
 
-
-/** @defgroup LL_EXTI2_SEC_x
+/** @defgroup LL_EXTI2_SEC_x EXTI2 Secure x
   * @{
   */
 #define LL_EXTI2_SEC_0              EXTI2_SECCFGR1_SEC0   /*!< Secure Line 0 */
@@ -1195,7 +1239,7 @@ typedef struct
     LL_EXTI2_SEC_22 | LL_EXTI2_SEC_23 | LL_EXTI2_SEC_24 | \
     LL_EXTI2_SEC_25 | LL_EXTI2_SEC_26 | LL_EXTI2_SEC_27 | \
     LL_EXTI2_SEC_29 | LL_EXTI2_SEC_30 | LL_EXTI2_SEC_31)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 /* #define LL_EXTI2_SEC_32             EXTI2_SECCFGR2_SEC32   !< Secure Line 32 */
 #define LL_EXTI2_SEC_33             EXTI2_SECCFGR2_SEC33   /*!< Secure Line 33 */
@@ -1241,7 +1285,7 @@ typedef struct
     LL_EXTI2_SEC_55 | LL_EXTI2_SEC_56 | LL_EXTI2_SEC_59 | \
     LL_EXTI2_SEC_60 | LL_EXTI2_SEC_61 | LL_EXTI2_SEC_62 | \
     LL_EXTI2_SEC_63)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_SEC_64             EXTI2_SECCFGR3_SEC64  /*!< Secure Line 64 */
 #define LL_EXTI2_SEC_65             EXTI2_SECCFGR3_SEC65  /*!< Secure Line 65 */
@@ -1261,9 +1305,13 @@ typedef struct
   ( LL_EXTI2_SEC_64 | LL_EXTI2_SEC_65 | LL_EXTI2_SEC_66 | \
     LL_EXTI2_SEC_67 | LL_EXTI2_SEC_68 | LL_EXTI2_SEC_69 | \
     LL_EXTI2_SEC_70 | LL_EXTI2_SEC_76)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
-/** @defgroup LL_EXTI2_PRIV_x
+/**
+  * @}
+  */
+
+/** @defgroup LL_EXTI2_PRIV_x EXTI2 Privilege x
   * @{
   */
 #define LL_EXTI2_PRIV_0              EXTI2_PRIVCFGR1_PRIV0   /*!< Secure Line 0 */
@@ -1310,7 +1358,7 @@ typedef struct
     LL_EXTI2_PRIV_22 | LL_EXTI2_PRIV_23 | LL_EXTI2_PRIV_24 | \
     LL_EXTI2_PRIV_25 | LL_EXTI2_PRIV_26 | LL_EXTI2_PRIV_27 | \
     LL_EXTI2_PRIV_29 | LL_EXTI2_PRIV_30 | LL_EXTI2_PRIV_31)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 /* #define LL_EXTI2_PRIV_32             EXTI2_PRIVCFGR2_PRIV32   !< Secure Line 0 */
 #define LL_EXTI2_PRIV_33             EXTI2_PRIVCFGR2_PRIV33  /*!< Secure Line 1 */
@@ -1356,7 +1404,7 @@ typedef struct
     LL_EXTI2_PRIV_55 | LL_EXTI2_PRIV_56 | LL_EXTI2_PRIV_59 | \
     LL_EXTI2_PRIV_60 | LL_EXTI2_PRIV_61 | LL_EXTI2_PRIV_62 | \
     LL_EXTI2_PRIV_63)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
 #define LL_EXTI2_PRIV_64             EXTI2_PRIVCFGR3_PRIV64  /*!< Secure Line 0 */
 #define LL_EXTI2_PRIV_65             EXTI2_PRIVCFGR3_PRIV65  /*!< Secure Line 1 */
@@ -1376,9 +1424,8 @@ typedef struct
   ( LL_EXTI2_PRIV_64 | LL_EXTI2_PRIV_65 | LL_EXTI2_PRIV_66 | \
     LL_EXTI2_PRIV_67 | LL_EXTI2_PRIV_68 | LL_EXTI2_PRIV_69 | \
     LL_EXTI2_PRIV_70 | LL_EXTI2_PRIV_76)
-  /*!< All Extended line not reserved*/
+/*!< All Extended line not reserved*/
 
-//TODO change it to 8 for 3 bit CID
 #define IS_EXTI_CID_VALID(__VALUE__) ((__VALUE__) < 4U)
 
 
@@ -1389,6 +1436,7 @@ typedef struct
 /**
   * @}
   */
+
 #if defined(USE_FULL_LL_DRIVER)
 /** @defgroup EXTI_LL_EC_MODE Mode
   * @{
@@ -1426,10 +1474,11 @@ typedef struct
 #define LL_EXTI_EXTICR_PORTI            EXTI_EXTICR1_EXTI0_PI
 #define LL_EXTI_EXTICR_PORTJ            EXTI_EXTICR1_EXTI0_PJ
 #define LL_EXTI_EXTICR_PORTK            EXTI_EXTICR1_EXTI0_PK
-#define LL_EXTI_EXTICR_PORTL            EXTI_EXTICR1_EXTI0_PZ
+#define LL_EXTI_EXTICR_PORTZ            EXTI_EXTICR1_EXTI0_PZ
 /**
   * @}
   */
+
 /** @defgroup SYSTEM_LL_EC_EXTI_LINE EXTI EXTI LINE
   * @{
   */
@@ -1490,9 +1539,9 @@ typedef struct
 #define IS_EXTI2_INSTANCE(INSTANCE)  ( ((INSTANCE) == EXTI2) )
 #if defined (CORE_CM0PLUS)
 #define IS_EXTI1_INSTANCE(INSTANCE)  ( 1U < 0 )
-#else
+#else   /* CORE_CM0PLUS */
 #define IS_EXTI1_INSTANCE(INSTANCE)  ( ((INSTANCE) == EXTI1) )
-#endif
+#endif  /* CORE_CM0PLUS */
 
 
 /**
@@ -1500,11 +1549,10 @@ typedef struct
   */
 
 
-
 /* Exported functions --------------------------------------------------------*/
 /** @defgroup EXTI_LL_Exported_Functions EXTI Exported Functions
- * @{
- */
+  * @{
+  */
 /** @defgroup EXTI_LL_EF_IT_Management IT_Management
   * @{
   */
@@ -1514,15 +1562,15 @@ typedef struct
   * @rmtoll IMR1         IMx           LL_EXTI_EnableIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
+  *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C1_EXTI_EnableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C1IMR1, ExtiLine);
 }
 
@@ -1531,15 +1579,15 @@ __STATIC_INLINE void LL_C1_EXTI_EnableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t Exti
   * @rmtoll C2IMR1         IMx           LL_C2_EXTI_EnableIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
+  *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_EnableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C2IMR1, ExtiLine);
 }
 
@@ -1548,15 +1596,15 @@ __STATIC_INLINE void LL_C2_EXTI_EnableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t Exti
   * @rmtoll C3IMR1         IMx           LL_C3_EXTI_EnableIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
+  *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_EnableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C3IMR1, ExtiLine);
 }
 
@@ -1565,16 +1613,15 @@ __STATIC_INLINE void LL_C3_EXTI_EnableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t Exti
   * @rmtoll C1IMR2         IMx           LL_EXTI_EnableIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C1_EXTI_EnableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C1IMR2, ExtiLine);
 }
 
@@ -1583,16 +1630,15 @@ __STATIC_INLINE void LL_C1_EXTI_EnableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C2IMR2         IMx           LL_C2_EXTI_EnableIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_EnableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C2IMR2, ExtiLine);
 }
 
@@ -1601,16 +1647,15 @@ __STATIC_INLINE void LL_C2_EXTI_EnableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C3IMR2         IMx           LL_C3_EXTI_EnableIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_EnableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C3IMR2, ExtiLine);
 }
 
@@ -1619,16 +1664,15 @@ __STATIC_INLINE void LL_C3_EXTI_EnableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C1IMR3         IMx           LL_EXTI_EnableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C1_EXTI_EnableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C1IMR3, ExtiLine);
 }
 
@@ -1637,16 +1681,15 @@ __STATIC_INLINE void LL_C1_EXTI_EnableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C2IMR3         IMx           LL_C2_EXTI_EnableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_EnableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C2IMR3, ExtiLine);
 }
 
@@ -1655,33 +1698,32 @@ __STATIC_INLINE void LL_C2_EXTI_EnableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C3IMR3         IMx           LL_C3_EXTI_EnableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_EnableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C3IMR3, ExtiLine);
 }
 
 /**
   * @brief  Disable ExtiLine Interrupt request for Lines in range 0 to 31
   * @rmtoll IMR1         IMx           LL_EXTI_DisableIT_0_31
+  * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C1_EXTI_DisableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C1IMR1, ExtiLine);
 }
 
@@ -1690,16 +1732,15 @@ __STATIC_INLINE void LL_C1_EXTI_DisableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C2IMR1         IMx           LL_C2_EXTI_DisableIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_DisableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C2IMR1, ExtiLine);
 }
 
@@ -1708,16 +1749,15 @@ __STATIC_INLINE void LL_C2_EXTI_DisableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll C3IMR1         IMx           LL_C3_EXTI_DisableIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_DisableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C3IMR1, ExtiLine);
 }
 
@@ -1726,16 +1766,15 @@ __STATIC_INLINE void LL_C3_EXTI_DisableIT_0_31(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll IMR2         IMx           LL_EXTI_DisableIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C1_EXTI_DisableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C1IMR2, ExtiLine);
 }
 
@@ -1744,16 +1783,15 @@ __STATIC_INLINE void LL_C1_EXTI_DisableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @rmtoll C2IMR2         IMx           LL_C2_EXTI_DisableIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_DisableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C2IMR2, ExtiLine);
 }
 
@@ -1762,16 +1800,15 @@ __STATIC_INLINE void LL_C2_EXTI_DisableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @rmtoll C3IMR2         IMx           LL_C3_EXTI_DisableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_DisableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C3IMR2, ExtiLine);
 }
 
@@ -1780,16 +1817,15 @@ __STATIC_INLINE void LL_C3_EXTI_DisableIT_32_63(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @rmtoll C1IMR3         IMx           LL_EXTI_DisableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C1_EXTI_DisableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C1IMR3, ExtiLine);
 }
 
@@ -1798,16 +1834,15 @@ __STATIC_INLINE void LL_C1_EXTI_DisableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @rmtoll C2IMR3         IMx           LL_C2_EXTI_DisableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_DisableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C2IMR3, ExtiLine);
 }
 
@@ -1816,16 +1851,15 @@ __STATIC_INLINE void LL_C2_EXTI_DisableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @rmtoll C3IMR3         IMx           LL_C3_EXTI_DisableIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_DisableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C3IMR3, ExtiLine);
 }
 
@@ -1834,16 +1868,15 @@ __STATIC_INLINE void LL_C3_EXTI_DisableIT_64_95(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @rmtoll IMR1         IMx           LL_EXTI_IsEnabledIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C1_EXTI_IsEnabledIT_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C1IMR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1852,16 +1885,15 @@ __STATIC_INLINE uint32_t LL_C1_EXTI_IsEnabledIT_0_31(const EXTI_TypeDef *EXTIx, 
   * @rmtoll C2IMR1         IMx           LL_C2_EXTI_IsEnabledIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledIT_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C2IMR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1870,16 +1902,15 @@ __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledIT_0_31(const EXTI_TypeDef *EXTIx, 
   * @rmtoll C3IMR1         IMx           LL_C3_EXTI_IsEnabledIT_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledIT_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C3IMR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1888,16 +1919,15 @@ __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledIT_0_31(const EXTI_TypeDef *EXTIx, 
   * @rmtoll IMR2         IMx           LL_EXTI_IsEnabledIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C1_EXTI_IsEnabledIT_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C1IMR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1906,33 +1936,32 @@ __STATIC_INLINE uint32_t LL_C1_EXTI_IsEnabledIT_32_63(const EXTI_TypeDef *EXTIx,
   * @rmtoll C2IMR2         IMx           LL_C2_EXTI_IsEnabledIT_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledIT_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C2IMR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
 /**
   * @brief  Indicate if ExtiLine Interrupt request is enabled for Lines in range 32 to 63 for cpu3
   * @rmtoll C3IMR2         IMx           LL_C3_EXTI_IsEnabledIT_32_63
+  * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledIT_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C3IMR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1941,16 +1970,15 @@ __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledIT_32_63(const EXTI_TypeDef *EXTIx,
   * @rmtoll IMR2         IMx           LL_EXTI_IsEnabledIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C1_EXTI_IsEnabledIT_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C1IMR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1959,16 +1987,15 @@ __STATIC_INLINE uint32_t LL_C1_EXTI_IsEnabledIT_64_95(const EXTI_TypeDef *EXTIx,
   * @rmtoll C2IMR2         IMx           LL_C2_EXTI_IsEnabledIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledIT_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C2IMR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -1977,16 +2004,15 @@ __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledIT_64_95(const EXTI_TypeDef *EXTIx,
   * @rmtoll C3IMR2         IMx           LL_C3_EXTI_IsEnabledIT_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
-  *         @arg @ref LL_EXTIx_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledIT_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C3IMR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2004,15 +2030,15 @@ __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledIT_64_95(const EXTI_TypeDef *EXTIx,
   * @rmtoll C2EMR1         EMx           LL_C2_EXTI_EnableEvent_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_EnableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C2EMR1, ExtiLine);
 }
 
@@ -2021,15 +2047,15 @@ __STATIC_INLINE void LL_C2_EXTI_EnableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t E
   * @rmtoll C3EMR1         EMx           LL_C3_EXTI_EnableEvent_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_EnableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C3EMR1, ExtiLine);
 }
 
@@ -2039,15 +2065,15 @@ __STATIC_INLINE void LL_C3_EXTI_EnableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t E
   * @rmtoll C2EMR2         EMx           LL_C2_EXTI_EnableEvent_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_EnableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C2EMR2, ExtiLine);
 }
 
@@ -2056,18 +2082,17 @@ __STATIC_INLINE void LL_C2_EXTI_EnableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t 
   * @rmtoll C3EMR2         EMx           LL_C3_EXTI_EnableEvent_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_EnableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C3EMR2, ExtiLine);
 }
-
 
 
 /**
@@ -2075,18 +2100,17 @@ __STATIC_INLINE void LL_C3_EXTI_EnableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t 
   * @rmtoll C2EMR3         EMx           LL_C2_EXTI_EnableEvent_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_EnableEvent_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI1_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->C2EMR3, ExtiLine);
 }
-
 
 
 /**
@@ -2094,15 +2118,15 @@ __STATIC_INLINE void LL_C2_EXTI_EnableEvent_64_95(EXTI_TypeDef *EXTIx, uint32_t 
   * @rmtoll C2EMR1         EMx           LL_C2_EXTI_DisableEvent_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_DisableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C2EMR1, ExtiLine);
 }
 
@@ -2111,18 +2135,17 @@ __STATIC_INLINE void LL_C2_EXTI_DisableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t 
   * @rmtoll C3EMR1         EMx           LL_C3_EXTI_DisableEvent_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_DisableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C3EMR1, ExtiLine);
 }
-
 
 
 /**
@@ -2130,15 +2153,15 @@ __STATIC_INLINE void LL_C3_EXTI_DisableEvent_0_31(EXTI_TypeDef *EXTIx, uint32_t 
   * @rmtoll C2EMR2         EMx           LL_C2_EXTI_DisableEvent_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_DisableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C2EMR2, ExtiLine);
 }
 
@@ -2147,18 +2170,17 @@ __STATIC_INLINE void LL_C2_EXTI_DisableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll C3EMR2         EMx           LL_C3_EXTI_DisableEvent_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C3_EXTI_DisableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C3EMR2, ExtiLine);
 }
-
 
 
 /**
@@ -2166,18 +2188,17 @@ __STATIC_INLINE void LL_C3_EXTI_DisableEvent_32_63(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll C2EMR3         EMx           LL_C2_EXTI_DisableEvent_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_C2_EXTI_DisableEvent_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI1_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->C2EMR3, ExtiLine);
 }
-
 
 
 /**
@@ -2185,15 +2206,15 @@ __STATIC_INLINE void LL_C2_EXTI_DisableEvent_64_95(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll C2EMR1         EMx           LL_C2_EXTI_IsEnabledEvent_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledEvent_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C2EMR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2202,15 +2223,15 @@ __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledEvent_0_31(const EXTI_TypeDef *EXTI
   * @rmtoll C3EMR1         EMx           LL_C3_EXTI_IsEnabledEvent_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be one of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledEvent_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C3EMR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2220,15 +2241,15 @@ __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledEvent_0_31(const EXTI_TypeDef *EXTI
   * @rmtoll EMR2         EMx           LL_C2_EXTI_IsEnabledEvent_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledEvent_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C2EMR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2237,18 +2258,17 @@ __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledEvent_32_63(const EXTI_TypeDef *EXT
   * @rmtoll EMR2         EMx           LL_C3_EXTI_IsEnabledEvent_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledEvent_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C3EMR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
-
 
 
 /**
@@ -2256,15 +2276,15 @@ __STATIC_INLINE uint32_t LL_C3_EXTI_IsEnabledEvent_32_63(const EXTI_TypeDef *EXT
   * @rmtoll C2EMR3         EMx           LL_C2_EXTI_IsEnabledEvent_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledEvent_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI1_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->C2EMR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2288,15 +2308,15 @@ __STATIC_INLINE uint32_t LL_C2_EXTI_IsEnabledEvent_64_95(const EXTI_TypeDef *EXT
   * @rmtoll RTSR1        RTx           LL_EXTI_EnableRisingTrig_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableRisingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->RTSR1, ExtiLine);
 }
 
@@ -2311,15 +2331,15 @@ __STATIC_INLINE void LL_EXTI_EnableRisingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll RTSR2        RTx           LL_EXTI_EnableRisingTrig_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableRisingTrig_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->RTSR2, ExtiLine);
 }
 
@@ -2334,15 +2354,15 @@ __STATIC_INLINE void LL_EXTI_EnableRisingTrig_32_63(EXTI_TypeDef *EXTIx, uint32_
   * @rmtoll RTSR3        RTx           LL_EXTI_EnableRisingTrig_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableRisingTrig_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->RTSR3, ExtiLine);
 }
 
@@ -2358,15 +2378,15 @@ __STATIC_INLINE void LL_EXTI_EnableRisingTrig_64_95(EXTI_TypeDef *EXTIx, uint32_
   * @rmtoll RTSR1        RTx           LL_EXTI_DisableRisingTrig_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableRisingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->RTSR1, ExtiLine);
 }
 
@@ -2382,15 +2402,15 @@ __STATIC_INLINE void LL_EXTI_DisableRisingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_
   * @rmtoll RTSR2        RTx           LL_EXTI_DisableRisingTrig_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableRisingTrig_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->RTSR2, ExtiLine);
 }
 
@@ -2406,15 +2426,15 @@ __STATIC_INLINE void LL_EXTI_DisableRisingTrig_32_63(EXTI_TypeDef *EXTIx, uint32
   * @rmtoll RTSR3        RTx           LL_EXTI_DisableRisingTrig_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableRisingTrig_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->RTSR3, ExtiLine);
 }
 
@@ -2423,15 +2443,15 @@ __STATIC_INLINE void LL_EXTI_DisableRisingTrig_64_95(EXTI_TypeDef *EXTIx, uint32
   * @rmtoll RTSR1        RTx           LL_EXTI_IsEnabledRisingTrig_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledRisingTrig_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->RTSR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2440,15 +2460,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledRisingTrig_0_31(const EXTI_TypeDef *EX
   * @rmtoll RTSR2        RTx           LL_EXTI_IsEnabledRisingTrig_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledRisingTrig_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->RTSR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2457,15 +2477,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledRisingTrig_32_63(const EXTI_TypeDef *E
   * @rmtoll RTSR3        RTx           LL_EXTI_IsEnabledRisingTrig_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledRisingTrig_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->RTSR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2489,15 +2509,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledRisingTrig_64_95(const EXTI_TypeDef *E
   * @rmtoll FTSR1        FTx           LL_EXTI_EnableFallingTrig_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableFallingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->FTSR1, ExtiLine);
 }
 
@@ -2513,15 +2533,15 @@ __STATIC_INLINE void LL_EXTI_EnableFallingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_
   * @rmtoll FTSR2        FTx           LL_EXTI_EnableFallingTrig_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableFallingTrig_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->FTSR2, ExtiLine);
 }
 
@@ -2537,15 +2557,15 @@ __STATIC_INLINE void LL_EXTI_EnableFallingTrig_32_63(EXTI_TypeDef *EXTIx, uint32
   * @rmtoll FTSR3        FTx           LL_EXTI_EnableFallingTrig_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableFallingTrig_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->FTSR3, ExtiLine);
 }
 
@@ -2560,15 +2580,15 @@ __STATIC_INLINE void LL_EXTI_EnableFallingTrig_64_95(EXTI_TypeDef *EXTIx, uint32
   * @rmtoll FTSR1        FTx           LL_EXTI_DisableFallingTrig_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableFallingTrig_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->FTSR1, ExtiLine);
 }
 
@@ -2583,15 +2603,15 @@ __STATIC_INLINE void LL_EXTI_DisableFallingTrig_0_31(EXTI_TypeDef *EXTIx, uint32
   * @rmtoll FTSR2        FTx           LL_EXTI_DisableFallingTrig_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableFallingTrig_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->FTSR2, ExtiLine);
 }
 
@@ -2606,15 +2626,15 @@ __STATIC_INLINE void LL_EXTI_DisableFallingTrig_32_63(EXTI_TypeDef *EXTIx, uint3
   * @rmtoll FTSR3        FTx           LL_EXTI_DisableFallingTrig_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableFallingTrig_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   CLEAR_BIT(EXTIx->FTSR3, ExtiLine);
 }
 
@@ -2623,15 +2643,15 @@ __STATIC_INLINE void LL_EXTI_DisableFallingTrig_64_95(EXTI_TypeDef *EXTIx, uint3
   * @rmtoll FTSR1        FTx           LL_EXTI_IsEnabledFallingTrig_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledFallingTrig_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->FTSR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2640,15 +2660,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledFallingTrig_0_31(const EXTI_TypeDef *E
   * @rmtoll FTSR2        FTx           LL_EXTI_IsEnabledFallingTrig_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledFallingTrig_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->FTSR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2657,15 +2677,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledFallingTrig_32_63(const EXTI_TypeDef *
   * @rmtoll FTSR3        FTx           LL_EXTI_IsEnabledFallingTrig_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledFallingTrig_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->FTSR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2687,21 +2707,21 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledFallingTrig_64_95(const EXTI_TypeDef *
   * @rmtoll SWIER1       SWIx          LL_EXTI_GenerateSWI_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_GenerateSWI_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   SET_BIT(EXTIx->SWIER1, ExtiLine);
 }
 
 /**
   * @brief  Generate a software Interrupt Event for Lines in range 32 to 63
-  * @note If the interrupt is enabled on this line inthe EXTI_IMR2, writing a 1 to
+  * @note If the interrupt is enabled on this line in the EXTI_IMR2, writing a 1 to
   *       this bit when it is at '0' sets the corresponding pending bit in EXTI_PR2
   *       resulting in an interrupt request generation.
   *       This bit is cleared by clearing the corresponding bit in the EXTI_PR2
@@ -2709,21 +2729,21 @@ __STATIC_INLINE void LL_EXTI_GenerateSWI_0_31(EXTI_TypeDef *EXTIx, uint32_t Exti
   * @rmtoll SWIER2       SWIx          LL_EXTI_GenerateSWI_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_GenerateSWI_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   SET_BIT(EXTIx->SWIER2, ExtiLine);
 }
 
 /**
   * @brief  Generate a software Interrupt Event for Lines in range 32 to 63
-  * @note If the interrupt is enabled on this line inthe EXTI_IMR2, writing a 1 to
+  * @note If the interrupt is enabled on this line in the EXTI_IMR2, writing a 1 to
   *       this bit when it is at '0' sets the corresponding pending bit in EXTI_PR2
   *       resulting in an interrupt request generation.
   *       This bit is cleared by clearing the corresponding bit in the EXTI_PR2
@@ -2731,15 +2751,15 @@ __STATIC_INLINE void LL_EXTI_GenerateSWI_32_63(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll SWIER3       SWIx          LL_EXTI_GenerateSWI_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_GenerateSWI_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   SET_BIT(EXTIx->SWIER3, ExtiLine);
 }
 
@@ -2758,15 +2778,15 @@ __STATIC_INLINE void LL_EXTI_GenerateSWI_64_95(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @rmtoll RPR1          PIFx           LL_EXTI_IsActiveRisingFlag_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsActiveRisingFlag_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->RPR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2777,15 +2797,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsActiveRisingFlag_0_31(const EXTI_TypeDef *EXT
   * @rmtoll RPR2          PIFx           LL_EXTI_IsActiveRisingFlag_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsActiveRisingFlag_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->RPR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2796,15 +2816,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsActiveRisingFlag_32_63(const EXTI_TypeDef *EX
   * @rmtoll RPR3          PIFx           LL_EXTI_IsActiveRisingFlag_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsActiveRisingFlag_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->RPR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2815,15 +2835,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsActiveRisingFlag_64_95(const EXTI_TypeDef *EX
   * @rmtoll RPR1          PIFx           LL_EXTI_ReadRisingFlag_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected edge event arrives on the interrupt
   */
 __STATIC_INLINE uint32_t LL_EXTI_ReadRisingFlag_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return (uint32_t)(READ_BIT(EXTIx->RPR1, ExtiLine));
 }
 
@@ -2834,15 +2854,15 @@ __STATIC_INLINE uint32_t LL_EXTI_ReadRisingFlag_0_31(const EXTI_TypeDef *EXTIx, 
   * @rmtoll RPR2          PIFx           LL_EXTI_ReadRisingFlag_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected edge event arrives on the interrupt
   */
 __STATIC_INLINE uint32_t LL_EXTI_ReadRisingFlag_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return (uint32_t)(READ_BIT(EXTIx->RPR2, ExtiLine));
 }
 
@@ -2853,15 +2873,15 @@ __STATIC_INLINE uint32_t LL_EXTI_ReadRisingFlag_32_63(const EXTI_TypeDef *EXTIx,
   * @rmtoll RPR3          PIFx           LL_EXTI_ReadRisingFlag_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected edge event arrives on the interrupt
   */
 __STATIC_INLINE uint32_t LL_EXTI_ReadRisingFlag_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return (uint32_t)(READ_BIT(EXTIx->RPR3, ExtiLine));
 }
 
@@ -2872,15 +2892,15 @@ __STATIC_INLINE uint32_t LL_EXTI_ReadRisingFlag_64_95(const EXTI_TypeDef *EXTIx,
   * @rmtoll RPR1          PIFx           LL_EXTI_ClearRisingFlag_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_ClearRisingFlag_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   WRITE_REG(EXTIx->RPR1, ExtiLine);
 }
 
@@ -2891,15 +2911,15 @@ __STATIC_INLINE void LL_EXTI_ClearRisingFlag_0_31(EXTI_TypeDef *EXTIx, uint32_t 
   * @rmtoll RPR2          PIFx           LL_EXTI_ClearRisingFlag_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_ClearRisingFlag_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   WRITE_REG(EXTIx->RPR2, ExtiLine);
 }
 
@@ -2910,15 +2930,15 @@ __STATIC_INLINE void LL_EXTI_ClearRisingFlag_32_63(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll RPR3          PIFx           LL_EXTI_ClearRisingFlag_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_ClearRisingFlag_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   WRITE_REG(EXTIx->RPR3, ExtiLine);
 }
 
@@ -2930,15 +2950,15 @@ __STATIC_INLINE void LL_EXTI_ClearRisingFlag_64_95(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll FPR1          PIFx           LL_EXTI_IsActiveFallingFlag_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsActiveFallingFlag_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->FPR1, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2949,15 +2969,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsActiveFallingFlag_0_31(const EXTI_TypeDef *EX
   * @rmtoll FPR2          PIFx           LL_EXTI_IsActiveFallingFlag_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsActiveFallingFlag_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->FPR2, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2968,15 +2988,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsActiveFallingFlag_32_63(const EXTI_TypeDef *E
   * @rmtoll FPR3          PIFx           LL_EXTI_IsActiveFallingFlag_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsActiveFallingFlag_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return ((READ_BIT(EXTIx->FPR3, ExtiLine) == (ExtiLine)) ? 1UL : 0UL);
 }
 
@@ -2987,15 +3007,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsActiveFallingFlag_64_95(const EXTI_TypeDef *E
   * @rmtoll FPR1          PIFx           LL_EXTI_ReadFallingFlag_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected edge event arrives on the interrupt
   */
 __STATIC_INLINE uint32_t LL_EXTI_ReadFallingFlag_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   return (uint32_t)(READ_BIT(EXTIx->FPR1, ExtiLine));
 }
 
@@ -3006,15 +3026,15 @@ __STATIC_INLINE uint32_t LL_EXTI_ReadFallingFlag_0_31(const EXTI_TypeDef *EXTIx,
   * @rmtoll FPR2          PIFx           LL_EXTI_ReadFallingFlag_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected edge event arrives on the interrupt
   */
 __STATIC_INLINE uint32_t LL_EXTI_ReadFallingFlag_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   return (uint32_t)(READ_BIT(EXTIx->FPR2, ExtiLine));
 }
 
@@ -3025,15 +3045,15 @@ __STATIC_INLINE uint32_t LL_EXTI_ReadFallingFlag_32_63(const EXTI_TypeDef *EXTIx
   * @rmtoll FPR3          PIFx           LL_EXTI_ReadFallingFlag_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected edge event arrives on the interrupt
   */
 __STATIC_INLINE uint32_t LL_EXTI_ReadFallingFlag_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   return (uint32_t)(READ_BIT(EXTIx->FPR3, ExtiLine));
 }
 
@@ -3044,15 +3064,15 @@ __STATIC_INLINE uint32_t LL_EXTI_ReadFallingFlag_64_95(const EXTI_TypeDef *EXTIx
   * @rmtoll FPR1          PIFx           LL_EXTI_ClearFallingFlag_0_31
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_LINE_ALL_0_31
+  *         @arg @ref LL_EXTI2_LINE_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_ClearFallingFlag_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_0_31(EXTIx, ExtiLine));
   WRITE_REG(EXTIx->FPR1, ExtiLine);
 }
 
@@ -3063,15 +3083,15 @@ __STATIC_INLINE void LL_EXTI_ClearFallingFlag_0_31(EXTI_TypeDef *EXTIx, uint32_t
   * @rmtoll FPR2          PIFx           LL_EXTI_ClearFallingFlag_32_63
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_LINE_ALL_32_63
+  *         @arg @ref LL_EXTI2_LINE_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_ClearFallingFlag_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_32_63(EXTIx, ExtiLine));
   WRITE_REG(EXTIx->FPR2, ExtiLine);
 }
 
@@ -3082,18 +3102,17 @@ __STATIC_INLINE void LL_EXTI_ClearFallingFlag_32_63(EXTI_TypeDef *EXTIx, uint32_
   * @rmtoll FPR3          PIFx           LL_EXTI_ClearFallingFlag_64_95
   * @param  EXTIx EXTI Instance
   * @param  ExtiLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_LINE_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_LINE_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_LINE_ALL_64_95
+  *         @arg @ref LL_EXTI2_LINE_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_ClearFallingFlag_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_LINE_64_95(EXTIx, ExtiLine));
   WRITE_REG(EXTIx->FPR3, ExtiLine);
 }
-
 
 
 /* SECCFGRx */
@@ -3103,15 +3122,15 @@ __STATIC_INLINE void LL_EXTI_ClearFallingFlag_64_95(EXTI_TypeDef *EXTIx, uint32_
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_SEC_ALL_0_31
+  *         @arg @ref LL_EXTI2_SEC_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableSecure_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_0_31(EXTIx, ExtiSecureLine));
   SET_BIT(EXTIx->SECCFGR1, ExtiSecureLine);
 }
 /**
@@ -3119,15 +3138,15 @@ __STATIC_INLINE void LL_EXTI_EnableSecure_0_31(EXTI_TypeDef *EXTIx, uint32_t Ext
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_SEC_ALL_32_63
+  *         @arg @ref LL_EXTI2_SEC_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableSecure_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_32_63(EXTIx, ExtiSecureLine));
   SET_BIT(EXTIx->SECCFGR2, ExtiSecureLine);
 }
 
@@ -3136,15 +3155,15 @@ __STATIC_INLINE void LL_EXTI_EnableSecure_32_63(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_SEC_ALL_64_95
+  *         @arg @ref LL_EXTI2_SEC_ALL_64_95
   *         (*) all values are not $defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnableSecure_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_64_95(EXTIx, ExtiSecureLine));
   SET_BIT(EXTIx->SECCFGR3, ExtiSecureLine);
 }
 
@@ -3153,15 +3172,15 @@ __STATIC_INLINE void LL_EXTI_EnableSecure_64_95(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_SEC_ALL_0_31
+  *         @arg @ref LL_EXTI2_SEC_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected line secure flag is enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledSecure_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_0_31(EXTIx, ExtiSecureLine));
   return (uint32_t)(READ_BIT(EXTIx->SECCFGR1, ExtiSecureLine));
 }
 
@@ -3170,15 +3189,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledSecure_0_31(const EXTI_TypeDef *EXTIx,
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_SEC_ALL_32_63
+  *         @arg @ref LL_EXTI2_SEC_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected line secure flag is enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledSecure_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_32_63(EXTIx, ExtiSecureLine));
   return (uint32_t)(READ_BIT(EXTIx->SECCFGR2, ExtiSecureLine));
 }
 
@@ -3187,15 +3206,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledSecure_32_63(const EXTI_TypeDef *EXTIx
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_SEC_ALL_64_95
+  *         @arg @ref LL_EXTI2_SEC_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected line secure flag is enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledSecure_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_64_95(EXTIx, ExtiSecureLine));
   return (uint32_t)(READ_BIT(EXTIx->SECCFGR3, ExtiSecureLine));
 }
 
@@ -3204,15 +3223,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledSecure_64_95(const EXTI_TypeDef *EXTIx
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_SEC_ALL_0_31
+  *         @arg @ref LL_EXTI2_SEC_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableSecure_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_0_31(EXTIx, ExtiSecureLine));
   CLEAR_BIT(EXTIx->SECCFGR1, ExtiSecureLine);
 }
 
@@ -3221,15 +3240,15 @@ __STATIC_INLINE void LL_EXTI_DisableSecure_0_31(EXTI_TypeDef *EXTIx, uint32_t Ex
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_SEC_ALL_32_63
+  *         @arg @ref LL_EXTI2_SEC_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableSecure_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_32_63(EXTIx, ExtiSecureLine));
   CLEAR_BIT(EXTIx->SECCFGR2, ExtiSecureLine);
 }
 
@@ -3238,20 +3257,17 @@ __STATIC_INLINE void LL_EXTI_DisableSecure_32_63(EXTI_TypeDef *EXTIx, uint32_t E
   * @note This bit is set when the selected line security is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiSecureLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_SEC_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_SEC_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_SEC_ALL_64_95
+  *         @arg @ref LL_EXTI2_SEC_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisableSecure_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiSecureLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_SEC_64_95(EXTIx, ExtiSecureLine));
   CLEAR_BIT(EXTIx->SECCFGR3, ExtiSecureLine);
 }
-
-
-
 
 
 /* PRIVCFGRx */
@@ -3261,15 +3277,15 @@ __STATIC_INLINE void LL_EXTI_DisableSecure_64_95(EXTI_TypeDef *EXTIx, uint32_t E
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_SEC_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_0_31
+  *         @arg @ref LL_EXTI2_PRIV_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnablePrivilege_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_0_31(EXTIx, ExtiPrivilegeLine));
   SET_BIT(EXTIx->PRIVCFGR1, ExtiPrivilegeLine);
 }
 /**
@@ -3277,15 +3293,15 @@ __STATIC_INLINE void LL_EXTI_EnablePrivilege_0_31(EXTI_TypeDef *EXTIx, uint32_t 
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_32_63
+  *         @arg @ref LL_EXTI2_PRIV_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnablePrivilege_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_32_63(EXTIx, ExtiPrivilegeLine));
   SET_BIT(EXTIx->PRIVCFGR2, ExtiPrivilegeLine);
 }
 
@@ -3294,15 +3310,15 @@ __STATIC_INLINE void LL_EXTI_EnablePrivilege_32_63(EXTI_TypeDef *EXTIx, uint32_t
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_64_95
+  *         @arg @ref LL_EXTI2_PRIV_ALL_64_95
   *         (*) all values are not $defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_EnablePrivilege_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_64_95(EXTIx, ExtiPrivilegeLine));
   SET_BIT(EXTIx->PRIVCFGR3, ExtiPrivilegeLine);
 }
 
@@ -3311,15 +3327,15 @@ __STATIC_INLINE void LL_EXTI_EnablePrivilege_64_95(EXTI_TypeDef *EXTIx, uint32_t
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_0_31
+  *         @arg @ref LL_EXTI2_PRIV_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected line Privilege flag is enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledPrivilege_0_31(const EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_0_31(EXTIx, ExtiPrivilegeLine));
   return (uint32_t)(READ_BIT(EXTIx->PRIVCFGR1, ExtiPrivilegeLine));
 }
 
@@ -3328,15 +3344,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledPrivilege_0_31(const EXTI_TypeDef *EXT
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_32_63
+  *         @arg @ref LL_EXTI2_PRIV_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected line Privilege flag is enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledPrivilege_32_63(const EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_32_63(EXTIx, ExtiPrivilegeLine));
   return (uint32_t)(READ_BIT(EXTIx->PRIVCFGR2, ExtiPrivilegeLine));
 }
 
@@ -3345,15 +3361,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledPrivilege_32_63(const EXTI_TypeDef *EX
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_64_95
+  *         @arg @ref LL_EXTI2_PRIV_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval @note This bit is set when the selected line Privilege flag is enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledPrivilege_64_95(const EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_64_95(EXTIx, ExtiPrivilegeLine));
   return (uint32_t)(READ_BIT(EXTIx->PRIVCFGR3, ExtiPrivilegeLine));
 }
 
@@ -3362,15 +3378,15 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledPrivilege_64_95(const EXTI_TypeDef *EX
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 0 to 31)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_0_31
+  *         @arg @ref LL_EXTI2_PRIV_ALL_0_31
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisablePrivilege_0_31(EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_0_31(EXTIx, ExtiPrivilegeLine));
   CLEAR_BIT(EXTIx->PRIVCFGR1, ExtiPrivilegeLine);
 }
 
@@ -3379,15 +3395,15 @@ __STATIC_INLINE void LL_EXTI_DisablePrivilege_0_31(EXTI_TypeDef *EXTIx, uint32_t
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 32 to 63)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_32_63
+  *         @arg @ref LL_EXTI2_PRIV_ALL_32_63
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisablePrivilege_32_63(EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_32_63(EXTIx, ExtiPrivilegeLine));
   CLEAR_BIT(EXTIx->PRIVCFGR2, ExtiPrivilegeLine);
 }
 
@@ -3396,15 +3412,15 @@ __STATIC_INLINE void LL_EXTI_DisablePrivilege_32_63(EXTI_TypeDef *EXTIx, uint32_
   * @note This bit is set when the selected line privilege is enabled
   * @param  EXTIx EXTI Instance
   * @param  ExtiPrivilegeLine This parameter can be a combination of the following values(*):
-  *         @arg @ref LL_EXTIx_PRIV_y (with x, the instance and y the line number)
+  *         @arg @ref LL_EXTI1_PRIV_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI2_PRIV_x (with x, the line number from 64 to 95)
+  *         @arg @ref LL_EXTI1_PRIV_ALL_64_95
+  *         @arg @ref LL_EXTI2_PRIV_ALL_64_95
   *         (*) all values are not defined in all instances
   * @retval None
   */
 __STATIC_INLINE void LL_EXTI_DisablePrivilege_64_95(EXTI_TypeDef *EXTIx, uint32_t ExtiPrivilegeLine)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_LL_EXTI_PRIV_64_95(EXTIx, ExtiPrivilegeLine));
   CLEAR_BIT(EXTIx->PRIVCFGR3, ExtiPrivilegeLine);
 }
 
@@ -3415,8 +3431,6 @@ __STATIC_INLINE void LL_EXTI_DisablePrivilege_64_95(EXTI_TypeDef *EXTIx, uint32_
   */
 __STATIC_INLINE void LL_EXTI_EnableGlobalSecurityLock(EXTI_TypeDef *EXTIx)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   SET_BIT(EXTIx->LOCKR, EXTI_LOCKR_GLOCK);
 }
 
@@ -3428,8 +3442,6 @@ __STATIC_INLINE void LL_EXTI_EnableGlobalSecurityLock(EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE void LL_EXTI_DisableGlobalSecurityLock(EXTI_TypeDef *EXTIx)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   CLEAR_BIT(EXTIx->LOCKR, EXTI_LOCKR_GLOCK);
 }
 
@@ -3440,43 +3452,33 @@ __STATIC_INLINE void LL_EXTI_DisableGlobalSecurityLock(EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnableGlobalSecurityLock(const EXTI_TypeDef *EXTIx)
 {
-  /* Check the parameters */
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   return ((READ_BIT(EXTIx->LOCKR, EXTI_LOCKR_GLOCK) == (EXTI_LOCKR_GLOCK)) ? 1UL : 0UL);
 }
 
 
-
 /**
   * @brief  Set  authorised  CID for  accessing a event line configuration
-  * @note relevant only in case of  CID filtering active on event input ressource
+  * @note relevant only in case of  CID filtering active on event input resource
   * @param  EXTIx EXTI Instance
   * @param  evtIndex : LL_EXTIx_EnCIDCFGR_y (from 0 to 95). valid index depends on EXTI instance
   * @param  cid : authorised cid value   2 bits (or 3 bits soon)
   */
 __STATIC_INLINE void LL_EXTI_setEventCid(EXTI_TypeDef *EXTIx, uint32_t evtIndex, uint32_t cid)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_EXTI_EVT_CID_VALID(EXTIx, evtIndex));
-  assert_param(IS_EXTI_CID_VALID(cid));
-
   MODIFY_REG(EXTIx->ECIDCFGR[evtIndex], EXTI_EnCIDCFGR_CID, cid << EXTI_EnCIDCFGR_CID_Pos);
 }
 
 
 /**
-  * @brief  Get  authorised  CID for  accessing a non sharable ressource
-  * @note relevant only in case of  CID filtering active on input ressource
+  * @brief  Get  authorised  CID for  accessing a non shareable resource
+  * @note relevant only in case of  CID filtering active on input resource
   * @param  EXTIx EXTI Instance
   * @param  evtIndex : from 0 to 95. valid index depends on EXTI instance
   * @retval CID for event line configuration
   */
 __STATIC_INLINE uint32_t LL_EXTI_getEventCid(const EXTI_TypeDef *EXTIx, uint32_t evtIndex)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_EXTI_EVT_CID_VALID(EXTIx, evtIndex));
-
-  return ( (READ_REG(EXTIx->ECIDCFGR[evtIndex]) & (EXTI_EnCIDCFGR_CID)) >> EXTI_EnCIDCFGR_CID_Pos) ;
+  return ((READ_REG(EXTIx->ECIDCFGR[evtIndex]) & (EXTI_EnCIDCFGR_CID)) >> EXTI_EnCIDCFGR_CID_Pos) ;
 }
 
 /**
@@ -3486,9 +3488,6 @@ __STATIC_INLINE uint32_t LL_EXTI_getEventCid(const EXTI_TypeDef *EXTIx, uint32_t
   */
 __STATIC_INLINE void LL_EXTI_EnableEventCidFiltering(EXTI_TypeDef *EXTIx, uint32_t evtIndex)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_EXTI_EVT_CID_VALID(EXTIx, evtIndex));
-
   SET_BIT(EXTIx->ECIDCFGR[evtIndex], EXTI_EnCIDCFGR_CFEN);
 }
 
@@ -3499,9 +3498,6 @@ __STATIC_INLINE void LL_EXTI_EnableEventCidFiltering(EXTI_TypeDef *EXTIx, uint32
   */
 __STATIC_INLINE void LL_EXTI_DisableEventCidFiltering(EXTI_TypeDef *EXTIx, uint32_t evtIndex)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_EXTI_EVT_CID_VALID(EXTIx, evtIndex));
-
   SET_BIT(EXTIx->ECIDCFGR[evtIndex], EXTI_EnCIDCFGR_CFEN);
 }
 
@@ -3513,34 +3509,31 @@ __STATIC_INLINE void LL_EXTI_DisableEventCidFiltering(EXTI_TypeDef *EXTIx, uint3
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledEventCidFiltering(const EXTI_TypeDef *EXTIx, uint32_t evtIndex)
 {
-   return ((READ_BIT(EXTIx->ECIDCFGR[evtIndex], EXTI_EnCIDCFGR_CFEN) == EXTI_EnCIDCFGR_CFEN) ? 1UL : 0UL);
+  return ((READ_BIT(EXTIx->ECIDCFGR[evtIndex], EXTI_EnCIDCFGR_CFEN) == EXTI_EnCIDCFGR_CFEN) ? 1UL : 0UL);
 }
 
 
 /**
   * @brief  Set  authorised  CID for  accessing C1 processor configuration
-  * @note relevant only in case of  CID filtering active on processor ressource
+  * @note relevant only in case of  CID filtering active on processor resource
   * @param  EXTIx EXTI Instance
   * @param  cid : authorised cid value   2 bits (or 3 bits soon)
   */
 __STATIC_INLINE void LL_EXTI_setC1ProcessorCid(EXTI_TypeDef *EXTIx, uint32_t cid)
 {
-  assert_param(IS_EXTI_CID_VALID(cid));
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   MODIFY_REG(EXTIx->C1CIDCFGR, EXTI_CmCIDCFGR_CID, cid << EXTI_CmCIDCFGR_CID_Pos);
 }
 
 
 /**
   * @brief  Get  authorised  CID for  accessing C1 processor configuration
-  * @note relevant only in case of  CID filtering active on input ressource
+  * @note relevant only in case of  CID filtering active on input resource
   * @param  EXTIx EXTI Instance
   * @retval CID for C1 processor configuration
   */
 __STATIC_INLINE uint32_t LL_EXTI_getC1ProcessorCid(const EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  return ( (READ_REG(EXTIx->C1CIDCFGR) & (EXTI_CmCIDCFGR_CID)) >> EXTI_CmCIDCFGR_CID_Pos) ;
+  return ((READ_REG(EXTIx->C1CIDCFGR) & (EXTI_CmCIDCFGR_CID)) >> EXTI_CmCIDCFGR_CID_Pos) ;
 }
 
 /**
@@ -3549,7 +3542,6 @@ __STATIC_INLINE uint32_t LL_EXTI_getC1ProcessorCid(const EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE void LL_EXTI_EnableC1ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   SET_BIT(EXTIx->C1CIDCFGR, EXTI_CmCIDCFGR_CFEN);
 }
 
@@ -3559,7 +3551,6 @@ __STATIC_INLINE void LL_EXTI_EnableC1ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE void LL_EXTI_DisableC1ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   CLEAR_BIT(EXTIx->C1CIDCFGR, EXTI_CmCIDCFGR_CFEN);
 }
 
@@ -3570,34 +3561,30 @@ __STATIC_INLINE void LL_EXTI_DisableC1ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledC1ProcessorCidFiltering(const EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   return ((READ_BIT(EXTIx->C1CIDCFGR, EXTI_CmCIDCFGR_CFEN) == EXTI_CmCIDCFGR_CFEN) ? 1UL : 0UL);
 }
 
 /**
   * @brief  Set  authorised  CID for  accessing C2 processor configuration
-  * @note relevant only in case of  CID filtering active on processor ressource
+  * @note relevant only in case of  CID filtering active on processor resource
   * @param  EXTIx EXTI Instance
   * @param  cid : authorised cid value   2 bits (or 3 bits soon)
   */
 __STATIC_INLINE void LL_EXTI_setC2ProcessorCid(EXTI_TypeDef *EXTIx, uint32_t cid)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  assert_param(IS_EXTI_CID_VALID(cid));
   MODIFY_REG(EXTIx->C2CIDCFGR, EXTI_CmCIDCFGR_CID, cid << EXTI_CmCIDCFGR_CID_Pos);
 }
 
 
 /**
   * @brief  Get  authorised  CID for  accessing C2 processor configuration
-  * @note relevant only in case of  CID filtering active on input ressource
+  * @note relevant only in case of  CID filtering active on input resource
   * @param  EXTIx EXTI Instance
   * @retval CID for C2 processor configuration
   */
 __STATIC_INLINE uint32_t LL_EXTI_getC2ProcessorCid(const EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
-  return ( (READ_REG(EXTIx->C2CIDCFGR) & (EXTI_CmCIDCFGR_CID)) >> EXTI_CmCIDCFGR_CID_Pos) ;
+  return ((READ_REG(EXTIx->C2CIDCFGR) & (EXTI_CmCIDCFGR_CID)) >> EXTI_CmCIDCFGR_CID_Pos) ;
 }
 
 /**
@@ -3606,7 +3593,6 @@ __STATIC_INLINE uint32_t LL_EXTI_getC2ProcessorCid(const EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE void LL_EXTI_EnableC2ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   SET_BIT(EXTIx->C2CIDCFGR, EXTI_CmCIDCFGR_CFEN);
 }
 
@@ -3616,7 +3602,6 @@ __STATIC_INLINE void LL_EXTI_EnableC2ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE void LL_EXTI_DisableC2ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   CLEAR_BIT(EXTIx->C2CIDCFGR, EXTI_CmCIDCFGR_CFEN);
 }
 
@@ -3627,68 +3612,59 @@ __STATIC_INLINE void LL_EXTI_DisableC2ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledC2ProcessorCidFiltering(const EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI_ALL_INSTANCE(EXTIx));
   return ((READ_BIT(EXTIx->C2CIDCFGR, EXTI_CmCIDCFGR_CFEN) == EXTI_CmCIDCFGR_CFEN) ? 1UL : 0UL);
 }
 
 
 /**
   * @brief  Set  authorised  CID for  accessing C3 processor configuration
-  * @note relevant only in case of  CID filtering active on processor ressource
-  * @param  EXTI2 Instance only
+  * @note relevant only in case of  CID filtering active on processor resource
+  * @param  EXTIx EXTI2 Instance only
   * @param  cid : authorised cid value   2 bits (or 3 bits soon)
   */
 __STATIC_INLINE void LL_EXTI_setC3ProcessorCid(EXTI_TypeDef *EXTIx, uint32_t cid)
 {
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  assert_param(IS_EXTI_CID_VALID(cid));
   MODIFY_REG(EXTIx->C3CIDCFGR, EXTI_CmCIDCFGR_CID, cid << EXTI_CmCIDCFGR_CID_Pos);
 }
 
 
 /**
   * @brief  Get  authorised  CID for  accessing C3 processor configuration
-  * @note relevant only in case of  CID filtering active on input ressource
-  * @param  EXTI2 Instance only
+  * @note relevant only in case of  CID filtering active on input resource
+  * @param  EXTIx EXTI2 Instance only
   * @retval CID for C3 processor configuration
   */
 __STATIC_INLINE uint32_t LL_EXTI_getC3ProcessorCid(const EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
-  return ( (READ_REG(EXTIx->C3CIDCFGR) & (EXTI_CmCIDCFGR_CID)) >> EXTI_CmCIDCFGR_CID_Pos) ;
+  return ((READ_REG(EXTIx->C3CIDCFGR) & (EXTI_CmCIDCFGR_CID)) >> EXTI_CmCIDCFGR_CID_Pos) ;
 }
 
 
 /**
   * @brief  Enable  CID filtering  to  control processor C3 configuration
-  * @param  EXTI2 Instance only
-  * @param  None
+  * @param  EXTIx EXTI2 Instance only
   */
 __STATIC_INLINE void LL_EXTI_EnableC3ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
   SET_BIT(EXTIx->C3CIDCFGR, EXTI_CmCIDCFGR_CFEN);
 }
 
 /**
   * @brief  Disable CID filtering  to  control processor C3 configuration
-  * @param  EXTI2 Instance only
-  * @param  None
+  * @param  EXTIx EXTI2 Instance only
   */
 __STATIC_INLINE void LL_EXTI_DisableC3ProcessorCidFiltering(EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
   CLEAR_BIT(EXTIx->C3CIDCFGR, EXTI_CmCIDCFGR_CFEN);
 }
 
 /**
   * @brief  Check if CID filtering to control processor C3 configuration access is enabled.
-  * @param  EXTI2 Instance only
+  * @param  EXTIx EXTI2 Instance only
   * @retval true is filtering enabled
   */
 __STATIC_INLINE uint32_t LL_EXTI_IsEnabledC3ProcessorCidFiltering(const EXTI_TypeDef *EXTIx)
 {
-  assert_param(IS_EXTI2_INSTANCE(EXTIx));
   return ((READ_BIT(EXTIx->C3CIDCFGR, EXTI_CmCIDCFGR_CFEN) == EXTI_CmCIDCFGR_CFEN) ? 1UL : 0UL);
 }
 
@@ -3711,6 +3687,7 @@ __STATIC_INLINE uint32_t LL_EXTI_IsEnabledC3ProcessorCidFiltering(const EXTI_Typ
   *         EXTIx_EXTICR4 EXTI13        LL_EXTI_SetEXTISource\n
   *         EXTIx_EXTICR4 EXTI14        LL_EXTI_SetEXTISource\n
   *         EXTIx_EXTICR4 EXTI15        LL_EXTI_SetEXTISource
+  * @param  EXTIx EXTI Instance
   * @param  Port This parameter can be one of the following values:
   *         @arg @ref LL_EXTI_EXTICR_PORTA
   *         @arg @ref LL_EXTI_EXTICR_PORTB
@@ -3769,6 +3746,7 @@ __STATIC_INLINE void LL_EXTI_SetEXTISource(EXTI_TypeDef *EXTIx, uint32_t Port, u
   *         EXTIx_EXTICR4 EXTI13        LL_EXTI_GetEXTISource\n
   *         EXTIx_EXTICR4 EXTI14        LL_EXTI_GetEXTISource\n
   *         EXTIx_EXTICR4 EXTI15        LL_EXTI_GetEXTISource
+  * @param  EXTIx EXTI Instance
   * @param  Line This parameter can be one of the following values:
   *         @arg @ref LL_EXTI_EXTI_LINE0
   *         @arg @ref LL_EXTI_EXTI_LINE1
@@ -3843,6 +3821,3 @@ void        LL_EXTI_StructInit(LL_EXTI_InitTypeDef *EXTI_InitStruct);
 #endif
 
 #endif /* __STM32MP2xx_LL_EXTI_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

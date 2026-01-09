@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -21,7 +21,7 @@
 #define STM32MP2xx_HAL_GPIO_H
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -60,7 +60,7 @@ typedef struct
 
   uint32_t Alternate;  /*!< Peripheral to be connected to the selected pins
                             This parameter can be a value of @ref GPIOEx_Alternate_function_selection */
-}GPIO_InitTypeDef;
+} GPIO_InitTypeDef;
 
 /**
   * @brief  GPIO Bit SET and Bit RESET enumeration
@@ -69,7 +69,7 @@ typedef enum
 {
   GPIO_PIN_RESET = 0U,
   GPIO_PIN_SET
-}GPIO_PinState;
+} GPIO_PinState;
 /**
   * @}
   */
@@ -97,7 +97,7 @@ typedef enum
 #define GPIO_PIN_13                ((uint16_t)0x2000)  /* Pin 13 selected   */
 #define GPIO_PIN_14                ((uint16_t)0x4000)  /* Pin 14 selected   */
 #define GPIO_PIN_15                ((uint16_t)0x8000)  /* Pin 15 selected   */
-#define GPIO_PIN_All               ((uint16_t)0xFFFF)  /* All pins selected */
+#define GPIO_PIN_ALL               ((uint16_t)0xFFFF)  /* All pins selected */
 
 #define GPIO_PIN_MASK              (0x0000FFFFu) /* PIN mask for assert test */
 /**
@@ -159,10 +159,10 @@ typedef enum
   * @}
   */
 
- /** @defgroup GPIO_pull GPIO pull
-   * @brief GPIO Pull-Up or Pull-Down Activation
-   * @{
-   */
+/** @defgroup GPIO_pull GPIO pull
+  * @brief GPIO Pull-Up or Pull-Down Activation
+  * @{
+  */
 #define  GPIO_NOPULL        (0x00000000U)   /*!< No Pull-up or Pull-down activation  */
 #define  GPIO_PULLUP        (0x00000001U)   /*!< Pull-up activation                  */
 #define  GPIO_PULLDOWN      (0x00000002U)   /*!< Pull-down activation                */
@@ -170,13 +170,14 @@ typedef enum
   * @}
   */
 
- /** @defgroup GPIO_attributes GPIO attributes
-   * @brief GPIO pin secure/non-secure  or/and priviledge/non-priviledge or/end CID attributes
-   * @{
-   */
+/** @defgroup GPIO_attributes GPIO attributes
+  * @brief GPIO pin secure/non-secure  or/and privilege/non-privilege or/end CID attributes
+  * @{
+  */
 #define GPIO_PIN_ATTR_PRIV_SELECT          0x01000000U
 #define GPIO_PIN_ATTR_SEC_SELECT           0x02000000U
-#define GPIO_PIN_ATTR_CID_SHARED_MASK      (GPIO_CIDCFGR0_SEMWLC3 | GPIO_CIDCFGR0_SEMWLC2 | GPIO_CIDCFGR0_SEMWLC1 | GPIO_CIDCFGR0_SEMWLC0)
+#define GPIO_PIN_ATTR_CID_SHARED_MASK      (GPIO_CIDCFGR0_SEMWLC3 |\
+                                            GPIO_CIDCFGR0_SEMWLC2 | GPIO_CIDCFGR0_SEMWLC1 | GPIO_CIDCFGR0_SEMWLC0)
 #define GPIO_PIN_ATTR_CID_SHARED_SELECT    0x10000000U
 #define GPIO_PIN_ATTR_CID_STATIC_SELECT    0x20000000U
 #define GPIO_PIN_CID_DISABLE               0x80000000U
@@ -268,12 +269,12 @@ typedef enum
   */
 #if !defined(CORE_CM0PLUS)
 #define __HAL_GPIO_EXTI1_CLEAR_RISING_IT(__EXTI_LINE__) do { \
-                                                       EXTI1->RPR1 = (__EXTI_LINE__); \
-                                                     } while (0);
+                                                             EXTI1->RPR1 = (__EXTI_LINE__); \
+                                                           } while (0);
 #endif /*!defined(CORE_CM0PLUS)*/
 #define __HAL_GPIO_EXTI_CLEAR_RISING_IT(__EXTI_LINE__) do { \
-                                                       EXTI2->RPR1 = (__EXTI_LINE__); \
-                                                     } while (0);
+                                                            EXTI2->RPR1 = (__EXTI_LINE__); \
+                                                          } while (0);
 
 /**
   * @brief  Clears the EXTI's line pending bits for Falling edge.
@@ -283,12 +284,12 @@ typedef enum
   */
 #if !defined(CORE_CM0PLUS)
 #define __HAL_GPIO_EXTI1_CLEAR_FALLING_IT(__EXTI_LINE__) do { \
-                                                       EXTI1->FPR1 = (__EXTI_LINE__); \
-                                                     } while (0);
+                                                              EXTI1->FPR1 = (__EXTI_LINE__); \
+                                                            } while (0);
 #endif /*!defined(CORE_CM0PLUS)*/
 #define __HAL_GPIO_EXTI_CLEAR_FALLING_IT(__EXTI_LINE__) do { \
-                                                       EXTI2->FPR1 = (__EXTI_LINE__); \
-                                                     } while (0);
+                                                             EXTI2->FPR1 = (__EXTI_LINE__); \
+                                                           } while (0);
 
 /**
   * @brief  Generate a Software interrupt on selected EXTI line.
@@ -315,60 +316,90 @@ typedef enum
                                      (((uint32_t)(__PIN__) & ~GPIO_PIN_MASK) == 0x00U))
 
 #define IS_GPIO_COMMON_PIN(__RESETMASK__, __SETMASK__)  \
-                                    (((uint32_t)(__RESETMASK__) & (uint32_t)(__SETMASK__)) == 0x00u)
+  (((uint32_t)(__RESETMASK__) & (uint32_t)(__SETMASK__)) == 0x00u)
 #if !defined(CORE_CA35)
 #define IS_GPIO_EXTI2_EVT(__MODE__) (((__MODE__) == GPIO_EXTI2_EVT_RISING)         ||\
                                      ((__MODE__) == GPIO_EXTI2_EVT_FALLING)        ||\
                                      ((__MODE__) == GPIO_EXTI2_EVT_RISING_FALLING  ))
-#else
+#else   /* !defined(CORE_CA35) */
 #define IS_GPIO_EXTI2_EVT(__MODE__)   (0U)
-#endif
+#endif  /* !defined(CORE_CA35) */
 
 #if defined(CORE_CM33)
 #define IS_GPIO_EXTI1_EVT(__MODE__) (((__MODE__) == GPIO_EXTI1_EVT_RISING)         ||\
                                      ((__MODE__) == GPIO_EXTI1_EVT_FALLING)        ||\
                                      ((__MODE__) == GPIO_EXTI1_EVT_RISING_FALLING  ))
-#else
+#else   /* CORE_CM33 */
 #define IS_GPIO_EXTI1_EVT(__MODE__)   (0U)
-#endif
+#endif  /* CORE_CM33 */
 
-#define IS_GPIO_MODE(__MODE__)     ((((__MODE__) == GPIO_MODE_INPUT)              ||\
-                                     ((__MODE__) == GPIO_MODE_OUTPUT_PP)          ||\
-                                     ((__MODE__) == GPIO_MODE_OUTPUT_OD)          ||\
-                                     ((__MODE__) == GPIO_MODE_AF_PP)              ||\
-                                     ((__MODE__) == GPIO_MODE_AF_OD)              ||\
-                                     ((__MODE__) == GPIO_EXTI1_IT_RISING)          ||\
-                                     ((__MODE__) == GPIO_EXTI1_IT_FALLING)         ||\
-                                     ((__MODE__) == GPIO_EXTI1_IT_RISING_FALLING)  ||\
-                                     ((__MODE__) == GPIO_EXTI2_IT_RISING)          ||\
-                                     ((__MODE__) == GPIO_EXTI2_IT_FALLING)         ||\
-                                     ((__MODE__) == GPIO_EXTI2_IT_RISING_FALLING)  ||\
-                                     ((__MODE__) == GPIO_MODE_ANALOG))             ||\
-                                     (IS_GPIO_EXTI1_EVT(__MODE__))                 ||\
-                                     (IS_GPIO_EXTI2_EVT(__MODE__)))
+#define IS_GPIO_MODE(__MODE__)     ( \
+                                     ( \
+                                       ((__MODE__) == GPIO_MODE_INPUT)               ||   \
+                                       ((__MODE__) == GPIO_MODE_OUTPUT_PP)           ||   \
+                                       ((__MODE__) == GPIO_MODE_OUTPUT_OD)           ||   \
+                                       ((__MODE__) == GPIO_MODE_AF_PP)               ||   \
+                                       ((__MODE__) == GPIO_MODE_AF_OD)               ||   \
+                                       ((__MODE__) == GPIO_EXTI1_IT_RISING)          ||   \
+                                       ((__MODE__) == GPIO_EXTI1_IT_FALLING)         ||   \
+                                       ((__MODE__) == GPIO_EXTI1_IT_RISING_FALLING)  ||   \
+                                       ((__MODE__) == GPIO_EXTI2_IT_RISING)          ||   \
+                                       ((__MODE__) == GPIO_EXTI2_IT_FALLING)         ||   \
+                                       ((__MODE__) == GPIO_EXTI2_IT_RISING_FALLING)  ||   \
+                                       ((__MODE__) == GPIO_MODE_ANALOG)                   \
+                                     )                                                    \
+                                     ||                                                   \
+                                     (IS_GPIO_EXTI1_EVT(__MODE__))                        \
+                                     ||                                                   \
+                                     (IS_GPIO_EXTI2_EVT(__MODE__))                        \
+                                   )
 
 
-#define IS_GPIO_SPEED(__SPEED__)    (((__SPEED__) == GPIO_SPEED_FREQ_LOW)       ||\
-                                     ((__SPEED__) == GPIO_SPEED_FREQ_MEDIUM)    ||\
-                                     ((__SPEED__) == GPIO_SPEED_FREQ_HIGH)      ||\
-                                     ((__SPEED__) == GPIO_SPEED_FREQ_VERY_HIGH))
+#define IS_GPIO_SPEED(__SPEED__)    ( \
+                                      ((__SPEED__) == GPIO_SPEED_FREQ_LOW)           ||   \
+                                      ((__SPEED__) == GPIO_SPEED_FREQ_MEDIUM)        ||   \
+                                      ((__SPEED__) == GPIO_SPEED_FREQ_HIGH)          ||   \
+                                      ((__SPEED__) == GPIO_SPEED_FREQ_VERY_HIGH)          \
+                                    )
 
-#define IS_GPIO_PULL(__PULL__)      (((__PULL__) == GPIO_NOPULL)   ||\
-                                     ((__PULL__) == GPIO_PULLUP)   || \
-                                     ((__PULL__) == GPIO_PULLDOWN))
+#define IS_GPIO_PULL(__PULL__)      ( \
+                                      ((__PULL__) == GPIO_NOPULL)                    ||   \
+                                      ((__PULL__) == GPIO_PULLUP)                    ||   \
+                                      ((__PULL__) == GPIO_PULLDOWN)                       \
+                                    )
 
 #if defined (CORTEX_IN_SECURE_STATE)
-#define IS_GPIO_PIN_ATTRIBUTES(__ATTRIBUTES__)  ((((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_SHARED_SELECT )==GPIO_PIN_ATTR_CID_SHARED_SELECT)    ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_STATIC_SELECT )==GPIO_PIN_ATTR_CID_STATIC_SELECT)    ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_CID_DISABLE            )==GPIO_PIN_CID_DISABLE)               ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_ATTR_SEC_SELECT )       ==GPIO_PIN_ATTR_SEC_SELECT)           ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_ATTR_PRIV_SELECT)       ==GPIO_PIN_ATTR_PRIV_SELECT)            )
-#else
-#define IS_GPIO_PIN_ATTRIBUTES(__ATTRIBUTES__)  ((((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_SHARED_SELECT )==GPIO_PIN_ATTR_CID_SHARED_SELECT)    ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_STATIC_SELECT )==GPIO_PIN_ATTR_CID_STATIC_SELECT)    ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_CID_DISABLE            )==GPIO_PIN_CID_DISABLE)               ||\
-                                                 (((__ATTRIBUTES__)&GPIO_PIN_ATTR_PRIV_SELECT)       ==GPIO_PIN_ATTR_PRIV_SELECT)            )
-#endif
+#define IS_GPIO_PIN_ATTRIBUTES(__ATTRIBUTES__)  ( \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_SHARED_SELECT) ==    \
+                                                   GPIO_PIN_ATTR_CID_SHARED_SELECT                  )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_STATIC_SELECT) ==    \
+                                                   GPIO_PIN_ATTR_CID_STATIC_SELECT                  )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_CID_DISABLE           ) ==    \
+                                                   GPIO_PIN_CID_DISABLE                             )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_SEC_SELECT       ) ==    \
+                                                   GPIO_PIN_ATTR_SEC_SELECT                         )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_PRIV_SELECT      ) ==    \
+                                                   GPIO_PIN_ATTR_PRIV_SELECT                        )       \
+                                                )
+#else   /* CORTEX_IN_SECURE_STATE */
+#define IS_GPIO_PIN_ATTRIBUTES(__ATTRIBUTES__)  ( \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_SHARED_SELECT) ==    \
+                                                   GPIO_PIN_ATTR_CID_SHARED_SELECT                  )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_CID_STATIC_SELECT) ==    \
+                                                   GPIO_PIN_ATTR_CID_STATIC_SELECT                  )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_CID_DISABLE           ) ==    \
+                                                   GPIO_PIN_CID_DISABLE                             )       \
+                                                  ||                                                        \
+                                                  (((__ATTRIBUTES__)&GPIO_PIN_ATTR_PRIV_SELECT      ) ==    \
+                                                   GPIO_PIN_ATTR_PRIV_SELECT                        )       \
+                                                )
+#endif  /* CORTEX_IN_SECURE_STATE */
 /**
   * @}
   */
@@ -378,17 +409,17 @@ typedef enum
 
 /* Exported functions --------------------------------------------------------*/
 /** @defgroup GPIO_Exported_Functions GPIO Exported Functions
- *  @brief    GPIO Exported Functions
+  *  @brief    GPIO Exported Functions
   * @{
   */
 
 /** @defgroup GPIO_Exported_Functions_Group1 Initialization/de-initialization functions
- *  @brief    Initialization and Configuration functions
- * @{
- */
+  *  @brief    Initialization and Configuration functions
+  * @{
+  */
 
 /* Initialization and de-initialization functions *****************************/
-void              HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init);
+void              HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, const GPIO_InitTypeDef *GPIO_Init);
 void              HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin);
 
 /**
@@ -396,21 +427,22 @@ void              HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin);
   */
 
 /** @defgroup GPIO_Exported_Functions_Group2 IO operation functions
- *  @brief    IO operation functions
- * @{
- */
+  *  @brief    IO operation functions
+  * @{
+  */
 
 /* IO operation functions *****************************************************/
-GPIO_PinState     HAL_GPIO_ReadPin(const GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
-void              HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState);
+GPIO_PinState     HAL_GPIO_ReadPin(const GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+void              HAL_GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState);
 void              HAL_GPIO_WriteMultipleStatePin(GPIO_TypeDef *GPIOx, uint16_t PinReset, uint16_t PinSet);
-void              HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
-HAL_StatusTypeDef HAL_GPIO_LockPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+void              HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+HAL_StatusTypeDef HAL_GPIO_LockPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 #if !defined(CORE_CM0PLUS)
+EXTI_TypeDef     *getUsedExti(const GPIO_TypeDef  *GPIOx, uint32_t pinPosition);
 void              HAL_GPIO_EXTI1_IRQHandler(uint16_t GPIO_Pin);
 void              HAL_GPIO_EXTI1_Rising_Callback(uint16_t GPIO_Pin);
 void              HAL_GPIO_EXTI1_Falling_Callback(uint16_t GPIO_Pin);
-#endif
+#endif  /* CORE_CM0PLUS */
 void              HAL_GPIO_EXTI_IRQHandler(uint16_t GPIO_Pin);
 void              HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin);
 void              HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin);
@@ -423,10 +455,11 @@ void              HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin);
   * @brief    GPIO Attributes functions
   * @{
   */
-HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, uint32_t PinAttributes);
-HAL_StatusTypeDef HAL_GPIO_GetConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, uint32_t *pPinAttributes);
-HAL_StatusTypeDef HAL_GPIO_TakePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
-HAL_StatusTypeDef HAL_GPIO_ReleasePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t PinAttributes);
+HAL_StatusTypeDef HAL_GPIO_GetConfigPinAttributes(const GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,
+                                                  uint32_t *pPinAttributes);
+HAL_StatusTypeDef HAL_GPIO_TakePinSemaphore(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+HAL_StatusTypeDef HAL_GPIO_ReleasePinSemaphore(const GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 
 
 /**

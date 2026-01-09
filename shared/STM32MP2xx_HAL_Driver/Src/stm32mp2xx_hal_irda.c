@@ -2384,7 +2384,6 @@ static HAL_StatusTypeDef IRDA_SetConfig(IRDA_HandleTypeDef *hirda)
 
   /*-------------------------- USART BRR Configuration -----------------------*/
   IRDA_GETCLOCK(hirda, clock);
-  tmpreg =   0U;
   pclk = HAL_RCCEx_GetPeriphCLKFreq(clock);
   tmpreg = (uint32_t)(IRDA_DIV_SAMPLING16(pclk, hirda->Init.BaudRate, hirda->Init.ClockPrescaler));
 

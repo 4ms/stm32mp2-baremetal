@@ -355,6 +355,19 @@ __STATIC_INLINE void LL_PKA_EnableIT_OPERR(PKA_TypeDef *PKAx)
   SET_BIT(PKAx->CR, PKA_CR_OPERRIE);
 }
 
+#if defined(PKA_CR_CMFIE)
+/**
+  * @brief  Enable Chaining node error interrupt.
+  * @rmtoll CR           CMFIE      LL_PKA_EnableIT_CMFIE
+  * @param  PKAx PKA Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_PKA_EnableIT_CMFIE(PKA_TypeDef *PKAx)
+{
+  SET_BIT(PKAx->CR, PKA_CR_CMFIE);
+}
+#endif /* PKA_CR_CMFIE */
+
 /**
   * @brief  Enable end of operation interrupt.
   * @rmtoll CR           PROCENDIE     LL_PKA_EnableIT_PROCEND
@@ -410,6 +423,19 @@ __STATIC_INLINE void LL_PKA_DisableIT_OPERR(PKA_TypeDef *PKAx)
   CLEAR_BIT(PKAx->CR, PKA_CR_OPERRIE);
 }
 
+#if defined(PKA_CR_CMFIE)
+/**
+  * @brief  Disable OPERATION error interrupt.
+  * @rmtoll CR           CMFIE       LL_PKA_DisableIT_CMFIE
+  * @param  PKAx PKA Instance.
+  * @retval None
+  */
+__STATIC_INLINE void LL_PKA_DisableIT_CMFIE(PKA_TypeDef *PKAx)
+{
+  CLEAR_BIT(PKAx->CR, PKA_CR_CMFIE);
+}
+#endif /* PKA_CR_CMFIE */
+
 /**
   * @brief  Check if address error interrupt is enabled.
   * @rmtoll CR           ADDRERRIE     LL_PKA_IsEnabledIT_ADDRERR
@@ -442,6 +468,19 @@ __STATIC_INLINE uint32_t LL_PKA_IsEnabledIT_OPERR(const PKA_TypeDef *PKAx)
 {
   return ((READ_BIT(PKAx->CR, PKA_CR_OPERRIE) == (PKA_CR_OPERRIE)) ? 1UL : 0UL);
 }
+
+#if defined(PKA_CR_CMFIE)
+/**
+  * @brief  Check if OPERATION error interrupt is enabled.
+  * @rmtoll CR           CMFIE      LL_PKA_IsEnabledIT_CMFIE
+  * @param  PKAx PKA Instance.
+  * @retval State of bit (1 or 0).
+  */
+__STATIC_INLINE uint32_t LL_PKA_IsEnabledIT_CMFIE(const PKA_TypeDef *PKAx)
+{
+  return ((READ_BIT(PKAx->CR, PKA_CR_CMFIE) == (PKA_CR_CMFIE)) ? 1UL : 0UL);
+}
+#endif /* PKA_CR_CMFIE */
 
 /**
   * @brief  Check if end of operation interrupt is enabled.

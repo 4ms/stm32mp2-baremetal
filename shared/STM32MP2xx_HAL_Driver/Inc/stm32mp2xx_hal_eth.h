@@ -24,7 +24,6 @@
 extern "C" {
 #endif
 
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32mp2xx_hal_def.h"
 
@@ -160,7 +159,7 @@ typedef struct
 
   void *pData;                     /*!< Specifies Application packet pointer to save   */
 
-} ETH_TxPacketConfig_t;
+} ETH_TxPacketConfigTypeDef;
 /**
   *
   */
@@ -363,9 +362,9 @@ typedef struct
 
   uint32_t        BurstMode;               /*!< Sets the AHB Master interface burst transfers.
                                                      This parameter can be a value of @ref ETH_Burst_Mode */
-   uint32_t        RxOSRLimit;               /*!< Sets the maximum outstanding request on the AXI read interface. */
+  uint32_t        RxOSRLimit;               /*!< Sets the maximum outstanding request on the AXI read interface. */
 
-   uint32_t        TxOSRLimit;               /*!< Sets the maximum outstanding request on the AXI write interface. */
+  uint32_t        TxOSRLimit;               /*!< Sets the maximum outstanding request on the AXI write interface. */
 
   FunctionalState PBLx8Mode;               /*!< Enables or disables the PBL multiplication by eight. */
 
@@ -390,7 +389,7 @@ typedef struct
   MaximumSegmentSize;      /*!< Sets the maximum segment size that should be used while segmenting the packet
                                                   This parameter can be a value from 0x40 to 0x3FFF */
 
-   uint32_t        AXIBLENMaxSize;          /*!< Sets the maximum BLEN max size that should be used on th AXI interface to initiate burst transfers of specified lengths */
+  uint32_t        AXIBLENMaxSize;          /*!< Sets the maximum BLEN max size that should be used on th AXI interface to initiate burst transfers of specified lengths */
 } ETH_DMAConfigTypeDef;
 /**
   *
@@ -801,7 +800,6 @@ typedef struct
 #define ETH_DMATXNDESCWBF_DB                      0x00000002U  /*!< Deferred Bit */
 #define ETH_DMATXNDESCWBF_IHE                     0x00000004U  /*!< IP Header Error */
 
-
 /*
    DMA Tx Context Descriptor
   -----------------------------------------------------------------------------------------------
@@ -851,7 +849,6 @@ typedef struct
 /**
   * @}
   */
-
 
 /** @defgroup ETH_DMA_Rx_Descriptor_Bit_Definition ETH DMA Rx Descriptor Bit Definition
   * @{
@@ -950,7 +947,6 @@ typedef struct
 #define ETH_DMARXNDESCWBF_SAF             0x00010000U  /*!< SA Address Filter Fail                */
 #define ETH_DMARXNDESCWBF_VF              0x00008000U  /*!< VLAN Filter Status                    */
 #define ETH_DMARXNDESCWBF_ARPNR           0x00000400U  /*!< ARP Reply Not Generated               */
-
 
 /**
   * @brief  Bit definition of Rx normal descriptor register 3 write back format
@@ -1201,8 +1197,8 @@ typedef struct
   */
 
 /** @defgroup ETH_BLEN_Size ETH Blen size
- * @{
- */
+  * @{
+  */
 #define ETH_BLEN_MAX_SIZE_256             (ETH_DMASBMR_BLEN256 | ETH_BLEN_MAX_SIZE_128)
 #define ETH_BLEN_MAX_SIZE_128             (ETH_DMASBMR_BLEN128 | ETH_BLEN_MAX_SIZE_64)
 #define ETH_BLEN_MAX_SIZE_64              (ETH_DMASBMR_BLEN64 | ETH_BLEN_MAX_SIZE_32)
@@ -1286,22 +1282,22 @@ typedef struct
   * @{
   */
 #define ETH_DMA_RX_NO_ERROR_FLAG                 0x00000000U
-#define ETH_DMA_RX_DESC_READ_ERROR_FLAG          (ETH_DMACSR_REB_BIT_2 | ETH_DMACSR_REB_BIT_1 | ETH_DMACSR_REB_BIT_0)
-#define ETH_DMA_RX_DESC_WRITE_ERROR_FLAG         (ETH_DMACSR_REB_BIT_2 | ETH_DMACSR_REB_BIT_1)
-#define ETH_DMA_RX_BUFFER_READ_ERROR_FLAG        (ETH_DMACSR_REB_BIT_2 | ETH_DMACSR_REB_BIT_0)
-#define ETH_DMA_RX_BUFFER_WRITE_ERROR_FLAG        ETH_DMACSR_REB_BIT_2
+#define ETH_DMA_RX_DESC_READ_ERROR_FLAG          0x00380000U
+#define ETH_DMA_RX_DESC_WRITE_ERROR_FLAG         0x00300000U
+#define ETH_DMA_RX_BUFFER_READ_ERROR_FLAG        0x00280000U
+#define ETH_DMA_RX_BUFFER_WRITE_ERROR_FLAG       0x00200000U
 #define ETH_DMA_TX_NO_ERROR_FLAG                 0x00000000U
-#define ETH_DMA_TX_DESC_READ_ERROR_FLAG          (ETH_DMACSR_TEB_BIT_2 | ETH_DMACSR_TEB_BIT_1 | ETH_DMACSR_TEB_BIT_0)
-#define ETH_DMA_TX_DESC_WRITE_ERROR_FLAG         (ETH_DMACSR_TEB_BIT_2 | ETH_DMACSR_TEB_BIT_1)
-#define ETH_DMA_TX_BUFFER_READ_ERROR_FLAG        (ETH_DMACSR_TEB_BIT_2 | ETH_DMACSR_TEB_BIT_0)
-#define ETH_DMA_TX_BUFFER_WRITE_ERROR_FLAG        ETH_DMACSR_TEB_BIT_2
-#define ETH_DMA_CONTEXT_DESC_ERROR_FLAG           ETH_DMACSR_CDE
-#define ETH_DMA_FATAL_BUS_ERROR_FLAG              ETH_DMACSR_FBE
-#define ETH_DMA_EARLY_TX_IT_FLAG                  ETH_DMACSR_ERI
-#define ETH_DMA_RX_WATCHDOG_TIMEOUT_FLAG          ETH_DMACSR_RWT
-#define ETH_DMA_RX_PROCESS_STOPPED_FLAG           ETH_DMACSR_RPS
-#define ETH_DMA_RX_BUFFER_UNAVAILABLE_FLAG        ETH_DMACSR_RBU
-#define ETH_DMA_TX_PROCESS_STOPPED_FLAG           ETH_DMACSR_TPS
+#define ETH_DMA_TX_DESC_READ_ERROR_FLAG          0x00070000U
+#define ETH_DMA_TX_DESC_WRITE_ERROR_FLAG         0x00060000U
+#define ETH_DMA_TX_BUFFER_READ_ERROR_FLAG        0x00050000U
+#define ETH_DMA_TX_BUFFER_WRITE_ERROR_FLAG       0x00040000U
+#define ETH_DMA_CONTEXT_DESC_ERROR_FLAG          ETH_DMACSR_CDE
+#define ETH_DMA_FATAL_BUS_ERROR_FLAG             ETH_DMACSR_FBE
+#define ETH_DMA_EARLY_TX_IT_FLAG                 ETH_DMACSR_ERI
+#define ETH_DMA_RX_WATCHDOG_TIMEOUT_FLAG         ETH_DMACSR_RWT
+#define ETH_DMA_RX_PROCESS_STOPPED_FLAG          ETH_DMACSR_RPS
+#define ETH_DMA_RX_BUFFER_UNAVAILABLE_FLAG       ETH_DMACSR_RBU
+#define ETH_DMA_TX_PROCESS_STOPPED_FLAG          ETH_DMACSR_TPS
 /**
   * @}
   */
@@ -1530,6 +1526,10 @@ typedef struct
   * @}
   */
 
+/**
+  * @}
+  */
+
 /* Exported macro ------------------------------------------------------------*/
 /** @defgroup ETH_Exported_Macros ETH Exported Macros
   * @{
@@ -1666,7 +1666,7 @@ typedef struct
   */
 #define __HAL_ETH_WAKEUP_EXTI_CLEAR_FLAG(__EXTI_LINE__) (EXTI1_C1->IMR3 = (__EXTI_LINE__))
 
-#if defined(DUAL_CORE)
+#if defined(CORE_CM33)
 /**
   * @brief Enable the ETH WAKEUP Exti Line by Core2.
   * @param  __EXTI_LINE__: specifies the ETH WAKEUP Exti sources to be enabled.
@@ -1690,7 +1690,7 @@ typedef struct
   * @retval None.
   */
 #define __HAL_ETH_WAKEUP_EXTID2_CLEAR_FLAG(__EXTI_LINE__) (EXTI1_C2->IMR3 = (__EXTI_LINE__))
-#endif /* DUAL_CORE */
+#endif /* CORE_CM33 */
 
 /**
   * @brief  enable rising edge interrupt on selected EXTI line.
@@ -1778,7 +1778,7 @@ HAL_StatusTypeDef HAL_ETH_RegisterRxAllocateCallback(ETH_HandleTypeDef *heth,
 HAL_StatusTypeDef HAL_ETH_UnRegisterRxAllocateCallback(ETH_HandleTypeDef *heth);
 HAL_StatusTypeDef HAL_ETH_RegisterRxLinkCallback(ETH_HandleTypeDef *heth, pETH_rxLinkCallbackTypeDef rxLinkCallback);
 HAL_StatusTypeDef HAL_ETH_UnRegisterRxLinkCallback(ETH_HandleTypeDef *heth);
-HAL_StatusTypeDef HAL_ETH_GetRxDataErrorCode(ETH_HandleTypeDef *heth, uint32_t *pErrorCode);
+HAL_StatusTypeDef HAL_ETH_GetRxDataErrorCode(const ETH_HandleTypeDef *heth, uint32_t *pErrorCode);
 HAL_StatusTypeDef HAL_ETH_RegisterTxFreeCallback(ETH_HandleTypeDef *heth, pETH_txFreeCallbackTypeDef txFreeCallback);
 HAL_StatusTypeDef HAL_ETH_UnRegisterTxFreeCallback(ETH_HandleTypeDef *heth);
 HAL_StatusTypeDef HAL_ETH_ReleaseTxPacket(ETH_HandleTypeDef *heth);
@@ -1797,8 +1797,8 @@ HAL_StatusTypeDef HAL_ETH_RegisterTxPtpCallback(ETH_HandleTypeDef *heth, pETH_tx
 HAL_StatusTypeDef HAL_ETH_UnRegisterTxPtpCallback(ETH_HandleTypeDef *heth);
 #endif /* HAL_ETH_USE_PTP */
 
-HAL_StatusTypeDef HAL_ETH_Transmit(ETH_HandleTypeDef *heth, ETH_TxPacketConfig_t *pTxConfig, uint32_t Timeout);
-HAL_StatusTypeDef HAL_ETH_Transmit_IT(ETH_HandleTypeDef *heth, ETH_TxPacketConfig_t *pTxConfig);
+HAL_StatusTypeDef HAL_ETH_Transmit(ETH_HandleTypeDef *heth, ETH_TxPacketConfigTypeDef *pTxConfig, uint32_t Timeout);
+HAL_StatusTypeDef HAL_ETH_Transmit_IT(ETH_HandleTypeDef *heth, ETH_TxPacketConfigTypeDef *pTxConfig);
 
 HAL_StatusTypeDef HAL_ETH_WritePHYRegister(const ETH_HandleTypeDef *heth, uint32_t PHYAddr, uint32_t PHYReg,
                                            uint32_t RegValue);
@@ -1825,8 +1825,8 @@ void              HAL_ETH_TxPtpCallback(uint32_t *buff, ETH_TimeStampTypeDef *ti
   */
 /* Peripheral Control functions  **********************************************/
 /* MAC & DMA Configuration APIs  **********************************************/
-HAL_StatusTypeDef HAL_ETH_GetMACConfig(ETH_HandleTypeDef *heth, ETH_MACConfigTypeDef *macconf);
-HAL_StatusTypeDef HAL_ETH_GetDMAConfig(ETH_HandleTypeDef *heth, ETH_DMAConfigTypeDef *dmaconf);
+HAL_StatusTypeDef HAL_ETH_GetMACConfig(const ETH_HandleTypeDef *heth, ETH_MACConfigTypeDef *macconf);
+HAL_StatusTypeDef HAL_ETH_GetDMAConfig(const ETH_HandleTypeDef *heth, ETH_DMAConfigTypeDef *dmaconf);
 HAL_StatusTypeDef HAL_ETH_SetMACConfig(ETH_HandleTypeDef *heth, ETH_MACConfigTypeDef *macconf);
 HAL_StatusTypeDef HAL_ETH_SetDMAConfig(ETH_HandleTypeDef *heth, ETH_DMAConfigTypeDef *dmaconf);
 void              HAL_ETH_SetMDIOClockRange(ETH_HandleTypeDef *heth);
@@ -1836,7 +1836,7 @@ void              HAL_ETH_SetRxVLANIdentifier(ETH_HandleTypeDef *heth, uint32_t 
                                               uint32_t VLANIdentifier);
 
 /* MAC L2 Packet Filtering APIs  **********************************************/
-HAL_StatusTypeDef HAL_ETH_GetMACFilterConfig(ETH_HandleTypeDef *heth, ETH_MACFilterConfigTypeDef *pFilterConfig);
+HAL_StatusTypeDef HAL_ETH_GetMACFilterConfig(const ETH_HandleTypeDef *heth, ETH_MACFilterConfigTypeDef *pFilterConfig);
 HAL_StatusTypeDef HAL_ETH_SetMACFilterConfig(ETH_HandleTypeDef *heth, const ETH_MACFilterConfigTypeDef *pFilterConfig);
 HAL_StatusTypeDef HAL_ETH_SetHashTable(ETH_HandleTypeDef *heth, uint32_t *pHashTable);
 HAL_StatusTypeDef HAL_ETH_SetSourceMACAddrMatch(const ETH_HandleTypeDef *heth, uint32_t AddrNbr,

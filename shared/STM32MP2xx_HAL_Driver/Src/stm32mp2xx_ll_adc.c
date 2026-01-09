@@ -79,7 +79,7 @@
 /* Check of parameters for configuration of ADC hierarchical scope:           */
 /* common to several ADC instances.                                           */
 #define IS_LL_ADC_COMMON_CLOCK(__CLOCK__)                                      \
-     (((__CLOCK__) == LL_ADC_CLOCK_DIV1)                                       \
+  (((__CLOCK__) == LL_ADC_CLOCK_DIV1)                                       \
    || ((__CLOCK__) == LL_ADC_CLOCK_DIV2)                                       \
    || ((__CLOCK__) == LL_ADC_CLOCK_DIV4)                                       \
    || ((__CLOCK__) == LL_ADC_CLOCK_DIV6)                                       \
@@ -130,75 +130,75 @@
 /* ADC group regular                                                          */
 #define IS_LL_ADC_REG_TRIG_SOURCE_ADC12(__REG_TRIG_SOURCE__)                   \
   (      ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_SOFTWARE)                   \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO2)            \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM6_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM15_TRGO_ADC12)       \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC2)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC1_ADC12)        \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC2)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC3)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_CC2)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_CC4)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_CC4)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM12_CC1)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_EXTI_LINE11)            \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM1_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM2_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM3_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM4_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM5_OUT)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO2)            \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM6_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM15_TRGO_ADC12)       \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC2)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC1_ADC12)        \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC2)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC3)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_CC2)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_CC4)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_CC4)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM12_CC1)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_EXTI_LINE11)            \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM1_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM2_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM3_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM4_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM5_OUT)             \
   )
 
 #define IS_LL_ADC_REG_TRIG_SOURCE_ADC3(__REG_TRIG_SOURCE__)                    \
   (      ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_SOFTWARE)                   \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO2)            \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM6_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM7_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM15_TRGO_ADC3)        \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM17_CC1)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC1_ADC3)         \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM12_CC1)              \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_EXTI_LINE2)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM1_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM2_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM3_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM4_CH1)             \
-      || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM5_OUT)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_TRGO2)            \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM6_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM7_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM15_TRGO_ADC3)        \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM17_CC1)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM1_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM8_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM20_CC1_ADC3)         \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM2_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM3_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM4_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM5_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_TIM12_CC1)              \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_EXTI_LINE2)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM1_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM2_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM3_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM4_CH1)             \
+         || ((__REG_TRIG_SOURCE__) == LL_ADC_REG_TRIG_EXT_LPTIM5_OUT)             \
   )
 
 #define IS_LL_ADC_REG_TRIG_SOURCE(__ADC_INSTANCE__, __REG_TRIG_SOURCE__)       \
   ((((__ADC_INSTANCE__) == ADC1) || ((__ADC_INSTANCE__) == ADC2))              \
-    ? IS_LL_ADC_REG_TRIG_SOURCE_ADC12(__REG_TRIG_SOURCE__)                     \
-      :                                                                        \
-      IS_LL_ADC_REG_TRIG_SOURCE_ADC3(__REG_TRIG_SOURCE__)                      \
+   ? IS_LL_ADC_REG_TRIG_SOURCE_ADC12(__REG_TRIG_SOURCE__)                     \
+   :                                                                        \
+   IS_LL_ADC_REG_TRIG_SOURCE_ADC3(__REG_TRIG_SOURCE__)                      \
   )
 
 #define IS_LL_ADC_REG_CONTINUOUS_MODE(__REG_CONTINUOUS_MODE__)                 \
@@ -319,9 +319,9 @@
 
 #define IS_LL_ADC_INJ_TRIG_SOURCE(__ADC_INSTANCE__, __INJ_TRIG_SOURCE__)   \
   ((((__ADC_INSTANCE__) == ADC1) || ((__ADC_INSTANCE__) == ADC2))          \
-    ? IS_LL_ADC_INJ_TRIG_SOURCE_ADC12(__INJ_TRIG_SOURCE__)                 \
-      :                                                                    \
-      IS_LL_ADC_INJ_TRIG_SOURCE_ADC3(__INJ_TRIG_SOURCE__)                  \
+   ? IS_LL_ADC_INJ_TRIG_SOURCE_ADC12(__INJ_TRIG_SOURCE__)                 \
+   :                                                                    \
+   IS_LL_ADC_INJ_TRIG_SOURCE_ADC3(__INJ_TRIG_SOURCE__)                  \
   )
 
 #define IS_LL_ADC_INJ_TRIG_EXT_EDGE(__INJ_TRIG_EXT_EDGE__)                     \
@@ -362,10 +362,10 @@
   )
 
 #define IS_LL_ADC_MULTI_DATA_FORMAT(__MULTI_DATA_FORMAT__)                     \
- (   ((__MULTI_DATA_FORMAT__) == LL_ADC_MULTI_REG_DATA_EACH_ADC)               \
-  || ((__MULTI_DATA_FORMAT__) == LL_ADC_MULTI_REG_DATA_COMMON_32B)             \
-  || ((__MULTI_DATA_FORMAT__) == LL_ADC_MULTI_REG_DATA_COMMON_16B)             \
- )
+  (   ((__MULTI_DATA_FORMAT__) == LL_ADC_MULTI_REG_DATA_EACH_ADC)               \
+      || ((__MULTI_DATA_FORMAT__) == LL_ADC_MULTI_REG_DATA_COMMON_32B)             \
+      || ((__MULTI_DATA_FORMAT__) == LL_ADC_MULTI_REG_DATA_COMMON_16B)             \
+  )
 
 #define IS_LL_ADC_MULTI_TWOSMP_DELAY(__MULTI_TWOSMP_DELAY__)                   \
   (((__MULTI_TWOSMP_DELAY__) == LL_ADC_MULTI_TWOSMP_DELAY_1CYCLE)              \
@@ -416,21 +416,39 @@
   *          - SUCCESS: ADC common registers are de-initialized
   *          - ERROR: not applicable
   */
-ErrorStatus LL_ADC_CommonDeInit(ADC_Common_TypeDef *ADCxy_COMMON)
+ErrorStatus LL_ADC_CommonDeInit(const ADC_Common_TypeDef *ADCxy_COMMON)
 {
   /* Check the parameters */
   assert_param(IS_ADC_COMMON_INSTANCE(ADCxy_COMMON));
 
+#if defined(ADC1_COMMON)
+  if (ADCxy_COMMON == ADC1_COMMON)
+  {
+    __HAL_RCC_ADC1_FORCE_RESET();
+    __HAL_RCC_ADC1_RELEASE_RESET();
+  }
+#endif /* ADC1_COMMON */
+#if defined(ADC2_COMMON)
+  if (ADCxy_COMMON == ADC2_COMMON)
+  {
+    __HAL_RCC_ADC2_FORCE_RESET();
+    __HAL_RCC_ADC2_RELEASE_RESET();
+  }
+#endif /* ADC2_COMMON */
+#if defined(ADC12_COMMON)
   if (ADCxy_COMMON == ADC12_COMMON)
   {
     __HAL_RCC_ADC12_FORCE_RESET();
     __HAL_RCC_ADC12_RELEASE_RESET();
   }
-  else /*if ( ADCxy_COMMON == ADC3_COMMON)*/
+#endif /* ADC12_COMMON */
+#if defined(ADC3_COMMON)
+  if ( ADCxy_COMMON == ADC3_COMMON)
   {
     __HAL_RCC_ADC3_FORCE_RESET();
     __HAL_RCC_ADC3_RELEASE_RESET();
   }
+#endif /* ADC3_COMMON */
   return SUCCESS;
 }
 
@@ -449,7 +467,7 @@ ErrorStatus LL_ADC_CommonDeInit(ADC_Common_TypeDef *ADCxy_COMMON)
   *          - SUCCESS: ADC common registers are initialized
   *          - ERROR: ADC common registers are not initialized
   */
-ErrorStatus LL_ADC_CommonInit(ADC_Common_TypeDef *ADCxy_COMMON, LL_ADC_CommonInitTypeDef *pADC_CommonInitStruct)
+ErrorStatus LL_ADC_CommonInit(ADC_Common_TypeDef *ADCxy_COMMON, const LL_ADC_CommonInitTypeDef *pADC_CommonInitStruct)
 {
   ErrorStatus status = SUCCESS;
 
@@ -507,7 +525,7 @@ ErrorStatus LL_ADC_CommonInit(ADC_Common_TypeDef *ADCxy_COMMON, LL_ADC_CommonIni
     }
 #else
     LL_ADC_SetCommonClock(ADCxy_COMMON, pADC_CommonInitStruct->CommonClock);
-#endif
+#endif /* ADC_MULTIMODE_SUPPORT */
   }
   else
   {
@@ -545,6 +563,14 @@ void LL_ADC_CommonStructInit(LL_ADC_CommonInitTypeDef *pADC_CommonInitStruct)
   *         to their default reset values.
   * @note   To reset all ADC instances quickly (perform a hard reset),
   *         use function @ref LL_ADC_CommonDeInit().
+  * @note   If this functions returns error status, it means that ADC instance
+  *         is in an unknown state.
+  *         In this case, perform a hard reset using high level
+  *         clock source RCC ADC reset.
+  *         Caution: On this STM32 series, if several ADC instances are available
+  *         on the selected device, RCC ADC reset will reset
+  *         all ADC instances belonging to the common ADC instance.
+  *         Refer to function @ref LL_ADC_CommonDeInit().
   * @param  ADCx ADC instance
   * @retval An ErrorStatus enumeration value:
   *          - SUCCESS: ADC registers are de-initialized
@@ -794,6 +820,9 @@ ErrorStatus LL_ADC_DeInit(ADC_TypeDef *ADCx)
     /* Caution: On this STM32 series, if several ADC instances are available  */
     /*          on the selected device, RCC ADC reset will reset              */
     /*          all ADC instances belonging to the common ADC instance.       */
+    /* Caution: On this STM32 series, if several ADC instances are available  */
+    /*          on the selected device, RCC ADC reset will reset              */
+    /*          all ADC instances belonging to the common ADC instance.       */
     status = ERROR;
   }
 
@@ -833,7 +862,7 @@ ErrorStatus LL_ADC_DeInit(ADC_TypeDef *ADCx)
   *          - SUCCESS: ADC registers are initialized
   *          - ERROR: ADC registers are not initialized
   */
-ErrorStatus LL_ADC_Init(ADC_TypeDef *ADCx, LL_ADC_InitTypeDef *pADC_InitStruct)
+ErrorStatus LL_ADC_Init(ADC_TypeDef *ADCx, const LL_ADC_InitTypeDef *pADC_InitStruct)
 {
   ErrorStatus status = SUCCESS;
 
@@ -919,7 +948,7 @@ void LL_ADC_StructInit(LL_ADC_InitTypeDef *pADC_InitStruct)
   *          - SUCCESS: ADC registers are initialized
   *          - ERROR: ADC registers are not initialized
   */
-ErrorStatus LL_ADC_REG_Init(ADC_TypeDef *ADCx, LL_ADC_REG_InitTypeDef *pADC_REG_InitStruct )
+ErrorStatus LL_ADC_REG_Init(ADC_TypeDef *ADCx, const LL_ADC_REG_InitTypeDef *pADC_REG_InitStruct)
 {
   ErrorStatus status = SUCCESS;
 
@@ -1011,7 +1040,7 @@ ErrorStatus LL_ADC_REG_Init(ADC_TypeDef *ADCx, LL_ADC_REG_InitTypeDef *pADC_REG_
   *                            whose fields will be set to default values.
   * @retval None
   */
-void LL_ADC_REG_StructInit(LL_ADC_REG_InitTypeDef *pADC_REG_InitStruct )
+void LL_ADC_REG_StructInit(LL_ADC_REG_InitTypeDef *pADC_REG_InitStruct)
 {
   /* Set ADC_REG_InitStruct fields to default values */
   /* Set fields of ADC group regular */
@@ -1052,18 +1081,15 @@ void LL_ADC_REG_StructInit(LL_ADC_REG_InitTypeDef *pADC_REG_InitStruct )
   *          - Set ADC channel sampling time
   *            Refer to function LL_ADC_SetChannelSamplingTime();
   * @note   Caution if feature ADC group injected contexts queue is enabled
-  *         (refer to with function @ref LL_ADC_INJ_SetQueueMode() ):
   *         using successively several times this function will appear as
   *         having no effect.
-  *         To set several features of ADC group injected, use
-  *         function @ref LL_ADC_INJ_ConfigQueueContext().
   * @param  ADCx ADC instance
   * @param  pADC_INJ_InitStruct Pointer to a @ref LL_ADC_INJ_InitTypeDef structure
   * @retval An ErrorStatus enumeration value:
   *          - SUCCESS: ADC registers are initialized
   *          - ERROR: ADC registers are not initialized
   */
-ErrorStatus LL_ADC_INJ_Init(ADC_TypeDef *ADCx, LL_ADC_INJ_InitTypeDef *pADC_INJ_InitStruct)
+ErrorStatus LL_ADC_INJ_Init(ADC_TypeDef *ADCx, const LL_ADC_INJ_InitTypeDef *pADC_INJ_InitStruct)
 {
   ErrorStatus status = SUCCESS;
 

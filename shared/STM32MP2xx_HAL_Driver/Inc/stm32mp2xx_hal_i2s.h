@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2020 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -376,18 +376,18 @@ typedef  void (*pI2S_CallbackTypeDef)(I2S_HandleTypeDef *hi2s); /*!< pointer to 
 /** @defgroup I2S_Flags_Definition I2S Flags Definition
   * @{
   */
-#define I2S_FLAG_RXP                     SPI_SR_RXP       /* I2S status flag : Rx-Packet available flag                 */
-#define I2S_FLAG_TXP                     SPI_SR_TXP       /* I2S status flag : Tx-Packet space available flag           */
-#define I2S_FLAG_DXP                     SPI_SR_DXP       /* I2S status flag : Dx-Packet space available flag           */
-#define I2S_FLAG_EOT                     SPI_SR_EOT       /* I2S status flag : End of transfer flag                     */
-#define I2S_FLAG_TXTF                    SPI_SR_TXTF      /* I2S status flag : Transmission Transfer Filled flag        */
-#define I2S_FLAG_UDR                     SPI_SR_UDR       /* I2S Error flag  : Underrun flag                            */
-#define I2S_FLAG_OVR                     SPI_SR_OVR       /* I2S Error flag  : Overrun flag                             */
-#define I2S_FLAG_FRE                     SPI_SR_TIFRE     /* I2S Error flag  : TI mode frame format error flag          */
-#define I2S_FLAG_SUSP                    SPI_SR_SUSP      /* I2S status flag : Transfer suspend complete flag           */
-#define I2S_FLAG_TXC                     SPI_SR_TXC       /* I2S status flag : TxFIFO transmission complete flag        */
-#define I2S_FLAG_FRLVL                   SPI_SR_RXPLVL    /* I2S status flag : Fifo reception level flag                */
-#define I2S_FLAG_RXWNE                   SPI_SR_RXWNE     /* I2S status flag : RxFIFO word not empty flag               */
+#define I2S_FLAG_RXP                     SPI_SR_RXP       /* I2S status flag : Rx-Packet available flag               */
+#define I2S_FLAG_TXP                     SPI_SR_TXP       /* I2S status flag : Tx-Packet space available flag         */
+#define I2S_FLAG_DXP                     SPI_SR_DXP       /* I2S status flag : Dx-Packet space available flag         */
+#define I2S_FLAG_EOT                     SPI_SR_EOT       /* I2S status flag : End of transfer flag                   */
+#define I2S_FLAG_TXTF                    SPI_SR_TXTF      /* I2S status flag : Transmission Transfer Filled flag      */
+#define I2S_FLAG_UDR                     SPI_SR_UDR       /* I2S Error flag  : Underrun flag                          */
+#define I2S_FLAG_OVR                     SPI_SR_OVR       /* I2S Error flag  : Overrun flag                           */
+#define I2S_FLAG_FRE                     SPI_SR_TIFRE     /* I2S Error flag  : TI mode frame format error flag        */
+#define I2S_FLAG_SUSP                    SPI_SR_SUSP      /* I2S status flag : Transfer suspend complete flag         */
+#define I2S_FLAG_TXC                     SPI_SR_TXC       /* I2S status flag : TxFIFO transmission complete flag      */
+#define I2S_FLAG_FRLVL                   SPI_SR_RXPLVL    /* I2S status flag : Fifo reception level flag              */
+#define I2S_FLAG_RXWNE                   SPI_SR_RXWNE     /* I2S status flag : RxFIFO word not empty flag             */
 #define I2S_FLAG_MASK                    (SPI_SR_RXP | SPI_SR_TXP | SPI_SR_DXP |SPI_SR_UDR | SPI_SR_OVR | SPI_SR_TIFRE)
 /**
   * @}
@@ -635,7 +635,9 @@ uint32_t HAL_I2S_GetError(I2S_HandleTypeDef *hi2s);
   * @retval SET or RESET.
   */
 #define I2S_CHECK_FLAG(__SR__, __FLAG__)         ((((__SR__) &\
-                                                    ((__FLAG__) & I2S_FLAG_MASK)) == ((__FLAG__) & I2S_FLAG_MASK)) ? SET : RESET)
+                                                    ((__FLAG__) &\
+                                                     I2S_FLAG_MASK)) == ((__FLAG__) &\
+                                                                         I2S_FLAG_MASK)) ? SET : RESET)
 
 /** @brief  Check whether the specified SPI Interrupt is set or not.
   * @param  __IER__  copy of I2S IER register.

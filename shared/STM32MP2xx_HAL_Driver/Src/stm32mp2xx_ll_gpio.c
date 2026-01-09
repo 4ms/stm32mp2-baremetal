@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -22,15 +22,25 @@
 #include "stm32mp2xx_ll_bus.h"
 #ifdef  USE_FULL_ASSERT
 #include "stm32_assert.h"
-#else
+#else   /* USE_FULL_ASSERT */
 #define assert_param(expr) ((void)0U)
-#endif
+#endif  /* USE_FULL_ASSERT */
 
 /** @addtogroup STM32MP2xx_LL_Driver
   * @{
   */
 
-#if ((defined(CORE_CM33) || defined(CORE_CA35)) && (defined (GPIOA) || defined (GPIOB) || defined (GPIOC) || defined (GPIOD) || defined (GPIOE) || defined (GPIOF) || defined (GPIOG) || defined (GPIOH) || defined (GPIOI) || defined (GPIOJ) || defined (GPIOK) || defined (GPIOZ))) || (defined(CORE_CM0PLUS) && defined(GPIOZ))
+#if (                                                                                 \
+      (defined(CORE_CM33) || defined(CORE_CA35))                                      \
+      &&                                                                              \
+      (                                                                               \
+        defined (GPIOA) || defined (GPIOB) || defined (GPIOC) || defined (GPIOD) ||   \
+        defined (GPIOE) || defined (GPIOF) || defined (GPIOG) || defined (GPIOH) ||   \
+        defined (GPIOI) || defined (GPIOJ) || defined (GPIOK) || defined (GPIOZ)      \
+      )                                                                               \
+    )                                                                                 \
+    ||                                                                                \
+    (defined(CORE_CM0PLUS) && defined(GPIOZ))
 /** @addtogroup GPIO_LL
   * @{
   */
@@ -106,7 +116,7 @@ ErrorStatus LL_GPIO_DeInit(const GPIO_TypeDef *GPIOx)
   /* Check the parameters */
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
 
-/* Force and Release reset on clock of GPIOx Port */
+  /* Force and Release reset on clock of GPIOx Port */
 #if defined(CORE_CM33) || defined(CORE_CA35)
   if (GPIOx == GPIOA)
   {
@@ -153,16 +163,20 @@ ErrorStatus LL_GPIO_DeInit(const GPIO_TypeDef *GPIOx)
     LL_RCC_GPIOI_ForceReset();
     LL_RCC_GPIOI_ReleaseReset();
   }
+#if defined (GPIOJ)
   else if (GPIOx == GPIOJ)
   {
     LL_RCC_GPIOJ_ForceReset();
     LL_RCC_GPIOJ_ReleaseReset();
   }
+#endif /* GPIOJ */
+#if defined (GPIOK)
   else if (GPIOx == GPIOK)
   {
     LL_RCC_GPIOK_ForceReset();
     LL_RCC_GPIOK_ReleaseReset();
   }
+#endif /* GPOIK */
   else if (GPIOx == GPIOZ)
   {
     LL_RCC_GPIOZ_ForceReset();
@@ -172,7 +186,7 @@ ErrorStatus LL_GPIO_DeInit(const GPIO_TypeDef *GPIOx)
   {
     status = ERROR;
   }
-  
+
 #else /* CORE_CM33 || CORE_CA35 */
   status = ERROR;
 #endif /* CORE_CM33 || CORE_CA35 */
@@ -191,10 +205,10 @@ ErrorStatus LL_GPIO_DeInit(const GPIO_TypeDef *GPIOx)
   */
 ErrorStatus LL_GPIO_Init(GPIO_TypeDef *GPIOx, LL_GPIO_InitTypeDef *GPIO_InitStruct)
 {
-  uint32_t pinpos, currentpin;
+  uint32_t pinpos;
+  uint32_t currentpin;
 
   /* Check the parameters */
-  //TODO add null pointer checking for GPIO_InitStruct
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
   assert_param(IS_LL_GPIO_PIN(GPIO_InitStruct->Pin));
   assert_param(IS_LL_GPIO_MODE(GPIO_InitStruct->Mode));
@@ -204,9 +218,9 @@ ErrorStatus LL_GPIO_Init(GPIO_TypeDef *GPIOx, LL_GPIO_InitTypeDef *GPIO_InitStru
   /* Initialize  pinpos on first pin set */
 #if defined(CORE_CM0PLUS)
   pinpos = 0;
-#else
+#else   /* CORE_CM0PLUS */
   pinpos = POSITION_VAL(GPIO_InitStruct->Pin);
-#endif
+#endif  /* CORE_CM0PLUS */
 
   /* Configure the port pins */
   while (((GPIO_InitStruct->Pin) >> pinpos) != 0x00000000U)
@@ -292,7 +306,18 @@ void LL_GPIO_StructInit(LL_GPIO_InitTypeDef *GPIO_InitStruct)
   * @}
   */
 
-#endif /* ((defined(CORE_CM33) || defined(CORE_CA35)) && (defined (GPIOA) || defined (GPIOB) || defined (GPIOC) || defined (GPIOD) || defined (GPIOE) || defined (GPIOF) || defined (GPIOG) || defined (GPIOH) || defined (GPIOI) || defined (GPIOJ) || defined (GPIOK) || defined (GPIOZ))) || (defined(CORE_CM0PLUS) && defined(GPIOZ)) */
+#endif  /* (                                                                                  \
+              (defined(CORE_CM33) || defined(CORE_CA35))                                      \
+              &&                                                                              \
+              (                                                                               \
+                defined (GPIOA) || defined (GPIOB) || defined (GPIOC) || defined (GPIOD) ||   \
+                defined (GPIOE) || defined (GPIOF) || defined (GPIOG) || defined (GPIOH) ||   \
+                defined (GPIOI) || defined (GPIOJ) || defined (GPIOK) || defined (GPIOZ)      \
+              )                                                                               \
+            )                                                                                 \
+            ||                                                                                \
+            (defined(CORE_CM0PLUS) && defined(GPIOZ))
+        */
 
 /**
   * @}

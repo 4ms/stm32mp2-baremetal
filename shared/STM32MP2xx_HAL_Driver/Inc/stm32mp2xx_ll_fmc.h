@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                       opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -41,11 +40,13 @@ extern "C" {
   */
 #define IS_FMC_ITEM_CID(__ITEM__) (((__ITEM__) >= FMC_COMMON) && \
                                    ((__ITEM__) <= FMC_NAND))
-#define IS_FMC_ATTRIBUTES_CID(__ATTRIBUTE__) ((((__ATTRIBUTE__) & FMC_CID_DYNAMIC_SELECT) == FMC_CID_DYNAMIC_SELECT) || \
-                                         (((__ATTRIBUTE__) & FMC_CID_STATIC_SELECT) == FMC_CID_STATIC_SELECT) || \
-                                         (((__ATTRIBUTE__) & FMC_CID_DISABLE) == FMC_CID_DISABLE) || \
-                                         (((__ATTRIBUTE__) & FMC_SEC_SELECT) == FMC_SEC_SELECT) || \
-                                         (((__ATTRIBUTE__) & FMC_PRIV_SELECT) == FMC_PRIV_SELECT))
+#define IS_FMC_ATTRIBUTES_CID(__ATTRIBUTE__) ((((__ATTRIBUTE__) & \
+                                                FMC_CID_DYNAMIC_SELECT) == FMC_CID_DYNAMIC_SELECT) || \
+                                              (((__ATTRIBUTE__) & \
+                                                FMC_CID_STATIC_SELECT) == FMC_CID_STATIC_SELECT) || \
+                                              (((__ATTRIBUTE__) & FMC_CID_DISABLE) == FMC_CID_DISABLE) || \
+                                              (((__ATTRIBUTE__) & FMC_SEC_SELECT) == FMC_SEC_SELECT) || \
+                                              (((__ATTRIBUTE__) & FMC_PRIV_SELECT) == FMC_PRIV_SELECT))
 
 #define IS_FMC_NORSRAM_BANK(__BANK__) (((__BANK__) == FMC_NORSRAM_BANK1) || \
                                        ((__BANK__) == FMC_NORSRAM_BANK2) || \
@@ -153,60 +154,60 @@ extern "C" {
 typedef struct
 {
   uint32_t NSBank;                       /*!< Specifies the NORSRAM memory device that will be used.
-                                              This parameter can be a value of @ref FMC_NORSRAM_Bank                     */
+                                          This parameter can be a value of @ref FMC_NORSRAM_Bank                     */
 
   uint32_t DataAddressMux;               /*!< Specifies whether the address and data values are
-                                              multiplexed on the data bus or not.
-                                              This parameter can be a value of @ref FMC_Data_Address_Bus_Multiplexing    */
+                                          multiplexed on the data bus or not.
+                                          This parameter can be a value of @ref FMC_Data_Address_Bus_Multiplexing    */
 
   uint32_t MemoryType;                   /*!< Specifies the type of external memory attached to
-                                              the corresponding memory device.
-                                              This parameter can be a value of @ref FMC_Memory_Type                      */
+                                          the corresponding memory device.
+                                          This parameter can be a value of @ref FMC_Memory_Type                      */
 
   uint32_t MemoryDataWidth;              /*!< Specifies the external memory device width.
-                                              This parameter can be a value of @ref FMC_NORSRAM_Data_Width               */
+                                          This parameter can be a value of @ref FMC_NORSRAM_Data_Width               */
 
   uint32_t BurstAccessMode;              /*!< Enables or disables the burst access mode for Flash memory,
-                                              valid only with synchronous burst Flash memories.
-                                              This parameter can be a value of @ref FMC_Burst_Access_Mode                */
+                                          valid only with synchronous burst Flash memories.
+                                          This parameter can be a value of @ref FMC_Burst_Access_Mode                */
 
   uint32_t WaitSignalPolarity;           /*!< Specifies the wait signal polarity, valid only when accessing
-                                              the Flash memory in burst mode.
-                                              This parameter can be a value of @ref FMC_Wait_Signal_Polarity             */
+                                          the Flash memory in burst mode.
+                                          This parameter can be a value of @ref FMC_Wait_Signal_Polarity             */
 
   uint32_t WaitSignalActive;             /*!< Specifies if the wait signal is asserted by the memory one
-                                              clock cycle before the wait state or during the wait state,
-                                              valid only when accessing memories in burst mode.
-                                              This parameter can be a value of @ref FMC_Wait_Timing                      */
+                                          clock cycle before the wait state or during the wait state,
+                                          valid only when accessing memories in burst mode.
+                                          This parameter can be a value of @ref FMC_Wait_Timing                      */
 
   uint32_t WriteOperation;               /*!< Enables or disables the write operation in the selected device by the FMC.
-                                              This parameter can be a value of @ref FMC_Write_Operation                  */
+                                          This parameter can be a value of @ref FMC_Write_Operation                  */
 
   uint32_t WaitSignal;                   /*!< Enables or disables the wait state insertion via wait
-                                              signal, valid for Flash memory access in burst mode.
-                                              This parameter can be a value of @ref FMC_Wait_Signal                      */
+                                          signal, valid for Flash memory access in burst mode.
+                                          This parameter can be a value of @ref FMC_Wait_Signal                      */
 
   uint32_t ExtendedMode;                 /*!< Enables or disables the extended mode.
-                                              This parameter can be a value of @ref FMC_Extended_Mode                    */
+                                          This parameter can be a value of @ref FMC_Extended_Mode                    */
 
   uint32_t AsynchronousWait;             /*!< Enables or disables wait signal during asynchronous transfers,
-                                              valid only with asynchronous Flash memories.
-                                              This parameter can be a value of @ref FMC_AsynchronousWait                 */
+                                          valid only with asynchronous Flash memories.
+                                          This parameter can be a value of @ref FMC_AsynchronousWait                 */
 
   uint32_t WriteBurst;                   /*!< Enables or disables the write burst operation.
-                                              This parameter can be a value of @ref FMC_Write_Burst                      */
+                                          This parameter can be a value of @ref FMC_Write_Burst                      */
 
   uint32_t ContinuousClock;              /*!< Enables or disables the FMC clock output to external memory devices.
-                                              This parameter is only enabled through the FMC_BCR1 register, and don't care
-                                              through FMC_BCR2..4 registers.
-                                              This parameter can be a value of @ref FMC_Continous_Clock                  */
+                                          This parameter is only enabled through the FMC_BCR1 register, and don't care
+                                          through FMC_BCR2..4 registers.
+                                          This parameter can be a value of @ref FMC_Continous_Clock                  */
 
   uint32_t PageSize;                     /*!< Specifies the memory page size.
-                                              This parameter can be a value of @ref FMC_Page_Size                        */
+                                          This parameter can be a value of @ref FMC_Page_Size                        */
 
   uint32_t NBLSetupTime;                 /*!< Specifies the NBL setup timing clock cycle number
-                                              This parameter can be a value of @ref FMC_Byte_Lane                        */
-}FMC_NORSRAM_InitTypeDef;
+                                          This parameter can be a value of @ref FMC_Byte_Lane                        */
+} FMC_NORSRAM_InitTypeDef;
 
 /**
   * @brief  FMC NORSRAM Timing parameters structure definition
@@ -214,47 +215,48 @@ typedef struct
 typedef struct
 {
   uint32_t AddressSetupTime;             /*!< Defines the number of HCLK cycles to configure
-                                              the duration of the address setup time.
-                                              This parameter can be a value between Min_Data = 0 and Max_Data = 15.
-                                              @note This parameter is not used with synchronous NOR Flash memories.      */
+                                          the duration of the address setup time.
+                                          This parameter can be a value between Min_Data = 0 and Max_Data = 15.
+                                          @note This parameter is not used with synchronous NOR Flash memories.      */
 
   uint32_t AddressHoldTime;              /*!< Defines the number of HCLK cycles to configure
-                                              the duration of the address hold time.
-                                              This parameter can be a value between Min_Data = 1 and Max_Data = 15.
-                                              @note This parameter is not used with synchronous NOR Flash memories.      */
+                                          the duration of the address hold time.
+                                          This parameter can be a value between Min_Data = 1 and Max_Data = 15.
+                                          @note This parameter is not used with synchronous NOR Flash memories.      */
 
   uint32_t DataSetupTime;                /*!< Defines the number of HCLK cycles to configure
-                                              the duration of the data setup time.
-                                              This parameter can be a value between Min_Data = 1 and Max_Data = 255.
-                                              @note This parameter is used for SRAMs, ROMs and asynchronous multiplexed
-                                              NOR Flash memories.                                                        */
+                                          the duration of the data setup time.
+                                          This parameter can be a value between Min_Data = 1 and Max_Data = 255.
+                                          @note This parameter is used for SRAMs, ROMs and asynchronous multiplexed
+                                          NOR Flash memories.                                                        */
 
   uint32_t DataHoldTime;                 /*!< Defines the number of HCLK cycles to configure
-                                              the duration of the data hold time.
-                                              This parameter can be a value between Min_Data = 0 and Max_Data = 3.
-                                              @note This parameter is used for used in asynchronous accesses.            */
+                                          the duration of the data hold time.
+                                          This parameter can be a value between Min_Data = 0 and Max_Data = 3.
+                                          @note This parameter is used for used in asynchronous accesses.            */
 
   uint32_t BusTurnAroundDuration;        /*!< Defines the number of HCLK cycles to configure
-                                              the duration of the bus turnaround.
-                                              This parameter can be a value between Min_Data = 0 and Max_Data = 15.
-                                              @note This parameter is only used for multiplexed NOR Flash memories.      */
+                                          the duration of the bus turnaround.
+                                          This parameter can be a value between Min_Data = 0 and Max_Data = 15.
+                                          @note This parameter is only used for multiplexed NOR Flash memories.      */
 
   uint32_t CLKDivision;                  /*!< Defines the period of CLK clock output signal, expressed in number of
-                                              HCLK cycles. This parameter can be a value between Min_Data = 2 and Max_Data = 16.
-                                              @note This parameter is not used for asynchronous NOR Flash, SRAM or ROM
-                                              accesses.                                                                  */
+                                          HCLK cycles. This parameter can be a value between Min_Data = 2 and
+                                          Max_Data = 16.
+                                          @note This parameter is not used for asynchronous NOR Flash, SRAM or ROM
+                                          accesses.                                                                  */
 
   uint32_t DataLatency;                  /*!< Defines the number of memory clock cycles to issue
-                                              to the memory before getting the first data.
-                                              The parameter value depends on the memory type as shown below:
-                                              - It must be set to 0 in case of a CRAM
-                                              - It is don't care in asynchronous NOR, SRAM or ROM accesses
-                                              - It may assume a value between Min_Data = 2 and Max_Data = 17 in NOR Flash memories
-                                                with synchronous burst mode enable                                       */
+                                          to the memory before getting the first data.
+                                          The parameter value depends on the memory type as shown below:
+                                          - It must be set to 0 in case of a CRAM
+                                          - It is don't care in asynchronous NOR, SRAM or ROM accesses
+                                          - It may assume a value between Min_Data = 2 and Max_Data = 17 in
+                                            NOR Flash memories with synchronous burst mode enable                    */
 
   uint32_t AccessMode;                   /*!< Specifies the asynchronous access mode.
-                                              This parameter can be a value of @ref FMC_Access_Mode                      */
-}FMC_NORSRAM_TimingTypeDef;
+                                              This parameter can be a value of @ref FMC_Access_Mode                  */
+} FMC_NORSRAM_TimingTypeDef;
 
 /**
   * @brief  FMC NAND Configuration Structure definition
@@ -283,7 +285,7 @@ typedef struct
   uint32_t TARSetupTime;           /*!< Defines the number of HCLK cycles to configure the
                                         delay between ALE low and RE low.
                                         This parameter can be a number between Min_Data = 0 and Max_Data = 255 */
-}FMC_NAND_InitTypeDef;
+} FMC_NAND_InitTypeDef;
 
 /**
   * @brief  FMC NAND Timing parameters structure definition
@@ -314,7 +316,7 @@ typedef struct
                                       write access to common/Attribute or I/O memory space (depending
                                       on the memory space timing to be configured).
                                       This parameter can be a number between Min_Data = 0 and Max_Data = 254   */
-}FMC_NAND_PCC_TimingTypeDef;
+} FMC_NAND_PCC_TimingTypeDef;
 
 
 /**
@@ -508,7 +510,7 @@ typedef struct
   * @}
   */
 
-  /** @defgroup FMC_Access_Mode FMC Access Mode
+/** @defgroup FMC_Access_Mode FMC Access Mode
   * @{
   */
 #define FMC_ACCESS_MODE_A                       ((uint32_t)0x00000000)
@@ -634,7 +636,8 @@ typedef struct
 /** @defgroup FMC_LL_Private_Constants FMC_LL  Private Constants
   * @{
   */
-#define FMC_CID_DYNAMIC_MASK        (FMC_CIDCFGR0_SEMWLC3 | FMC_CIDCFGR0_SEMWLC2 | FMC_CIDCFGR0_SEMWLC1 | FMC_CIDCFGR0_SEMWLC0)
+#define FMC_CID_DYNAMIC_MASK        (FMC_CIDCFGR0_SEMWLC3 |\
+                                     FMC_CIDCFGR0_SEMWLC2 | FMC_CIDCFGR0_SEMWLC1 | FMC_CIDCFGR0_SEMWLC0)
 #define FMC_CID_DYNAMIC_SELECT      0x10000000U
 #define FMC_CID_STATIC_SELECT       0x20000000U
 #define FMC_PRIV_SELECT             0x01000000U
@@ -650,12 +653,12 @@ typedef struct
 /**
   * @}
   */
-  
+
 /* Private macro -------------------------------------------------------------*/
 /** @defgroup FMC_LL_Private_Macros FMC_LL  Private Macros
   * @{
   */
-  /**
+/**
   * @brief  Enable the FMC Peripheral.
   * @retval None
   */
@@ -692,9 +695,9 @@ typedef struct
   */
 
 /** @defgroup FMC_LL_NAND_Macros FMC NAND Macros
- *  @brief macros to handle NAND device enable/disable
- *  @{
- */
+  *  @brief macros to handle NAND device enable/disable
+  *  @{
+  */
 
 /**
   * @brief  Enable the NAND device access.
@@ -815,9 +818,14 @@ HAL_StatusTypeDef HAL_FMC_ReleaseSemaphore(uint32_t Item);
   *  @{
   */
 HAL_StatusTypeDef  FMC_NORSRAM_Init(FMC_NORSRAM_TypeDef *Device, FMC_NORSRAM_InitTypeDef *Init);
-HAL_StatusTypeDef  FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device, FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank);
-HAL_StatusTypeDef  FMC_NORSRAM_Extended_Timing_Init(FMC_NORSRAM_EXTENDED_TypeDef *Device, FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank, uint32_t ExtendedMode);
-HAL_StatusTypeDef  FMC_NORSRAM_DeInit(FMC_NORSRAM_TypeDef *Device, FMC_NORSRAM_EXTENDED_TypeDef *ExDevice, uint32_t Bank);
+HAL_StatusTypeDef  FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device, FMC_NORSRAM_TimingTypeDef *Timing,
+                                           uint32_t Bank);
+HAL_StatusTypeDef  FMC_NORSRAM_Extended_Timing_Init(FMC_NORSRAM_EXTENDED_TypeDef *Device,
+                                                    FMC_NORSRAM_TimingTypeDef *Timing,
+                                                    uint32_t Bank,
+                                                    uint32_t ExtendedMode);
+HAL_StatusTypeDef  FMC_NORSRAM_DeInit(FMC_NORSRAM_TypeDef *Device, FMC_NORSRAM_EXTENDED_TypeDef *ExDevice,
+                                      uint32_t Bank);
 /**
   * @}
   */
@@ -841,8 +849,10 @@ HAL_StatusTypeDef  FMC_NORSRAM_WriteOperation_Disable(FMC_NORSRAM_TypeDef *Devic
   *  @{
   */
 HAL_StatusTypeDef  FMC_NAND_Init(FMC_NAND_TypeDef *Device, FMC_NAND_InitTypeDef *Init);
-HAL_StatusTypeDef  FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank);
-HAL_StatusTypeDef  FMC_NAND_AttributeSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank);
+HAL_StatusTypeDef  FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing,
+                                                    uint32_t Bank);
+HAL_StatusTypeDef  FMC_NAND_AttributeSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing,
+                                                       uint32_t Bank);
 HAL_StatusTypeDef  FMC_NAND_DeInit(FMC_NAND_TypeDef *Device, uint32_t Bank);
 /**
   * @}
@@ -862,7 +872,6 @@ HAL_StatusTypeDef  FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, u
   */
 
 
-
 /**
   * @}
   */
@@ -880,5 +889,3 @@ HAL_StatusTypeDef  FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, u
 #endif
 
 #endif /* STM32MP2xx_LL_FMC_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

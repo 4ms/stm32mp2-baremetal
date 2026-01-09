@@ -17,8 +17,8 @@
   */
 
 /* Define to prevent recursive inclusion ------------------------------------*/
-#ifndef __STM32MP2xx_HAL_ICACHE_H
-#define __STM32MP2xx_HAL_ICACHE_H
+#ifndef STM32MP2xx_HAL_ICACHE_H
+#define STM32MP2xx_HAL_ICACHE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,6 +27,7 @@ extern "C" {
 /* Includes -----------------------------------------------------------------*/
 #include "stm32mp2xx_hal_def.h"
 
+#if defined(ICACHE)
 /** @addtogroup STM32MP2xx_HAL_Driver
   * @{
   */
@@ -100,13 +101,13 @@ typedef struct
 /** @defgroup ICACHE_Region_Size Remapped Region size
   * @{
   */
-#define ICACHE_REGIONSIZE_2MB          1U  /*!< Region size 2MB */
-#define ICACHE_REGIONSIZE_4MB          2U  /*!< Region size 4MB */
-#define ICACHE_REGIONSIZE_8MB          3U  /*!< Region size 8MB */
-#define ICACHE_REGIONSIZE_16MB         4U  /*!< Region size 16MB */
-#define ICACHE_REGIONSIZE_32MB         5U  /*!< Region size 32MB */
-#define ICACHE_REGIONSIZE_64MB         6U  /*!< Region size 64MB */
-#define ICACHE_REGIONSIZE_128MB        7U  /*!< Region size 128MB */
+#define ICACHE_REGIONSIZE_2MB          1UL  /*!< Region size 2MB */
+#define ICACHE_REGIONSIZE_4MB          2UL  /*!< Region size 4MB */
+#define ICACHE_REGIONSIZE_8MB          3UL  /*!< Region size 8MB */
+#define ICACHE_REGIONSIZE_16MB         4UL  /*!< Region size 16MB */
+#define ICACHE_REGIONSIZE_32MB         5UL  /*!< Region size 32MB */
+#define ICACHE_REGIONSIZE_64MB         6UL  /*!< Region size 64MB */
+#define ICACHE_REGIONSIZE_128MB        7UL  /*!< Region size 128MB */
 /**
   * @}
   */
@@ -272,36 +273,6 @@ HAL_StatusTypeDef HAL_ICACHE_DisableRemapRegion(uint32_t Region);
 /**
   * @}
   */
-/* Private types -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private constants ---------------------------------------------------------*/
-/* Private macros ------------------------------------------------------------*/
-/** @defgroup ICACHE_Private_Macros ICACHE Private Macros
-  * @{
-  */
-
-#define IS_ICACHE_ASSOCIATIVITY_MODE(__MODE__) (((__MODE__) == ICACHE_1WAY) || \
-                                                ((__MODE__) == ICACHE_2WAYS))
-
-#define IS_ICACHE_MONITOR_TYPE(__TYPE__)    (((__TYPE__) == ICACHE_MONITOR_HIT_MISS) || \
-                                             ((__TYPE__) == ICACHE_MONITOR_HIT)      || \
-                                             ((__TYPE__) == ICACHE_MONITOR_MISS))
-
-#define IS_ICACHE_REGION_NUMBER(__NUMBER__) ((__NUMBER__) < 4U)
-
-#define IS_ICACHE_REGION_SIZE(__SIZE__)     (((__SIZE__) == ICACHE_REGIONSIZE_2MB)   || \
-                                             ((__SIZE__) == ICACHE_REGIONSIZE_4MB)   || \
-                                             ((__SIZE__) == ICACHE_REGIONSIZE_8MB)   || \
-                                             ((__SIZE__) == ICACHE_REGIONSIZE_16MB)  || \
-                                             ((__SIZE__) == ICACHE_REGIONSIZE_32MB)  || \
-                                             ((__SIZE__) == ICACHE_REGIONSIZE_64MB)  || \
-                                             ((__SIZE__) == ICACHE_REGIONSIZE_128MB))
-
-#define IS_ICACHE_REGION_TRAFFIC_ROUTE(__TRAFFICROUTE__)  (((__TRAFFICROUTE__) == ICACHE_MASTER1_PORT) || \
-                                                           ((__TRAFFICROUTE__) == ICACHE_MASTER2_PORT))
-
-#define IS_ICACHE_REGION_OUTPUT_BURST_TYPE(__OUTPUTBURSTTYPE_) (((__OUTPUTBURSTTYPE_) == ICACHE_OUTPUT_BURST_WRAP) || \
-                                                                ((__OUTPUTBURSTTYPE_) == ICACHE_OUTPUT_BURST_INCR))
 
 /**
   * @}
@@ -317,6 +288,7 @@ HAL_StatusTypeDef HAL_ICACHE_DisableRemapRegion(uint32_t Region);
 /**
   * @}
   */
+#endif /* ICACHE */
 
 #ifdef __cplusplus
 }

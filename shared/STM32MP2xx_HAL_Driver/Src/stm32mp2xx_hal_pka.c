@@ -199,11 +199,11 @@
 
      The compilation flag USE_HAL_PKA_REGISTER_CALLBACKS, when set to 1,
      allows the user to configure dynamically the driver callbacks.
-     Use Functions @ref HAL_PKA_RegisterCallback()
+     Use Functions HAL_PKA_RegisterCallback()
      to register an interrupt callback.
     [..]
 
-     Function @ref HAL_PKA_RegisterCallback() allows to register following callbacks:
+     Function HAL_PKA_RegisterCallback() allows to register following callbacks:
        (+) OperationCpltCallback : callback for End of operation.
        (+) ErrorCallback         : callback for error detection.
        (+) MspInitCallback       : callback for Msp Init.
@@ -212,11 +212,11 @@
      and a pointer to the user callback function.
     [..]
 
-     Use function @ref HAL_PKA_UnRegisterCallback to reset a callback to the default
+     Use function HAL_PKA_UnRegisterCallback to reset a callback to the default
      weak function.
     [..]
 
-     @ref HAL_PKA_UnRegisterCallback takes as parameters the HAL peripheral handle,
+     HAL_PKA_UnRegisterCallback takes as parameters the HAL peripheral handle,
      and the Callback ID.
      This function allows to reset following callbacks:
        (+) OperationCpltCallback : callback for End of operation.
@@ -225,27 +225,27 @@
        (+) MspDeInitCallback     : callback for Msp DeInit.
      [..]
 
-     By default, after the @ref HAL_PKA_Init() and when the state is @ref HAL_PKA_STATE_RESET
+     By default, after the HAL_PKA_Init() and when the state is HAL_PKA_STATE_RESET
      all callbacks are set to the corresponding weak functions:
-     examples @ref HAL_PKA_OperationCpltCallback(), @ref HAL_PKA_ErrorCallback().
+     examples HAL_PKA_OperationCpltCallback(), HAL_PKA_ErrorCallback().
      Exception done for MspInit and MspDeInit functions that are
-     reset to the legacy weak functions in the @ref HAL_PKA_Init()/ @ref HAL_PKA_DeInit() only when
+     reset to the legacy weak functions in the HAL_PKA_Init()/ HAL_PKA_DeInit() only when
      these callbacks are null (not registered beforehand).
     [..]
 
-     If MspInit or MspDeInit are not null, the @ref HAL_PKA_Init()/ @ref HAL_PKA_DeInit()
+     If MspInit or MspDeInit are not null, the HAL_PKA_Init()/ HAL_PKA_DeInit()
      keep and use the user MspInit/MspDeInit callbacks (registered beforehand) whatever the state.
      [..]
 
-     Callbacks can be registered/unregistered in @ref HAL_PKA_STATE_READY state only.
+     Callbacks can be registered/unregistered in HAL_PKA_STATE_READY state only.
      Exception done MspInit/MspDeInit functions that can be registered/unregistered
-     in @ref HAL_PKA_STATE_READY or @ref HAL_PKA_STATE_RESET state,
+     in HAL_PKA_STATE_READY or HAL_PKA_STATE_RESET state,
      thus registered (user) MspInit/DeInit callbacks can be used during the Init/DeInit.
     [..]
 
      Then, the user first registers the MspInit/MspDeInit user callbacks
-     using @ref HAL_PKA_RegisterCallback() before calling @ref HAL_PKA_DeInit()
-     or @ref HAL_PKA_Init() function.
+     using HAL_PKA_RegisterCallback() before calling HAL_PKA_DeInit()
+     or HAL_PKA_Init() function.
      [..]
 
      When the compilation flag USE_HAL_PKA_REGISTER_CALLBACKS is set to 0 or
@@ -298,7 +298,7 @@ uint32_t PKA_GetMode(const PKA_HandleTypeDef *hpka);
 HAL_StatusTypeDef PKA_PollEndOfOperation(const PKA_HandleTypeDef *hpka, uint32_t Timeout, uint32_t Tickstart);
 uint32_t PKA_CheckError(const PKA_HandleTypeDef *hpka, uint32_t mode);
 uint32_t PKA_GetBitSize_u8(uint32_t byteNumber);
-uint32_t PKA_GetOptBitSize_u8(uint32_t byteNumber, const uint8_t* data);
+uint32_t PKA_GetOptBitSize_u8(uint32_t byteNumber, uint8_t msb);
 uint32_t PKA_GetBitSize_u32(uint32_t wordNumber);
 uint32_t PKA_GetArraySize_u8(uint32_t bitSize);
 void PKA_Memcpy_u32_to_u8(uint8_t dst[], __IO const uint32_t src[], size_t n);
@@ -399,8 +399,22 @@ HAL_StatusTypeDef HAL_PKA_Init(PKA_HandleTypeDef *hpka)
     /* Set the state to busy */
     hpka->State = HAL_PKA_STATE_BUSY;
 
-    /* Reset the control register and enable the PKA */
-    hpka->Instance->CR = PKA_CR_EN;
+    /* Get current tick */
+    tickstart = HAL_GetTick();
+
+    /* Reset the control register and enable the PKA (wait the end of PKA RAM erase) */
+    while ((hpka->Instance->CR & PKA_CR_EN) != PKA_CR_EN)
+    {
+      hpka->Instance->CR = PKA_CR_EN;
+
+      /* Check the Timeout */
+      if ((HAL_GetTick() - tickstart) > PKA_RAM_ERASE_TIMEOUT)
+      {
+        /* Set timeout status */
+        err = HAL_TIMEOUT;
+        break;
+      }
+    }
 
     /* Get current tick */
     tickstart = HAL_GetTick();
@@ -502,12 +516,50 @@ __weak void HAL_PKA_MspInit(PKA_HandleTypeDef *hpka)
   */
 __weak void HAL_PKA_MspDeInit(PKA_HandleTypeDef *hpka)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hpka);
-
-  /* NOTE : This function should not be modified, when the callback is needed,
+  /* NOTE : This function should not be modified,
             the HAL_PKA_MspDeInit can be implemented in the user file
+            user should take into consideration PKA RAM erase when resetting PKA
    */
+  uint32_t tickstart = HAL_GetTick();
+
+  /* Enable PKA reset state */
+  __HAL_RCC_PKA_FORCE_RESET();
+
+  /* Release PKA from reset state */
+  __HAL_RCC_PKA_RELEASE_RESET();
+
+  /* Wait the INITOK flag Setting */
+  while (hpka->Instance->CR != PKA_CR_EN)
+  {
+    hpka->Instance->CR = PKA_CR_EN;
+
+    /* Check for the Timeout */
+    if ((HAL_GetTick() - tickstart) > PKA_RAM_ERASE_TIMEOUT)
+    {
+      /* update the state */
+      hpka->State = HAL_PKA_STATE_ERROR;
+    }
+  }
+
+  /* Get current tick */
+  tickstart = HAL_GetTick();
+
+  /* Wait the INITOK flag Setting */
+  if (PKA_WaitOnFlagUntilTimeout(hpka, PKA_SR_INITOK, RESET, tickstart, PKA_RAM_ERASE_TIMEOUT) != HAL_OK)
+  {
+    /* update the state */
+    hpka->State = HAL_PKA_STATE_ERROR;
+  }
+
+  /* Reset any pending flag */
+  SET_BIT(hpka->Instance->CLRFR, PKA_CLRFR_PROCENDFC | PKA_CLRFR_RAMERRFC | PKA_CLRFR_ADDRERRFC | PKA_CLRFR_OPERRFC);
+
+  /* PKA Periph clock disable */
+  hpka->Instance->CR = 0;
+  __HAL_RCC_PKA_CLK_DISABLE();
+
+  /* PKA Periph IRQ disable */
+  HAL_NVIC_DisableIRQ(PKA_IRQn);
 }
 
 #if (USE_HAL_PKA_REGISTER_CALLBACKS == 1)
@@ -811,9 +863,7 @@ HAL_StatusTypeDef HAL_PKA_ModExp(PKA_HandleTypeDef *hpka, PKA_ModExpInTypeDef *i
 {
   /* Set input parameter in PKA RAM */
   PKA_ModExp_Set(hpka, in);
-
   opsize = in->OpSize;
-
   /* Start the operation */
   return PKA_Process(hpka, PKA_MODE_MODULAR_EXP, Timeout);
 }
@@ -828,9 +878,7 @@ HAL_StatusTypeDef HAL_PKA_ModExp_IT(PKA_HandleTypeDef *hpka, PKA_ModExpInTypeDef
 {
   /* Set input parameter in PKA RAM */
   PKA_ModExp_Set(hpka, in);
-
   opsize = in->OpSize;
-
   /* Start the operation */
   return PKA_Process_IT(hpka, PKA_MODE_MODULAR_EXP);
 }
@@ -846,9 +894,7 @@ HAL_StatusTypeDef HAL_PKA_ModExpFastMode(PKA_HandleTypeDef *hpka, PKA_ModExpFast
 {
   /* Set input parameter in PKA RAM */
   PKA_ModExpFastMode_Set(hpka, in);
-
   opsize = in->OpSize;
-
   /* Start the operation */
   return PKA_Process(hpka, PKA_MODE_MODULAR_EXP_FAST_MODE, Timeout);
 }
@@ -863,9 +909,7 @@ HAL_StatusTypeDef HAL_PKA_ModExpFastMode_IT(PKA_HandleTypeDef *hpka, PKA_ModExpF
 {
   /* Set input parameter in PKA RAM */
   PKA_ModExpFastMode_Set(hpka, in);
-
   opsize = in->OpSize;
-
   /* Start the operation */
   return PKA_Process_IT(hpka, PKA_MODE_MODULAR_EXP_FAST_MODE);
 }
@@ -883,9 +927,7 @@ HAL_StatusTypeDef HAL_PKA_ModExpProtectMode(PKA_HandleTypeDef *hpka, PKA_ModExpP
 {
   /* Set input parameter in PKA RAM */
   PKA_ModExpProtectMode_Set(hpka, in);
-
   opsize = in->OpSize;
-
   return PKA_Process(hpka, PKA_MODE_MODULAR_EXP_PROTECT, Timeout);
 }
 
@@ -900,9 +942,7 @@ HAL_StatusTypeDef HAL_PKA_ModExpProtectMode_IT(PKA_HandleTypeDef *hpka, PKA_ModE
 {
   /* Set input parameter in PKA RAM */
   PKA_ModExpProtectMode_Set(hpka, in);
-
   opsize = in->OpSize;
-
   return PKA_Process_IT(hpka, PKA_MODE_MODULAR_EXP_PROTECT);
 }
 
@@ -935,9 +975,7 @@ HAL_StatusTypeDef HAL_PKA_ECDSASign(PKA_HandleTypeDef *hpka, PKA_ECDSASignInType
 {
   /* Set input parameter in PKA RAM */
   PKA_ECDSASign_Set(hpka, in);
-
   primeordersize = in->primeOrderSize;
-
   /* Start the operation */
   return PKA_Process(hpka, PKA_MODE_ECDSA_SIGNATURE, Timeout);
 }
@@ -952,9 +990,7 @@ HAL_StatusTypeDef HAL_PKA_ECDSASign_IT(PKA_HandleTypeDef *hpka, PKA_ECDSASignInT
 {
   /* Set input parameter in PKA RAM */
   PKA_ECDSASign_Set(hpka, in);
-
   primeordersize = in->primeOrderSize;
-
   /* Start the operation */
   return PKA_Process_IT(hpka, PKA_MODE_ECDSA_SIGNATURE);
 }
@@ -1132,9 +1168,7 @@ HAL_StatusTypeDef HAL_PKA_ECCMul(PKA_HandleTypeDef *hpka, PKA_ECCMulInTypeDef *i
 {
   /* Set input parameter in PKA RAM */
   PKA_ECCMul_Set(hpka, in);
-
   modulussize = in->modulusSize;
-
   /* Start the operation */
   return PKA_Process(hpka, PKA_MODE_ECC_MUL, Timeout);
 }
@@ -1149,9 +1183,7 @@ HAL_StatusTypeDef HAL_PKA_ECCMul_IT(PKA_HandleTypeDef *hpka, PKA_ECCMulInTypeDef
 {
   /* Set input parameter in PKA RAM */
   PKA_ECCMul_Set(hpka, in);
-
   modulussize = in->modulusSize;
-
   /* Start the operation */
   return PKA_Process_IT(hpka, PKA_MODE_ECC_MUL);
 }
@@ -1166,9 +1198,7 @@ HAL_StatusTypeDef HAL_PKA_ECCMulEx(PKA_HandleTypeDef *hpka, PKA_ECCMulExInTypeDe
 {
   /* Set input parameter in PKA RAM */
   PKA_ECCMulEx_Set(hpka, in);
-
   modulussize = in->modulusSize;
-
   /* Start the operation */
   return PKA_Process(hpka, PKA_MODE_ECC_MUL, Timeout);
 }
@@ -1183,9 +1213,7 @@ HAL_StatusTypeDef HAL_PKA_ECCMulEx_IT(PKA_HandleTypeDef *hpka, PKA_ECCMulExInTyp
 {
   /* Set input parameter in PKA RAM */
   PKA_ECCMulEx_Set(hpka, in);
-
   modulussize = in->modulusSize;
-
   /* Start the operation */
   return PKA_Process_IT(hpka, PKA_MODE_ECC_MUL);
 }
@@ -1704,7 +1732,7 @@ HAL_StatusTypeDef HAL_PKA_Abort(PKA_HandleTypeDef *hpka)
   /* Clear EN bit */
   /* This abort any operation in progress (PKA RAM content is not guaranteed in this case) */
   CLEAR_BIT(hpka->Instance->CR, PKA_CR_EN);
-  /* When secure operation is aborted, PKA perfoms RAM Erase. 667 clock cycle */
+  /* When secure operation is aborted, PKA performs RAM Erase. 667 clock cycle */
   if ((mode == PKA_MODE_MODULAR_EXP_PROTECT) ||
       (mode == PKA_MODE_ECC_MUL) ||
       (mode == PKA_MODE_ECDSA_SIGNATURE))
@@ -2083,22 +2111,9 @@ uint32_t PKA_GetBitSize_u8(uint32_t byteNumber)
   * @param  byteNumber Number of u8 inside the array
   * @param  msb Most significant uint8_t of the array
   */
-uint32_t PKA_GetOptBitSize_u8(uint32_t byteNumber, const uint8_t* data)
+uint32_t PKA_GetOptBitSize_u8(uint32_t byteNumber, uint8_t msb)
 {
   uint32_t position;
-  uint8_t msb;
-  uint32_t size = byteNumber;
-  const uint8_t* dataPointer=data;
-
-  while(*(dataPointer) == 0U)
-  {
-	dataPointer++;
-    size--;
-    if(size == 0UL){
-        break;
-    }
-  }
-  msb = *dataPointer;
 
   position = 32UL - __CLZ(msb);
 
@@ -2288,7 +2303,7 @@ HAL_StatusTypeDef PKA_Process(PKA_HandleTypeDef *hpka, uint32_t mode, uint32_t T
 
       hpka->ErrorCode |= HAL_PKA_ERROR_TIMEOUT;
 
-      /* When secure operation is aborted, PKA perfoms RAM Erase. 667 clock cycle */
+      /* When secure operation is aborted, PKA performs RAM Erase. 667 clock cycle */
       if ((mode == PKA_MODE_MODULAR_EXP_PROTECT) ||
           (mode == PKA_MODE_ECC_MUL) ||
           (mode == PKA_MODE_ECDSA_SIGNATURE))
@@ -2465,10 +2480,10 @@ void PKA_ModExpProtectMode_Set(PKA_HandleTypeDef *hpka, PKA_ModExpProtectModeInT
 void PKA_ECDSASign_Set(PKA_HandleTypeDef *hpka, PKA_ECDSASignInTypeDef *in)
 {
   /* Get the prime order n length */
-  hpka->Instance->RAM[PKA_ECDSA_SIGN_IN_ORDER_NB_BITS] = PKA_GetOptBitSize_u8(in->primeOrderSize, in->primeOrder);
+  hpka->Instance->RAM[PKA_ECDSA_SIGN_IN_ORDER_NB_BITS] = PKA_GetOptBitSize_u8(in->primeOrderSize, *(in->primeOrder));
 
   /* Get the modulus p length */
-  hpka->Instance->RAM[PKA_ECDSA_SIGN_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, in->modulus);
+  hpka->Instance->RAM[PKA_ECDSA_SIGN_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, *(in->modulus));
 
   /* Get the coefficient a sign */
   hpka->Instance->RAM[PKA_ECDSA_SIGN_IN_A_COEFF_SIGN] = in->coefSign;
@@ -2518,10 +2533,10 @@ void PKA_ECDSASign_Set(PKA_HandleTypeDef *hpka, PKA_ECDSASignInTypeDef *in)
 void PKA_ECDSAVerif_Set(PKA_HandleTypeDef *hpka, PKA_ECDSAVerifInTypeDef *in)
 {
   /* Get the prime order n length */
-  hpka->Instance->RAM[PKA_ECDSA_VERIF_IN_ORDER_NB_BITS] = PKA_GetOptBitSize_u8(in->primeOrderSize, in->primeOrder);
+  hpka->Instance->RAM[PKA_ECDSA_VERIF_IN_ORDER_NB_BITS] = PKA_GetOptBitSize_u8(in->primeOrderSize, *(in->primeOrder));
 
   /* Get the modulus p length */
-  hpka->Instance->RAM[PKA_ECDSA_VERIF_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, in->modulus);
+  hpka->Instance->RAM[PKA_ECDSA_VERIF_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, *(in->modulus));
 
   /* Get the coefficient a sign */
   hpka->Instance->RAM[PKA_ECDSA_VERIF_IN_A_COEFF_SIGN] = in->coefSign;
@@ -2612,7 +2627,7 @@ void PKA_RSACRTExp_Set(PKA_HandleTypeDef *hpka, PKA_RSACRTExpInTypeDef *in)
 void PKA_PointCheck_Set(PKA_HandleTypeDef *hpka, PKA_PointCheckInTypeDef *in)
 {
   /* Get the modulus length */
-  hpka->Instance->RAM[PKA_POINT_CHECK_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, in->modulus);
+  hpka->Instance->RAM[PKA_POINT_CHECK_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, *(in->modulus));
 
   /* Get the coefficient a sign */
   hpka->Instance->RAM[PKA_POINT_CHECK_IN_A_COEFF_SIGN] = in->coefSign;
@@ -2651,10 +2666,10 @@ void PKA_PointCheck_Set(PKA_HandleTypeDef *hpka, PKA_PointCheckInTypeDef *in)
 void PKA_ECCMul_Set(PKA_HandleTypeDef *hpka, PKA_ECCMulInTypeDef *in)
 {
   /* Get the prime order n length */
-  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_EXP_NB_BITS] = PKA_GetOptBitSize_u8(in->scalarMulSize, in->primeOrder);
+  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_EXP_NB_BITS] = PKA_GetOptBitSize_u8(in->scalarMulSize, *(in->primeOrder));
 
   /* Get the modulus length */
-  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_OP_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, in->modulus);
+  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_OP_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, *(in->modulus));
 
   /* Get the coefficient a sign */
   hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_A_COEFF_SIGN] = in->coefSign;
@@ -2695,10 +2710,10 @@ void PKA_ECCMul_Set(PKA_HandleTypeDef *hpka, PKA_ECCMulInTypeDef *in)
 void PKA_ECCMulEx_Set(PKA_HandleTypeDef *hpka, PKA_ECCMulExInTypeDef *in)
 {
   /* Get the prime order n length */
-  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_EXP_NB_BITS] = PKA_GetOptBitSize_u8(in->primeOrderSize, in->primeOrder);
+  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_EXP_NB_BITS] = PKA_GetOptBitSize_u8(in->primeOrderSize, *(in->primeOrder));
 
   /* Get the modulus length */
-  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_OP_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, in->modulus);
+  hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_OP_NB_BITS] = PKA_GetOptBitSize_u8(in->modulusSize, *(in->modulus));
 
   /* Get the coefficient a sign */
   hpka->Instance->RAM[PKA_ECC_SCALAR_MUL_IN_A_COEFF_SIGN] = in->coefSign;
@@ -2781,10 +2796,22 @@ void PKA_ModRed_Set(PKA_HandleTypeDef *hpka, PKA_ModRedInTypeDef *in)
   */
 void PKA_MontgomeryParam_Set(PKA_HandleTypeDef *hpka, const uint32_t size, const uint8_t *pOp1)
 {
+  uint32_t bytetoskip = 0UL;
+  uint32_t newSize;
+
   if (pOp1 != NULL)
   {
+    /* Count the number of zero bytes */
+    while ((bytetoskip < size) && (pOp1[bytetoskip] == 0UL))
+    {
+      bytetoskip++;
+    }
+
+    /* Get new size after skipping zero bytes */
+    newSize = size - bytetoskip;
+
     /* Get the number of bit per operand */
-    hpka->Instance->RAM[PKA_MONTGOMERY_PARAM_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(size, pOp1);
+    hpka->Instance->RAM[PKA_MONTGOMERY_PARAM_IN_MOD_NB_BITS] = PKA_GetOptBitSize_u8(newSize, pOp1[bytetoskip]);
 
     /* Move the input parameters pOp1 to PKA RAM */
     PKA_Memcpy_u8_to_u32(&hpka->Instance->RAM[PKA_MONTGOMERY_PARAM_IN_MODULUS], pOp1, size);

@@ -21,8 +21,9 @@
     [..]
     The LL CORTEX driver contains a set of generic APIs that can be
     used by user:
-      (+) SYSTICK configuration used by @ref LL_mDelay and @ref LL_Init1msTick
-          functions
+      (+) SYSTICK configuration used by @ref LL_mDelay and @ref LL_Init1msTick with
+           HCLK source or @ref LL_Init1msTick_HCLK_Div8, @ref LL_Init1msTick_LSI or
+           @ref LL_Init1msTick_LSE with external source
       (+) Low power mode configuration (SCB register of Cortex-MCU)
       (+) API to access to MCU info (CPUID register)
       (+) API to enable fault handler (SHCSR accesses)
@@ -31,7 +32,6 @@
       (+) API to configure the attributes region of MPU secure and non-secure
 
   @endverbatim
-  ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -63,23 +63,30 @@ extern "C" {
   * @{
   */
 
-/** @defgroup CORTEX_LL_EC_CLKSOURCE_HCLK CORTEX LL SYSTICK Clock Source
+/** @defgroup CORTEX_LL_EC_CLKSOURCE_HCLK SYSTICK Clock Source
   * @{
   */
-#define LL_SYSTICK_CLKSOURCE_HCLK_DIV8     0x00000000U                 /*!< AHB clock divided by 8 selected as SysTick clock source.*/
-#define LL_SYSTICK_CLKSOURCE_HCLK          SysTick_CTRL_CLKSOURCE_Msk  /*!< AHB clock selected as SysTick clock source. */
+#define LL_SYSTICK_CLKSOURCE_EXTERNAL      0x00000000U                 /*!< External clock source selected as SysTick
+                                                                            clock source */
+#define LL_SYSTICK_CLKSOURCE_HCLK          SysTick_CTRL_CLKSOURCE_Msk  /*!< AHB clock selected as SysTick 
+                                                                            clock source */
+/** Legacy definitions for backward compatibility purpose
+  */
+#define LL_SYSTICK_CLKSOURCE_HCLK_DIV8    LL_SYSTICK_CLKSOURCE_EXTERNAL
+/**
+  */
 /**
   * @}
   */
 
 #if !defined(CORE_CM0PLUS)
-/** @defgroup CORTEX_LL_EC_FAULT CORTEX LL Handler Fault Control
+/** @defgroup CORTEX_LL_EC_FAULT Handler Fault type
   * @{
   */
-#define LL_HANDLER_FAULT_USG               SCB_SHCSR_USGFAULTENA_Msk              /*!< Usage fault enabled */
-#define LL_HANDLER_FAULT_BUS               SCB_SHCSR_BUSFAULTENA_Msk              /*!< Bus fault enabled */
-#define LL_HANDLER_FAULT_MEM               SCB_SHCSR_MEMFAULTENA_Msk              /*!< Memory management fault enabled */
-#define LL_HANDLER_FAULT_SECURE            SCB_SHCSR_SECUREFAULTENA_Msk           /*!< Secure fault enabled */
+#define LL_HANDLER_FAULT_USG               SCB_SHCSR_USGFAULTENA_Msk              /*!< Usage fault */
+#define LL_HANDLER_FAULT_BUS               SCB_SHCSR_BUSFAULTENA_Msk              /*!< Bus fault */
+#define LL_HANDLER_FAULT_MEM               SCB_SHCSR_MEMFAULTENA_Msk              /*!< Memory management fault */
+#define LL_HANDLER_FAULT_SECURE            SCB_SHCSR_SECUREFAULTENA_Msk           /*!< Secure fault */
 /**
   * @}
   */
@@ -88,7 +95,7 @@ extern "C" {
 #if __MPU_PRESENT
 /* [MPU/CONSTANTS] M0+ (ARMv6-M) / M33 (ARMv8-M) common definitions */
 /* Register MPU_CTRL */
-/** @defgroup CORTEX_LL_EC_CTRL_HFNMI_PRIVDEF CORTEX LL MPU Control
+/** @defgroup CORTEX_LL_MPU_HFNMI_PRIVDEF_Control CORTEX LL MPU HFNMI and PRIVILEGED Access control
   * @{
   */
 #define LL_MPU_CTRL_HFNMI_PRIVDEF_NONE     0x00000000U                                       /*!< Disable NMI and privileged SW access */
@@ -127,7 +134,7 @@ extern "C" {
   */
 
 /* Register MPU_RASR (M0+) / MPU_RLAR (M33) */
-/** @defgroup CORTEX_LL_EC_REGION CORTEX LL MPU Region
+/** @defgroup CORTEX_LL_MPU_Region_Enable CORTEX LL MPU Region Enable
   * @{
   */
 #define LL_MPU_REGION_ENABLE               1U
@@ -136,7 +143,7 @@ extern "C" {
   * @}
   */
 
-/** @defgroup CORTEX_LL_EC_INSTRUCTION_ACCESS CORTEX LL MPU Instruction Access
+/** @defgroup CORTEX_LL_MPU_Instruction_Access CORTEX LL MPU Instruction Access
   * @{
   */
 /* Register MPU_RBAR (Cortex-M33) : bit 0 */
@@ -152,7 +159,7 @@ extern "C" {
   * @}
   */
 
-/** @defgroup CORTEX_LL_EC_SHAREABLE_ACCESS CORTEX LL MPU Shareable Access
+/** @defgroup CORTEX_LL_MPU_Access_Shareable CORTEX LL MPU Instruction Access Shareable
   * @{
   */
 /* Register MPU_RBAR (Cortex-M33) : bits [4:3] */
@@ -169,7 +176,7 @@ extern "C" {
   * @}
   */
 
-/** @defgroup CORTEX_LL_EC_REGION_ACCESS_PERMISSIONS CORTEX LL MPU Region Access Permissions
+/** @defgroup CORTEX_LL_MPU_Region_Permission_Attributes CORTEX LL MPU Region Permission Attributes
   * @{
   */
 /* Register MPU_RBAR (Cortex-M33) : bits [2:1] */
@@ -230,6 +237,17 @@ extern "C" {
   * @}
   */
 
+/** @defgroup CORTEX_LL_EC_TEX MPU TEX Level
+  * @{
+  */
+#define LL_MPU_TEX_LEVEL0                  (0x00U << MPU_RASR_TEX_Pos) /*!< b000 for TEX bits */
+#define LL_MPU_TEX_LEVEL1                  (0x01U << MPU_RASR_TEX_Pos) /*!< b001 for TEX bits */
+#define LL_MPU_TEX_LEVEL2                  (0x02U << MPU_RASR_TEX_Pos) /*!< b010 for TEX bits */
+#define LL_MPU_TEX_LEVEL4                  (0x04U << MPU_RASR_TEX_Pos) /*!< b100 for TEX bits */
+/**
+  * @}
+  */
+
 /** @defgroup CORTEX_LL_EC_CACHEABLE_ACCESS CORTEX LL MPU Cacheable Access
   * @{
   */
@@ -260,12 +278,12 @@ extern "C" {
   * @{
   */
 /* Register MPU_RBAR (Cortex-M33) : bits [4:0] */
-#define LL_MPU_ACCESS_Msk                  (MPU_RBAR_SH_Msk|MPU_RBAR_AP_Msk|MPU_RBAR_XN_Msk)
+#define LL_MPU_ACCESS_MSK                  (MPU_RBAR_SH_Msk|MPU_RBAR_AP_Msk|MPU_RBAR_XN_Msk)
 /**
   * @}
   */
 
-/** @defgroup CORTEX_LL_EC_ATTRIBUTES_INDEX CORTEX LL MPU Memory Attributes Index
+/** @defgroup CORTEX_LL_MPU_Attributes_Index CORTEX LL MPU Memory Attributes Index
   * @{
   */
 /* Register MPU_RLAR (Cortex-M33) : bits [3:1] */
@@ -281,14 +299,14 @@ extern "C" {
   * @}
   */
 
-/** @defgroup CORTEX_LL_EC_ATTRIBUTES CORTEX LL MPU Memory Attributes
+/** @defgroup CORTEX_LL_MPU_Attributes CORTEX LL MPU Attributes
   * @{
   */
 /* Registers MPU_MAIR0/MPU_MAIR1 (Cortex-M33) : MAIR_ATTR bits [7:0] */
 /* - bits [3:2] (bits [7:4] = 0b0000 - bits [1:0] = 0b00) */
-#define  LL_MPU_DEVICE_nGnRnE          0x00U  /* Device, noGather, noReorder, noEarly acknowledge. */
-#define  LL_MPU_DEVICE_nGnRE           0x04U  /* Device, noGather, noReorder, Early acknowledge.   */
-#define  LL_MPU_DEVICE_nGRE            0x08U  /* Device, noGather, Reorder, Early acknowledge.     */
+#define  LL_MPU_DEVICE_NGNRNE          0x00U  /* Device, noGather, noReorder, noEarly acknowledge. */
+#define  LL_MPU_DEVICE_NGNRE           0x04U  /* Device, noGather, noReorder, Early acknowledge.   */
+#define  LL_MPU_DEVICE_NGRE            0x08U  /* Device, noGather, Reorder, Early acknowledge.     */
 #define  LL_MPU_DEVICE_GRE             0x0CU  /* Device, Gather, Reorder, Early acknowledge.       */
 /* - bits [7:6] / bits [3:2] */
 #define  LL_MPU_NOT_CACHEABLE          0x4U  /* Normal memory, non-cacheable. */
@@ -320,7 +338,7 @@ extern "C" {
   * @{
   */
 
-/** @defgroup CORTEX_LL_EF_SYSTICK CORTEX LL SYSTICK
+/** @defgroup CORTEX_LL_EF_SYSTICK SYSTICK
   * @brief CORTEX SYSTICK LL module driver
   * @{
   */
@@ -331,19 +349,19 @@ extern "C" {
 /**
   * @brief  This function checks if the Systick counter flag is active or not.
   * @note   It can be used in timeout function on application side.
-  * @rmtoll SYST_CSR     COUNTFLAG     LL_SYSTICK_IsActiveCounterFlag
+  * @rmtoll STK_CTRL     COUNTFLAG     LL_SYSTICK_IsActiveCounterFlag
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_SYSTICK_IsActiveCounterFlag(void)
 {
-  return ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == (SysTick_CTRL_COUNTFLAG_Msk));
+  return (((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == (SysTick_CTRL_COUNTFLAG_Msk)) ? 1UL : 0UL);
 }
 
 /**
   * @brief  Configures the SysTick clock source
-  * @rmtoll SYST_CSR     CLKSOURCE     LL_SYSTICK_SetClkSource
+  * @rmtoll STK_CTRL     CLKSOURCE     LL_SYSTICK_SetClkSource
   * @param  Source This parameter can be one of the following values:
-  *         @arg @ref LL_SYSTICK_CLKSOURCE_HCLK_DIV8
+  *         @arg @ref LL_SYSTICK_CLKSOURCE_EXTERNAL
   *         @arg @ref LL_SYSTICK_CLKSOURCE_HCLK
   * @retval None
   */
@@ -361,9 +379,9 @@ __STATIC_INLINE void LL_SYSTICK_SetClkSource(uint32_t Source)
 
 /**
   * @brief  Get the SysTick clock source
-  * @rmtoll SYST_CSR     CLKSOURCE     LL_SYSTICK_GetClkSource
+  * @rmtoll STK_CTRL     CLKSOURCE     LL_SYSTICK_GetClkSource
   * @retval Returned value can be one of the following values:
-  *         @arg @ref LL_SYSTICK_CLKSOURCE_HCLK_DIV8
+  *         @arg @ref LL_SYSTICK_CLKSOURCE_EXTERNAL
   *         @arg @ref LL_SYSTICK_CLKSOURCE_HCLK
   */
 __STATIC_INLINE uint32_t LL_SYSTICK_GetClkSource(void)
@@ -373,7 +391,7 @@ __STATIC_INLINE uint32_t LL_SYSTICK_GetClkSource(void)
 
 /**
   * @brief  Enable SysTick exception request
-  * @rmtoll SYST_CSR     TICKINT       LL_SYSTICK_EnableIT
+  * @rmtoll STK_CTRL     TICKINT       LL_SYSTICK_EnableIT
   * @retval None
   */
 __STATIC_INLINE void LL_SYSTICK_EnableIT(void)
@@ -383,7 +401,7 @@ __STATIC_INLINE void LL_SYSTICK_EnableIT(void)
 
 /**
   * @brief  Disable SysTick exception request
-  * @rmtoll SYST_CSR     TICKINT       LL_SYSTICK_DisableIT
+  * @rmtoll STK_CTRL     TICKINT       LL_SYSTICK_DisableIT
   * @retval None
   */
 __STATIC_INLINE void LL_SYSTICK_DisableIT(void)
@@ -393,12 +411,12 @@ __STATIC_INLINE void LL_SYSTICK_DisableIT(void)
 
 /**
   * @brief  Checks if the SYSTICK interrupt is enabled or disabled.
-  * @rmtoll SYST_CSR     TICKINT       LL_SYSTICK_IsEnabledIT
+  * @rmtoll STK_CTRL     TICKINT       LL_SYSTICK_IsEnabledIT
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_SYSTICK_IsEnabledIT(void)
 {
-  return (READ_BIT(SysTick->CTRL, SysTick_CTRL_TICKINT_Msk) == (SysTick_CTRL_TICKINT_Msk));
+  return ((READ_BIT(SysTick->CTRL, SysTick_CTRL_TICKINT_Msk) == (SysTick_CTRL_TICKINT_Msk)) ? 1UL : 0UL);
 }
 
 /******************************************/
@@ -538,9 +556,9 @@ __STATIC_INLINE void LL_LPM_DisableSleepOnExit(void)
 }
 
 /**
-  * @brief  Enabled events and all interrupts, including disabled interrupts,
-  *         can wakeup the processor.
-  * @rmtoll SCB_SCR      SEVONPEND    LL_LPM_EnableEventOnPend
+  * @brief  Enabled events and all interrupts, including disabled interrupts, can wakeup the
+  *         processor.
+  * @rmtoll SCB_SCR      SEVEONPEND    LL_LPM_EnableEventOnPend
   * @retval None
   */
 __STATIC_INLINE void LL_LPM_EnableEventOnPend(void)
@@ -550,8 +568,8 @@ __STATIC_INLINE void LL_LPM_EnableEventOnPend(void)
 }
 
 /**
-  * @brief  Only enabled interrupts or events can wakeup the processor,
-  *         disabled interrupts are excluded
+  * @brief  Only enabled interrupts or events can wakeup the processor, disabled interrupts are
+  *         excluded
   * @rmtoll SCB_SCR      SEVONPEND    LL_LPM_DisableEventOnPend
   * @retval None
   */
@@ -921,8 +939,8 @@ __STATIC_INLINE void LL_MPU_Enable(uint32_t MPU_Control)
 {
   __DMB(); /* Data Memory Barrier operation to force any outstanding writes to memory before enabling the MPU */
 
-  /* Enable the MPU */
-  WRITE_REG(MPU->CTRL, (MPU_CTRL_ENABLE_Msk | MPU_Control));
+  /* Enable the MPU*/
+  MPU->CTRL = MPU_CTRL_ENABLE_Msk | MPU_Control;
 
   /* Follow ARM recommendation with */
   /* Data Synchronization and Instruction Synchronization Barriers to ensure MPU configuration */
@@ -1012,9 +1030,31 @@ __STATIC_INLINE void LL_MPU_ConfigRegion(uint32_t Region, uint32_t SubRegionDisa
   /* Set region index */
   WRITE_REG(MPU->RNR, Region);
   /* Set region base address */
-  WRITE_REG(MPU->RBAR, (Address & MPU_RBAR_ADDR_Msk));
+  WRITE_REG(MPU->RBAR, (Address & 0xFFFFFFE0U));
   /* Set region access attributes and enable region */
   WRITE_REG(MPU->RASR, (MPU_RASR_ENABLE_Msk | Attributes | (SubRegionDisable << MPU_RASR_SRD_Pos)));
+}
+
+/**
+  * @brief  Enable a MPU region
+  * @rmtoll MPU_RASR     ENABLE        LL_MPU_EnableRegion
+  * @param  Region This parameter can be one of the following values:
+  *         @arg @ref LL_MPU_REGION_NUMBER0
+  *         @arg @ref LL_MPU_REGION_NUMBER1
+  *         @arg @ref LL_MPU_REGION_NUMBER2
+  *         @arg @ref LL_MPU_REGION_NUMBER3
+  *         @arg @ref LL_MPU_REGION_NUMBER4
+  *         @arg @ref LL_MPU_REGION_NUMBER5
+  *         @arg @ref LL_MPU_REGION_NUMBER6
+  *         @arg @ref LL_MPU_REGION_NUMBER7
+  * @retval None
+  */
+__STATIC_INLINE void LL_MPU_EnableRegion(uint32_t Region)
+{
+  /* Set Region number */
+  WRITE_REG(MPU->RNR, Region);
+  /* Enable the MPU region */
+  SET_BIT(MPU->RASR, MPU_RASR_ENABLE_Msk);
 }
 
 /**
@@ -1034,9 +1074,9 @@ __STATIC_INLINE void LL_MPU_ConfigRegion(uint32_t Region, uint32_t SubRegionDisa
   */
 __STATIC_INLINE void LL_MPU_DisableRegion(uint32_t Region)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
-  /* Disable current MPU region */
+  /* Disable the MPU region */
   CLEAR_BIT(MPU->RASR, MPU_RASR_ENABLE_Msk);
 }
 
@@ -1071,9 +1111,10 @@ __STATIC_INLINE void LL_MPU_DisableRegion(uint32_t Region)
   */
 __STATIC_INLINE void LL_MPU_EnableRegion(uint32_t Region)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
-  /* Enable current MPU region */
+
+  /* Enable the MPU region */
   SET_BIT(MPU->RLAR, MPU_RLAR_EN_Msk);
 }
 
@@ -1103,9 +1144,10 @@ __STATIC_INLINE void LL_MPU_EnableRegion(uint32_t Region)
   */
 __STATIC_INLINE void LL_MPU_DisableRegion(uint32_t Region)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
-  /* Disable current MPU region */
+
+  /* Disable the MPU region */
   CLEAR_BIT(MPU->RLAR, MPU_RLAR_EN_Msk);
 }
 
@@ -1146,12 +1188,12 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_Region(uint32_t Region)
   * @brief  Configure and enable a MPU region
   * @rmtoll MPU_RNR      REGION        LL_MPU_ConfigRegion\n
   *         MPU_RBAR     BASE          LL_MPU_ConfigRegion\n
-  *         MPU_RLAR     LIMIT         LL_MPU_ConfigRegion\n
+  *         MPU_RLAR     LIMIT          LL_MPU_ConfigRegion\n
   *         MPU_RBAR     XN            LL_MPU_ConfigRegion\n
   *         MPU_RBAR     AP            LL_MPU_ConfigRegion\n
   *         MPU_RBAR     SH            LL_MPU_ConfigRegion\n
   *         MPU_RLAR     EN            LL_MPU_ConfigRegion\n
-  *         MPU_RLAR     AttrIndx      LL_MPU_ConfigRegion
+  *         MPU_RLAR     AttrIndx      LL_MPU_ConfigRegion\n
   * @param  Region This parameter can be one of the following values:
   *         @arg @ref LL_MPU_REGION_NUMBER0
   *         @arg @ref LL_MPU_REGION_NUMBER1
@@ -1169,7 +1211,7 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_Region(uint32_t Region)
   *         @arg @ref LL_MPU_REGION_NUMBER13
   *         @arg @ref LL_MPU_REGION_NUMBER14
   *         @arg @ref LL_MPU_REGION_NUMBER15
-  * @param  AccessAttributes This parameter can be a combination of the following values:
+  * @param  Attributes This parameter can be a combination of the following values:
   *         @arg @ref LL_MPU_INSTRUCTION_ACCESS_ENABLE or @ref LL_MPU_INSTRUCTION_ACCESS_DISABLE
   *         @arg @ref LL_MPU_ACCESS_NOT_SHAREABLE or @ref LL_MPU_ACCESS_OUTER_SHAREABLE
   *              or @ref LL_MPU_ACCESS_INNER_SHAREABLE
@@ -1189,14 +1231,15 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_Region(uint32_t Region)
   * @note   MP2 Cortex-M33 supports 16 secure and 16 non-secure regions.
   * @retval None
   */
-__STATIC_INLINE void LL_MPU_ConfigRegion(uint32_t Region, uint32_t AccessAttributes,
-                                         uint32_t AttrIndx, uint32_t BaseAddress,
+__STATIC_INLINE void LL_MPU_ConfigRegion(uint32_t Region, uint32_t Attributes, uint32_t AttrIndx, uint32_t BaseAddress,
                                          uint32_t LimitAddress)
 {
   /* Set region index */
   WRITE_REG(MPU->RNR, Region);
+
   /* Set region base address and region access attributes */
-  WRITE_REG(MPU->RBAR, ((BaseAddress & MPU_RBAR_BASE_Msk) | AccessAttributes));
+  WRITE_REG(MPU->RBAR, ((BaseAddress & MPU_RBAR_BASE_Msk) | Attributes));
+
   /* Set region limit address, memory attributes index and enable region */
   WRITE_REG(MPU->RLAR, ((LimitAddress & MPU_RLAR_LIMIT_Msk) | AttrIndx | MPU_RLAR_EN_Msk));
 }
@@ -1230,10 +1273,12 @@ __STATIC_INLINE void LL_MPU_ConfigRegion(uint32_t Region, uint32_t AccessAttribu
   */
 __STATIC_INLINE void LL_MPU_ConfigRegionAddress(uint32_t Region, uint32_t BaseAddress, uint32_t LimitAddress)
 {
-  /* Set region index */
+  /* Set region number */
   WRITE_REG(MPU->RNR, Region);
+
   /* Modify region base address */
   MODIFY_REG(MPU->RBAR, MPU_RBAR_BASE_Msk, (BaseAddress & MPU_RBAR_BASE_Msk));
+
   /* Modify region limit address */
   MODIFY_REG(MPU->RLAR, MPU_RLAR_LIMIT_Msk, (LimitAddress & MPU_RLAR_LIMIT_Msk));
 }
@@ -1266,14 +1311,15 @@ __STATIC_INLINE void LL_MPU_ConfigRegionAddress(uint32_t Region, uint32_t BaseAd
   */
 __STATIC_INLINE void LL_MPU_SetRegionBaseAddress(uint32_t Region, uint32_t BaseAddress)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
-  /* Modify region base address */
+
+  /* Set region base address */
   MODIFY_REG(MPU->RBAR, MPU_RBAR_BASE_Msk, (BaseAddress & MPU_RBAR_BASE_Msk));
 }
 
 /**
-  * @brief  Get one MPU region base address
+  * @brief  Get a MPU region base address
   * @rmtoll MPU_RNR      REGION        LL_MPU_GetRegionBaseAddress\n
   *         MPU_RBAR     BASE          LL_MPU_GetRegionBaseAddress
   * @param  Region This parameter can be one of the following values:
@@ -1298,14 +1344,15 @@ __STATIC_INLINE void LL_MPU_SetRegionBaseAddress(uint32_t Region, uint32_t BaseA
   */
 __STATIC_INLINE uint32_t LL_MPU_GetRegionBaseAddress(uint32_t Region)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
+
   /* Return region base address */
   return (READ_REG(MPU->RBAR & MPU_RBAR_BASE_Msk));
 }
 
 /**
-  * @brief  Configure one MPU region access attributes
+  * @brief  Configure a MPU region access attributes
   * @rmtoll MPU_RNR      REGION        LL_MPU_SetRegionAccess\n
   *         MPU_RBAR     XN            LL_MPU_SetRegionAccess\n
   *         MPU_RBAR     AP            LL_MPU_SetRegionAccess\n
@@ -1327,7 +1374,7 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionBaseAddress(uint32_t Region)
   *         @arg @ref LL_MPU_REGION_NUMBER13
   *         @arg @ref LL_MPU_REGION_NUMBER14
   *         @arg @ref LL_MPU_REGION_NUMBER15
-  * @param  AccessAttributes This parameter can be a combination of the following values:
+  * @param  Attributes This parameter can be a combination of the following values:
   *         @arg @ref LL_MPU_INSTRUCTION_ACCESS_ENABLE or @ref LL_MPU_INSTRUCTION_ACCESS_DISABLE
   *         @arg @ref LL_MPU_ACCESS_NOT_SHAREABLE or @ref LL_MPU_ACCESS_OUTER_SHAREABLE
   *              or @ref LL_MPU_ACCESS_INNER_SHAREABLE
@@ -1336,16 +1383,16 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionBaseAddress(uint32_t Region)
   * @note   MP2 Cortex-M33 supports 16 secure and 16 non-secure regions.
   * @retval None
   */
-__STATIC_INLINE void LL_MPU_SetRegionAccess(uint32_t Region, uint32_t AccessAttributes)
+__STATIC_INLINE void LL_MPU_SetRegionAccess(uint32_t Region, uint32_t Attributes)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
-  /* Modify region access attributes */
-  MODIFY_REG(MPU->RBAR, LL_MPU_ACCESS_Msk, (AccessAttributes & LL_MPU_ACCESS_Msk));
+  /* Set region access attributes */
+  MODIFY_REG(MPU->RBAR, LL_MPU_ACCESS_MSK, (Attributes & LL_MPU_ACCESS_MSK));
 }
 
 /**
-  * @brief  Get one MPU region access attributes
+  * @brief  Get a MPU region access attributes
   * @rmtoll MPU_RNR      REGION        LL_MPU_GetRegionAccess\n
   *         MPU_RBAR     XN            LL_MPU_GetRegionAccess\n
   *         MPU_RBAR     AP            LL_MPU_GetRegionAccess\n
@@ -1372,15 +1419,16 @@ __STATIC_INLINE void LL_MPU_SetRegionAccess(uint32_t Region, uint32_t AccessAttr
   */
 __STATIC_INLINE uint32_t LL_MPU_GetRegionAccess(uint32_t Region)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
+
   /* Return region access attributes */
-  return (READ_REG(MPU->RBAR & LL_MPU_ACCESS_Msk));
+  return (READ_REG(MPU->RBAR & (MPU_RBAR_XN_Msk | MPU_RBAR_AP_Msk | MPU_RBAR_SH_Msk)));
 }
 
 /* Registers MPU_RNR & MPU_RLAR */
 /**
-  * @brief  Configure one MPU region limit address
+  * @brief  Configure a MPU region limit address
   * @rmtoll MPU_RNR      REGION        LL_MPU_SetRegionLimitAddress\n
   *         MPU_RLAR     LIMIT         LL_MPU_SetRegionLimitAddress
   * @param  Region This parameter can be one of the following values:
@@ -1406,14 +1454,15 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionAccess(uint32_t Region)
   */
 __STATIC_INLINE void LL_MPU_SetRegionLimitAddress(uint32_t Region, uint32_t LimitAddress)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
-  /* Modify region limit address */
+
+  /* Set region limit address */
   MODIFY_REG(MPU->RLAR, MPU_RLAR_LIMIT_Msk, (LimitAddress & MPU_RLAR_LIMIT_Msk));
 }
 
 /**
-  * @brief  Get one MPU region limit address
+  * @brief  Get a MPU region limit address
   * @rmtoll MPU_RNR      REGION        LL_MPU_GetRegionLimitAddress\n
   *         MPU_RLAR     LIMIT         LL_MPU_GetRegionLimitAddress
   * @param  Region This parameter can be one of the following values:
@@ -1438,17 +1487,18 @@ __STATIC_INLINE void LL_MPU_SetRegionLimitAddress(uint32_t Region, uint32_t Limi
   */
 __STATIC_INLINE uint32_t LL_MPU_GetRegionLimitAddress(uint32_t Region)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU->RNR, Region);
+
   /* Return region limit address */
   return (READ_REG(MPU->RLAR & MPU_RLAR_LIMIT_Msk));
 }
 
 /* Registers MPU_MAIR0 & MPU_MAIR1 */
 /**
-  * @brief  Configure one MPU memory attributes index
-  * @rmtoll MPU_MAIR0      Attr<i>       LL_MPU_ConfigAttributes\n
-  *         MPU_MAIR1      Attr<i>       LL_MPU_ConfigAttributes
+  * @brief  Configure a MPU attributes index
+  * @rmtoll MPU_MAIR0      Attribute       LL_MPU_ConfigAttributes\n
+  *         MPU_MAIR1      Attribute       LL_MPU_ConfigAttributes\n
   * @param  AttIndex This parameter can be one of the following values:
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER0
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER1
@@ -1458,22 +1508,22 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionLimitAddress(uint32_t Region)
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER5
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER6
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER7
-  * @param  MemoryAttributes This parameter can be a combination of @ref CORTEX_LL_EC_ATTRIBUTES
+  * @param  Attributes This parameter can be a combination of @ref CORTEX_LL_MPU_Attributes
   * @retval None
   */
-__STATIC_INLINE void LL_MPU_ConfigAttributes(uint32_t AttIndex, uint32_t MemoryAttributes)
+__STATIC_INLINE void LL_MPU_ConfigAttributes(uint32_t AttIndex, uint32_t  Attributes)
 {
-  /* When selected index is in range [0;3], */
+  /* When selected index is in range [0;3] */
   if (AttIndex < LL_MPU_ATTRIBUTES_NUMBER4)
   {
     /* Modify Attr<i> field of MPU_MAIR0 accordingly */
-    MODIFY_REG(MPU->MAIR0, (0xFF << (AttIndex * 8U)), (MemoryAttributes << (AttIndex * 8U)));
+    MODIFY_REG(MPU->MAIR0, (0xFFUL << (AttIndex * 8U)), (Attributes << (AttIndex * 8U)));
   }
-  /* When selected index is in range [4;7], */
+  /* When selected index is in range [4;7] */
   else
   {
     /* Modify Attr<i> field of MPU_MAIR1 accordingly */
-    MODIFY_REG(MPU->MAIR1, (0xFF << ((AttIndex - 4U) * 8U)), (MemoryAttributes << ((AttIndex - 4U) * 8U)));
+    MODIFY_REG(MPU->MAIR1, (0xFFUL << ((AttIndex - 4U) * 8U)), (Attributes << ((AttIndex - 4U) * 8U)));
   }
 }
 #endif /* defined(CORE_CM0PLUS) */
@@ -1561,7 +1611,7 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_NS(void)
   */
 __STATIC_INLINE void LL_MPU_EnableRegion_NS(uint32_t Region)
 {
-  /* Set region index */
+  /* Set region number */
   WRITE_REG(MPU_NS->RNR, Region);
   /* Enable the non-secure MPU region */
   SET_BIT(MPU_NS->RLAR, MPU_RLAR_EN_Msk);
@@ -1593,8 +1643,9 @@ __STATIC_INLINE void LL_MPU_EnableRegion_NS(uint32_t Region)
   */
 __STATIC_INLINE void LL_MPU_DisableRegion_NS(uint32_t Region)
 {
-  /* Set region index */
+  /* Set region number */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Disable the non-secure MPU region */
   CLEAR_BIT(MPU_NS->RLAR, MPU_RLAR_EN_Msk);
 }
@@ -1627,6 +1678,7 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_Region_NS(uint32_t Region)
 {
   /* Set region index */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Return non-secure MPU region status */
   return ((READ_BIT(MPU_NS->RLAR, MPU_RLAR_EN_Msk) == (MPU_RLAR_EN_Msk)) ? 1UL : 0UL);
 }
@@ -1659,7 +1711,7 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_Region_NS(uint32_t Region)
   *         @arg @ref LL_MPU_REGION_NUMBER13
   *         @arg @ref LL_MPU_REGION_NUMBER14
   *         @arg @ref LL_MPU_REGION_NUMBER15
-  * @param  AccessAttributes This parameter can be a combination of the following values:
+  * @param  Attributes This parameter can be a combination of the following values:
   *         @arg @ref LL_MPU_INSTRUCTION_ACCESS_ENABLE or @ref LL_MPU_INSTRUCTION_ACCESS_DISABLE
   *         @arg @ref LL_MPU_ACCESS_NOT_SHAREABLE or @ref LL_MPU_ACCESS_OUTER_SHAREABLE
   *              or @ref LL_MPU_ACCESS_INNER_SHAREABLE
@@ -1679,14 +1731,15 @@ __STATIC_INLINE uint32_t LL_MPU_IsEnabled_Region_NS(uint32_t Region)
   * @note   MP2 Cortex-M33 supports 16 secure and 16 non-secure regions.
   * @retval None
   */
-__STATIC_INLINE void LL_MPU_ConfigRegion_NS(uint32_t Region, uint32_t AccessAttributes,
-                                            uint32_t AttrIndx, uint32_t BaseAddress,
-                                            uint32_t LimitAddress)
+__STATIC_INLINE void LL_MPU_ConfigRegion_NS(uint32_t Region, uint32_t Attributes, uint32_t AttrIndx,
+                                            uint32_t BaseAddress, uint32_t LimitAddress)
 {
-  /* Set region index */
+  /* Set Region number */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Set region base address and region access attributes */
-  WRITE_REG(MPU_NS->RBAR, ((BaseAddress & MPU_RBAR_BASE_Msk) | AccessAttributes));
+  WRITE_REG(MPU_NS->RBAR, ((BaseAddress & MPU_RBAR_BASE_Msk) | Attributes));
+
   /* Set region limit address, memory attributes index and enable region */
   WRITE_REG(MPU_NS->RLAR, ((LimitAddress & MPU_RLAR_LIMIT_Msk) | AttrIndx | MPU_RLAR_EN_Msk));
 }
@@ -1720,17 +1773,19 @@ __STATIC_INLINE void LL_MPU_ConfigRegion_NS(uint32_t Region, uint32_t AccessAttr
   */
 __STATIC_INLINE void LL_MPU_ConfigRegionAddress_NS(uint32_t Region, uint32_t BaseAddress, uint32_t LimitAddress)
 {
-  /* Set region index */
+  /* Set region number */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Modify non-secure region base address */
   MODIFY_REG(MPU_NS->RBAR, MPU_RBAR_BASE_Msk, (BaseAddress & MPU_RBAR_BASE_Msk));
+
   /* Modify non-secure region limit address */
   MODIFY_REG(MPU_NS->RLAR, MPU_RLAR_LIMIT_Msk, (LimitAddress & MPU_RLAR_LIMIT_Msk));
 }
 
 /* Registers MPU_RNR_NS & MPU_RBAR_NS */
 /**
-  * @brief  Configure one non-secure MPU region base address
+  * @brief  Configure a non-secure MPU region base address
   * @rmtoll MPU_RNR_NS      REGION        LL_MPU_SetRegionBaseAddress_NS\n
   *         MPU_RBAR_NS     BASE          LL_MPU_SetRegionBaseAddress_NS
   * @param  Region This parameter can be one of the following values:
@@ -1756,9 +1811,9 @@ __STATIC_INLINE void LL_MPU_ConfigRegionAddress_NS(uint32_t Region, uint32_t Bas
   */
 __STATIC_INLINE void LL_MPU_SetRegionBaseAddress_NS(uint32_t Region, uint32_t BaseAddress)
 {
-  /* Set non-secure region index */
+  /* Set non-secure region number */
   WRITE_REG(MPU_NS->RNR, Region);
-  /* Modify non-secure region base address */
+  /* Set non-secure region base address */
   MODIFY_REG(MPU_NS->RBAR, MPU_RBAR_BASE_Msk, (BaseAddress & MPU_RBAR_BASE_Msk));
 }
 
@@ -1788,14 +1843,15 @@ __STATIC_INLINE void LL_MPU_SetRegionBaseAddress_NS(uint32_t Region, uint32_t Ba
   */
 __STATIC_INLINE uint32_t LL_MPU_GetRegionBaseAddress_NS(uint32_t Region)
 {
-  /* Set non-secure region index */
+  /* Set non-secure region number */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Return non-secure region base address */
   return (READ_REG(MPU_NS->RBAR & MPU_RBAR_BASE_Msk));
 }
 
 /**
-  * @brief  Configure one non-secure MPU region access attributes
+  * @brief  Configure a non-secure MPU region access attributes
   * @rmtoll MPU_RNR_NS      REGION        LL_MPU_SetRegionAccess_NS\n
   *         MPU_RBAR_NS     XN            LL_MPU_SetRegionAccess_NS\n
   *         MPU_RBAR_NS     AP            LL_MPU_SetRegionAccess_NS\n
@@ -1817,7 +1873,7 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionBaseAddress_NS(uint32_t Region)
   *         @arg @ref LL_MPU_REGION_NUMBER13
   *         @arg @ref LL_MPU_REGION_NUMBER14
   *         @arg @ref LL_MPU_REGION_NUMBER15
-  * @param  AccessAttributes This parameter can be a combination of the following values:
+  * @param  Attributes This parameter can be a combination of the following values:
   *         @arg @ref LL_MPU_INSTRUCTION_ACCESS_ENABLE or @ref LL_MPU_INSTRUCTION_ACCESS_DISABLE
   *         @arg @ref LL_MPU_ACCESS_NOT_SHAREABLE or @ref LL_MPU_ACCESS_OUTER_SHAREABLE
   *              or @ref LL_MPU_ACCESS_INNER_SHAREABLE
@@ -1826,16 +1882,17 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionBaseAddress_NS(uint32_t Region)
   * @note   MP2 Cortex-M33 supports 16 secure and 16 non-secure regions.
   * @retval None
   */
-__STATIC_INLINE void LL_MPU_SetRegionAccess_NS(uint32_t Region, uint32_t AccessAttributes)
+__STATIC_INLINE void LL_MPU_SetRegionAccess_NS(uint32_t Region, uint32_t Attributes)
 {
-  /* Set non-secure region index */
+  /* Set non-secure region number */
   WRITE_REG(MPU_NS->RNR, Region);
-  /* Modify non-secure region access attributes */
-  MODIFY_REG(MPU_NS->RBAR, LL_MPU_ACCESS_Msk, (AccessAttributes & LL_MPU_ACCESS_Msk));
+
+  /* Modify non-secure region attributes */
+  MODIFY_REG(MPU_NS->RBAR, LL_MPU_ACCESS_MSK, (Attributes & LL_MPU_ACCESS_MSK));
 }
 
 /**
-  * @brief  Get one non-secure MPU region access attributes
+  * @brief  Get a non-secure MPU region access attributes
   * @rmtoll MPU_RNR_NS      REGION        LL_MPU_GetRegionAccess_NS\n
   *         MPU_RBAR_NS     XN            LL_MPU_GetRegionAccess_NS\n
   *         MPU_RBAR_NS     AP            LL_MPU_GetRegionAccess_NS\n
@@ -1862,10 +1919,11 @@ __STATIC_INLINE void LL_MPU_SetRegionAccess_NS(uint32_t Region, uint32_t AccessA
   */
 __STATIC_INLINE uint32_t LL_MPU_GetRegionAccess_NS(uint32_t Region)
 {
-  /* Set non-secure region index */
+  /* Set non-secure region number */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Return non-secure region access attributes */
-  return (READ_REG(MPU_NS->RBAR & LL_MPU_ACCESS_Msk));
+  return (READ_REG(MPU_NS->RBAR & (MPU_RBAR_XN_Msk | MPU_RBAR_AP_Msk | MPU_RBAR_SH_Msk)));
 }
 
 /* Registers MPU_RNR_NS & MPU_RLAR_NS */
@@ -1896,14 +1954,15 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionAccess_NS(uint32_t Region)
   */
 __STATIC_INLINE void LL_MPU_SetRegionLimitAddress_NS(uint32_t Region, uint32_t LimitAddress)
 {
-  /* Set non-secure region index */
+  /* Set non-secure region number */
   WRITE_REG(MPU_NS->RNR, Region);
-  /* Modify region limit address */
+
+  /* Set region limit address */
   MODIFY_REG(MPU_NS->RLAR, MPU_RLAR_LIMIT_Msk, (LimitAddress & MPU_RLAR_LIMIT_Msk));
 }
 
 /**
-  * @brief  Get one non-secure MPU region limit address
+  * @brief  Get a non-secure MPU region limit address
   * @rmtoll MPU_RNR_NS      REGION        LL_MPU_GetRegionLimitAddress_NS\n
   *         MPU_RLAR_NS     LIMIT         LL_MPU_GetRegionLimitAddress_NS
   * @param  Region This parameter can be one of the following values:
@@ -1928,17 +1987,18 @@ __STATIC_INLINE void LL_MPU_SetRegionLimitAddress_NS(uint32_t Region, uint32_t L
   */
 __STATIC_INLINE uint32_t LL_MPU_GetRegionLimitAddress_NS(uint32_t Region)
 {
-  /* Set non-secure region index */
+  /* Set non-secure region number */
   WRITE_REG(MPU_NS->RNR, Region);
+
   /* Return non-secure region limit address */
   return (READ_REG(MPU_NS->RLAR & MPU_RLAR_LIMIT_Msk));
 }
 
 /* Registers MPU_MAIR0_NS & MPU_MAIR1_NS */
 /**
-  * @brief  Configure a non-secure MPU memory attributes index
-  * @rmtoll MPU_MAIR0_NS      Attr<i>       LL_MPU_ConfigAttributes_NS\n
-  *         MPU_MAIR1_NS      Attr<i>       LL_MPU_ConfigAttributes_NS
+  * @brief  Configure a non-secure MPU attributes index
+  * @rmtoll MPU_MAIR0      Attribute       LL_MPU_ConfigAttributes_NS\n
+  *         MPU_MAIR1      Attribute       LL_MPU_ConfigAttributes_NS\n
   * @param  AttIndex This parameter can be one of the following values:
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER0
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER1
@@ -1948,22 +2008,22 @@ __STATIC_INLINE uint32_t LL_MPU_GetRegionLimitAddress_NS(uint32_t Region)
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER5
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER6
   *         @arg @ref LL_MPU_ATTRIBUTES_NUMBER7
-  * @param  MemoryAttributes This parameter can be a combination of @ref CORTEX_LL_EC_ATTRIBUTES
+  * @param  Attributes This parameter can be a combination of @ref CORTEX_LL_MPU_Attributes
   * @retval None
   */
-__STATIC_INLINE void LL_MPU_ConfigAttributes_NS(uint32_t AttIndex, uint32_t MemoryAttributes)
+__STATIC_INLINE void LL_MPU_ConfigAttributes_NS(uint32_t AttIndex, uint32_t  Attributes)
 {
-  /* When selected index is in range [0;3], */
+  /* When selected index is in range [0;3] */
   if (AttIndex < LL_MPU_ATTRIBUTES_NUMBER4)
   {
     /* Modify Attr<i> field of MPU_MAIR0_NS accordingly */
-    MODIFY_REG(MPU_NS->MAIR0, (0xFF << (AttIndex * 8U)), (MemoryAttributes << (AttIndex * 8U)));
+    MODIFY_REG(MPU_NS->MAIR0, (0xFFU << (AttIndex * 8U)), (Attributes << (AttIndex * 8U)));
   }
-  /* When selected index is in range [4;7], */
+  /* When selected index is in range [4;7] */
   else
   {
     /* Modify Attr<i> field of MPU_MAIR1_NS accordingly */
-    MODIFY_REG(MPU_NS->MAIR1, (0xFF << ((AttIndex - 4U) * 8U)), (MemoryAttributes << ((AttIndex - 4U) * 8U)));
+    MODIFY_REG(MPU_NS->MAIR1, (0xFFU << ((AttIndex - 4U) * 8U)), (Attributes << ((AttIndex - 4U) * 8U)));
   }
 }
 #endif /* defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U) */
@@ -1973,6 +2033,10 @@ __STATIC_INLINE void LL_MPU_ConfigAttributes_NS(uint32_t AttIndex, uint32_t Memo
   */
 
 #endif /* __MPU_PRESENT */
+/**
+  * @}
+  */
+
 /**
   * @}
   */

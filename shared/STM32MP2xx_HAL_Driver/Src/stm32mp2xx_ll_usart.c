@@ -199,6 +199,7 @@ ErrorStatus LL_USART_DeInit(const USART_TypeDef *USARTx)
     /* Release reset of UART clock */
     LL_RCC_UART7_ReleaseReset();
   }
+#if defined(UART8)
   else if (USARTx == UART8)
   {
     /* Force reset of USART clock */
@@ -207,6 +208,8 @@ ErrorStatus LL_USART_DeInit(const USART_TypeDef *USARTx)
     /* Release reset of USART clock */
     LL_RCC_UART8_ReleaseReset();
   }
+#endif /* UART8 */
+#if defined(UART9)
   else if (USARTx == UART9)
   {
     /* Force reset of USART clock */
@@ -215,26 +218,7 @@ ErrorStatus LL_USART_DeInit(const USART_TypeDef *USARTx)
     /* Release reset of USART clock */
     LL_RCC_UART9_ReleaseReset();
   }
-#if (defined(GENERATOR_USART11_AVAILABLE_SOME_DEVICES)&&defined(USART11)) || defined(GENERATOR_USART11_AVAILABLE_ALL_DEVICES)
-  else if (USARTx == USART11)
-  {
-    /* Force reset of USART clock */
-    LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_USART11);
-
-    /* Release reset of USART clock */
-    LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_USART11);
-  }
-#endif /* USART11 */
-#if (defined(GENERATOR_UART12_AVAILABLE_SOME_DEVICES)&&defined(UART12)) || defined(GENERATOR_UART12_AVAILABLE_ALL_DEVICES)
-  else if (USARTx == UART12)
-  {
-    /* Force reset of UART clock */
-    LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_UART12);
-
-    /* Release reset of UART clock */
-    LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_UART12);
-  }
-#endif /* UART12 */
+#endif /* UART9 */
   else
   {
     status = ERROR;
@@ -335,26 +319,18 @@ ErrorStatus LL_USART_Init(USART_TypeDef *USARTx, const LL_USART_InitTypeDef *USA
     {
       periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART78_CLKSOURCE);
     }
+#if defined(UART8)
     else if (USARTx == UART8)
     {
       periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART78_CLKSOURCE);
     }
+#endif /* UART8 */
+#if defined(UART9)
     else if (USARTx == UART9)
     {
       periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART9_CLKSOURCE);
     }
-#if (defined(GENERATOR_USART11_AVAILABLE_SOME_DEVICES)&&defined(USART11)) || defined(GENERATOR_USART11_AVAILABLE_ALL_DEVICES)
-    else if (USARTx == USART11)
-    {
-      periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART11_CLKSOURCE);
-    }
-#endif /* USART11 */
-#if (defined(GENERATOR_UART12_AVAILABLE_SOME_DEVICES)&&defined(UART12)) || defined(GENERATOR_UART12_AVAILABLE_ALL_DEVICES)
-    else if (USARTx == UART12)
-    {
-      periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_UART12_CLKSOURCE);
-    }
-#endif /* UART12 */
+#endif /* UART9 */
     else
     {
       /* Nothing to do, as error code is already assigned to ERROR value */

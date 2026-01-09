@@ -222,7 +222,7 @@ static void LPTIM_IC2_SetConfig(LPTIM_HandleTypeDef *hlptim, LPTIM_IC_ConfigType
 #if (USE_HAL_LPTIM_REGISTER_CALLBACKS == 1)
 static void LPTIM_ResetCallback(LPTIM_HandleTypeDef *lptim);
 #endif /* USE_HAL_LPTIM_REGISTER_CALLBACKS */
-static HAL_StatusTypeDef LPTIM_WaitForFlag(LPTIM_HandleTypeDef *hlptim, uint32_t flag);
+static HAL_StatusTypeDef LPTIM_WaitForFlag(const LPTIM_HandleTypeDef *hlptim, uint32_t flag);
 void LPTIM_DMAError(DMA_HandleTypeDef *hdma);
 void LPTIM_DMACaptureCplt(DMA_HandleTypeDef *hdma);
 void LPTIM_DMACaptureHalfCplt(DMA_HandleTypeDef *hdma);
@@ -402,16 +402,22 @@ HAL_StatusTypeDef HAL_LPTIM_Init(LPTIM_HandleTypeDef *hlptim)
   hlptim->Instance->CFGR = tmpcfgr;
 
   /* Configure LPTIM input sources */
+#if defined (CORE_CA35) || defined (CORE_CM33)
   if (hlptim->Instance == LPTIM1)
+#endif /* CORE_CA35 || CORE_CM33 */
   {
+#if defined (CORE_CA35) || defined (CORE_CM33)
     /* Check LPTIM Input1 and Input2 sources */
     assert_param(IS_LPTIM_INPUT1_SOURCE(hlptim->Instance, hlptim->Init.Input1Source));
     assert_param(IS_LPTIM_INPUT2_SOURCE(hlptim->Instance, hlptim->Init.Input2Source));
 
     /* Configure LPTIM Input1 and Input2 sources */
     hlptim->Instance->CFGR2 = (hlptim->Init.Input1Source | hlptim->Init.Input2Source);
+#endif /* CORE_CA35 || CORE_CM33 */
   }
+#if defined (CORE_CA35) || defined (CORE_CM33)
   else
+#endif /* CORE_CA35 || CORE_CM33 */
   {
     /* Check LPTIM2 Input1 source */
     assert_param(IS_LPTIM_INPUT1_SOURCE(hlptim->Instance, hlptim->Init.Input1Source));
@@ -2433,6 +2439,11 @@ uint8_t HAL_LPTIM_IC_GetOffset(LPTIM_HandleTypeDef *hlptim, uint32_t Channel)
   *         This parameter can be one of the following values:
   *            @arg LPTIM_CHANNEL_1: LPTIM Channel 1 selected
   *            @arg LPTIM_CHANNEL_2: LPTIM Channel 2 selected
+  * @note   Successive calls to HAL_LPTIM_OC_ConfigChannel can only be performed
+  *         after a delay that must be greater or equal than the value of
+  *        (PRESC x 3) kernel clock cycles, PRESC[2:0] being the clock decimal
+  *         division factor (1, 2, 4, ..., 128). Any successive call violating
+  *         this delay, leads to unpredictable results.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_LPTIM_OC_ConfigChannel(LPTIM_HandleTypeDef *hlptim, LPTIM_OC_ConfigTypeDef *sConfig,
@@ -2493,6 +2504,11 @@ HAL_StatusTypeDef HAL_LPTIM_OC_ConfigChannel(LPTIM_HandleTypeDef *hlptim, LPTIM_
   *         This parameter can be one of the following values:
   *            @arg LPTIM_CHANNEL_1: LPTIM Channel 1 selected
   *            @arg LPTIM_CHANNEL_2: LPTIM Channel 2 selected
+  * @note   Successive calls to HAL_LPTIM_IC_ConfigChannel can only be performed
+  *         after a delay that must be greater or equal than the value of
+  *        (PRESC x 3) kernel clock cycles, PRESC[2:0] being the clock decimal
+  *         division factor (1, 2, 4, ..., 128). Any successive call violating
+  *         this delay, leads to unpredictable results.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_LPTIM_IC_ConfigChannel(LPTIM_HandleTypeDef *hlptim, LPTIM_IC_ConfigTypeDef *sConfig,
@@ -3050,10 +3066,10 @@ __weak void HAL_LPTIM_ErrorCallback(LPTIM_HandleTypeDef *hlptim)
   *          @arg @ref HAL_LPTIM_UPDATE_EVENT_CB_ID      Update event detection Callback ID
   *          @arg @ref HAL_LPTIM_REP_COUNTER_WRITE_CB_ID Repetition counter register write complete Callback ID
   *          @arg @ref HAL_LPTIM_UPDATE_EVENT_HALF_CB_ID Update event Half detection Callback ID
+  *          @arg @ref HAL_LPTIM_ERROR_CB_ID             Error  Callback ID
   *          @arg @ref HAL_LPTIM_IC_CAPTURE_CB_ID        Input Capture Callback ID
   *          @arg @ref HAL_LPTIM_IC_CAPTURE_HALF_CB_ID   Input Capture half complete Callback ID
   *          @arg @ref HAL_LPTIM_OVER_CAPTURE_CB_ID      Over Capture Callback ID
-  *          @arg @ref HAL_LPTIM_ERROR_CB_ID             Error  Callback ID
   * @param pCallback pointer to the callback function
   * @retval status
   */
@@ -3067,9 +3083,6 @@ HAL_StatusTypeDef HAL_LPTIM_RegisterCallback(LPTIM_HandleTypeDef        *hlptim,
   {
     return HAL_ERROR;
   }
-
-  /* Process locked */
-  __HAL_LOCK(hlptim);
 
   if (hlptim->State == HAL_LPTIM_STATE_READY)
   {
@@ -3123,6 +3136,10 @@ HAL_StatusTypeDef HAL_LPTIM_RegisterCallback(LPTIM_HandleTypeDef        *hlptim,
         hlptim->UpdateEventHalfCpltCallback = pCallback;
         break;
 
+      case HAL_LPTIM_ERROR_CB_ID :
+        hlptim->ErrorCallback = pCallback;
+        break;
+
       case HAL_LPTIM_IC_CAPTURE_CB_ID :
         hlptim->IC_CaptureCallback = pCallback;
         break;
@@ -3133,10 +3150,6 @@ HAL_StatusTypeDef HAL_LPTIM_RegisterCallback(LPTIM_HandleTypeDef        *hlptim,
 
       case HAL_LPTIM_OVER_CAPTURE_CB_ID :
         hlptim->IC_OverCaptureCallback = pCallback;
-        break;
-
-      case HAL_LPTIM_ERROR_CB_ID :
-        hlptim->ErrorCallback = pCallback;
         break;
 
       default :
@@ -3169,9 +3182,6 @@ HAL_StatusTypeDef HAL_LPTIM_RegisterCallback(LPTIM_HandleTypeDef        *hlptim,
     status =  HAL_ERROR;
   }
 
-  /* Release Lock */
-  __HAL_UNLOCK(hlptim);
-
   return status;
 }
 
@@ -3192,15 +3202,17 @@ HAL_StatusTypeDef HAL_LPTIM_RegisterCallback(LPTIM_HandleTypeDef        *hlptim,
   *          @arg @ref HAL_LPTIM_DIRECTION_DOWN_CB_ID   Down-counting direction change Callback ID
   *          @arg @ref HAL_LPTIM_UPDATE_EVENT_CB_ID      Update event detection Callback ID
   *          @arg @ref HAL_LPTIM_REP_COUNTER_WRITE_CB_ID Repetition counter register write complete Callback ID
+  *          @arg @ref HAL_LPTIM_UPDATE_EVENT_HALF_CB_ID Update event Half detection Callback ID
+  *          @arg @ref HAL_LPTIM_ERROR_CB_ID             Error  Callback ID
+  *          @arg @ref HAL_LPTIM_IC_CAPTURE_CB_ID        Input Capture Callback ID
+  *          @arg @ref HAL_LPTIM_IC_CAPTURE_HALF_CB_ID   Input Capture half complete Callback ID
+  *          @arg @ref HAL_LPTIM_OVER_CAPTURE_CB_ID      Over Capture Callback ID
   * @retval status
   */
 HAL_StatusTypeDef HAL_LPTIM_UnRegisterCallback(LPTIM_HandleTypeDef        *hlptim,
                                                HAL_LPTIM_CallbackIDTypeDef CallbackID)
 {
   HAL_StatusTypeDef status = HAL_OK;
-
-  /* Process locked */
-  __HAL_LOCK(hlptim);
 
   if (hlptim->State == HAL_LPTIM_STATE_READY)
   {
@@ -3266,6 +3278,11 @@ HAL_StatusTypeDef HAL_LPTIM_UnRegisterCallback(LPTIM_HandleTypeDef        *hlpti
         hlptim->UpdateEventHalfCpltCallback = HAL_LPTIM_UpdateEventHalfCpltCallback;
         break;
 
+      case HAL_LPTIM_ERROR_CB_ID :
+        /* Legacy weak error Callback */
+        hlptim->ErrorCallback = HAL_LPTIM_ErrorCallback;
+        break;
+
       case HAL_LPTIM_IC_CAPTURE_CB_ID :
         /* Legacy weak IC Capture Callback */
         hlptim->IC_CaptureCallback = HAL_LPTIM_IC_CaptureCallback;
@@ -3313,9 +3330,6 @@ HAL_StatusTypeDef HAL_LPTIM_UnRegisterCallback(LPTIM_HandleTypeDef        *hlpti
     status =  HAL_ERROR;
   }
 
-  /* Release Lock */
-  __HAL_UNLOCK(hlptim);
-
   return status;
 }
 #endif /* USE_HAL_LPTIM_REGISTER_CALLBACKS */
@@ -3343,7 +3357,7 @@ HAL_StatusTypeDef HAL_LPTIM_UnRegisterCallback(LPTIM_HandleTypeDef        *hlpti
   * @param  hlptim LPTIM handle
   * @retval HAL state
   */
-HAL_LPTIM_StateTypeDef HAL_LPTIM_GetState(LPTIM_HandleTypeDef *hlptim)
+HAL_LPTIM_StateTypeDef HAL_LPTIM_GetState(const LPTIM_HandleTypeDef *hlptim)
 {
   /* Return LPTIM handle state */
   return hlptim->State;
@@ -3397,7 +3411,7 @@ static void LPTIM_ResetCallback(LPTIM_HandleTypeDef *lptim)
   * @param  flag   The lptim flag
   * @retval HAL status
   */
-static HAL_StatusTypeDef LPTIM_WaitForFlag(LPTIM_HandleTypeDef *hlptim, uint32_t flag)
+static HAL_StatusTypeDef LPTIM_WaitForFlag(const LPTIM_HandleTypeDef *hlptim, uint32_t flag)
 {
   HAL_StatusTypeDef result = HAL_OK;
   uint32_t count = TIMEOUT * (SystemCoreClock / 20UL / 1000UL);

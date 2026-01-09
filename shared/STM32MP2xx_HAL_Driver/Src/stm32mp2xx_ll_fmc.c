@@ -16,7 +16,7 @@
   ==============================================================================
   [..] The Flexible memory controller (FMC) includes following memory controllers:
        (+) The NOR/PSRAM memory controller
-	   (+) The NAND memory controller
+     (+) The NAND memory controller
 
   [..] The FMC functional block makes the interface with synchronous and asynchronous static
        memories. Its main purposes are:
@@ -41,13 +41,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                       opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -64,7 +63,7 @@
   * @brief FMC driver modules
   * @{
   */
-	
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
@@ -127,8 +126,8 @@
   */
 
 /** @addtogroup FMC_LL_Exported_Functions RIF protection configuration
- *  @brief   RIF protection configuration functions
- *
+  *  @brief   RIF protection configuration functions
+  *
 @verbatim
   ==============================================================================
             ##### RIF protection configuration functions #####
@@ -145,10 +144,14 @@
   * @brief  Configure the RIF COMMON, NOR and NAND CID protection
   * @param  Item COMMON or NOR/PSRAM or NAND
   *           @arg FMC_COMMON (COMMON controller, FMC_CFGR)
-  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE2, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE3, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE4, including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE2,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE3,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE4,
+                  including registers and associated memory map region (64 Mbytes))
   *           @arg FMC_NAND (NAND controller, including registers and associated memory map region (4 Kbytes))
   * @param  Attributes RIF COMMON, NOR/PSRAM and NAND CID protection attribute
   *           @arg FMC_PRIV
@@ -175,11 +178,11 @@ HAL_StatusTypeDef HAL_FMC_ConfigAttributes(uint32_t Item, uint32_t Attributes)
   {
     if ((Attributes & FMC_PRIV) == FMC_PRIV)
     {
-      FMC_Common_R->PRIVCFGR |= (1U << Item);
+      FMC_Common_R->PRIVCFGR |= (1UL << Item);
     }
     else
     {
-      FMC_Common_R->PRIVCFGR &= ~(1U << Item);
+      FMC_Common_R->PRIVCFGR &= ~(1UL << Item);
     }
   }
 
@@ -188,11 +191,11 @@ HAL_StatusTypeDef HAL_FMC_ConfigAttributes(uint32_t Item, uint32_t Attributes)
   {
     if ((Attributes & FMC_SEC) == FMC_SEC)
     {
-      FMC_Common_R->SECCFGR |= (1U << Item);
+      FMC_Common_R->SECCFGR |= (1UL << Item);
     }
     else
     {
-      FMC_Common_R->SECCFGR &= ~(1U << Item);
+      FMC_Common_R->SECCFGR &= ~(1UL << Item);
     }
   }
 
@@ -293,6 +296,10 @@ HAL_StatusTypeDef HAL_FMC_ConfigAttributes(uint32_t Item, uint32_t Attributes)
       FMC_Common_R->CIDCFGR5 |= (Attributes & FMC_CID_DYNAMIC_MASK) | FMC_CIDCFGR5_CFEN | FMC_CIDCFGR5_SEMEN;
     }
   }
+  else
+  {
+    /* Nothing to do */
+  }
 
   return HAL_OK;
 }
@@ -301,10 +308,14 @@ HAL_StatusTypeDef HAL_FMC_ConfigAttributes(uint32_t Item, uint32_t Attributes)
   * @brief  Get the configuration of the RIF COMMON, NOR and NAND CID protection
   * @param  Item COMMON or NOR/PSRAM or NAND
   *           @arg FMC_COMMON (COMMON controller, FMC_CFGR)
-  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
   *           @arg FMC_NAND (NAND controller, including registers and associated memory map region (4 Kbytes))
   * @param  pAttributes RIF COMMON, NOR/PSRAM and NAND CID protection attribute
   *           @arg FMC_PRIV
@@ -330,10 +341,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
   /* Check the parameters */
   assert_param(IS_FMC_ITEM_CID(Item));
 
-  *pAttributes = ((FMC_Common_R->PRIVCFGR & (1 << Item)) == 0U) ? FMC_NPRIV : FMC_PRIV;
+  *pAttributes = ((FMC_Common_R->PRIVCFGR & (1UL << Item)) == 0UL) ? FMC_NPRIV : FMC_PRIV;
 
   /* Get item security attribute */
-  *pAttributes |= ((FMC_Common_R->SECCFGR & (1 << Item)) == 0U) ? FMC_NSEC : FMC_SEC;
+  *pAttributes |= ((FMC_Common_R->SECCFGR & (1UL << Item)) == 0UL) ? FMC_NSEC : FMC_SEC;
 
   if (Item == FMC_COMMON)
   {
@@ -344,10 +355,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       {
         /* Get CIDs value from Semaphore white list */
         *pAttributes |= ((FMC_CID_DYNAMIC_SELECT) |
-                       ((READ_REG(FMC_Common_R->CIDCFGR0)) &
-                        (FMC_CIDCFGR0_SEMWLC2_Msk |
-                         FMC_CIDCFGR0_SEMWLC1_Msk |
-                         FMC_CIDCFGR0_SEMWLC0_Msk)));
+                         ((READ_REG(FMC_Common_R->CIDCFGR0)) &
+                          (FMC_CIDCFGR0_SEMWLC2_Msk |
+                           FMC_CIDCFGR0_SEMWLC1_Msk |
+                           FMC_CIDCFGR0_SEMWLC0_Msk)));
       }
       else
       {
@@ -369,10 +380,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       {
         /* Get CIDs value from Semaphore white list */
         *pAttributes |= ((FMC_CID_DYNAMIC_SELECT) |
-                       ((READ_REG(FMC_Common_R->CIDCFGR1)) &
-                        (FMC_CIDCFGR1_SEMWLC2_Msk |
-                         FMC_CIDCFGR1_SEMWLC1_Msk |
-                         FMC_CIDCFGR1_SEMWLC0_Msk)));
+                         ((READ_REG(FMC_Common_R->CIDCFGR1)) &
+                          (FMC_CIDCFGR1_SEMWLC2_Msk |
+                           FMC_CIDCFGR1_SEMWLC1_Msk |
+                           FMC_CIDCFGR1_SEMWLC0_Msk)));
       }
       else
       {
@@ -394,10 +405,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       {
         /* Get CIDs value from Semaphore white list */
         *pAttributes |= ((FMC_CID_DYNAMIC_SELECT) |
-                       ((READ_REG(FMC_Common_R->CIDCFGR2)) &
-                        (FMC_CIDCFGR2_SEMWLC2_Msk |
-                         FMC_CIDCFGR2_SEMWLC1_Msk |
-                         FMC_CIDCFGR2_SEMWLC0_Msk)));
+                         ((READ_REG(FMC_Common_R->CIDCFGR2)) &
+                          (FMC_CIDCFGR2_SEMWLC2_Msk |
+                           FMC_CIDCFGR2_SEMWLC1_Msk |
+                           FMC_CIDCFGR2_SEMWLC0_Msk)));
       }
       else
       {
@@ -419,10 +430,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       {
         /* Get CIDs value from Semaphore white list */
         *pAttributes |= ((FMC_CID_DYNAMIC_SELECT) |
-                       ((READ_REG(FMC_Common_R->CIDCFGR3)) &
-                        (FMC_CIDCFGR3_SEMWLC2_Msk |
-                         FMC_CIDCFGR3_SEMWLC1_Msk |
-                         FMC_CIDCFGR3_SEMWLC0_Msk)));
+                         ((READ_REG(FMC_Common_R->CIDCFGR3)) &
+                          (FMC_CIDCFGR3_SEMWLC2_Msk |
+                           FMC_CIDCFGR3_SEMWLC1_Msk |
+                           FMC_CIDCFGR3_SEMWLC0_Msk)));
       }
       else
       {
@@ -444,10 +455,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       {
         /* Get CIDs value from Semaphore white list */
         *pAttributes |= ((FMC_CID_DYNAMIC_SELECT) |
-                       ((READ_REG(FMC_Common_R->CIDCFGR4)) &
-                        (FMC_CIDCFGR4_SEMWLC2_Msk |
-                         FMC_CIDCFGR4_SEMWLC1_Msk |
-                         FMC_CIDCFGR4_SEMWLC0_Msk)));
+                         ((READ_REG(FMC_Common_R->CIDCFGR4)) &
+                          (FMC_CIDCFGR4_SEMWLC2_Msk |
+                           FMC_CIDCFGR4_SEMWLC1_Msk |
+                           FMC_CIDCFGR4_SEMWLC0_Msk)));
       }
       else
       {
@@ -469,10 +480,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       {
         /* Get CIDs value from Semaphore white list */
         *pAttributes |= ((FMC_CID_DYNAMIC_SELECT) |
-                       ((READ_REG(FMC_Common_R->CIDCFGR5)) &
-                        (FMC_CIDCFGR5_SEMWLC2_Msk |
-                         FMC_CIDCFGR5_SEMWLC1_Msk |
-                         FMC_CIDCFGR5_SEMWLC0_Msk)));
+                         ((READ_REG(FMC_Common_R->CIDCFGR5)) &
+                          (FMC_CIDCFGR5_SEMWLC2_Msk |
+                           FMC_CIDCFGR5_SEMWLC1_Msk |
+                           FMC_CIDCFGR5_SEMWLC0_Msk)));
       }
       else
       {
@@ -485,6 +496,10 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
       *pAttributes |= FMC_CID_DISABLE;
     }
   }
+  else
+  {
+    /* Nothing to do */
+  }
 
   return HAL_OK;
 }
@@ -493,10 +508,14 @@ HAL_StatusTypeDef HAL_FMC_GetConfigAttributes(uint32_t Item, uint32_t *pAttribut
   * @brief  Attempt to acquire semaphore(s) of the RIF COMMON, NOR and NAND CID protection
   * @param  Item COMMON or NOR/PSRAM or NAND
   *           @arg FMC_COMMON (COMMON controller, FMC_CFGR)
-  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
   *           @arg FMC_NAND (NAND controller, including registers and associated memory map region (4 Kbytes))
   * @retval HAL_OK if the configuration is successfully read, HAL_ERROR otherwise
   */
@@ -509,13 +528,13 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
 #if defined(CORE_CM0PLUS)
   cidcurrent = RIF_CID_CPU3_CM0;
-#endif
+#endif /* CORE_CM0PLUS */
 #if defined(CORE_CM33)
   cidcurrent = RIF_CID_CPU2_CM33;
-#endif
+#endif /* CORE_CM33 */
 #if defined(CORE_CA35)
   cidcurrent = RIF_CID_CPU1_CA35;
-#endif
+#endif /* CORE_CA35 */
 
   /* Take Semaphore */
   if (Item == FMC_COMMON)
@@ -524,8 +543,9 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
     if ((FMC_Common_R->SEMCR0 & FMC_SEMCR0_SEMCID_Msk) != (cidcurrent << FMC_SEMCR0_SEMCID_Pos))
     {
-      /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired semaphore shall be released and status error is returned */
-      HAL_FMC_ReleaseSemaphore(Item);
+      /* Mutex not taken with current CID - it means that other authorized CID has control,
+        previous acquired semaphore shall be released and status error is returned */
+      (void)HAL_FMC_ReleaseSemaphore(Item);
       return HAL_ERROR;
     }
   }
@@ -535,8 +555,9 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
     if ((FMC_Common_R->SEMCR1 & FMC_SEMCR1_SEMCID_Msk) != (cidcurrent << FMC_SEMCR1_SEMCID_Pos))
     {
-      /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired semaphore shall be released and status error is returned */
-      HAL_FMC_ReleaseSemaphore(Item);
+      /* Mutex not taken with current CID - it means that other authorized CID has control,
+        previous acquired semaphore shall be released and status error is returned */
+      (void)HAL_FMC_ReleaseSemaphore(Item);
       return HAL_ERROR;
     }
   }
@@ -546,8 +567,9 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
     if ((FMC_Common_R->SEMCR2 & FMC_SEMCR2_SEMCID_Msk) != (cidcurrent << FMC_SEMCR2_SEMCID_Pos))
     {
-      /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired semaphore shall be released and status error is returned */
-      HAL_FMC_ReleaseSemaphore(Item);
+      /* Mutex not taken with current CID - it means that other authorized CID has control,
+        previous acquired semaphore shall be released and status error is returned */
+      (void)HAL_FMC_ReleaseSemaphore(Item);
       return HAL_ERROR;
     }
   }
@@ -557,8 +579,9 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
     if ((FMC_Common_R->SEMCR3 & FMC_SEMCR3_SEMCID_Msk) != (cidcurrent << FMC_SEMCR3_SEMCID_Pos))
     {
-      /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired semaphore shall be released and status error is returned */
-      HAL_FMC_ReleaseSemaphore(Item);
+      /* Mutex not taken with current CID - it means that other authorized CID has control,
+        previous acquired semaphore shall be released and status error is returned */
+      (void)HAL_FMC_ReleaseSemaphore(Item);
       return HAL_ERROR;
     }
   }
@@ -568,8 +591,9 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
     if ((FMC_Common_R->SEMCR4 & FMC_SEMCR4_SEMCID_Msk) != (cidcurrent << FMC_SEMCR4_SEMCID_Pos))
     {
-      /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired semaphore shall be released and status error is returned */
-      HAL_FMC_ReleaseSemaphore(Item);
+      /* Mutex not taken with current CID - it means that other authorized CID has control,
+        previous acquired semaphore shall be released and status error is returned */
+      (void)HAL_FMC_ReleaseSemaphore(Item);
       return HAL_ERROR;
     }
   }
@@ -579,10 +603,15 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
 
     if ((FMC_Common_R->SEMCR5 & FMC_SEMCR5_SEMCID_Msk) != (cidcurrent << FMC_SEMCR5_SEMCID_Pos))
     {
-      /* Mutex not taken with current CID - it means that other authorized CID has control, previous acquired semaphore shall be released and status error is returned */
-      HAL_FMC_ReleaseSemaphore(Item);
+      /* Mutex not taken with current CID - it means that other authorized CID has control,
+        previous acquired semaphore shall be released and status error is returned */
+      (void)HAL_FMC_ReleaseSemaphore(Item);
       return HAL_ERROR;
     }
+  }
+  else
+  {
+    /* Nothing to do */
   }
 
   return HAL_OK;
@@ -592,10 +621,14 @@ HAL_StatusTypeDef HAL_FMC_TakeSemaphore(uint32_t Item)
   * @brief  Release semaphore(s) of the RIF COMMON, NOR and NAND CID protection
   * @param  Item COMMON or NOR/PSRAM or NAND
   *           @arg FMC_COMMON (COMMON controller, FMC_CFGR)
-  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
-  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE1, including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_1 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_2 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_3 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
+  *           @arg FMC_NOR_PSRAM_4 (NOR/PSRAM controller for Chip Select NE1,
+                  including registers and associated memory map region (64 Mbytes))
   *           @arg FMC_NAND (NAND controller, including registers and associated memory map region (4 Kbytes))
   * @retval HAL_OK if the configuration is successfully read, HAL_ERROR otherwise
   */
@@ -628,6 +661,10 @@ HAL_StatusTypeDef HAL_FMC_ReleaseSemaphore(uint32_t Item)
   else if (Item == FMC_NAND)
   {
     FMC_Common_R->SEMCR5 &= ~FMC_SEMCR5_SEM_MUTEX;
+  }
+  else
+  {
+    /* Nothing to do */
   }
 
   return HAL_OK;
@@ -826,13 +863,13 @@ HAL_StatusTypeDef FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device, FMC_NORSR
 
   /* Set FMC_NORSRAM device timing parameters */
   MODIFY_REG(Device->BTCR[Bank + 1U], BTR_CLEAR_MASK, (Timing->AddressSetupTime                                  |
-                                                      ((Timing->AddressHoldTime)        << FMC_BTRx_ADDHLD_Pos)  |
-                                                      ((Timing->DataSetupTime)          << FMC_BTRx_DATAST_Pos)  |
-                                                      ((Timing->DataHoldTime)           << FMC_BTRx_DATAHLD_Pos) |
-                                                      ((Timing->BusTurnAroundDuration)  << FMC_BTRx_BUSTURN_Pos) |
-                                                      (((Timing->CLKDivision) - 1U)     << FMC_BTRx_CLKDIV_Pos)  |
-                                                      (((Timing->DataLatency) - 2U)     << FMC_BTRx_DATLAT_Pos)  |
-                                                      (Timing->AccessMode)));
+                                                       ((Timing->AddressHoldTime)        << FMC_BTRx_ADDHLD_Pos)  |
+                                                       ((Timing->DataSetupTime)          << FMC_BTRx_DATAST_Pos)  |
+                                                       ((Timing->DataHoldTime)           << FMC_BTRx_DATAHLD_Pos) |
+                                                       ((Timing->BusTurnAroundDuration)  << FMC_BTRx_BUSTURN_Pos) |
+                                                       (((Timing->CLKDivision) - 1U)     << FMC_BTRx_CLKDIV_Pos)  |
+                                                       (((Timing->DataLatency) - 2U)     << FMC_BTRx_DATLAT_Pos)  |
+                                                       (Timing->AccessMode)));
 
   /* Configure Clock division value (in NORSRAM bank 1) when continuous clock is enabled */
   if (HAL_IS_BIT_SET(Device->BTCR[FMC_NORSRAM_BANK1], FMC_CFGR_CCLKEN))
@@ -857,7 +894,10 @@ HAL_StatusTypeDef FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device, FMC_NORSR
   *            @arg FMC_EXTENDED_MODE_ENABLE
   * @retval HAL status
   */
-HAL_StatusTypeDef FMC_NORSRAM_Extended_Timing_Init(FMC_NORSRAM_EXTENDED_TypeDef *Device, FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank, uint32_t ExtendedMode)
+HAL_StatusTypeDef FMC_NORSRAM_Extended_Timing_Init(FMC_NORSRAM_EXTENDED_TypeDef *Device,
+                                                   FMC_NORSRAM_TimingTypeDef *Timing,
+                                                   uint32_t Bank,
+                                                   uint32_t ExtendedMode)
 {
   /* Check the parameters */
   assert_param(IS_FMC_EXTENDED_MODE(ExtendedMode));
@@ -901,8 +941,8 @@ HAL_StatusTypeDef FMC_NORSRAM_Extended_Timing_Init(FMC_NORSRAM_EXTENDED_TypeDef 
   */
 
 /** @addtogroup FMC_LL_NORSRAM_Private_Functions_Group2
- *  @brief   management functions
- *
+  *  @brief   management functions
+  *
 @verbatim
   ==============================================================================
                       ##### FMC_NORSRAM Control functions #####
@@ -986,8 +1026,8 @@ HAL_StatusTypeDef FMC_NORSRAM_WriteOperation_Disable(FMC_NORSRAM_TypeDef *Device
   */
 
 /** @defgroup FMC_LL_NAND_Exported_Functions_Group1 Initialization and de-initialization functions
- *  @brief    Initialization and Configuration functions
- *
+  *  @brief    Initialization and Configuration functions
+  *
 @verbatim
   ==============================================================================
               ##### Initialization and de_initialization functions #####
@@ -1041,7 +1081,8 @@ HAL_StatusTypeDef FMC_NAND_Init(FMC_NAND_TypeDef *Device, FMC_NAND_InitTypeDef *
   * @param  Bank NAND bank number
   * @retval HAL status
   */
-HAL_StatusTypeDef FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank)
+HAL_StatusTypeDef FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing,
+                                                   uint32_t Bank)
 {
   /* Check the parameters */
   assert_param(IS_FMC_NAND_DEVICE(Device));
@@ -1071,7 +1112,8 @@ HAL_StatusTypeDef FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC
   * @param  Bank NAND bank number
   * @retval HAL status
   */
-HAL_StatusTypeDef FMC_NAND_AttributeSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank)
+HAL_StatusTypeDef FMC_NAND_AttributeSpace_Timing_Init(FMC_NAND_TypeDef *Device, FMC_NAND_PCC_TimingTypeDef *Timing,
+                                                      uint32_t Bank)
 {
   /* Check the parameters */
   assert_param(IS_FMC_NAND_DEVICE(Device));
@@ -1230,7 +1272,6 @@ HAL_StatusTypeDef FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, ui
   */
 
 
-
 /**
   * @}
   */
@@ -1243,5 +1284,3 @@ HAL_StatusTypeDef FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, ui
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

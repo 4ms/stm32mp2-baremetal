@@ -2426,11 +2426,10 @@ static HAL_StatusTypeDef SMARTCARD_SetConfig(SMARTCARD_HandleTypeDef *hsmartcard
     assert_param(IS_SMARTCARD_TIMEOUT_VALUE(hsmartcard->Init.TimeOutValue));
     tmpreg |= (uint32_t) hsmartcard->Init.TimeOutValue;
   }
-  MODIFY_REG(hsmartcard->Instance->RTOR, (USART_RTOR_RTO | USART_RTOR_BLEN), tmpreg);
+  WRITE_REG(hsmartcard->Instance->RTOR, tmpreg);
 
   /*-------------------------- USART BRR Configuration -----------------------*/
   SMARTCARD_GETCLOCK(hsmartcard, clock);
-  tmpreg =   0U;
   pclk = HAL_RCCEx_GetPeriphCLKFreq(clock);
   tmpreg = (uint32_t)(((pclk / SMARTCARDPrescTable[hsmartcard->Init.ClockPrescaler]) +
                        (hsmartcard->Init.BaudRate / 2U)) / hsmartcard->Init.BaudRate);

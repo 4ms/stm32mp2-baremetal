@@ -350,15 +350,17 @@ HAL_StatusTypeDef HAL_UART_Init(UART_HandleTypeDef *huart)
 
   __HAL_UART_DISABLE(huart);
 
+  /* Perform advanced settings configuration */
+  /* For some items, configuration requires to be done prior TE and RE bits are set */
+  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
+  {
+    UART_AdvFeatureConfig(huart);
+  }
+
   /* Set the UART Communication parameters */
   if (UART_SetConfig(huart) == HAL_ERROR)
   {
     return HAL_ERROR;
-  }
-
-  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
-  {
-    UART_AdvFeatureConfig(huart);
   }
 
   /* In asynchronous mode, the following bits must be kept cleared:
@@ -415,15 +417,17 @@ HAL_StatusTypeDef HAL_HalfDuplex_Init(UART_HandleTypeDef *huart)
 
   __HAL_UART_DISABLE(huart);
 
+  /* Perform advanced settings configuration */
+  /* For some items, configuration requires to be done prior TE and RE bits are set */
+  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
+  {
+    UART_AdvFeatureConfig(huart);
+  }
+
   /* Set the UART Communication parameters */
   if (UART_SetConfig(huart) == HAL_ERROR)
   {
     return HAL_ERROR;
-  }
-
-  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
-  {
-    UART_AdvFeatureConfig(huart);
   }
 
   /* In half-duplex mode, the following bits must be kept cleared:
@@ -501,15 +505,17 @@ HAL_StatusTypeDef HAL_LIN_Init(UART_HandleTypeDef *huart, uint32_t BreakDetectLe
 
   __HAL_UART_DISABLE(huart);
 
+  /* Perform advanced settings configuration */
+  /* For some items, configuration requires to be done prior TE and RE bits are set */
+  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
+  {
+    UART_AdvFeatureConfig(huart);
+  }
+
   /* Set the UART Communication parameters */
   if (UART_SetConfig(huart) == HAL_ERROR)
   {
     return HAL_ERROR;
-  }
-
-  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
-  {
-    UART_AdvFeatureConfig(huart);
   }
 
   /* In LIN mode, the following bits must be kept cleared:
@@ -585,15 +591,17 @@ HAL_StatusTypeDef HAL_MultiProcessor_Init(UART_HandleTypeDef *huart, uint8_t Add
 
   __HAL_UART_DISABLE(huart);
 
+  /* Perform advanced settings configuration */
+  /* For some items, configuration requires to be done prior TE and RE bits are set */
+  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
+  {
+    UART_AdvFeatureConfig(huart);
+  }
+
   /* Set the UART Communication parameters */
   if (UART_SetConfig(huart) == HAL_ERROR)
   {
     return HAL_ERROR;
-  }
-
-  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
-  {
-    UART_AdvFeatureConfig(huart);
   }
 
   /* In multiprocessor mode, the following bits must be kept cleared:
@@ -957,10 +965,7 @@ HAL_StatusTypeDef HAL_UART_RegisterRxEventCallback(UART_HandleTypeDef *huart, pU
     return HAL_ERROR;
   }
 
-  /* Process locked */
-  __HAL_LOCK(huart);
-
-  if (huart->gState == HAL_UART_STATE_READY)
+  if (huart->RxState == HAL_UART_STATE_READY)
   {
     huart->RxEventCallback = pCallback;
   }
@@ -970,9 +975,6 @@ HAL_StatusTypeDef HAL_UART_RegisterRxEventCallback(UART_HandleTypeDef *huart, pU
 
     status =  HAL_ERROR;
   }
-
-  /* Release Lock */
-  __HAL_UNLOCK(huart);
 
   return status;
 }
@@ -987,10 +989,7 @@ HAL_StatusTypeDef HAL_UART_UnRegisterRxEventCallback(UART_HandleTypeDef *huart)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
-  /* Process locked */
-  __HAL_LOCK(huart);
-
-  if (huart->gState == HAL_UART_STATE_READY)
+  if (huart->RxState == HAL_UART_STATE_READY)
   {
     huart->RxEventCallback = HAL_UARTEx_RxEventCallback; /* Legacy weak UART Rx Event Callback  */
   }
@@ -1001,8 +1000,6 @@ HAL_StatusTypeDef HAL_UART_UnRegisterRxEventCallback(UART_HandleTypeDef *huart)
     status =  HAL_ERROR;
   }
 
-  /* Release Lock */
-  __HAL_UNLOCK(huart);
   return status;
 }
 
@@ -3162,7 +3159,7 @@ HAL_StatusTypeDef UART_SetConfig(UART_HandleTypeDef *huart)
     pclk = HAL_RCCEx_GetPeriphCLKFreq(clocksource);
 #else /* CORE_CM0PLUS */
     UNUSED(clocksource);
-    pclk = 0U;
+    pclk = MSI_VALUE;
 #endif /* ! CORE_CM0PLUS */
 
     /* If proper clock source reported */
@@ -3265,6 +3262,13 @@ void UART_AdvFeatureConfig(UART_HandleTypeDef *huart)
   /* Check whether the set of advanced features to configure is properly set */
   assert_param(IS_UART_ADVFEATURE_INIT(huart->AdvancedInit.AdvFeatureInit));
 
+  /* if required, configure RX/TX pins swap */
+  if (HAL_IS_BIT_SET(huart->AdvancedInit.AdvFeatureInit, UART_ADVFEATURE_SWAP_INIT))
+  {
+    assert_param(IS_UART_ADVFEATURE_SWAP(huart->AdvancedInit.Swap));
+    MODIFY_REG(huart->Instance->CR2, USART_CR2_SWAP, huart->AdvancedInit.Swap);
+  }
+
   /* if required, configure TX pin active level inversion */
   if (HAL_IS_BIT_SET(huart->AdvancedInit.AdvFeatureInit, UART_ADVFEATURE_TXINVERT_INIT))
   {
@@ -3284,13 +3288,6 @@ void UART_AdvFeatureConfig(UART_HandleTypeDef *huart)
   {
     assert_param(IS_UART_ADVFEATURE_DATAINV(huart->AdvancedInit.DataInvert));
     MODIFY_REG(huart->Instance->CR2, USART_CR2_DATAINV, huart->AdvancedInit.DataInvert);
-  }
-
-  /* if required, configure RX/TX pins swap */
-  if (HAL_IS_BIT_SET(huart->AdvancedInit.AdvFeatureInit, UART_ADVFEATURE_SWAP_INIT))
-  {
-    assert_param(IS_UART_ADVFEATURE_SWAP(huart->AdvancedInit.Swap));
-    MODIFY_REG(huart->Instance->CR2, USART_CR2_SWAP, huart->AdvancedInit.Swap);
   }
 
   /* if required, configure RX overrun detection disabling */
@@ -3420,7 +3417,7 @@ HAL_StatusTypeDef UART_WaitOnFlagUntilTimeout(UART_HandleTypeDef *huart, uint32_
         return HAL_TIMEOUT;
       }
 
-      if (READ_BIT(huart->Instance->CR1, USART_CR1_RE) != 0U)
+      if ((READ_BIT(huart->Instance->CR1, USART_CR1_RE) != 0U) && (Flag != UART_FLAG_TXE) && (Flag != UART_FLAG_TC))
       {
         if (__HAL_UART_GET_FLAG(huart, UART_FLAG_ORE) == SET)
         {

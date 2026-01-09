@@ -94,7 +94,8 @@ typedef struct
   uint32_t InjectedSamplingTime;          /*!< Sampling time value to be set for the selected channel.
                                                Unit: ADC clock cycles.
                                                Conversion time is the addition of sampling time and processing time
-                                               (12.5 ADC clock cycles at ADC resolution 12 bits, 10.5 cycles at 10 bits, 8.5 cycles at 8 bits, 6.5 cycles at 6 bits).
+                                               (12.5 ADC clock cycles at ADC resolution 12 bits, 10.5 cycles at
+                                               10 bits, 8.5 cycles at 8 bits, 6.5 cycles at 6 bits).
                                                This parameter can be a value of @ref ADC_HAL_EC_CHANNEL_SAMPLINGTIME.
                                                Caution: This parameter applies to a channel that can be used in a
                                                         regular and/or injected group.
@@ -121,19 +122,20 @@ typedef struct
                                                Note: This parameter must be modified when ADC is disabled (before ADC
                                                      start conversion or after ADC stop conversion).
                                                If ADC is enabled, this parameter setting is bypassed without error
-                                               reporting (as it can be the expected behavior in case of another parameter
+                                               reporting (as it can be the expected behavior in case of
+                                               another parameter
                                                update on the fly) */
 
   uint32_t InjectedOffsetNumber;          /*!< Selects the offset number.
                                                This parameter can be a value of @ref ADC_HAL_EC_OFFSET_NB.
-                                               Caution: Only one offset is allowed per channel. This parameter overwrites
-                                               the last setting. */
+                                               Caution: Only one offset is allowed per channel. This
+                                               parameter overwrites the last setting. */
 
   uint32_t InjectedOffset;                /*!< Defines the offset to be subtracted from the raw converted data.
                                                Offset value must be a positive number.
-                                               Depending of ADC resolution selected (12, 10, 8 or 6 bits), this parameter
-                                               must be a number between Min_Data = 0x000 and Max_Data = 0xFFF,  0x3FF,
-                                               0xFF or 0x3F respectively.
+                                               Depending of ADC resolution selected (12, 10, 8 or 6 bits),
+                                               this parameter must be a number between Min_Data = 0x000 and
+                                               Max_Data = 0xFFF,  0x3FF, 0xFF or 0x3F respectively.
                                                Note: This parameter must be modified when no conversion is on going on
                                                      both regular and injected groups (ADC disabled, or ADC enabled
                                                      without continuous mode or external trigger that could launch a
@@ -147,14 +149,18 @@ typedef struct
                                                (positive sign) from or to the raw converted data.
                                                This parameter can be a value of @ref ADCEx_OffsetSign.
                                                Note:
-                                                 - This parameter must be modified when no conversion is on going on both
-                                                   regular and injected groups (ADC disabled, or ADC enabled without
-                                                   continuous mode or external trigger that could launch a conversion).
+                                                 - This parameter must be modified when no conversion is on
+                                                   going on both regular and injected groups (ADC disabled,
+                                                   or ADC enabled without continuous mode or external trigger
+                                                   that could launch a conversion).
                                                  - This parameter is specific to ADC1 only. */
 
   FunctionalState InjectedOffsetSaturation;   /*!< Define if the offset should be saturated upon under or over flow.
                                                This parameter value can be ENABLE or DISABLE.
-                                               Note: This parameter must be modified when no conversion is on going on both regular and injected groups (ADC disabled, or ADC enabled without continuous mode or external trigger that could launch a conversion). */
+                                               Note: This parameter must be modified when no conversion is on
+                                                     going on both regular and injected groups (ADC disabled,
+                                                     or ADC enabled without continuous mode or external trigger
+                                                     that could launch a conversion). */
 
   uint32_t InjectedLeftBitShift;          /*!< Configures the left shifting applied to the final result with or without
                                                oversampling.
@@ -192,44 +198,46 @@ typedef struct
   FunctionalState AutoInjectedConv;       /*!< Enables or disables the selected ADC group injected automatic conversion
                                                after regular one
                                                This parameter can be set to ENABLE or DISABLE.
-                                               Note: To use Automatic injected conversion, discontinuous mode must be
-                                                     disabled ('DiscontinuousConvMode' and 'InjectedDiscontinuousConvMode'
-                                                     set to DISABLE)
-                                               Note: To use Automatic injected conversion, injected group external triggers
-                                                     must be disabled ('ExternalTrigInjecConv' set to
-                                                     ADC_INJECTED_SOFTWARE_START)
+                                               Note: To use Automatic injected conversion, discontinuous mode
+                                                     must be disabled ('DiscontinuousConvMode' and
+                                                     'InjectedDiscontinuousConvMode' set to DISABLE)
+                                               Note: To use Automatic injected conversion, injected group
+                                                     external triggers must be disabled
+                                                     ('ExternalTrigInjecConv' set to ADC_INJECTED_SOFTWARE_START)
                                                Note: In case of DMA used with regular group: if DMA configured in normal
-                                                     mode (single shot) JAUTO will be stopped upon DMA transfer complete.
-                                                     To maintain JAUTO always enabled,
+                                                     mode (single shot) JAUTO will be stopped upon DMA
+                                                     transfer complete. To maintain JAUTO always enabled,
                                                      DMA must be configured in circular mode.
                                                Caution: this setting impacts the entire injected group.
                                                         Therefore, call of HAL_ADCEx_InjectedConfigChannel() to
-                                                        configure a channel on injected group can impact the configuration
-                                                        of other channels previously set. */
+                                                        configure a channel on injected group can impact the
+                                                        configuration of other channels previously set. */
 
   uint32_t ExternalTrigInjecConv;         /*!< Selects the external event used to trigger the conversion start of
                                                injected group.
                                                If set to ADC_INJECTED_SOFTWARE_START, external triggers are disabled
                                                and software trigger is used instead.
-                                               This parameter can be a value of @ref ADC_injected_external_trigger_source.
-                                               Caution: this setting impacts the entire injected group. Therefore, call of
-                                                        HAL_ADCEx_InjectedConfigChannel() to configure a channel on
-                                                        injected group can impact the configuration of other channels
-                                                        previously set. */
+                                               This parameter can be a value of
+                                               @ref ADC_injected_external_trigger_source.
+                                               Caution: this setting impacts the entire injected group. Therefore,
+                                                        call of HAL_ADCEx_InjectedConfigChannel() to configure a
+                                                        channel on injected group can impact the configuration of
+                                                        other channels previously set. */
 
   uint32_t ExternalTrigInjecConvEdge;     /*!< Selects the external trigger edge of injected group.
                                                This parameter can be a value of @ref ADC_injected_external_trigger_edge.
                                                If trigger source is set to ADC_INJECTED_SOFTWARE_START, this parameter
                                                is discarded.
                                                Caution: this setting impacts the entire injected group.
-                                                        Therefore, call of HAL_ADCEx_InjectedConfigChannel() to configure a
-                                                        channel on injected group can impact the configuration of other
-                                                        channels previously set. */
+                                                        Therefore, call of HAL_ADCEx_InjectedConfigChannel()
+                                                        to configure a channel on injected group can impact the
+                                                        configuration of other channels previously set. */
 
   FunctionalState InjecOversamplingMode;        /*!< Specifies whether the oversampling feature is enabled or disabled.
                                                      This parameter can be set to ENABLE or DISABLE.
-                                                     Note: This parameter can be modified only if there is no conversion is
-                                                           ongoing (both ADSTART and JADSTART cleared). */
+                                                     Note: This parameter can be modified only if there is
+                                                           no conversion is ongoing (both ADSTART and JADSTART
+                                                           cleared). */
 
   ADC_InjOversamplingTypeDef  InjecOversampling; /*!< Specifies the Oversampling parameters.
                                                       Caution: this setting overwrites the previous oversampling
@@ -307,7 +315,6 @@ typedef struct
 #define ADC_EXTERNALTRIGINJEC_LPTIM4_CH1    (LL_ADC_INJ_TRIG_EXT_LPTIM4_CH1)     /*!< ADC group injected conversion trigger from external peripheral: LPTIM4 channel 1 event. Trigger edge set to rising edge (default setting). */
 #define ADC_EXTERNALTRIGINJEC_LPTIM5_OUT    (LL_ADC_INJ_TRIG_EXT_LPTIM5_OUT)     /*!< ADC group injected conversion trigger from external peripheral: LPTIM5 OUT event.       Trigger edge set to rising edge (default setting). */
 
-#define ADC_EXTERNALTRIGINJEC_T15_TRGO      (LL_ADC_INJ_TRIG_EXT_TIM15_TRGO)     /*!< ADC group injected conversion trigger from external peripheral: TIM15 TRGO event.  Trigger edge set to rising edge (default setting). */
 #define ADC_EXTERNALTRIGINJEC_T1_CC3_ADC3   (LL_ADC_INJ_TRIG_EXT_TIM1_CC3_ADC3)  /*!< ADC group injected conversion trigger from external peripheral: TIM1 channel 4 event  (capture compare: input capture or output capture). Trigger edge set to rising edge (default setting). */
 #define ADC_EXTERNALTRIGINJEC_T1_CC4        (LL_ADC_INJ_TRIG_EXT_TIM1_CC4)       /*!< ADC group injected conversion trigger from external peripheral: TIM8 channel 2 event  (capture compare: input capture or output capture). Trigger edge set to rising edge (default setting). */
 #define ADC_EXTERNALTRIGINJEC_T8_CC2        (LL_ADC_INJ_TRIG_EXT_TIM8_CC2)       /*!< ADC group injected conversion trigger from external peripheral: TIM8 channel 4 event  (capture compare: input capture or output capture). Trigger edge set to rising edge (default setting). */
@@ -445,11 +452,11 @@ typedef struct
   * @{
   */
 #define ADC_CFGR1_FIELDS    (ADC_CFGR1_AWD1CH  | ADC_CFGR1_JAUTO   | ADC_CFGR1_JAWD1EN |\
-                            ADC_CFGR1_AWD1EN  | ADC_CFGR1_AWD1SGL | \
-                            ADC_CFGR1_JDISCEN | ADC_CFGR1_DISCNUM | ADC_CFGR1_DISCEN  |\
-                            ADC_CFGR1_AUTDLY  | ADC_CFGR1_CONT    | ADC_CFGR1_OVRMOD  |\
-                            ADC_CFGR1_EXTEN   | ADC_CFGR1_EXTSEL  | ADC_CFGR1_ALIGN   |\
-                            ADC_CFGR1_RES     | ADC_CFGR1_DMACFG  | ADC_CFGR1_DMAEN   )
+                             ADC_CFGR1_AWD1EN  | ADC_CFGR1_AWD1SGL | \
+                             ADC_CFGR1_JDISCEN | ADC_CFGR1_DISCNUM | ADC_CFGR1_DISCEN  |\
+                             ADC_CFGR1_AUTDLY  | ADC_CFGR1_CONT    | ADC_CFGR1_OVRMOD  |\
+                             ADC_CFGR1_EXTEN   | ADC_CFGR1_EXTSEL  | ADC_CFGR1_ALIGN   |\
+                             ADC_CFGR1_RES     | ADC_CFGR1_DMACFG  | ADC_CFGR1_DMAEN   )
 /**
   * @}
   */
@@ -603,7 +610,6 @@ typedef struct
 
 /**
   * @brief Enable the ADC DMA continuous request.
-  * @param __HANDLE__ ADC handle.
   * @param __DMACONTREQ_MODE__: DMA continuous request mode.
   * @retval None
   */
@@ -829,7 +835,6 @@ typedef struct
    : ((__HANDLE_SLAVE__)->Instance = NULL))
 
 
-
 /**
   * @brief Verify the ADC instance connected to the battery voltage VBAT.
   * @param __HANDLE__ ADC handle.
@@ -892,7 +897,7 @@ typedef struct
   */
 #if defined(ADC3)
 #define ADC_VDDCPU_INSTANCE(__HANDLE__)  ((((__HANDLE__)->Instance) == ADC2) ||\
-                                           (((__HANDLE__)->Instance) == ADC3) )
+                                          (((__HANDLE__)->Instance) == ADC3) )
 #else
 #define ADC_VDDCPU_INSTANCE(__HANDLE__)  ((((__HANDLE__)->Instance) == ADC2) )
 #endif /* ADC3 */
@@ -964,23 +969,23 @@ typedef struct
 #define IS_ADC_DIFF_CHANNEL(__INSTANCE__, __CHANNEL__) \
   ( ( ((__INSTANCE__) == ADC1)                         \
     )?                                                 \
-     (((__CHANNEL__) == ADC_CHANNEL_1)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_2)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_3)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_4)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_5)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_10) ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_11) ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_15) ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_17)   )            \
+    (((__CHANNEL__) == ADC_CHANNEL_1)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_2)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_3)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_4)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_5)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_10) ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_11) ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_15) ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_17)   )            \
     :                                                  \
-     (((__CHANNEL__) == ADC_CHANNEL_1)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_2)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_3)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_4)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_5)  ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_10) ||             \
-      ((__CHANNEL__) == ADC_CHANNEL_11)   )            \
+    (((__CHANNEL__) == ADC_CHANNEL_1)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_2)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_3)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_4)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_5)  ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_10) ||             \
+     ((__CHANNEL__) == ADC_CHANNEL_11)   )            \
   )
 
 /**
@@ -1022,8 +1027,8 @@ typedef struct
 
 /**
   * @brief Verify the ADC injected conversions external trigger.
-  * @param __INJTRIG__ programmed ADC injected conversions external trigger.
-  * @retval SET (__INJTRIG__ is a valid value) or RESET (__INJTRIG__ is invalid)
+  * @param __INJ_TRIG_SOURCE__ programmed ADC injected conversions external trigger.
+  * @retval SET (__INJ_TRIG_SOURCE__ is a valid value) or RESET (__INJ_TRIG_SOURCE__ is invalid)
   */
 #define IS_ADC_EXTTRIGINJEC_ADC12(__INJ_TRIG_SOURCE__)                    \
   (   ((__INJ_TRIG_SOURCE__) == ADC_INJECTED_SOFTWARE_START)              \
@@ -1093,9 +1098,9 @@ typedef struct
 
 #define IS_ADC_EXTTRIGINJEC(__ADC_INSTANCE__, __INJ_TRIG_SOURCE__)          \
   ((((__ADC_INSTANCE__) == ADC1) || ((__ADC_INSTANCE__) == ADC2))           \
-    ? IS_ADC_EXTTRIGINJEC_ADC12(__INJ_TRIG_SOURCE__)                        \
-      :                                                                     \
-      IS_ADC_EXTTRIGINJEC_ADC3(__INJ_TRIG_SOURCE__)                         \
+   ? IS_ADC_EXTTRIGINJEC_ADC12(__INJ_TRIG_SOURCE__)                        \
+   :                                                                     \
+   IS_ADC_EXTTRIGINJEC_ADC3(__INJ_TRIG_SOURCE__)                         \
   )
 
 
@@ -1190,7 +1195,6 @@ typedef struct
    ((__FILTERING_MODE__) == ADC_AWD_FILTERING_8SAMPLES)    )
 
 
-
 /**
   * @brief Verify the ADC conversion (regular or injected or both).
   * @param __CONVERSION__ ADC conversion group.
@@ -1213,7 +1217,7 @@ typedef struct
 
 /**
   * @brief Verify the ADC oversampling ratio.
-  * @param RATIO: programmed ADC oversampling ratio.
+  * @param __RATIO__: programmed ADC oversampling ratio.
   * @retval SET (__RATIO__ is a valid value) or RESET (__RATIO__ is invalid)
   */
 #define IS_ADC_OVERSAMPLING_RATIO(__RATIO__)  (((__RATIO__) >= 1UL) && ((__RATIO__) <= 1024UL))
@@ -1268,7 +1272,7 @@ typedef struct
 
 /* ADC calibration */
 HAL_StatusTypeDef       HAL_ADCEx_Calibration_Start(ADC_HandleTypeDef *hadc, uint32_t SingleDiff);
-uint32_t                HAL_ADCEx_Calibration_GetValue(ADC_HandleTypeDef *hadc, uint32_t SingleDiff);
+uint32_t                HAL_ADCEx_Calibration_GetValue(const ADC_HandleTypeDef *hadc, uint32_t SingleDiff);
 HAL_StatusTypeDef       HAL_ADCEx_Calibration_SetValue(ADC_HandleTypeDef *hadc, uint32_t SingleDiff,
                                                        uint32_t CalibrationFactor);
 
@@ -1285,11 +1289,12 @@ HAL_StatusTypeDef       HAL_ADCEx_InjectedStop_IT(ADC_HandleTypeDef *hadc);
 /* ADC multimode */
 HAL_StatusTypeDef       HAL_ADCEx_MultiModeStart_DMA(ADC_HandleTypeDef *hadc, uint32_t *pData, uint32_t Length);
 HAL_StatusTypeDef       HAL_ADCEx_MultiModeStop_DMA(ADC_HandleTypeDef *hadc);
-uint32_t                HAL_ADCEx_MultiModeGetValue(ADC_HandleTypeDef *hadc);
+uint32_t                HAL_ADCEx_MultiModeGetValue(const ADC_HandleTypeDef *hadc);
 #endif /* ADC_MULTIMODE_SUPPORT */
 
 /* ADC retrieve conversion value intended to be used with polling or interruption */
-uint32_t                HAL_ADCEx_InjectedGetValue(ADC_HandleTypeDef *hadc, uint32_t InjectedRank);
+uint32_t                HAL_ADCEx_InjectedGetValue(const ADC_HandleTypeDef *hadc, uint32_t InjectedRank);
+int32_t                 HAL_ADCEx_InjectedGetSignedValue(const ADC_HandleTypeDef *hadc, uint32_t InjectedRank);
 
 /* ADC IRQHandler and Callbacks used in non-blocking modes (Interruption) */
 void                    HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc);
@@ -1314,9 +1319,11 @@ HAL_StatusTypeDef HAL_ADCEx_RegularMultiModeStop_DMA(ADC_HandleTypeDef *hadc);
   */
 /* Peripheral Control functions ***********************************************/
 HAL_StatusTypeDef       HAL_ADCEx_InjectedConfigChannel(ADC_HandleTypeDef *hadc,
-                                                        ADC_InjectionConfTypeDef *sConfigInjected);
+                                                        const ADC_InjectionConfTypeDef *pConfigInjected);
+
 #if defined(ADC_MULTIMODE_SUPPORT)
-HAL_StatusTypeDef       HAL_ADCEx_MultiModeConfigChannel(ADC_HandleTypeDef *hadc, ADC_MultiModeTypeDef *multimode);
+HAL_StatusTypeDef       HAL_ADCEx_MultiModeConfigChannel(ADC_HandleTypeDef *hadc,
+                                                         const ADC_MultiModeTypeDef *pMultimode);
 #endif /* ADC_MULTIMODE_SUPPORT */
 HAL_StatusTypeDef       HAL_ADCEx_EnterADCDeepPowerDownMode(ADC_HandleTypeDef *hadc);
 

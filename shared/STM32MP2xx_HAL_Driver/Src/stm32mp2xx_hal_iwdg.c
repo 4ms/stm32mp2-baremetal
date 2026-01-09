@@ -250,6 +250,10 @@ HAL_StatusTypeDef HAL_IWDG_Init(IWDG_HandleTypeDef *hiwdg)
      */
     hiwdg->Instance->EWCR = IWDG_EWCR_EWIE | hiwdg->Init.EWI;
   }
+  else
+  {
+    hiwdg->Instance->EWCR = 0x00U;
+  }
   /* Check pending flag, if previous update not done, return timeout */
   tickstart = HAL_GetTick();
 
@@ -425,7 +429,7 @@ HAL_StatusTypeDef HAL_IWDG_Refresh(IWDG_HandleTypeDef *hiwdg)
   *           @arg @ref IWDG_STATUS_DISABLE
   *           @arg @ref IWDG_STATUS_ENABLE
   */
-uint32_t HAL_IWDG_GetActiveStatus(IWDG_HandleTypeDef *hiwdg)
+uint32_t HAL_IWDG_GetActiveStatus(const IWDG_HandleTypeDef *hiwdg)
 {
   uint32_t status;
 

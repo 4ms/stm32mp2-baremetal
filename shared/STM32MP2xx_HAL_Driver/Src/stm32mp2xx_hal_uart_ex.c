@@ -219,15 +219,17 @@ HAL_StatusTypeDef HAL_RS485Ex_Init(UART_HandleTypeDef *huart, uint32_t Polarity,
   /* Disable the Peripheral */
   __HAL_UART_DISABLE(huart);
 
+  /* Perform advanced settings configuration */
+  /* For some items, configuration requires to be done prior TE and RE bits are set */
+  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
+  {
+    UART_AdvFeatureConfig(huart);
+  }
+
   /* Set the UART Communication parameters */
   if (UART_SetConfig(huart) == HAL_ERROR)
   {
     return HAL_ERROR;
-  }
-
-  if (huart->AdvancedInit.AdvFeatureInit != UART_ADVFEATURE_NO_INIT)
-  {
-    UART_AdvFeatureConfig(huart);
   }
 
   /* Enable the Driver Enable mode by setting the DEM bit in the CR3 register */
@@ -974,7 +976,11 @@ HAL_StatusTypeDef HAL_UARTEx_SetConfigAutonomousMode(UART_HandleTypeDef *huart,
     }
     else
     {
-      /* no trigger available for uart*/
+#if defined(STM32MP21xxxx)
+      assert_param(IS_UART_TRIGGER_SELECTION(sConfig->TriggerSelection));
+#else
+      /* no trigger available for uart */
+#endif /* STM32MP21xxxx */
     }
 
     /* Process Locked */
@@ -1000,8 +1006,14 @@ HAL_StatusTypeDef HAL_UARTEx_SetConfigAutonomousMode(UART_HandleTypeDef *huart,
     }
     else
     {
+#if defined(STM32MP21xxxx)
       tmpreg = ((sConfig->DataSize << USART_AUTOCR_TDN_Pos) | (sConfig->TriggerPolarity) | \
-                (sConfig->AutonomousModeState) | (sConfig->IdleFrame) );
+                (sConfig->AutonomousModeState) | (sConfig->IdleFrame) | \
+                (sConfig->TriggerSelection << USART_AUTOCR_TRIGSEL_Pos));
+#else
+      tmpreg = ((sConfig->DataSize << USART_AUTOCR_TDN_Pos) | (sConfig->TriggerPolarity) | \
+                (sConfig->AutonomousModeState) | (sConfig->IdleFrame));
+#endif /* STM32MP21xxxx */
     }
     WRITE_REG(huart->Instance->AUTOCR, tmpreg);
 

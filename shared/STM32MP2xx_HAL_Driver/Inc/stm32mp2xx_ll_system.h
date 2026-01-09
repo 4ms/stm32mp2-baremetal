@@ -93,7 +93,7 @@ extern "C" {
   * @}
   */
 
-/** @defgroup SYSTEM_LL_EC_CS2 SYSCFG VddIO2 compensation cell Code selection
+/** @defgroup SYSTEM_LL_EC_CS3 SYSCFG VddIO2 compensation cell Code selection
   * @{
   */
 #define LL_SYSCFG_VDDIO2_CELL_CODE                0U                    /*VDDIO2 I/Os code from the cell
@@ -104,7 +104,7 @@ extern "C" {
   * @}
   */
 
-/** @defgroup SYSTEM_LL_EC_CS2 SYSCFG VddIO3 compensation cell Code selection
+/** @defgroup SYSTEM_LL_EC_CS4 SYSCFG VddIO3 compensation cell Code selection
   * @{
   */
 #define LL_SYSCFG_VDDIO3_CELL_CODE                0U                    /*VDDIO3 I/Os code from the cell
@@ -115,7 +115,7 @@ extern "C" {
   * @}
   */
 
-/** @defgroup SYSTEM_LL_EC_CS2 SYSCFG VddIO4 compensation cell Code selection
+/** @defgroup SYSTEM_LL_EC_CS5 SYSCFG VddIO4 compensation cell Code selection
   * @{
   */
 #define LL_SYSCFG_VDDIO4_CELL_CODE                0U                    /*VDDIO4 I/Os code from the cell
@@ -189,10 +189,10 @@ extern "C" {
 #define LL_DBGMCU_APB3_GRP1_IWDG4_STOP        DBGMCU_APB3FZ_DBG_IWDG4_STOP        /*!< IWDG4 counter stopped when core is halted */
 #define LL_DBGMCU_APB3_GRP1_WWDG1_STOP        DBGMCU_APB3FZ_DBG_WWDG1_STOP        /*!< WWDG1 counter stopped when core is halted */
 
-/** @defgroup SYSTEM_LL_EC_APB4_GRP1_STOP_IP  DBGMCU APB4 GRP1 STOP IP
+/** @defgroup SYSTEM_LL_EC_CRA35_GRP1_STOP_IP  DBGMCU CRA35 GRP1 STOP IP
   * @{
   */
-#define LL_DBGMCU_APB4_GRP1_STGEN_STOP        DBGMCU_CRA35_DBG_STGEN_STOP         /*!< STGEN counter stopped when CA35 core is halted */
+#define LL_DBGMCU_CRA35_DBG_STGEN_STOP        DBGMCU_CRA35_DBG_STGEN_STOP         /*!< STGEN counter stopped when CA35 core is halted */
 
 /**
   * @}
@@ -202,6 +202,7 @@ extern "C" {
   * @{
   */
 #define LL_DBGMCU_APBSR_GRP1_RTC_STOP         DBGMCU_APBSRFZ_DBG_RTC_STOP         /*!< RTC stopped when Core is halted */
+#define LL_DBGMCU_APBSR_GRP1_I3C4_STOP        DBGMCU_APBSRFZ_DBG_I3C4_STOP        /*!< I3C4 stopped when Core is halted */
 #define LL_DBGMCU_APBSR_GRP1_I2C8_STOP        DBGMCU_APBSRFZ_DBG_I2C8_STOP        /*!< I2C8 SMBUS timeout mode stopped when Core is halted */
 #define LL_DBGMCU_APBSR_GRP1_LPTIM3_STOP      DBGMCU_APBSRFZ_DBG_LPTIM3_STOP      /*!< LPTIM3 counter stopped when core is halted */
 #define LL_DBGMCU_APBSR_GRP1_LPTIM4_STOP      DBGMCU_APBSRFZ_DBG_LPTIM4_STOP      /*!< LPTIM4 counter stopped when core is halted */
@@ -1191,7 +1192,7 @@ __STATIC_INLINE uint32_t LL_SYSCFG_IsEnabledIT_FPU_IDC(void)
 /**
   * @}
   */
-  
+
 /**
   * @}
   */
@@ -1301,8 +1302,8 @@ __STATIC_INLINE void LL_DBGMCU_SetWatchdogTimerBehaviour(uint32_t PinBehaviour)
   * @brief  Get the Watchdog Timer behaviour
   * @rmtoll DBGMCU_CR   WDFZCTL   LL_DBGMCU_GetWatchdogTimerBehaviour\n
   * @retval Returned value can be one of the following values:
-  *         @arg @ref LL_DBGMCU_IWDG_FREEZE_1CA7_HALT
-  *         @arg @ref LL_DBGMCU_IWDG_FREEZE_2CA7_HALT
+  *         @arg @ref LL_DBGMCU_IWDG_FREEZE_1CA35_HALT
+  *         @arg @ref LL_DBGMCU_IWDG_FREEZE_2CA35_HALT
   */
 __STATIC_INLINE uint32_t LL_DBGMCU_GetWatchdogTimerBehaviour(void)
 {
@@ -1368,7 +1369,7 @@ __STATIC_INLINE void LL_DBGMCU_APB1_GRP1_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->APB1FZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->APB1FZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1430,7 +1431,7 @@ __STATIC_INLINE void LL_DBGMCU_APB1_GRP1_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->APB1FZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->APB1FZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1460,7 +1461,7 @@ __STATIC_INLINE void LL_DBGMCU_APB2_GRP1_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->APB2FZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->APB2FZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1490,7 +1491,7 @@ __STATIC_INLINE void LL_DBGMCU_APB2_GRP1_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->APB2FZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->APB2FZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1516,7 +1517,7 @@ __STATIC_INLINE void LL_DBGMCU_APB3_GRP1_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->APB3FZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->APB3FZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1542,7 +1543,7 @@ __STATIC_INLINE void LL_DBGMCU_APB3_GRP1_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->APB3FZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->APB3FZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1558,7 +1559,7 @@ __STATIC_INLINE void LL_DBGMCU_APB4_GRP1_FreezePeriph(uint32_t Periphs)
 {
 #if defined (CORE_CA35)
   SET_BIT(DBGMCU->CRA35, Periphs);
-#endif
+#endif /*CORE_CA35*/
 }
 
 /**
@@ -1574,7 +1575,7 @@ __STATIC_INLINE void LL_DBGMCU_APB4_GRP1_UnFreezePeriph(uint32_t Periphs)
 {
 #if defined (CORE_CA35)
   CLEAR_BIT(DBGMCU->CRA35, Periphs);
-#endif
+#endif /*CORE_CA35*/
 }
 
 /**
@@ -1604,7 +1605,7 @@ __STATIC_INLINE void LL_DBGMCU_APBSR_GRP1_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->APBSRFZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->APBSRFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 #if defined (CORE_CM33)
@@ -1666,7 +1667,7 @@ __STATIC_INLINE void LL_DBGMCU_APBSR_GRP1_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->APBSRFZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->APBSRFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 #if defined (CORE_CM33)
@@ -1774,7 +1775,7 @@ __STATIC_INLINE void LL_DBGMCU_AHB2_GRP1_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->AHB2LFZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->AHB2LFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1854,7 +1855,7 @@ __STATIC_INLINE void LL_DBGMCU_AHB2_GRP1_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->AHB2LFZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->AHB2LFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1902,7 +1903,7 @@ __STATIC_INLINE void LL_DBGMCU_AHB2_GRP2_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->AHB2HFZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->AHB2HFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1950,7 +1951,7 @@ __STATIC_INLINE void LL_DBGMCU_AHB2_GRP2_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->AHB2HFZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->AHB2HFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 /**
@@ -1974,7 +1975,7 @@ __STATIC_INLINE void LL_DBGMCU_AHBSR_GRP1_FreezePeriph(uint32_t Periphs)
   SET_BIT(DBGMCU->AHBSRFZ1, Periphs);
 #elif defined (CORE_CM33)
   SET_BIT(DBGMCU->AHBSRFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 #if defined (CORE_CM33)
@@ -2020,7 +2021,7 @@ __STATIC_INLINE void LL_DBGMCU_AHBSR_GRP1_UnFreezePeriph(uint32_t Periphs)
   CLEAR_BIT(DBGMCU->AHBSRFZ1, Periphs);
 #elif defined (CORE_CM33)
   CLEAR_BIT(DBGMCU->AHBSRFZ2, Periphs);
-#endif
+#endif /*CORE_CA35 CORE_CM33*/
 }
 
 #if defined (CORE_CM33)

@@ -95,13 +95,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                       opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -155,7 +154,9 @@
   * @param  AttSpace_Timing pointer to Attribute space timing structure
   * @retval HAL status
   */
-HAL_StatusTypeDef  HAL_NAND_Init(NAND_HandleTypeDef *hnand, FMC_NAND_PCC_TimingTypeDef *ComSpace_Timing, FMC_NAND_PCC_TimingTypeDef *AttSpace_Timing)
+HAL_StatusTypeDef  HAL_NAND_Init(NAND_HandleTypeDef *hnand,
+                                 FMC_NAND_PCC_TimingTypeDef *ComSpace_Timing,
+                                 FMC_NAND_PCC_TimingTypeDef *AttSpace_Timing)
 {
   /* Check the NAND handle state */
   if (hnand == NULL)
@@ -169,7 +170,7 @@ HAL_StatusTypeDef  HAL_NAND_Init(NAND_HandleTypeDef *hnand, FMC_NAND_PCC_TimingT
     hnand->Lock = HAL_UNLOCKED;
 
 #if (USE_HAL_NAND_REGISTER_CALLBACKS == 1)
-    if(hnand->MspInitCallback == NULL)
+    if (hnand->MspInitCallback == NULL)
     {
       hnand->MspInitCallback = HAL_NAND_MspInit;
     }
@@ -180,7 +181,7 @@ HAL_StatusTypeDef  HAL_NAND_Init(NAND_HandleTypeDef *hnand, FMC_NAND_PCC_TimingT
 #else
     /* Initialize the low level hardware (MSP) */
     HAL_NAND_MspInit(hnand);
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
   }
 
   /* Initialize NAND control Interface */
@@ -194,7 +195,7 @@ HAL_StatusTypeDef  HAL_NAND_Init(NAND_HandleTypeDef *hnand, FMC_NAND_PCC_TimingT
 
   /* Enable the NAND device */
   __FMC_NAND_ENABLE(hnand->Instance);
-  
+
   /* Enable FMC Peripheral */
   __FMC_ENABLE();
   /* Update the NAND controller state */
@@ -212,7 +213,7 @@ HAL_StatusTypeDef  HAL_NAND_Init(NAND_HandleTypeDef *hnand, FMC_NAND_PCC_TimingT
 HAL_StatusTypeDef HAL_NAND_DeInit(NAND_HandleTypeDef *hnand)
 {
 #if (USE_HAL_NAND_REGISTER_CALLBACKS == 1)
-  if(hnand->MspDeInitCallback == NULL)
+  if (hnand->MspDeInitCallback == NULL)
   {
     hnand->MspDeInitCallback = HAL_NAND_MspDeInit;
   }
@@ -222,7 +223,7 @@ HAL_StatusTypeDef HAL_NAND_DeInit(NAND_HandleTypeDef *hnand)
 #else
   /* Initialize the low level hardware (MSP) */
   HAL_NAND_MspDeInit(hnand);
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
 
   /* Configure the NAND registers with their reset values */
   (void)FMC_NAND_DeInit(hnand->Instance, hnand->Init.NandBank);
@@ -274,7 +275,7 @@ __weak void HAL_NAND_MspDeInit(NAND_HandleTypeDef *hnand)
   * @param  hnand pointer to a NAND_HandleTypeDef structure that contains
   *                the configuration information for NAND module.
   * @retval HAL status
-*/
+  */
 void HAL_NAND_IRQHandler(NAND_HandleTypeDef *hnand)
 {
   /* Check NAND interrupt Rising edge flag */
@@ -285,7 +286,7 @@ void HAL_NAND_IRQHandler(NAND_HandleTypeDef *hnand)
     hnand->ItCallback(hnand);
 #else
     HAL_NAND_ITCallback(hnand);
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
 
     /* Clear NAND interrupt Rising edge pending bit */
     __FMC_NAND_CLEAR_FLAG(hnand->Instance, FMC_FLAG_RISING_EDGE);
@@ -299,7 +300,7 @@ void HAL_NAND_IRQHandler(NAND_HandleTypeDef *hnand)
     hnand->ItCallback(hnand);
 #else
     HAL_NAND_ITCallback(hnand);
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
 
     /* Clear NAND interrupt Level pending bit */
     __FMC_NAND_CLEAR_FLAG(hnand->Instance, FMC_FLAG_LEVEL);
@@ -313,7 +314,7 @@ void HAL_NAND_IRQHandler(NAND_HandleTypeDef *hnand)
     hnand->ItCallback(hnand);
 #else
     HAL_NAND_ITCallback(hnand);
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
 
     /* Clear NAND interrupt Falling edge pending bit */
     __FMC_NAND_CLEAR_FLAG(hnand->Instance, FMC_FLAG_FALLING_EDGE);
@@ -327,7 +328,7 @@ void HAL_NAND_IRQHandler(NAND_HandleTypeDef *hnand)
     hnand->ItCallback(hnand);
 #else
     HAL_NAND_ITCallback(hnand);
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
 
     /* Clear NAND interrupt FIFO empty pending bit */
     __FMC_NAND_CLEAR_FLAG(hnand->Instance, FMC_FLAG_FEMPT);
@@ -402,14 +403,14 @@ HAL_StatusTypeDef HAL_NAND_Read_ID(NAND_HandleTypeDef *hnand, NAND_IDTypeDef *pN
     /* Send Reset command sequence */
     *(__IO uint8_t *)((uint32_t)(deviceAddress | CMD_AREA))  = NAND_CMD_RESET;
     __DSB();
-    Delay(0xFFF);
+    (void)Delay(0xFFF);
     /* Send Read ID command sequence */
     *(__IO uint8_t *)((uint32_t)(deviceAddress | CMD_AREA))  = NAND_CMD_READID;
     __DSB();
-    Delay(0xFFF);
+    (void)Delay(0xFFF);
     *(__IO uint8_t *)((uint32_t)(deviceAddress | ADDR_AREA)) = 0x00;
     __DSB();
-    Delay(0xFFF);
+    (void)Delay(0xFFF);
 
     /* Read the electronic signature from NAND flash */
     if (hnand->Init.MemoryDataWidth == FMC_NAND_MEM_BUS_WIDTH_8)
@@ -521,12 +522,18 @@ HAL_StatusTypeDef  HAL_NAND_ConfigDevice(NAND_HandleTypeDef *hnand, NAND_DeviceC
   * @param  NumPageToRead  number of pages to read from block
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Read_Page_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t NumPageToRead)
+HAL_StatusTypeDef HAL_NAND_Read_Page_8b(NAND_HandleTypeDef *hnand,
+                                        const NAND_AddressTypeDef *pAddress,
+                                        uint8_t *pBuffer,
+                                        uint32_t NumPageToRead)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numPagesRead = 0U, nandAddress, nbpages = NumPageToRead;
-  uint8_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numPagesRead = 0U;
+  uint32_t nandAddress;
+  uint32_t nbpages = NumPageToRead;
+  uint8_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -675,12 +682,18 @@ HAL_StatusTypeDef HAL_NAND_Read_Page_8b(NAND_HandleTypeDef *hnand, NAND_AddressT
   * @param  NumPageToRead  number of pages to read from block
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Read_Page_16b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint16_t *pBuffer, uint32_t NumPageToRead)
+HAL_StatusTypeDef HAL_NAND_Read_Page_16b(NAND_HandleTypeDef *hnand,
+                                         const NAND_AddressTypeDef *pAddress,
+                                         uint16_t *pBuffer,
+                                         uint32_t NumPageToRead)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numPagesRead = 0, nandAddress, nbpages = NumPageToRead;
-  uint16_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numPagesRead = 0;
+  uint32_t nandAddress;
+  uint32_t nbpages = NumPageToRead;
+  uint16_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -828,12 +841,18 @@ HAL_StatusTypeDef HAL_NAND_Read_Page_16b(NAND_HandleTypeDef *hnand, NAND_Address
   * @param  NumPageToWrite   number of pages to write to block
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Write_Page_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t NumPageToWrite)
+HAL_StatusTypeDef HAL_NAND_Write_Page_8b(NAND_HandleTypeDef *hnand,
+                                         const NAND_AddressTypeDef *pAddress,
+                                         const uint8_t *pBuffer,
+                                         uint32_t NumPageToWrite)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numPagesWritten = 0, nandAddress, nbpages = NumPageToWrite;
-  uint8_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numPagesWritten = 0;
+  uint32_t nandAddress;
+  uint32_t nbpages = NumPageToWrite;
+  const uint8_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -977,12 +996,18 @@ HAL_StatusTypeDef HAL_NAND_Write_Page_8b(NAND_HandleTypeDef *hnand, NAND_Address
   * @param  NumPageToWrite   number of pages to write to block
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Write_Page_16b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint16_t *pBuffer, uint32_t NumPageToWrite)
+HAL_StatusTypeDef HAL_NAND_Write_Page_16b(NAND_HandleTypeDef *hnand,
+                                          const NAND_AddressTypeDef *pAddress,
+                                          const uint16_t *pBuffer,
+                                          uint32_t NumPageToWrite)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numPagesWritten = 0, nandAddress, nbpages = NumPageToWrite;
-  uint16_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numPagesWritten = 0;
+  uint32_t nandAddress;
+  uint32_t nbpages = NumPageToWrite;
+  const uint16_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -1125,13 +1150,20 @@ HAL_StatusTypeDef HAL_NAND_Write_Page_16b(NAND_HandleTypeDef *hnand, NAND_Addres
   * @param  pBuffer pointer to source buffer to write
   * @param  NumSpareAreaToRead Number of spare area to read
   * @retval HAL status
-*/
-HAL_StatusTypeDef HAL_NAND_Read_SpareArea_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t NumSpareAreaToRead)
+  */
+HAL_StatusTypeDef HAL_NAND_Read_SpareArea_8b(NAND_HandleTypeDef *hnand,
+                                             const NAND_AddressTypeDef *pAddress,
+                                             uint8_t *pBuffer,
+                                             uint32_t NumSpareAreaToRead)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numSpareAreaRead = 0, nandAddress, columnAddress, nbspare = NumSpareAreaToRead;
-  uint8_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numSpareAreaRead = 0;
+  uint32_t nandAddress;
+  uint32_t columnAddress;
+  uint32_t nbspare = NumSpareAreaToRead;
+  uint8_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -1285,13 +1317,20 @@ HAL_StatusTypeDef HAL_NAND_Read_SpareArea_8b(NAND_HandleTypeDef *hnand, NAND_Add
   * @param  pBuffer pointer to source buffer to write. pBuffer should be 16bits aligned.
   * @param  NumSpareAreaToRead Number of spare area to read
   * @retval HAL status
-*/
-HAL_StatusTypeDef HAL_NAND_Read_SpareArea_16b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint16_t *pBuffer, uint32_t NumSpareAreaToRead)
+  */
+HAL_StatusTypeDef HAL_NAND_Read_SpareArea_16b(NAND_HandleTypeDef *hnand,
+                                              const NAND_AddressTypeDef *pAddress,
+                                              uint16_t *pBuffer,
+                                              uint32_t NumSpareAreaToRead)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numSpareAreaRead = 0, nandAddress, columnAddress, nbspare = NumSpareAreaToRead;
-  uint16_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numSpareAreaRead = 0;
+  uint32_t nandAddress;
+  uint32_t columnAddress;
+  uint32_t nbspare = NumSpareAreaToRead;
+  uint16_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -1446,12 +1485,19 @@ HAL_StatusTypeDef HAL_NAND_Read_SpareArea_16b(NAND_HandleTypeDef *hnand, NAND_Ad
   * @param  NumSpareAreaTowrite   number of spare areas to write to block
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Write_SpareArea_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t NumSpareAreaTowrite)
+HAL_StatusTypeDef HAL_NAND_Write_SpareArea_8b(NAND_HandleTypeDef *hnand,
+                                              const NAND_AddressTypeDef *pAddress,
+                                              const uint8_t *pBuffer,
+                                              uint32_t NumSpareAreaTowrite)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numSpareAreaWritten = 0, nandAddress, columnAddress, nbspare = NumSpareAreaTowrite;
-  uint8_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numSpareAreaWritten = 0;
+  uint32_t nandAddress;
+  uint32_t columnAddress;
+  uint32_t nbspare = NumSpareAreaTowrite;
+  const uint8_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -1604,12 +1650,19 @@ HAL_StatusTypeDef HAL_NAND_Write_SpareArea_8b(NAND_HandleTypeDef *hnand, NAND_Ad
   * @param  NumSpareAreaTowrite   number of spare areas to write to block
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Write_SpareArea_16b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint16_t *pBuffer, uint32_t NumSpareAreaTowrite)
+HAL_StatusTypeDef HAL_NAND_Write_SpareArea_16b(NAND_HandleTypeDef *hnand,
+                                               const NAND_AddressTypeDef *pAddress,
+                                               const uint16_t *pBuffer,
+                                               uint32_t NumSpareAreaTowrite)
 {
   uint32_t index;
   uint32_t tickstart;
-  uint32_t deviceAddress, numSpareAreaWritten = 0, nandAddress, columnAddress, nbspare = NumSpareAreaTowrite;
-  uint16_t * buff = pBuffer;
+  uint32_t deviceAddress;
+  uint32_t numSpareAreaWritten = 0;
+  uint32_t nandAddress;
+  uint32_t columnAddress;
+  uint32_t nbspare = NumSpareAreaTowrite;
+  const uint16_t *buff = pBuffer;
 
   /* Check the NAND controller state */
   if (hnand->State == HAL_NAND_STATE_BUSY)
@@ -1760,7 +1813,7 @@ HAL_StatusTypeDef HAL_NAND_Write_SpareArea_16b(NAND_HandleTypeDef *hnand, NAND_A
   * @param  pAddress  pointer to NAND address structure
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_NAND_Erase_Block(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress)
+HAL_StatusTypeDef HAL_NAND_Erase_Block(NAND_HandleTypeDef *hnand, const NAND_AddressTypeDef *pAddress)
 {
   uint32_t DeviceAddress;
 
@@ -1816,7 +1869,7 @@ HAL_StatusTypeDef HAL_NAND_Erase_Block(NAND_HandleTypeDef *hnand, NAND_AddressTy
   *           - NAND_VALID_ADDRESS: When the new address is valid address
   *           - NAND_INVALID_ADDRESS: When the new address is invalid address
   */
-uint32_t HAL_NAND_Address_Inc(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress)
+uint32_t HAL_NAND_Address_Inc(const NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress)
 {
   uint32_t status = NAND_VALID_ADDRESS;
 
@@ -1857,11 +1910,13 @@ uint32_t HAL_NAND_Address_Inc(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pA
   * @param pCallback : pointer to the Callback function
   * @retval status
   */
-HAL_StatusTypeDef HAL_NAND_RegisterCallback (NAND_HandleTypeDef *hnand, HAL_NAND_CallbackIDTypeDef CallbackId, pNAND_CallbackTypeDef pCallback)
+HAL_StatusTypeDef HAL_NAND_RegisterCallback(NAND_HandleTypeDef *hnand,
+                                            HAL_NAND_CallbackIDTypeDef CallbackId,
+                                            pNAND_CallbackTypeDef pCallback)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
-  if(pCallback == NULL)
+  if (pCallback == NULL)
   {
     return HAL_ERROR;
   }
@@ -1869,39 +1924,39 @@ HAL_StatusTypeDef HAL_NAND_RegisterCallback (NAND_HandleTypeDef *hnand, HAL_NAND
   /* Process locked */
   __HAL_LOCK(hnand);
 
-  if(hnand->State == HAL_NAND_STATE_READY)
+  if (hnand->State == HAL_NAND_STATE_READY)
   {
     switch (CallbackId)
     {
-    case HAL_NAND_MSP_INIT_CB_ID :
-      hnand->MspInitCallback = pCallback;
-      break;
-    case HAL_NAND_MSP_DEINIT_CB_ID :
-      hnand->MspDeInitCallback = pCallback;
-      break;
-    case HAL_NAND_IT_CB_ID :
-      hnand->ItCallback = pCallback;
-      break;
-    default :
-      /* update return status */
-      status =  HAL_ERROR;
-      break;
+      case HAL_NAND_MSP_INIT_CB_ID :
+        hnand->MspInitCallback = pCallback;
+        break;
+      case HAL_NAND_MSP_DEINIT_CB_ID :
+        hnand->MspDeInitCallback = pCallback;
+        break;
+      case HAL_NAND_IT_CB_ID :
+        hnand->ItCallback = pCallback;
+        break;
+      default :
+        /* update return status */
+        status =  HAL_ERROR;
+        break;
     }
   }
-  else if(hnand->State == HAL_NAND_STATE_RESET)
+  else if (hnand->State == HAL_NAND_STATE_RESET)
   {
     switch (CallbackId)
     {
-    case HAL_NAND_MSP_INIT_CB_ID :
-      hnand->MspInitCallback = pCallback;
-      break;
-    case HAL_NAND_MSP_DEINIT_CB_ID :
-      hnand->MspDeInitCallback = pCallback;
-      break;
-    default :
-      /* update return status */
-      status =  HAL_ERROR;
-      break;
+      case HAL_NAND_MSP_INIT_CB_ID :
+        hnand->MspInitCallback = pCallback;
+        break;
+      case HAL_NAND_MSP_DEINIT_CB_ID :
+        hnand->MspDeInitCallback = pCallback;
+        break;
+      default :
+        /* update return status */
+        status =  HAL_ERROR;
+        break;
     }
   }
   else
@@ -1926,46 +1981,46 @@ HAL_StatusTypeDef HAL_NAND_RegisterCallback (NAND_HandleTypeDef *hnand, HAL_NAND
   *          @arg @ref HAL_NAND_IT_CB_ID             NAND IT callback ID
   * @retval status
   */
-HAL_StatusTypeDef HAL_NAND_UnRegisterCallback (NAND_HandleTypeDef *hnand, HAL_NAND_CallbackIDTypeDef CallbackId)
+HAL_StatusTypeDef HAL_NAND_UnRegisterCallback(NAND_HandleTypeDef *hnand, HAL_NAND_CallbackIDTypeDef CallbackId)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
   /* Process locked */
   __HAL_LOCK(hnand);
 
-  if(hnand->State == HAL_NAND_STATE_READY)
+  if (hnand->State == HAL_NAND_STATE_READY)
   {
     switch (CallbackId)
     {
-    case HAL_NAND_MSP_INIT_CB_ID :
-      hnand->MspInitCallback = HAL_NAND_MspInit;
-      break;
-    case HAL_NAND_MSP_DEINIT_CB_ID :
-      hnand->MspDeInitCallback = HAL_NAND_MspDeInit;
-      break;
-    case HAL_NAND_IT_CB_ID :
-      hnand->ItCallback = HAL_NAND_ITCallback;
-      break;
-    default :
-      /* update return status */
-      status =  HAL_ERROR;
-      break;
+      case HAL_NAND_MSP_INIT_CB_ID :
+        hnand->MspInitCallback = HAL_NAND_MspInit;
+        break;
+      case HAL_NAND_MSP_DEINIT_CB_ID :
+        hnand->MspDeInitCallback = HAL_NAND_MspDeInit;
+        break;
+      case HAL_NAND_IT_CB_ID :
+        hnand->ItCallback = HAL_NAND_ITCallback;
+        break;
+      default :
+        /* update return status */
+        status =  HAL_ERROR;
+        break;
     }
   }
-  else if(hnand->State == HAL_NAND_STATE_RESET)
+  else if (hnand->State == HAL_NAND_STATE_RESET)
   {
     switch (CallbackId)
     {
-    case HAL_NAND_MSP_INIT_CB_ID :
-      hnand->MspInitCallback = HAL_NAND_MspInit;
-      break;
-    case HAL_NAND_MSP_DEINIT_CB_ID :
-      hnand->MspDeInitCallback = HAL_NAND_MspDeInit;
-      break;
-    default :
-      /* update return status */
-      status =  HAL_ERROR;
-      break;
+      case HAL_NAND_MSP_INIT_CB_ID :
+        hnand->MspInitCallback = HAL_NAND_MspInit;
+        break;
+      case HAL_NAND_MSP_DEINIT_CB_ID :
+        hnand->MspDeInitCallback = HAL_NAND_MspDeInit;
+        break;
+      default :
+        /* update return status */
+        status =  HAL_ERROR;
+        break;
     }
   }
   else
@@ -1978,15 +2033,15 @@ HAL_StatusTypeDef HAL_NAND_UnRegisterCallback (NAND_HandleTypeDef *hnand, HAL_NA
   __HAL_UNLOCK(hnand);
   return status;
 }
-#endif
+#endif /* USE_HAL_NAND_REGISTER_CALLBACKS */
 
 /**
   * @}
   */
 
 /** @defgroup NAND_Exported_Functions_Group3 Peripheral Control functions
- *  @brief   management functions
- *
+  *  @brief   management functions
+  *
 @verbatim
   ==============================================================================
                          ##### NAND Control functions #####
@@ -2106,8 +2161,8 @@ HAL_StatusTypeDef  HAL_NAND_GetECC(NAND_HandleTypeDef *hnand, uint32_t *ECCval, 
 
 
 /** @defgroup NAND_Exported_Functions_Group4 Peripheral State functions
- *  @brief   Peripheral State functions
- *
+  *  @brief   Peripheral State functions
+  *
 @verbatim
   ==============================================================================
                          ##### NAND State functions #####
@@ -2126,7 +2181,7 @@ HAL_StatusTypeDef  HAL_NAND_GetECC(NAND_HandleTypeDef *hnand, uint32_t *ECCval, 
   *                the configuration information for NAND module.
   * @retval HAL state
   */
-HAL_NAND_StateTypeDef HAL_NAND_GetState(NAND_HandleTypeDef *hnand)
+HAL_NAND_StateTypeDef HAL_NAND_GetState(const NAND_HandleTypeDef *hnand)
 {
   return hnand->State;
 }
@@ -2137,14 +2192,14 @@ HAL_NAND_StateTypeDef HAL_NAND_GetState(NAND_HandleTypeDef *hnand)
   *                the configuration information for NAND module.
   * @retval NAND status
   */
-uint32_t HAL_NAND_Read_Status(NAND_HandleTypeDef *hnand)
+uint32_t HAL_NAND_Read_Status(const NAND_HandleTypeDef *hnand)
 {
   uint32_t data;
   uint32_t DeviceAddress;
   UNUSED(hnand);
 
   /* Identify the device address */
-    DeviceAddress = NAND_DEVICE;
+  DeviceAddress = NAND_DEVICE;
 
   /* Send Read status operation command */
   *(__IO uint8_t *)((uint32_t)(DeviceAddress | CMD_AREA)) = NAND_CMD_STATUS;
@@ -2168,6 +2223,21 @@ uint32_t HAL_NAND_Read_Status(NAND_HandleTypeDef *hnand)
 }
 
 /**
+  * @brief  Inserts a delay time.
+  * @param  nCount: specifies the delay time length
+  * @retval None
+  */
+void Delay(uint32_t nCount)
+{
+  volatile uint32_t delay = nCount;
+
+  while (delay > 0U)
+  {
+    delay--;
+  }
+}
+
+/**
   * @}
   */
 
@@ -2185,5 +2255,3 @@ uint32_t HAL_NAND_Read_Status(NAND_HandleTypeDef *hnand)
   * @}
   */
 
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

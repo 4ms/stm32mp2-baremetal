@@ -58,6 +58,10 @@ extern "C" {
 #define LL_HSEM_COREID_CPU3             HSEM_COREID_CPU3
 #define LL_HSEM_COREID                  HSEM_CR_COREID_CURRENT
 
+/**
+  * @}
+  */
+
 /** @defgroup HSEM_LL_EC_ATTRIBUTES Attributes Defines
   * @brief HSEM Privilege/NPrivilege and Secure/NSecure Attributes
   * @{
@@ -204,8 +208,8 @@ __STATIC_INLINE uint32_t LL_HSEM_GetSecurePrivStatus(HSEM_TypeDef *HSEMx, uint32
   * @param  HSEMx HSEM Instance.
   * @param  Semaphore Semaphore number. Value between Min_Data=0 and Max_Data=15
   * @retval Returned value can be one of the following values:
-  *         @arg @ref LL_HSEM_CID_NOT_FILTERED  : 0
-  *         @arg @ref LL_HSEM_CID_FILTERED    : 1
+  *         @arg LL_HSEM_CID_NOT_FILTERED  : 0
+  *         @arg LL_HSEM_CID_FILTERED      : 1
   */
 __STATIC_INLINE uint32_t LL_HSEM_GetCompartmentFilterStatus(HSEM_TypeDef *HSEMx, uint32_t Semaphore)
 {
@@ -217,7 +221,7 @@ __STATIC_INLINE uint32_t LL_HSEM_GetCompartmentFilterStatus(HSEM_TypeDef *HSEMx,
   * @rmtoll R            SEC        LL_HSEM_SetSecure
   * @param  HSEMx HSEM Instance.
   * @param  Semaphore Semaphore number. Value between Min_Data=0 and Max_Data=15
-  * @param  Attribute This parameter can be one of the following values:
+  * @param  attribute This parameter can be one of the following values:
   *         @arg @ref LL_HSEM_NSEC_PRIV
   *         @arg @ref LL_HSEM_NSEC_NPRIV
   *         @arg @ref LL_HSEM_SEC_PRIV
@@ -1182,10 +1186,10 @@ __STATIC_INLINE uint32_t LL_HSEM_IsEnabled_PRIVCFGR(HSEM_TypeDef *HSEMx, uint32_
   * @rmtoll G0CIDCFGR         ISEM          LL_HSEM_Disable_Group_CID_Filtering
   * @param  HSEMx HSEM Instance.
   * @param  GroupId This parameter can be a combination of the following values:
-  *         @arg @ref Group  : 0
-  *         @arg @ref Group  : 1
-  *         @arg @ref Group  : 2
-  *         @arg @ref Group  : 3
+  *         @arg Group  : 0
+  *         @arg Group  : 1
+  *         @arg Group  : 2
+  *         @arg Group  : 3
   * @retval None
   */
 __STATIC_INLINE void LL_HSEM_Disable_Group_CID_Filtering(HSEM_TypeDef *HSEMx, uint32_t GroupId)
@@ -1199,19 +1203,19 @@ __STATIC_INLINE void LL_HSEM_Disable_Group_CID_Filtering(HSEM_TypeDef *HSEMx, ui
   * @rmtoll G0CIDCFGR         ISEM          LL_HSEM_Config_Group_CID_Filtering
   * @param  HSEMx HSEM Instance.
   * @param  GroupId This parameter can be a combination of the following values:
-  *         @arg @ref Group  : 0
-  *         @arg @ref Group  : 1
-  *         @arg @ref Group  : 2
-  *         @arg @ref Group  : 3
+  *         @arg Group  : 0
+  *         @arg Group  : 1
+  *         @arg Group  : 2
+  *         @arg Group  : 3
   * @param  wlist This parameter can be a combination of the following values:
-  *         @arg @ref HSEM_COREID_CPU1 whitelist         : 1
-  *         @arg @ref HSEM_COREID_CPU2 whitelist         : 2
-  *         @arg @ref HSEM_COREID_CPU3 whitelist         : 4
-  *         @arg @ref HSEM_COREID_CPU1 & CPU2 whitelist  : 3
-  *         @arg @ref HSEM_COREID_CPU1 & CPU3 whitelist  : 5
-  *         @arg @ref HSEM_COREID_CPU2 & CPU3 whitelist  : 6
-  *         @arg @ref HSEM_CORE All whitelist            : 7
-  *         @arg @ref HSEM_CORE All blacklist            : 0
+  *         @arg HSEM_COREID_CPU1 whitelist         : 1
+  *         @arg HSEM_COREID_CPU2 whitelist         : 2
+  *         @arg HSEM_COREID_CPU3 whitelist         : 4
+  *         @arg HSEM_COREID_CPU1 & CPU2 whitelist  : 3
+  *         @arg HSEM_COREID_CPU1 & CPU3 whitelist  : 5
+  *         @arg HSEM_COREID_CPU2 & CPU3 whitelist  : 6
+  *         @arg HSEM_CORE All whitelist            : 7
+  *         @arg HSEM_CORE All blacklist            : 0
   * @retval None
   */
 __STATIC_INLINE void LL_HSEM_Config_Group_CID_Filtering(HSEM_TypeDef *HSEMx, uint32_t GroupId, uint32_t wlist)
@@ -1225,9 +1229,9 @@ __STATIC_INLINE void LL_HSEM_Config_Group_CID_Filtering(HSEM_TypeDef *HSEMx, uin
   * @rmtoll C1CIDCFGR         ISEM          LL_HSEM_Disable_Processor_CID_Filtering
   * @param  HSEMx HSEM Instance.
   * @param  ProcessorCID This parameter can be a combination of the following values:
-  *         @arg @ref ProcessorCID  : 1
-  *         @arg @ref ProcessorCID  : 2
-  *         @arg @ref ProcessorCID  : 3
+  *         @arg ProcessorCID  : 1
+  *         @arg ProcessorCID  : 2
+  *         @arg ProcessorCID  : 3
   * @retval None
   */
 __STATIC_INLINE void LL_HSEM_Disable_Processor_CID_Filtering(HSEM_TypeDef *HSEMx, uint32_t ProcessorCID)
@@ -1241,10 +1245,10 @@ __STATIC_INLINE void LL_HSEM_Disable_Processor_CID_Filtering(HSEM_TypeDef *HSEMx
   * @rmtoll C1CIDCFGR         ISEM          LL_HSEM_Config_Processor_CID_Filtering
   * @param  HSEMx HSEM Instance.
   * @param  CID This parameter can be a combination of the following values:
-  *         @arg @ref CID  : 1
-  *         @arg @ref CID  : 2
-  *         @arg @ref CID  : 3
-  * @param  CIDDomainId. Value between Min_Data=0 and Max_Data=7
+  *         @arg CID  : 1
+  *         @arg CID  : 2
+  *         @arg CID  : 3
+  * @param  CIDDomainId Value between Min_Data=0 and Max_Data=7
   * @retval None
   */
 __STATIC_INLINE void LL_HSEM_Config_Processor_CID_Filtering(HSEM_TypeDef *HSEMx, uint32_t CID, uint32_t CIDDomainId)
@@ -1276,5 +1280,3 @@ __STATIC_INLINE void LL_HSEM_Config_Processor_CID_Filtering(HSEM_TypeDef *HSEMx,
 #endif
 
 #endif /* __STM32MP2xx_LL_HSEM_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

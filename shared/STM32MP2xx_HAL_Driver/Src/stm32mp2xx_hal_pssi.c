@@ -290,7 +290,8 @@ HAL_StatusTypeDef HAL_PSSI_Init(PSSI_HandleTypeDef *hpssi)
   /* Configure PSSIx: Control Signal and Bus Width*/
 
   MODIFY_REG(hpssi->Instance->CR, PSSI_CR_DERDYCFG | PSSI_CR_DEPOL | PSSI_CR_RDYPOL | PSSI_CR_EDM,
-             hpssi->Init.ControlSignal | hpssi->Init.DataEnablePolarity | hpssi->Init.ReadyPolarity | hpssi->Init.BusWidth);
+             hpssi->Init.ControlSignal | hpssi->Init.DataEnablePolarity | hpssi->Init.ReadyPolarity |
+             hpssi->Init.BusWidth);
   MODIFY_REG(hpssi->Instance->IER, PSSI_IER_OVR_IE, PSSI_IER_OVR_IE);
 
   hpssi->ErrorCode = HAL_PSSI_ERROR_NONE;
@@ -628,9 +629,9 @@ HAL_StatusTypeDef HAL_PSSI_Transmit(PSSI_HandleTypeDef *hpssi, uint8_t *pData, u
   uint32_t tickstart;
 
   if (((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (hpssi->Init.BusWidth != HAL_PSSI_8LINES)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (Size % 8U != 0U))   ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && (Size % 16U != 0U)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && (Size % 32U != 0U)))
+      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && ((Size % 8U) != 0U))   ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && ((Size % 16U) != 0U)) ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && ((Size % 32U) != 0U)))
   {
     hpssi->ErrorCode = HAL_PSSI_ERROR_NOT_SUPPORTED;
     return HAL_ERROR;
@@ -790,9 +791,9 @@ HAL_StatusTypeDef HAL_PSSI_Receive(PSSI_HandleTypeDef *hpssi, uint8_t *pData, ui
   uint32_t tickstart;
 
   if (((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (hpssi->Init.BusWidth != HAL_PSSI_8LINES)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (Size % 8U != 0U))   ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && (Size % 16U != 0U)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && (Size % 32U != 0U)))
+      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && ((Size % 8U) != 0U))   ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && ((Size % 16U) != 0U)) ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && ((Size % 32U) != 0U)))
   {
     hpssi->ErrorCode = HAL_PSSI_ERROR_NOT_SUPPORTED;
     return HAL_ERROR;
@@ -820,7 +821,8 @@ HAL_StatusTypeDef HAL_PSSI_Receive(PSSI_HandleTypeDef *hpssi, uint8_t *pData, ui
     HAL_PSSI_DISABLE(hpssi);
 
     /* Configure transfer parameters */
-    hpssi->Instance->CR |= PSSI_CR_OUTEN_INPUT | ((hpssi->Init.ClockPolarity == HAL_PSSI_FALLING_EDGE) ? 0U : PSSI_CR_CKPOL);
+    hpssi->Instance->CR |= PSSI_CR_OUTEN_INPUT | \
+                           ((hpssi->Init.ClockPolarity == HAL_PSSI_FALLING_EDGE) ? 0U : PSSI_CR_CKPOL);
 
     /* DMA Disable */
     hpssi->Instance->CR &= PSSI_CR_DMA_DISABLE;
@@ -873,7 +875,7 @@ HAL_StatusTypeDef HAL_PSSI_Receive(PSSI_HandleTypeDef *hpssi, uint8_t *pData, ui
 #if defined (__GNUC__)
         *((uint16_t *)hpssi->pBuffPtr) = *pdr_16bits;
 #else
-        *((uint16_t *)hpssi->pBuffPtr) = *( __IO uint16_t *)(&hpssi->Instance->DR);
+        *((uint16_t *)hpssi->pBuffPtr) = *(__IO uint16_t *)(&hpssi->Instance->DR);
 #endif /* __GNUC__ */
 
         /* Increment Buffer pointer */
@@ -954,9 +956,9 @@ HAL_StatusTypeDef HAL_PSSI_Transmit_DMA(PSSI_HandleTypeDef *hpssi, uint8_t *pDat
 {
   HAL_StatusTypeDef dmaxferstatus;
   if (((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (hpssi->Init.BusWidth != HAL_PSSI_8LINES)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (Size % 8U != 0U))   ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && (Size % 16U != 0U)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && (Size % 32U != 0U)))
+      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && ((Size % 8U) != 0U))   ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && ((Size % 16U) != 0U)) ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && ((Size % 32U) != 0U)))
   {
     hpssi->ErrorCode = HAL_PSSI_ERROR_NOT_SUPPORTED;
     return HAL_ERROR;
@@ -990,93 +992,96 @@ HAL_StatusTypeDef HAL_PSSI_Transmit_DMA(PSSI_HandleTypeDef *hpssi, uint8_t *pDat
 
     if (hpssi->hdmatx != NULL)
     {
-        /* Packing mode management is enabled by the DMA settings */
-        if (((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && (hpssi->hdmatx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_WORD))     || \
-            ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && (hpssi->hdmatx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_HALFWORD)) || \
-            ((hpssi->Init.DataWidth == HAL_PSSI_8BITS)  && (hpssi->hdmatx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_BYTE)))
+      /* Packing mode management is enabled by the DMA settings */
+      if (((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && \
+           (hpssi->hdmatx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_WORD)) || \
+          ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && \
+           (hpssi->hdmatx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_HALFWORD)) || \
+          ((hpssi->Init.DataWidth == HAL_PSSI_8BITS)  && \
+           (hpssi->hdmatx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_BYTE)))
+      {
+        /* Restriction the DMA data received is not allowed in this mode */
+        __HAL_UNLOCK(hpssi);
+        return HAL_ERROR;
+      }
+
+      /* Set the PSSI DMA transfer complete callback */
+      hpssi->hdmatx->XferCpltCallback = PSSI_DMATransmitCplt;
+
+      /* Set the DMA error callback */
+      hpssi->hdmatx->XferErrorCallback = PSSI_DMAError;
+
+      /* Set the unused DMA callbacks to NULL */
+      hpssi->hdmatx->XferHalfCpltCallback = NULL;
+      hpssi->hdmatx->XferAbortCallback = NULL;
+
+      /* Disable the selected PSSI peripheral */
+      HAL_PSSI_DISABLE(hpssi);
+
+      /* Disable DMA  in PSSI CR */
+      hpssi->Instance->CR &= PSSI_CR_DMA_DISABLE;
+
+      /* Enable the DMA  */
+      if ((hpssi->hdmatx->Mode & DMA_LINKEDLIST) == DMA_LINKEDLIST)
+      {
+        if (hpssi->hdmatx->LinkedListQueue != NULL)
         {
-            /* Restriction the DMA data received is not allowed in this mode */
-            __HAL_UNLOCK(hpssi);
-            return HAL_ERROR;
-        }
+          /* Enable the DMA channel */
+          /* Set DMA data size */
+          hpssi->hdmatx->LinkedListQueue->Head->LinkRegisters[NODE_CBR1_DEFAULT_OFFSET] = hpssi->XferSize;
+          /* Set DMA source address */
+          hpssi->hdmatx->LinkedListQueue->Head->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] = (uint32_t)hpssi->pBuffPtr;
+          /* Set DMA destination address */
+          hpssi->hdmatx->LinkedListQueue->Head->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] =
+            (uint32_t)&hpssi->Instance->DR;
 
-        /* Set the PSSI DMA transfer complete callback */
-        hpssi->hdmatx->XferCpltCallback = PSSI_DMATransmitCplt;
-
-        /* Set the DMA error callback */
-        hpssi->hdmatx->XferErrorCallback = PSSI_DMAError;
-
-        /* Set the unused DMA callbacks to NULL */
-        hpssi->hdmatx->XferHalfCpltCallback = NULL;
-        hpssi->hdmatx->XferAbortCallback = NULL;
-
-        /* Disable the selected PSSI peripheral */
-        HAL_PSSI_DISABLE(hpssi);
-
-        /* Disable DMA  in PSSI CR */
-        hpssi->Instance->CR &= PSSI_CR_DMA_DISABLE;
-
-        /* Enable the DMA  */
-        if ((hpssi->hdmatx->Mode & DMA_LINKEDLIST) == DMA_LINKEDLIST)
-        {
-          if (hpssi->hdmatx->LinkedListQueue != NULL)
-          {
-            /* Enable the DMA channel */
-            /* Set DMA data size */
-            hpssi->hdmatx->LinkedListQueue->Head->LinkRegisters[NODE_CBR1_DEFAULT_OFFSET] = hpssi->XferSize;
-            /* Set DMA source address */
-            hpssi->hdmatx->LinkedListQueue->Head->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] = (uint32_t)hpssi->pBuffPtr;
-            /* Set DMA destination address */
-            hpssi->hdmatx->LinkedListQueue->Head->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] =
-              (uint32_t)&hpssi->Instance->DR;
-
-            dmaxferstatus = HAL_DMAEx_List_Start_IT(hpssi->hdmatx);
-          }
-          else
-          {
-            /* Unlock the process */
-            __HAL_UNLOCK(hpssi);
-
-            hpssi->State = HAL_PSSI_STATE_READY;
-            /* Return error status */
-            return HAL_ERROR;
-          }
+          dmaxferstatus = HAL_DMAEx_List_Start_IT(hpssi->hdmatx);
         }
         else
         {
-          dmaxferstatus = HAL_DMA_Start_IT(hpssi->hdmatx, (uint32_t)pData, (uint32_t)&hpssi->Instance->DR,
-                                           hpssi->XferSize);
-        }
-        /* Check status */
-        if (dmaxferstatus != HAL_OK)
-        {
-          /* Update PSSI error code */
-          hpssi->ErrorCode |= HAL_PSSI_ERROR_DMA;
-
-          /* Process Unlocked */
+          /* Unlock the process */
           __HAL_UNLOCK(hpssi);
 
-          /* Update PSSI state */
           hpssi->State = HAL_PSSI_STATE_READY;
+          /* Return error status */
           return HAL_ERROR;
         }
+      }
+      else
+      {
+        dmaxferstatus = HAL_DMA_Start_IT(hpssi->hdmatx, (uint32_t)pData, (uint32_t)&hpssi->Instance->DR,
+                                         hpssi->XferSize);
+      }
+      /* Check status */
+      if (dmaxferstatus != HAL_OK)
+      {
+        /* Update PSSI error code */
+        hpssi->ErrorCode |= HAL_PSSI_ERROR_DMA;
 
-        /* Configure BusWidth */
-        MODIFY_REG(hpssi->Instance->CR, PSSI_CR_OUTEN | PSSI_CR_CKPOL,
-                                        PSSI_CR_OUTEN_OUTPUT | ((hpssi->Init.ClockPolarity == HAL_PSSI_RISING_EDGE) ? 0U : PSSI_CR_CKPOL));
         /* Process Unlocked */
         __HAL_UNLOCK(hpssi);
 
-        /* Note : The PSSI interrupts must be enabled after unlocking current process
-                  to avoid the risk of PSSI interrupt handle execution before current
-                  process unlock */
-        /* Enable ERR interrupt */
-        HAL_PSSI_ENABLE_IT(hpssi, PSSI_FLAG_OVR_RIS);
+        /* Update PSSI state */
+        hpssi->State = HAL_PSSI_STATE_READY;
+        return HAL_ERROR;
+      }
 
-        /* Enable DMA Request */
-        hpssi->Instance->CR |= PSSI_CR_DMA_ENABLE;
-        /* Enable the selected PSSI peripheral */
-        HAL_PSSI_ENABLE(hpssi);
+      /* Configure BusWidth */
+      MODIFY_REG(hpssi->Instance->CR, PSSI_CR_OUTEN | PSSI_CR_CKPOL,
+                 PSSI_CR_OUTEN_OUTPUT | ((hpssi->Init.ClockPolarity == HAL_PSSI_RISING_EDGE) ? 0U : PSSI_CR_CKPOL));
+      /* Process Unlocked */
+      __HAL_UNLOCK(hpssi);
+
+      /* Note : The PSSI interrupts must be enabled after unlocking current process
+                to avoid the risk of PSSI interrupt handle execution before current
+                process unlock */
+      /* Enable ERR interrupt */
+      HAL_PSSI_ENABLE_IT(hpssi, PSSI_FLAG_OVR_RIS);
+
+      /* Enable DMA Request */
+      hpssi->Instance->CR |= PSSI_CR_DMA_ENABLE;
+      /* Enable the selected PSSI peripheral */
+      HAL_PSSI_ENABLE(hpssi);
     }
 
     else
@@ -1114,9 +1119,9 @@ HAL_StatusTypeDef HAL_PSSI_Receive_DMA(PSSI_HandleTypeDef *hpssi, uint8_t *pData
 {
   HAL_StatusTypeDef dmaxferstatus;
   if (((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (hpssi->Init.BusWidth != HAL_PSSI_8LINES)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && (Size % 8U != 0U))   ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && (Size % 16U != 0U)) ||
-      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && (Size % 32U != 0U)))
+      ((hpssi->Init.DataWidth == HAL_PSSI_8BITS) && ((Size % 8U) != 0U))   ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && ((Size % 16U) != 0U)) ||
+      ((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && ((Size % 32U) != 0U)))
   {
     hpssi->ErrorCode = HAL_PSSI_ERROR_NOT_SUPPORTED;
     return HAL_ERROR;
@@ -1150,93 +1155,96 @@ HAL_StatusTypeDef HAL_PSSI_Receive_DMA(PSSI_HandleTypeDef *hpssi, uint8_t *pData
 
     if (hpssi->hdmarx != NULL)
     {
-        /* Packing mode management is enabled by the DMA settings */
-        if (((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && (hpssi->hdmarx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_WORD))     || \
-            ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && (hpssi->hdmarx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_HALFWORD)) || \
-            ((hpssi->Init.DataWidth == HAL_PSSI_8BITS)  && (hpssi->hdmarx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_BYTE)))
+      /* Packing mode management is enabled by the DMA settings */
+      if (((hpssi->Init.DataWidth == HAL_PSSI_32BITS) && \
+           (hpssi->hdmarx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_WORD)) || \
+          ((hpssi->Init.DataWidth == HAL_PSSI_16BITS) && \
+           (hpssi->hdmarx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_HALFWORD)) || \
+          ((hpssi->Init.DataWidth == HAL_PSSI_8BITS)  && \
+           (hpssi->hdmarx->Init.SrcDataWidth !=  DMA_SRC_DATAWIDTH_BYTE)))
+      {
+        /* Restriction the DMA data received is not allowed in this mode */
+        __HAL_UNLOCK(hpssi);
+        return HAL_ERROR;
+      }
+
+      /* Set the PSSI DMA transfer complete callback */
+      hpssi->hdmarx->XferCpltCallback = PSSI_DMAReceiveCplt;
+
+      /* Set the DMA error callback */
+      hpssi->hdmarx->XferErrorCallback = PSSI_DMAError;
+
+      /* Set the unused DMA callbacks to NULL */
+      hpssi->hdmarx->XferHalfCpltCallback = NULL;
+      hpssi->hdmarx->XferAbortCallback = NULL;
+
+      /* Disable the selected PSSI peripheral */
+      HAL_PSSI_DISABLE(hpssi);
+
+      /* Disable DMA  in PSSI CR */
+      hpssi->Instance->CR &= PSSI_CR_DMA_DISABLE;
+
+      /* Enable the DMA  */
+      if ((hpssi->hdmarx->Mode & DMA_LINKEDLIST) == DMA_LINKEDLIST)
+      {
+        if (hpssi->hdmarx->LinkedListQueue != NULL)
         {
-            /* Restriction the DMA data received is not allowed in this mode */
-            __HAL_UNLOCK(hpssi);
-            return HAL_ERROR;
-        }
+          /* Enable the DMA channel */
+          /* Set DMA data size */
+          hpssi->hdmarx->LinkedListQueue->Head->LinkRegisters[NODE_CBR1_DEFAULT_OFFSET] = hpssi->XferSize;
+          /* Set DMA source address */
+          hpssi->hdmarx->LinkedListQueue->Head->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] =
+            (uint32_t)&hpssi->Instance->DR;
+          /* Set DMA destination address */
+          hpssi->hdmarx->LinkedListQueue->Head->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] = (uint32_t)hpssi->pBuffPtr;
 
-        /* Set the PSSI DMA transfer complete callback */
-        hpssi->hdmarx->XferCpltCallback = PSSI_DMAReceiveCplt;
-
-        /* Set the DMA error callback */
-        hpssi->hdmarx->XferErrorCallback = PSSI_DMAError;
-
-        /* Set the unused DMA callbacks to NULL */
-        hpssi->hdmarx->XferHalfCpltCallback = NULL;
-        hpssi->hdmarx->XferAbortCallback = NULL;
-
-        /* Disable the selected PSSI peripheral */
-        HAL_PSSI_DISABLE(hpssi);
-
-        /* Disable DMA  in PSSI CR */
-        hpssi->Instance->CR &= PSSI_CR_DMA_DISABLE;
-
-        /* Enable the DMA  */
-        if ((hpssi->hdmarx->Mode & DMA_LINKEDLIST) == DMA_LINKEDLIST)
-        {
-          if (hpssi->hdmarx->LinkedListQueue != NULL)
-          {
-            /* Enable the DMA channel */
-            /* Set DMA data size */
-            hpssi->hdmarx->LinkedListQueue->Head->LinkRegisters[NODE_CBR1_DEFAULT_OFFSET] = hpssi->XferSize;
-            /* Set DMA source address */
-            hpssi->hdmarx->LinkedListQueue->Head->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] =
-              (uint32_t)&hpssi->Instance->DR;
-            /* Set DMA destination address */
-            hpssi->hdmarx->LinkedListQueue->Head->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] = (uint32_t)hpssi->pBuffPtr;
-
-            dmaxferstatus = HAL_DMAEx_List_Start_IT(hpssi->hdmarx);
-          }
-          else
-          {
-            /* Unlock the process */
-            __HAL_UNLOCK(hpssi);
-
-            hpssi->State = HAL_PSSI_STATE_READY;
-            /* Return error status */
-            return HAL_ERROR;
-          }
+          dmaxferstatus = HAL_DMAEx_List_Start_IT(hpssi->hdmarx);
         }
         else
         {
-          dmaxferstatus = HAL_DMA_Start_IT(hpssi->hdmarx, (uint32_t)&hpssi->Instance->DR, (uint32_t)pData,
-                                           hpssi->XferSize);
-        }
-        /* Check status */
-        if (dmaxferstatus != HAL_OK)
-        {
-          /* Update PSSI error code */
-          hpssi->ErrorCode |= HAL_PSSI_ERROR_DMA;
-
-          /* Process Unlocked */
+          /* Unlock the process */
           __HAL_UNLOCK(hpssi);
 
-          /* Update PSSI state */
           hpssi->State = HAL_PSSI_STATE_READY;
+          /* Return error status */
           return HAL_ERROR;
         }
+      }
+      else
+      {
+        dmaxferstatus = HAL_DMA_Start_IT(hpssi->hdmarx, (uint32_t)&hpssi->Instance->DR, (uint32_t)pData,
+                                         hpssi->XferSize);
+      }
+      /* Check status */
+      if (dmaxferstatus != HAL_OK)
+      {
+        /* Update PSSI error code */
+        hpssi->ErrorCode |= HAL_PSSI_ERROR_DMA;
 
-        /* Configure BusWidth */
-        MODIFY_REG(hpssi->Instance->CR, PSSI_CR_OUTEN | PSSI_CR_CKPOL,
-                                        PSSI_CR_OUTEN_INPUT | ((hpssi->Init.ClockPolarity == HAL_PSSI_RISING_EDGE) ? PSSI_CR_CKPOL : 0U));
         /* Process Unlocked */
         __HAL_UNLOCK(hpssi);
 
-        /* Note : The PSSI interrupts must be enabled after unlocking current process
-                  to avoid the risk of PSSI interrupt handle execution before current
-                  process unlock */
-        /* Enable ERR interrupt */
-        HAL_PSSI_ENABLE_IT(hpssi, PSSI_FLAG_OVR_RIS);
+        /* Update PSSI state */
+        hpssi->State = HAL_PSSI_STATE_READY;
+        return HAL_ERROR;
+      }
 
-        /* Enable DMA Request */
-        hpssi->Instance->CR |= PSSI_CR_DMA_ENABLE;
-        /* Enable the selected PSSI peripheral */
-        HAL_PSSI_ENABLE(hpssi);
+      /* Configure BusWidth */
+      MODIFY_REG(hpssi->Instance->CR, PSSI_CR_OUTEN | PSSI_CR_CKPOL,
+                 PSSI_CR_OUTEN_INPUT | ((hpssi->Init.ClockPolarity == HAL_PSSI_RISING_EDGE) ? PSSI_CR_CKPOL : 0U));
+      /* Process Unlocked */
+      __HAL_UNLOCK(hpssi);
+
+      /* Note : The PSSI interrupts must be enabled after unlocking current process
+                to avoid the risk of PSSI interrupt handle execution before current
+                process unlock */
+      /* Enable ERR interrupt */
+      HAL_PSSI_ENABLE_IT(hpssi, PSSI_FLAG_OVR_RIS);
+
+      /* Enable DMA Request */
+      hpssi->Instance->CR |= PSSI_CR_DMA_ENABLE;
+      /* Enable the selected PSSI peripheral */
+      HAL_PSSI_ENABLE(hpssi);
     }
 
     else
@@ -1381,7 +1389,7 @@ void HAL_PSSI_IRQHandler(PSSI_HandleTypeDef *hpssi)
         hpssi->ErrorCode |= HAL_PSSI_ERROR_UNDER_RUN;
 
         /* Disable DMA and PSSI peripheral */
-    	HAL_PSSI_DISABLE(hpssi);
+        HAL_PSSI_DISABLE(hpssi);
         hpssi->Instance->CR &= ~PSSI_CR_DMAEN;
 
         if (hpssi->hdmatx != NULL)
@@ -1552,7 +1560,7 @@ __weak void HAL_PSSI_AbortCpltCallback(PSSI_HandleTypeDef *hpssi)
   *                the configuration information for the specified PSSI.
   * @retval HAL state
   */
-HAL_PSSI_StateTypeDef HAL_PSSI_GetState(PSSI_HandleTypeDef *hpssi)
+HAL_PSSI_StateTypeDef HAL_PSSI_GetState(const PSSI_HandleTypeDef *hpssi)
 {
   /* Return PSSI handle state */
   return hpssi->State;
@@ -1565,7 +1573,7 @@ HAL_PSSI_StateTypeDef HAL_PSSI_GetState(PSSI_HandleTypeDef *hpssi)
   *              the configuration information for the specified PSSI.
   * @retval PSSI Error Code
   */
-uint32_t HAL_PSSI_GetError(PSSI_HandleTypeDef *hpssi)
+uint32_t HAL_PSSI_GetError(const PSSI_HandleTypeDef *hpssi)
 {
   return hpssi->ErrorCode;
 }

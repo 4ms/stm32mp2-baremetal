@@ -1025,13 +1025,14 @@ uint32_t             HAL_SPI_GetError(SPI_HandleTypeDef *hspi);
 #define IS_SPI_NSSP(NSSP)                          (((NSSP) == SPI_NSS_PULSE_ENABLE) || \
                                                     ((NSSP) == SPI_NSS_PULSE_DISABLE))
 
-#define IS_SPI_BAUDRATE_PRESCALER(PRESCALER)       (((PRESCALER) == SPI_BAUDRATEPRESCALER_2)   || \
-                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_4)   || \
-                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_8)   || \
-                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_16)  || \
-                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_32)  || \
-                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_64)  || \
-                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_128) || \
+#define IS_SPI_BAUDRATE_PRESCALER(PRESCALER)       (((PRESCALER) == SPI_BAUDRATEPRESCALER_BYPASS) || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_2)      || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_4)      || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_8)      || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_16)     || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_32)     || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_64)     || \
+                                                    ((PRESCALER) == SPI_BAUDRATEPRESCALER_128)    || \
                                                     ((PRESCALER) == SPI_BAUDRATEPRESCALER_256))
 
 #define IS_SPI_FIRST_BIT(BIT)                      (((BIT) == SPI_FIRSTBIT_MSB) || \

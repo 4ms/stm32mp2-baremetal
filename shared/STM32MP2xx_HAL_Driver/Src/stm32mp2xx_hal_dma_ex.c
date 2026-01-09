@@ -616,9 +616,10 @@ HAL_StatusTypeDef HAL_DMAEx_List_Init(DMA_HandleTypeDef *const hdma)
     return HAL_ERROR;
   }
 
+  uint32_t ccid_cfen  = (hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_CFEN);
+  uint32_t ccid_semen = (hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_SEMEN);
   /* Take Channel resource for current CID if Dynamic Resource isolation is enabled , else error */
-  if (((hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_CFEN) == DMA_CCIDCFGR_CFEN) &&
-      ((hdma->Instance->CCIDCFGR & DMA_CCIDCFGR_SEMEN) == DMA_CCIDCFGR_SEMEN))
+  if ((ccid_cfen == DMA_CCIDCFGR_CFEN) && (ccid_semen == DMA_CCIDCFGR_SEMEN))
   {
     /* Take Semaphore*/
     hdma->Instance->CSEMCR = DMA_CSEMCR_SEMMUTEX;
@@ -949,7 +950,22 @@ HAL_StatusTypeDef HAL_DMAEx_List_Start_IT(DMA_HandleTypeDef *const hdma)
       DMA_List_GetCLLRNodeInfo(hdma->LinkedListQueue->Head, &cllr_mask, NULL);
 
       /* Update DMA registers for linked-list transfer */
+#if (defined(SYSCFG_HPDMAARCR_HPDMA1AREN)||defined(SYSCFG_HPDMAARCR_HPDMA2AREN)||defined(SYSCFG_HPDMAARCR_HPDMA3AREN))
+      if (((READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA1AREN) == SYSCFG_HPDMAARCR_HPDMA1AREN) || \
+           (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA2AREN) == SYSCFG_HPDMAARCR_HPDMA2AREN)  || \
+           (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA3AREN) == SYSCFG_HPDMAARCR_HPDMA3AREN)) && \
+          ((hdma->InitLinkedList.LinkAllocatedPort & DMA_CTR1_SAP) == DMA_SRC_ALLOCATED_PORT0))
+      {
+        hdma->Instance->CLBAR = ((uint32_t)hdma->LinkedListQueue->Head & DMA_CLBAR_LBA) - 0x80000000;
+      }
+      else
+      {
+        hdma->Instance->CLBAR = ((uint32_t)hdma->LinkedListQueue->Head & DMA_CLBAR_LBA);
+      }
+#else
       hdma->Instance->CLBAR = ((uint32_t)hdma->LinkedListQueue->Head & DMA_CLBAR_LBA);
+#endif /* SYSCFG_HPDMAARCR_HPDMAxAREN */
+
       hdma->Instance->CLLR  = ((uint32_t)hdma->LinkedListQueue->Head & DMA_CLLR_LA) | cllr_mask;
     }
 
@@ -1063,6 +1079,8 @@ HAL_StatusTypeDef HAL_DMAEx_List_Start_IT(DMA_HandleTypeDef *const hdma)
   *                       configurations.
   * @note   The DMA linked-list node parameter address should be 32bit aligned and should not exceed the 64 KByte
   *         addressable space.
+  * @note   Warning if AXI port is selected with HPDMA, the maximum source (and destination) length should be less
+  *         than 17. Otherwise, an error will be returned and no initialization performed.
   * @retval HAL status.
   */
 HAL_StatusTypeDef HAL_DMAEx_List_BuildNode(DMA_NodeConfTypeDef const *const pNodeConfig,
@@ -1114,10 +1132,6 @@ HAL_StatusTypeDef HAL_DMAEx_List_BuildNode(DMA_NodeConfTypeDef const *const pNod
     assert_param(IS_DMA_BURST_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.DestAddrOffset));
     assert_param(IS_DMA_BLOCK_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.BlkSrcAddrOffset));
     assert_param(IS_DMA_BLOCK_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.BlkDestAddrOffset));
-    assert_param(IS_DMA_BURST_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.SrcAddrOffset));
-    assert_param(IS_DMA_BURST_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.DestAddrOffset));
-    assert_param(IS_DMA_BLOCK_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.BlkSrcAddrOffset));
-    assert_param(IS_DMA_BLOCK_ADDR_OFFSET(pNodeConfig->RepeatBlockConfig.BlkDestAddrOffset));
   }
 
   /* Check DMA channel security and privilege attributes parameters */
@@ -1125,6 +1139,20 @@ HAL_StatusTypeDef HAL_DMAEx_List_BuildNode(DMA_NodeConfTypeDef const *const pNod
   assert_param(IS_DMA_ATTRIBUTES(pNodeConfig->SrcSecure));
   assert_param(IS_DMA_ATTRIBUTES(pNodeConfig->DestSecure));
 #endif /* CORTEX_IN_SECURE_STATE */
+
+  if ((pNodeConfig->NodeType & DMA_CHANNEL_TYPE_HPDMA) == DMA_CHANNEL_TYPE_HPDMA)
+  {
+    if (((pNodeConfig->Init.TransferAllocatedPort & DMA_CTR1_SAP) == DMA_SRC_ALLOCATED_PORT0) &&
+        (pNodeConfig->Init.SrcBurstLength > 16U))
+    {
+      return HAL_ERROR;
+    }
+    if (((pNodeConfig->Init.TransferAllocatedPort & DMA_CTR1_DAP) == DMA_DEST_ALLOCATED_PORT0) &&
+        (pNodeConfig->Init.DestBurstLength > 16U))
+    {
+      return HAL_ERROR;
+    }
+  }
 
   /* Build the DMA channel node */
   DMA_List_BuildNode(pNodeConfig, pNode);
@@ -3805,10 +3833,10 @@ static void DMA_List_BuildNode(DMA_NodeConfTypeDef const *const pNodeConfig,
       pNodeConfig->TriggerConfig.TriggerMode | pNodeConfig->TriggerConfig.TriggerPolarity |
       ((pNodeConfig->TriggerConfig.TriggerSelection << DMA_CTR2_TRIGSEL_Pos) & DMA_CTR2_TRIGSEL);
   }
-  /*********************************************************************************** CTR2 register value is updated */
+  /******************************************************************************* CTR2 register value is updated */
 
 
-  /* Update CBR1 register value ***************************************************************************************/
+  /* Update CBR1 register value ***********************************************************************************/
   /* Prepare DMA channel block register 1 (CBR1) value */
   pNode->LinkRegisters[NODE_CBR1_DEFAULT_OFFSET] = (pNodeConfig->DataSize & DMA_CBR1_BNDT);
 
@@ -3859,22 +3887,55 @@ static void DMA_List_BuildNode(DMA_NodeConfTypeDef const *const pNodeConfig,
       pNode->LinkRegisters[NODE_CBR1_DEFAULT_OFFSET] &= (~DMA_CBR1_BRDDEC);
     }
   }
-  /*********************************************************************************** CBR1 register value is updated */
+  /********************************************************************************* CBR1 register value is updated */
 
-
-  /* Update CSAR register value ***************************************************************************************/
+#if (defined(SYSCFG_HPDMAARCR_HPDMA1AREN)||defined(SYSCFG_HPDMAARCR_HPDMA2AREN)||defined(SYSCFG_HPDMAARCR_HPDMA3AREN))
+  if (((READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA1AREN) == SYSCFG_HPDMAARCR_HPDMA1AREN) || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA2AREN) == SYSCFG_HPDMAARCR_HPDMA2AREN)  || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA3AREN) == SYSCFG_HPDMAARCR_HPDMA3AREN)) && \
+      ((pNodeConfig->Init.TransferAllocatedPort & DMA_CTR1_SAP) == DMA_SRC_ALLOCATED_PORT0))
+  {
+    /* subtracting 0x80000000 from the source/destination address to get the actual address */
+    /* Update CSAR register value ***********************************************************/
+    pNode->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] = (pNodeConfig->SrcAddress - 0x80000000);
+    /******************************************************* CSAR register value is updated */
+  }
+  else
+  {
+    /* Update CSAR register value ***********************************************************/
+    pNode->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] = pNodeConfig->SrcAddress;
+    /******************************************************* CSAR register value is updated */
+  }
+  if (((READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA1AREN) == SYSCFG_HPDMAARCR_HPDMA1AREN) || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA2AREN) == SYSCFG_HPDMAARCR_HPDMA2AREN)  || \
+       (READ_BIT(SYSCFG->HPDMAARCR, SYSCFG_HPDMAARCR_HPDMA3AREN) == SYSCFG_HPDMAARCR_HPDMA3AREN)) && \
+      ((pNodeConfig->Init.TransferAllocatedPort & DMA_CTR1_DAP) == DMA_DEST_ALLOCATED_PORT0))
+  {
+    /* subtracting 0x80000000 from the source/destination address to get the actual address */
+    /* Update CDAR register value ***********************************************************/
+    pNode->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] = (pNodeConfig->DstAddress - 0x80000000);
+    /******************************************************** CDAR register value is updated */
+  }
+  else
+  {
+    /* Update CDAR register value ***********************************************************/
+    pNode->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] = pNodeConfig->DstAddress;
+    /******************************************************* CDAR register value is updated */
+  }
+#else
+  /* Update CSAR register value ***************************************************************/
   pNode->LinkRegisters[NODE_CSAR_DEFAULT_OFFSET] = pNodeConfig->SrcAddress;
-  /*********************************************************************************** CSAR register value is updated */
+  /*********************************************************** CSAR register value is updated */
 
-
-  /* Update CDAR register value ***************************************************************************************/
+  /* Update CDAR register value ***************************************************************/
   pNode->LinkRegisters[NODE_CDAR_DEFAULT_OFFSET] = pNodeConfig->DstAddress;
-  /*********************************************************************************** CDAR register value is updated */
+  /*********************************************************** CDAR register value is updated */
+#endif /* SYSCFG_HPDMAARCR_HPDMAxAREN */
 
   /* Check if the selected channel is 2D addressing */
   if ((pNodeConfig->NodeType & DMA_CHANNEL_TYPE_2D_ADDR) == DMA_CHANNEL_TYPE_2D_ADDR)
   {
-    /* Update CTR3 register value *************************************************************************************/
+    /* Update CTR3 register value *************************************************************/
     /* Write new CTR3 Register value : source address offset */
     if (pNodeConfig->RepeatBlockConfig.SrcAddrOffset < 0)
     {
@@ -3926,11 +3987,22 @@ static void DMA_List_BuildNode(DMA_NodeConfTypeDef const *const pNodeConfig,
       pNode->LinkRegisters[NODE_CBR2_DEFAULT_OFFSET] |=
         (((uint32_t)pNodeConfig->RepeatBlockConfig.BlkDestAddrOffset << DMA_CBR2_BRDAO_Pos) & DMA_CBR2_BRDAO);
     }
-    /********************************************************************************* CBR2 register value is updated */
+    /****************************************************************************** CBR2 register value is updated */
+    /* Update CLLR register value **********************************************************************************/
+    /* Reset CLLR Register value : channel linked-list address register offset */
+    pNode->LinkRegisters[NODE_CLLR_2D_DEFAULT_OFFSET] = 0U;
+    /****************************************************************************** CLLR register value is cleared */
+  }
+  else
+  {
+    /* Update CLLR register value **********************************************************************************/
+    /* Reset CLLR Register value : channel linked-list address register offset */
+    pNode->LinkRegisters[NODE_CLLR_LINEAR_DEFAULT_OFFSET] = 0U;
+    /****************************************************************************** CLLR register value is cleared */
   }
 
 
-  /* Update node information value ************************************************************************************/
+  /* Update node information value *********************************************************************************/
   /* Set node information */
   pNode->NodeInfo = pNodeConfig->NodeType;
   if ((pNodeConfig->NodeType & DMA_CHANNEL_TYPE_2D_ADDR) == DMA_CHANNEL_TYPE_2D_ADDR)
@@ -4484,7 +4556,7 @@ static void DMA_List_ConvertNodeToStatic(uint32_t ContextNodeAddr,
   uint32_t contextnode_reg_counter = 0U;
   uint32_t cllr_idx;
   uint32_t cllr_mask;
-  DMA_NodeTypeDef *context_node = (DMA_NodeTypeDef *)ContextNodeAddr;
+  const DMA_NodeTypeDef *context_node = (DMA_NodeTypeDef *)ContextNodeAddr;
   DMA_NodeTypeDef *current_node = (DMA_NodeTypeDef *)CurrentNodeAddr;
   uint32_t update_link[NODE_MAXIMUM_SIZE] = {DMA_CLLR_UT1, DMA_CLLR_UT2, DMA_CLLR_UB1, DMA_CLLR_USA,
                                              DMA_CLLR_UDA, DMA_CLLR_UT3, DMA_CLLR_UB2, DMA_CLLR_ULL

@@ -13,7 +13,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2020 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -2634,8 +2634,11 @@ static void SMBUS_ITErrorHandler(SMBUS_HandleTypeDef *hsmbus)
     __HAL_SMBUS_CLEAR_FLAG(hsmbus, SMBUS_FLAG_PECERR);
   }
 
-  /* Flush TX register */
-  SMBUS_Flush_TXDR(hsmbus);
+  if (hsmbus->ErrorCode != HAL_SMBUS_ERROR_NONE)
+  {
+    /* Flush TX register */
+    SMBUS_Flush_TXDR(hsmbus);
+  }
 
   /* Store current volatile hsmbus->ErrorCode, misra rule */
   tmperror = hsmbus->ErrorCode;

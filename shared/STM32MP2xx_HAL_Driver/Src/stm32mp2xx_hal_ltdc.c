@@ -180,13 +180,13 @@
 /**
   * @brief  calculate scaling factor.
   * @param  a_in input buffer resolution
-  *         a_out output buffer resolution
+  * @param  a_out output buffer resolution
   * @retval scaling factor
   */
 static uint32_t calculateScalingFactor(uint32_t a_in, uint32_t a_out)
 {
-  uint32_t factor = ((a_in-1) << SCALER_FRACTION) / (a_out-1);
-  return factor & 0xFFFF;
+  uint32_t factor = ((a_in - 1U) << SCALER_FRACTION) / (a_out - 1U);
+  return factor & (uint32_t)0xFFFF;
 }
 
 /* Private typedef -----------------------------------------------------------*/
@@ -194,7 +194,7 @@ static uint32_t calculateScalingFactor(uint32_t a_in, uint32_t a_out)
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
-static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLayerCfg, uint32_t LayerIdx);
+static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, const LTDC_LayerCfgTypeDef *pLayerCfg, uint32_t LayerIdx);
 /* Private functions ---------------------------------------------------------*/
 
 /** @defgroup LTDC_Exported_Functions LTDC Exported Functions
@@ -224,7 +224,8 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
   */
 HAL_StatusTypeDef HAL_LTDC_Init(LTDC_HandleTypeDef *hltdc)
 {
-  uint32_t tmp, tmp1;
+  uint32_t tmp;
+  uint32_t tmp1;
 
   /* Check the LTDC peripheral state */
   if (hltdc == NULL)
@@ -257,9 +258,9 @@ HAL_StatusTypeDef HAL_LTDC_Init(LTDC_HandleTypeDef *hltdc)
     hltdc->LineEventCallback   = HAL_LTDC_LineEventCallback;    /* Legacy weak LineEventCallback    */
     hltdc->ReloadEventCallback = HAL_LTDC_ReloadEventCallback;  /* Legacy weak ReloadEventCallback  */
     hltdc->ErrorCallback       = HAL_LTDC_ErrorCallback;        /* Legacy weak ErrorCallback        */
-    hltdc->SecureLineEventCallback   = HAL_LTDC_Secure_LineEventCallback;    /* Legacy weak SecureLineEventCallback    */
-    hltdc->SecureReloadEventCallback = HAL_LTDC_Secure_ReloadEventCallback;  /* Legacy weak SecureReloadEventCallback  */
-    hltdc->SecureErrorCallback       = HAL_LTDC_Secure_ErrorCallback;        /* Legacy weak SecureErrorCallback        */
+    hltdc->SecureLineEventCallback   = HAL_LTDC_Secure_LineEventCallback; /* Legacy weak SecureLineEventCallback    */
+    hltdc->SecureReloadEventCallback = HAL_LTDC_Secure_ReloadEventCallback;/* Legacy weak SecureReloadEventCallback  */
+    hltdc->SecureErrorCallback       = HAL_LTDC_Secure_ErrorCallback; /* Legacy weak SecureErrorCallback        */
 
     if (hltdc->MspInitCallback == NULL)
     {
@@ -283,12 +284,17 @@ HAL_StatusTypeDef HAL_LTDC_Init(LTDC_HandleTypeDef *hltdc)
 
   /* Configure the HS, VS, DE, PC polarity, Single frame trig, External trig, Rotation, Gamma, Background */
   hltdc->Instance->GCR &= ~(LTDC_GCR_HSPOL | LTDC_GCR_VSPOL | LTDC_GCR_DEPOL | LTDC_GCR_PCPOL | LTDC_GCR_SFEXEN \
-                          | LTDC_GCR_SFEN);
+                            | LTDC_GCR_SFEN);
+#if !defined(STM32MP21xxxx)
   hltdc->Instance->GCR |= (uint32_t)(hltdc->Init.HSPolarity | hltdc->Init.VSPolarity | \
                                      hltdc->Init.DEPolarity | hltdc->Init.PCPolarity | \
                                      hltdc->Init.SFExtTrig | hltdc->Init.SFTrig | \
                                      hltdc->Init.RotEn);
-
+#else
+  hltdc->Instance->GCR |= (uint32_t)(hltdc->Init.HSPolarity | hltdc->Init.VSPolarity | \
+                                     hltdc->Init.DEPolarity | hltdc->Init.PCPolarity | \
+                                     hltdc->Init.SFExtTrig | hltdc->Init.SFTrig);
+#endif /* !defined(STM32MP21xxxx) */
   /* Set Synchronization size */
   hltdc->Instance->SSCR &= ~(LTDC_SSCR_VSH | LTDC_SSCR_HSW);
   tmp = (hltdc->Init.HorizontalSync << 16U);
@@ -319,25 +325,28 @@ HAL_StatusTypeDef HAL_LTDC_Init(LTDC_HandleTypeDef *hltdc)
   hltdc->Instance->EDCR &= ~(LTDC_EDCR_OCYEN | LTDC_EDCR_OCYSEL | LTDC_EDCR_OCYCO);
   hltdc->Instance->EDCR |= (uint32_t)(hltdc->Init.ExtDisp.YCbCrEn | hltdc->Init.ExtDisp.YCbCrSel | \
                                       hltdc->Init.ExtDisp.YCbCrOrder);
-
+#if  defined(LTDC_RB0AR_ADDR)
   /* Configure rotation buffer 0 address register */
   hltdc->Instance->RB0AR &= ~(LTDC_RB0AR_ADDR);
   hltdc->Instance->RB0AR |= (uint32_t)(hltdc->Init.Rotation.Buffer0Addr);
-
+#endif /* defined(LTDC_RB0AR_ADDR) */
+#if  defined(LTDC_RB1AR_ADDR)
   /* Configure rotation buffer 1 address register */
   hltdc->Instance->RB1AR &= ~(LTDC_RB1AR_ADDR);
   hltdc->Instance->RB1AR |= (uint32_t)(hltdc->Init.Rotation.Buffer1Addr);
-
+#endif /* defined(LTDC_RB1AR_ADDR) */
+#if  defined(LTDC_RBPR_PITCH)
   /* Configure rotation pitch buffer register */
   hltdc->Instance->RBPR &= ~(LTDC_RBPR_PITCH);
   hltdc->Instance->RBPR = (uint32_t)(hltdc->Init.Rotation.BufferPitch);
-
+#endif /* defined(LTDC_RBPR_PITCH) */
+#if  defined(LTDC_RIFCR_RIFBLUE) && defined(LTDC_RIFCR_RIFGREEN) && defined(LTDC_RIFCR_RIFRED)
   /* Configure rotation intermediate frame color buffer register */
   tmp = ((uint32_t)(hltdc->Init.Rotation.InterFrameGreen) << 8U);
   tmp1 = ((uint32_t)(hltdc->Init.Rotation.InterFrameRed) << 16U);
-  hltdc->Instance->RIFCR &= ~(LTDC_RIFCR_RIFBLUE | LTDC_RIFCR_RIFGREEN |LTDC_RIFCR_RIFRED);
+  hltdc->Instance->RIFCR &= ~(LTDC_RIFCR_RIFBLUE | LTDC_RIFCR_RIFGREEN | LTDC_RIFCR_RIFRED);
   hltdc->Instance->RIFCR |= (uint32_t)(tmp | tmp1 | hltdc->Init.Rotation.InterFrameBlue);
-
+#endif /* defined(LTDC_RIFCR_RIFBLUE) & defined(LTDC_RIFCR_RIFGREEN) & defined(LTDC_RIFCR_RIFRED)*/
   /* Configure the Fifo Underrun Threshold register */
   hltdc->Instance->FUTR &= ~(LTDC_FUTR_THRE);
   hltdc->Instance->FUTR = (uint32_t)(hltdc->Init.FifoUnderThresh);
@@ -438,7 +447,8 @@ __weak void HAL_LTDC_MspDeInit(LTDC_HandleTypeDef *hltdc)
   * @param pCallback pointer to the Callback function
   * @retval status
   */
-HAL_StatusTypeDef HAL_LTDC_RegisterCallback(LTDC_HandleTypeDef *hltdc, HAL_LTDC_CallbackIDTypeDef CallbackID, pLTDC_CallbackTypeDef pCallback)
+HAL_StatusTypeDef HAL_LTDC_RegisterCallback(LTDC_HandleTypeDef *hltdc, HAL_LTDC_CallbackIDTypeDef CallbackID,
+                                            pLTDC_CallbackTypeDef pCallback)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
@@ -532,7 +542,7 @@ HAL_StatusTypeDef HAL_LTDC_RegisterCallback(LTDC_HandleTypeDef *hltdc, HAL_LTDC_
 
 /**
   * @brief  Unregister an LTDC Callback
-  *         LTDC callabck is redirected to the weak predefined callback
+  *         LTDC callback is redirected to the weak predefined callback
   * @param hltdc ltdc handle
   * @param CallbackID ID of the callback to be unregistered
   *        This parameter can be one of the following values:
@@ -567,15 +577,18 @@ HAL_StatusTypeDef HAL_LTDC_UnRegisterCallback(LTDC_HandleTypeDef *hltdc, HAL_LTD
         break;
 
       case HAL_LTDC_SECURE_LINE_EVENT_CB_ID :
-        hltdc->SecureLineEventCallback =  HAL_LTDC_Secure_LineEventCallback;      /* Legacy weak Secure_LineEventCallback    */
+        /* Legacy weak Secure_LineEventCallback    */
+        hltdc->SecureLineEventCallback =  HAL_LTDC_Secure_LineEventCallback;
         break;
 
       case HAL_LTDC_SECURE_RELOAD_EVENT_CB_ID :
-        hltdc->SecureReloadEventCallback = HAL_LTDC_Secure_ReloadEventCallback;  /* Legacy weak Secure_ReloadEventCallback  */
+        /* Legacy weak Secure_ReloadEventCallback  */
+        hltdc->SecureReloadEventCallback = HAL_LTDC_Secure_ReloadEventCallback;
         break;
 
       case HAL_LTDC_SECURE_ERROR_CB_ID :
-        hltdc->SecureErrorCallback  = HAL_LTDC_Secure_ErrorCallback;        /* Legacy weak Secure_ErrorCallback        */
+        /* Legacy weak Secure_ErrorCallback        */
+        hltdc->SecureErrorCallback  = HAL_LTDC_Secure_ErrorCallback;
         break;
 
       case HAL_LTDC_MSPINIT_CB_ID :
@@ -658,88 +671,88 @@ void HAL_LTDC_IRQHandler(LTDC_HandleTypeDef *hltdc)
   uint32_t itsources = READ_REG(hltdc->Instance->IER);
 
   /* Fifo Underrun at Rotation Interrupt management ***************************************/
-     if (((isrflags & LTDC_ISR_FURIF) != 0U) && ((itsources & LTDC_IER_FURIE) != 0U))
-     {
-       /* Disable the transfer Error interrupt */
-       __HAL_LTDC_DISABLE_IT(hltdc, LTDC_IT_UR);
+  if (((isrflags & LTDC_ISR_FURIF) != 0U) && ((itsources & LTDC_IER_FURIE) != 0U))
+  {
+    /* Disable the transfer Error interrupt */
+    __HAL_LTDC_DISABLE_IT(hltdc, LTDC_IT_UR);
 
-       /* Clear the FUR flag */
-       __HAL_LTDC_CLEAR_FLAG(hltdc, LTDC_FLAG_UR);
+    /* Clear the FUR flag */
+    __HAL_LTDC_CLEAR_FLAG(hltdc, LTDC_FLAG_UR);
 
-       /* Update error code */
-       hltdc->ErrorCode |= HAL_LTDC_ERROR_FUR;
+    /* Update error code */
+    hltdc->ErrorCode |= HAL_LTDC_ERROR_FUR;
 
-       /* Change LTDC state */
-       hltdc->State = HAL_LTDC_STATE_ERROR;
+    /* Change LTDC state */
+    hltdc->State = HAL_LTDC_STATE_ERROR;
 
-       /* Process unlocked */
-       __HAL_UNLOCK(hltdc);
+    /* Process unlocked */
+    __HAL_UNLOCK(hltdc);
 
-       /* Transfer error Callback */
-   #if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
-       /*Call registered error callback*/
-       hltdc->ErrorCallback(hltdc);
-   #else
-       /* Call legacy error callback*/
-       HAL_LTDC_ErrorCallback(hltdc);
-   #endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
-     }
+    /* Transfer error Callback */
+#if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
+    /*Call registered error callback*/
+    hltdc->ErrorCallback(hltdc);
+#else
+    /* Call legacy error callback*/
+    HAL_LTDC_ErrorCallback(hltdc);
+#endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
+  }
 
   /* CRC Interrupt management ***************************************/
-   if (((isrflags & LTDC_ISR_CRCIF) != 0U) && ((itsources & LTDC_IER_CRCIE) != 0U))
-   {
-     /* Disable the transfer Error interrupt */
-     __HAL_LTDC_DISABLE_IT(hltdc, LTDC_IT_CR);
+  if (((isrflags & LTDC_ISR_CRCIF) != 0U) && ((itsources & LTDC_IER_CRCIE) != 0U))
+  {
+    /* Disable the transfer Error interrupt */
+    __HAL_LTDC_DISABLE_IT(hltdc, LTDC_IT_CR);
 
-     /* Clear the crc flag */
-     __HAL_LTDC_CLEAR_FLAG(hltdc, LTDC_FLAG_CR);
+    /* Clear the crc flag */
+    __HAL_LTDC_CLEAR_FLAG(hltdc, LTDC_FLAG_CR);
 
-     /* Update error code */
-     hltdc->ErrorCode |= HAL_LTDC_ERROR_CRC;
+    /* Update error code */
+    hltdc->ErrorCode |= HAL_LTDC_ERROR_CRC;
 
-     /* Change LTDC state */
-     hltdc->State = HAL_LTDC_STATE_ERROR;
+    /* Change LTDC state */
+    hltdc->State = HAL_LTDC_STATE_ERROR;
 
-     /* Process unlocked */
-     __HAL_UNLOCK(hltdc);
+    /* Process unlocked */
+    __HAL_UNLOCK(hltdc);
 
-     /* Transfer error Callback */
- #if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
-     /*Call registered error callback*/
-     hltdc->ErrorCallback(hltdc);
- #else
-     /* Call legacy error callback*/
-     HAL_LTDC_ErrorCallback(hltdc);
- #endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
-   }
+    /* Transfer error Callback */
+#if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
+    /*Call registered error callback*/
+    hltdc->ErrorCallback(hltdc);
+#else
+    /* Call legacy error callback*/
+    HAL_LTDC_ErrorCallback(hltdc);
+#endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
+  }
 
   /* Fifo Underrun Killing Interrupt management ***************************************/
-   if (((isrflags & LTDC_ISR_FUKIF) != 0U) && ((itsources & LTDC_IER_FUKIE) != 0U))
-   {
-     /* Disable the transfer Error interrupt */
-     __HAL_LTDC_DISABLE_IT(hltdc, LTDC_IT_UK);
+  if (((isrflags & LTDC_ISR_FUKIF) != 0U) && ((itsources & LTDC_IER_FUKIE) != 0U))
+  {
+    /* Disable the transfer Error interrupt */
+    __HAL_LTDC_DISABLE_IT(hltdc, LTDC_IT_UK);
 
-     /* Clear the UK flag */
-     __HAL_LTDC_CLEAR_FLAG(hltdc, LTDC_FLAG_UK);
+    /* Clear the UK flag */
+    __HAL_LTDC_CLEAR_FLAG(hltdc, LTDC_FLAG_UK);
 
-      /* Update error code */
-      hltdc->ErrorCode |= HAL_LTDC_ERROR_UK;
+    /* Update error code */
+    hltdc->ErrorCode |= HAL_LTDC_ERROR_UK;
 
-      /* Change LTDC state */
-      hltdc->State = HAL_LTDC_STATE_ERROR;
+    /* Change LTDC state */
+    hltdc->State = HAL_LTDC_STATE_ERROR;
 
-      /* Process unlocked */
-      __HAL_UNLOCK(hltdc);
+    /* Process unlocked */
+    __HAL_UNLOCK(hltdc);
 
-      /* Transfer error Callback */
- #if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
-     /*Call registered error callback*/
-     hltdc->ErrorCallback(hltdc);
- #else
-     /* Call legacy error callback*/
-     HAL_LTDC_ErrorCallback(hltdc);
- #endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
-   }
+    /* Transfer error Callback */
+#if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
+    /*Call registered error callback*/
+    hltdc->ErrorCallback(hltdc);
+#else
+    /* Call legacy error callback*/
+    HAL_LTDC_ErrorCallback(hltdc);
+#endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
+  }
   /* Transfer Error Interrupt management ***************************************/
   if (((isrflags & LTDC_ISR_TERRIF) != 0U) && ((itsources & LTDC_IER_TERRIE) != 0U))
   {
@@ -955,32 +968,32 @@ void HAL_LTDC_Secure_IRQHandler(LTDC_HandleTypeDef *hltdc)
   uint32_t itsources = READ_REG(hltdc->Instance->IER2);
 
   /* CRC Interrupt management ***************************************/
-   if (((isrflags & LTDC_ISR_CRCIF) != 0U) && ((itsources & LTDC_IER_CRCIE) != 0U))
-   {
-     /* Disable the transfer Error interrupt */
-     __HAL_LTDC_DISABLE_SECURE_IT(hltdc, LTDC_IT_CR);
+  if (((isrflags & LTDC_ISR_CRCIF) != 0U) && ((itsources & LTDC_IER_CRCIE) != 0U))
+  {
+    /* Disable the transfer Error interrupt */
+    __HAL_LTDC_DISABLE_SECURE_IT(hltdc, LTDC_IT_CR);
 
-     /* Clear the crc flag */
-     __HAL_LTDC_CLEAR_SECURE_FLAG(hltdc, LTDC_FLAG_CR);
+    /* Clear the crc flag */
+    __HAL_LTDC_CLEAR_SECURE_FLAG(hltdc, LTDC_FLAG_CR);
 
-     /* Update error code */
-     hltdc->ErrorCode |= HAL_LTDC_ERROR_CRC;
+    /* Update error code */
+    hltdc->ErrorCode |= HAL_LTDC_ERROR_CRC;
 
-     /* Change LTDC state */
-     hltdc->State = HAL_LTDC_STATE_ERROR;
+    /* Change LTDC state */
+    hltdc->State = HAL_LTDC_STATE_ERROR;
 
-     /* Process unlocked */
-     __HAL_UNLOCK(hltdc);
+    /* Process unlocked */
+    __HAL_UNLOCK(hltdc);
 
-     /* Transfer error Callback */
- #if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
-     /*Call registered error callback*/
-     hltdc->SecureErrorCallback(hltdc);
- #else
-     /* Call legacy error callback*/
-     HAL_LTDC_Secure_ErrorCallback(hltdc);
- #endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
-   }
+    /* Transfer error Callback */
+#if (USE_HAL_LTDC_REGISTER_CALLBACKS == 1)
+    /*Call registered error callback*/
+    hltdc->SecureErrorCallback(hltdc);
+#else
+    /* Call legacy error callback*/
+    HAL_LTDC_Secure_ErrorCallback(hltdc);
+#endif /* USE_HAL_LTDC_REGISTER_CALLBACKS */
+  }
 
   /* Transfer Error Interrupt management ***************************************/
   if (((isrflags & LTDC_ISR_TERRIF) != 0U) && ((itsources & LTDC_IER_TERRIE) != 0U))
@@ -1217,11 +1230,12 @@ HAL_StatusTypeDef HAL_LTDC_ConfigColorKeying(LTDC_HandleTypeDef *hltdc, uint32_t
   *                   LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_LTDC_ConfigCLUT(LTDC_HandleTypeDef *hltdc, uint32_t *pCLUT, uint32_t CLUTSize, uint32_t LayerIdx)
+HAL_StatusTypeDef HAL_LTDC_ConfigCLUT(LTDC_HandleTypeDef *hltdc, const uint32_t *pCLUT, uint32_t CLUTSize,
+                                      uint32_t LayerIdx)
 {
   uint32_t tmp;
   uint32_t counter;
-  uint32_t *pcolorlut = pCLUT;
+  const uint32_t *pcolorlut = pCLUT;
   /* Check the parameters */
   assert_param(IS_LTDC_LAYER(LayerIdx));
 
@@ -1235,11 +1249,15 @@ HAL_StatusTypeDef HAL_LTDC_ConfigCLUT(LTDC_HandleTypeDef *hltdc, uint32_t *pCLUT
   {
     if (hltdc->LayerCfg[LayerIdx].PixelFormat == LTDC_PIXEL_FORMAT_AL44)
     {
-      tmp  = (((counter + (16U*counter)) << 24U) | ((uint32_t)(*pcolorlut) & 0xFFU) | ((uint32_t)(*pcolorlut) & 0xFF00U) | ((uint32_t)(*pcolorlut) & 0xFF0000U));
+      tmp  = (((counter + (16U * counter)) << 24U) | ((uint32_t)(*pcolorlut) & 0xFFU) \
+              | ((uint32_t)(*pcolorlut) & 0xFF00U) \
+              | ((uint32_t)(*pcolorlut) & 0xFF0000U));
     }
     else
     {
-      tmp  = ((counter << 24U) | ((uint32_t)(*pcolorlut) & 0xFFU) | ((uint32_t)(*pcolorlut) & 0xFF00U) | ((uint32_t)(*pcolorlut) & 0xFF0000U));
+      tmp  = ((counter << 24U) | ((uint32_t)(*pcolorlut) & 0xFFU) \
+              | ((uint32_t)(*pcolorlut) & 0xFF00U) \
+              | ((uint32_t)(*pcolorlut) & 0xFF0000U));
     }
 
     pcolorlut++;
@@ -1275,10 +1293,14 @@ HAL_StatusTypeDef HAL_LTDC_ConfigGamma(LTDC_HandleTypeDef *hltdc, LTDC_GammaType
   /* Change LTDC peripheral state */
   hltdc->State = HAL_LTDC_STATE_BUSY;
 
-  for (i = 0U; (i < GammaSize); i++) {
-    hltdc->Instance->GCCR = LTDC_GCCR_REN | pGamma[i].Address | (pGamma[i].Red << LTDC_GCCR_COMP_Pos);
-    hltdc->Instance->GCCR = LTDC_GCCR_GEN | pGamma[i].Address | (pGamma[i].Green << LTDC_GCCR_COMP_Pos);
-    hltdc->Instance->GCCR = LTDC_GCCR_BEN | pGamma[i].Address | (pGamma[i].Blue << LTDC_GCCR_COMP_Pos);
+  for (i = 0U; (i < GammaSize); i++)
+  {
+    hltdc->Instance->GCCR = LTDC_GCCR_REN | (uint32_t)pGamma[i].Address \
+                            | ((uint32_t)pGamma[i].Red << LTDC_GCCR_COMP_Pos);
+    hltdc->Instance->GCCR = LTDC_GCCR_GEN | (uint32_t)pGamma[i].Address \
+                            | ((uint32_t)pGamma[i].Green << LTDC_GCCR_COMP_Pos);
+    hltdc->Instance->GCCR = LTDC_GCCR_BEN | (uint32_t)pGamma[i].Address \
+                            | ((uint32_t)pGamma[i].Blue << LTDC_GCCR_COMP_Pos);
   }
 
   /* Change the LTDC state*/
@@ -1487,6 +1509,532 @@ HAL_StatusTypeDef HAL_LTDC_DisableColorBlending(LTDC_HandleTypeDef *hltdc, uint3
 
   /* Disable default color blending bit */
   LTDC_LAYER(hltdc, LayerIdx)->CR &= ~(uint32_t)LTDC_LxCR_DCBEN;
+
+  /* Set the Immediate Reload type */
+  hltdc->Instance->SRCR = LTDC_SRCR_IMR;
+
+  /* Change the LTDC state*/
+  hltdc->State = HAL_LTDC_STATE_READY;
+
+  /* Process unlocked */
+  __HAL_UNLOCK(hltdc);
+
+  return HAL_OK;
+}
+/**
+  * @brief  Enable horizontal mirroring.
+  * @param  hltdc     pointer to a LTDC_HandleTypeDef structure that contains
+  *                   the configuration information for the LTDC.
+  * @param  pLayerCfg  pointer to a LTDC_LayerCfgTypeDef structure that contains
+  *                    the configuration information for the Layer.
+  * @param  LayerIdx  LTDC Layer index.
+  *                   This parameter can be one of the following values:
+  *                   LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
+  * @retval  HAL status
+  */
+HAL_StatusTypeDef HAL_LTDC_EnableHMirror(LTDC_HandleTypeDef *hltdc, const LTDC_LayerCfgTypeDef *pLayerCfg,
+                                         uint32_t LayerIdx)
+{
+  uint32_t stride;
+  uint32_t HorInputSize;
+
+  /* Check the parameters */
+  assert_param(IS_LTDC_LAYER(LayerIdx));
+
+  /* Process locked */
+  __HAL_LOCK(hltdc);
+
+  /* Change LTDC peripheral state */
+  hltdc->State = HAL_LTDC_STATE_BUSY;
+
+  /* Enable horizontal mirroring bit */
+  LTDC_LAYER(hltdc, LayerIdx)->CR |= (uint32_t)LTDC_LxCR_HMEN;
+
+  if (((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) == LTDC_LxC1R_SCA) && (pLayerCfg->Scaler.Enable == 1U))
+  {
+    HorInputSize = pLayerCfg->Scaler.HorInputSize;
+  }
+  else
+  {
+    HorInputSize = pLayerCfg->WindowX1 - pLayerCfg->WindowX0;
+  }
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_ARGB8888:
+    case LTDC_PIXEL_FORMAT_ABGR8888:
+    case LTDC_PIXEL_FORMAT_RGBA8888:
+    case LTDC_PIXEL_FORMAT_BGRA8888:
+      stride = 4U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB888:
+      stride = 3U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB565:
+    case LTDC_PIXEL_FORMAT_BGR565:
+    case LTDC_PIXEL_FORMAT_ARGB1555:
+    case LTDC_PIXEL_FORMAT_ARGB4444:
+    case LTDC_PIXEL_FORMAT_AL88:
+    case LTDC_PIXEL_FORMAT_UYVY:
+    case LTDC_PIXEL_FORMAT_VYUY:
+    case LTDC_PIXEL_FORMAT_YVYU:
+    case LTDC_PIXEL_FORMAT_YUYV:
+      stride = 2U;
+      break;
+    case LTDC_PIXEL_FORMAT_L8:
+    case LTDC_PIXEL_FORMAT_AL44:
+    default:
+      stride = 1U;
+      break;
+  }
+
+  /* Configure the color frame buffer start address */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR = pLayerCfg->FBStartAdress +
+                                       (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0)) - 1U;
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_NV12:
+    case LTDC_PIXEL_FORMAT_NV21:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
+                                            (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0)) - 1U;
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
+                                            (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0)) - 1U;
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (pLayerCfg->ImageWidth << 16U) | (HorInputSize + 7U);
+
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U ;
+      break;
+    case LTDC_PIXEL_FORMAT_YUV420:
+    case LTDC_PIXEL_FORMAT_YVU420:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
+                                            (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U)) - 1U;
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
+                                            (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U)) - 1U;
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = ((pLayerCfg->ImageWidth >> 1U) << 16U) | ((HorInputSize >> 1U) + 7U);
+
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U;
+      break;
+    default :
+      break;
+  }
+
+  /* Configure the color frame buffer pitch in byte */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  &= ~(LTDC_LxCFBLR_CFBLL | LTDC_LxCFBLR_CFBP);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = (((pLayerCfg->ImageWidth * stride) << 16U) |
+                                         ((HorInputSize * stride)  + 7U));
+
+  /* Set the Immediate Reload type */
+  hltdc->Instance->SRCR = LTDC_SRCR_IMR;
+
+  /* Change the LTDC state*/
+  hltdc->State = HAL_LTDC_STATE_READY;
+
+  /* Process unlocked */
+  __HAL_UNLOCK(hltdc);
+
+  return HAL_OK;
+}
+
+/**
+  * @brief  Disable horizontal mirroring.
+  * @param  hltdc     pointer to a LTDC_HandleTypeDef structure that contains
+  *                   the configuration information for the LTDC.
+  * @param  pLayerCfg  pointer to a LTDC_LayerCfgTypeDef structure that contains
+  *                    the configuration information for the Layer.
+  * @param  LayerIdx  LTDC Layer index.
+  *                   This parameter can be one of the following values:
+  *                   LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
+  * @retval  HAL status
+  */
+HAL_StatusTypeDef HAL_LTDC_DisableHMirror(LTDC_HandleTypeDef *hltdc, const LTDC_LayerCfgTypeDef *pLayerCfg,
+                                          uint32_t LayerIdx)
+{
+  /* Check the parameters */
+  assert_param(IS_LTDC_LAYER(LayerIdx));
+
+  uint32_t stride;
+  uint32_t HorInputSize;
+
+  /* Process locked */
+  __HAL_LOCK(hltdc);
+
+  /* Change LTDC peripheral state */
+  hltdc->State = HAL_LTDC_STATE_BUSY;
+
+  if (((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) == LTDC_LxC1R_SCA) && (pLayerCfg->Scaler.Enable == 1U))
+  {
+    HorInputSize = pLayerCfg->Scaler.HorInputSize;
+  }
+  else
+  {
+    HorInputSize = pLayerCfg->WindowX1 - pLayerCfg->WindowX0;
+  }
+
+  /* Disable horizontal mirroring bit */
+  LTDC_LAYER(hltdc, LayerIdx)->CR &= ~(uint32_t)LTDC_LxCR_HMEN;
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_ARGB8888:
+    case LTDC_PIXEL_FORMAT_ABGR8888:
+    case LTDC_PIXEL_FORMAT_RGBA8888:
+    case LTDC_PIXEL_FORMAT_BGRA8888:
+      stride = 4U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB888:
+      stride = 3U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB565:
+    case LTDC_PIXEL_FORMAT_BGR565:
+    case LTDC_PIXEL_FORMAT_ARGB1555:
+    case LTDC_PIXEL_FORMAT_ARGB4444:
+    case LTDC_PIXEL_FORMAT_AL88:
+    case LTDC_PIXEL_FORMAT_UYVY:
+    case LTDC_PIXEL_FORMAT_VYUY:
+    case LTDC_PIXEL_FORMAT_YVYU:
+    case LTDC_PIXEL_FORMAT_YUYV:
+      stride = 2U;
+      break;
+    case LTDC_PIXEL_FORMAT_L8:
+    case LTDC_PIXEL_FORMAT_AL44:
+    default:
+      stride = 1U;
+      break;
+  }
+
+  /* Configure the color frame buffer start address */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR = (pLayerCfg->FBStartAdress);
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_NV12:
+    case LTDC_PIXEL_FORMAT_NV21:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0;
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1;
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (pLayerCfg->ImageWidth << 16U) | (HorInputSize + 7U);
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U ;
+      break;
+    case LTDC_PIXEL_FORMAT_YUV420:
+    case LTDC_PIXEL_FORMAT_YVU420:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0;
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1;
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = ((pLayerCfg->ImageWidth >> 1U) << 16U) |
+                                           ((HorInputSize >> 1U) + 7U);
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U;
+      break;
+    default :
+      break;
+  }
+
+  /* Configure the color frame buffer pitch in byte */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  &= ~(LTDC_LxCFBLR_CFBLL | LTDC_LxCFBLR_CFBP);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = (((pLayerCfg->ImageWidth * stride) << 16U) |
+                                         ((HorInputSize * stride)  + 7U));
+
+  /* Set the Immediate Reload type */
+  hltdc->Instance->SRCR = LTDC_SRCR_IMR;
+
+  /* Change the LTDC state*/
+  hltdc->State = HAL_LTDC_STATE_READY;
+
+  /* Process unlocked */
+  __HAL_UNLOCK(hltdc);
+
+  return HAL_OK;
+}
+
+/**
+  * @brief  Enable vertical mirroring.
+  * @param  hltdc     pointer to a LTDC_HandleTypeDef structure that contains
+  *                   the configuration information for the LTDC.
+  * @param  pLayerCfg  pointer to a LTDC_LayerCfgTypeDef structure that contains
+  *                    the configuration information for the Layer.
+  * @param  LayerIdx  LTDC Layer index.
+  *                   This parameter can be one of the following values:
+  *                   LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
+  * @retval  HAL status
+  */
+HAL_StatusTypeDef HAL_LTDC_EnableVMirror(LTDC_HandleTypeDef *hltdc,  const LTDC_LayerCfgTypeDef *pLayerCfg,
+                                         uint32_t LayerIdx)
+{
+  uint32_t stride;
+  uint32_t HorInputSize;
+
+  /* Check the parameters */
+  assert_param(IS_LTDC_LAYER(LayerIdx));
+
+  /* Process locked */
+  __HAL_LOCK(hltdc);
+
+  /* Change LTDC peripheral state */
+  hltdc->State = HAL_LTDC_STATE_BUSY;
+
+  if (((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) == LTDC_LxC1R_SCA) && (pLayerCfg->Scaler.Enable == 1U))
+  {
+    HorInputSize = pLayerCfg->Scaler.HorInputSize;
+  }
+  else
+  {
+    HorInputSize = pLayerCfg->WindowX1 - pLayerCfg->WindowX0;
+  }
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_ARGB8888:
+    case LTDC_PIXEL_FORMAT_ABGR8888:
+    case LTDC_PIXEL_FORMAT_RGBA8888:
+    case LTDC_PIXEL_FORMAT_BGRA8888:
+      stride = 4U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB888:
+      stride = 3U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB565:
+    case LTDC_PIXEL_FORMAT_BGR565:
+    case LTDC_PIXEL_FORMAT_ARGB1555:
+    case LTDC_PIXEL_FORMAT_ARGB4444:
+    case LTDC_PIXEL_FORMAT_AL88:
+    case LTDC_PIXEL_FORMAT_UYVY:
+    case LTDC_PIXEL_FORMAT_VYUY:
+    case LTDC_PIXEL_FORMAT_YVYU:
+    case LTDC_PIXEL_FORMAT_YUYV:
+      stride = 2U;
+      break;
+    case LTDC_PIXEL_FORMAT_L8:
+    case LTDC_PIXEL_FORMAT_AL44:
+    default:
+      stride = 1U;
+      break;
+  }
+
+  /* Configure the color frame buffer start address */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR = pLayerCfg->FBStartAdress +
+                                       (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
+                                        ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) - 1U));
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_NV12:
+    case LTDC_PIXEL_FORMAT_NV21:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
+                                            (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
+                                             (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
+                                            (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
+                                             (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = ((0x10000U - (pLayerCfg->ImageWidth * stride)) << 16U) |
+                                           ((HorInputSize * stride)  + 7U);
+
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U;
+      break;
+    case LTDC_PIXEL_FORMAT_YUV420:
+    case LTDC_PIXEL_FORMAT_YVU420:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
+                                            (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
+                                             (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
+                                            (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
+                                             (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (((0x10000U - (pLayerCfg->ImageWidth >> 1U)) * stride) << 16U) |
+                                           (((HorInputSize >> 1U) * stride) + 7U);
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U;
+      break;
+    default :
+      break;
+  }
+
+  /* set the pitch */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = ((((0x10000U - (pLayerCfg->ImageWidth * stride))) << 16U) |
+                                         ((HorInputSize * stride)  + 7U));
+
+  /* Set the Immediate Reload type */
+  hltdc->Instance->SRCR = LTDC_SRCR_IMR;
+
+  /* Change the LTDC state*/
+  hltdc->State = HAL_LTDC_STATE_READY;
+
+  /* Process unlocked */
+  __HAL_UNLOCK(hltdc);
+
+  return HAL_OK;
+}
+
+/**
+  * @brief  Disable vertical mirroring.
+  * @param  hltdc     pointer to a LTDC_HandleTypeDef structure that contains
+  *                   the configuration information for the LTDC.
+  * @param  pLayerCfg  pointer to a LTDC_LayerCfgTypeDef structure that contains
+  *                    the configuration information for the Layer.
+  * @param  LayerIdx  LTDC Layer index.
+  *                   This parameter can be one of the following values:
+  *                   LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
+  * @retval  HAL status
+  */
+HAL_StatusTypeDef HAL_LTDC_DisableVMirror(LTDC_HandleTypeDef *hltdc, const LTDC_LayerCfgTypeDef *pLayerCfg,
+                                          uint32_t LayerIdx)
+{
+  uint32_t stride;
+  uint32_t HorInputSize;
+
+  /* Check the parameters */
+  assert_param(IS_LTDC_LAYER(LayerIdx));
+
+  /* Process locked */
+  __HAL_LOCK(hltdc);
+
+  /* Change LTDC peripheral state */
+  hltdc->State = HAL_LTDC_STATE_BUSY;
+
+  if (((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) == LTDC_LxC1R_SCA) && (pLayerCfg->Scaler.Enable == 1U))
+  {
+    HorInputSize = pLayerCfg->Scaler.HorInputSize;
+  }
+  else
+  {
+    HorInputSize = pLayerCfg->WindowX1 - pLayerCfg->WindowX0;
+  }
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_ARGB8888:
+    case LTDC_PIXEL_FORMAT_ABGR8888:
+    case LTDC_PIXEL_FORMAT_RGBA8888:
+    case LTDC_PIXEL_FORMAT_BGRA8888:
+      stride = 4U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB888:
+      stride = 3U;
+      break;
+    case LTDC_PIXEL_FORMAT_RGB565:
+    case LTDC_PIXEL_FORMAT_BGR565:
+    case LTDC_PIXEL_FORMAT_ARGB1555:
+    case LTDC_PIXEL_FORMAT_ARGB4444:
+    case LTDC_PIXEL_FORMAT_AL88:
+    case LTDC_PIXEL_FORMAT_UYVY:
+    case LTDC_PIXEL_FORMAT_VYUY:
+    case LTDC_PIXEL_FORMAT_YVYU:
+    case LTDC_PIXEL_FORMAT_YUYV:
+      stride = 2U;
+      break;
+    case LTDC_PIXEL_FORMAT_L8:
+    case LTDC_PIXEL_FORMAT_AL44:
+    default:
+      stride = 1U;
+      break;
+  }
+
+  /* Configure the color frame buffer start address */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBAR = (pLayerCfg->FBStartAdress);
+
+  switch (pLayerCfg->PixelFormat)
+  {
+    case LTDC_PIXEL_FORMAT_NV12:
+    case LTDC_PIXEL_FORMAT_NV21:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0;
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1;
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (pLayerCfg->ImageWidth << 16U) | (HorInputSize + 7U);
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U ;
+      break;
+    case LTDC_PIXEL_FORMAT_YUV420:
+    case LTDC_PIXEL_FORMAT_YVU420:
+      /* Configure the auxiliary frame buffer address 0 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0;
+
+      /* Configure the auxiliary frame buffer address 1 */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1;
+
+      /* Configure the buffer length */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLR = ((pLayerCfg->ImageWidth >> 1U) << 16U) |
+                                           ((HorInputSize >> 1U) + 7U);
+      /* Configure the frame buffer line number */
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+      LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U;
+      break;
+    default :
+      break;
+  }
+
+  /* Configure the color frame buffer pitch in byte */
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  &= ~(LTDC_LxCFBLR_CFBLL | LTDC_LxCFBLR_CFBP);
+  LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = (((pLayerCfg->ImageWidth * stride) << 16U) |
+                                         ((HorInputSize * stride)  + 7U));
 
   /* Set the Immediate Reload type */
   hltdc->Instance->SRCR = LTDC_SRCR_IMR;
@@ -1963,12 +2511,13 @@ HAL_StatusTypeDef HAL_LTDC_SetAddress(LTDC_HandleTypeDef *hltdc, uint32_t Addres
 }
 
 /**
-  * @brief  Function used to reconfigure the pitch for specific cases where the attached LayerIdx buffer have a width that is
-  *         larger than the one intended to be displayed on screen. Example of a buffer 800x480 attached to layer for which we
-  *         want to read and display on screen only a portion 320x240 taken in the center of the buffer. The pitch in pixels
-  *         will be in that case 800 pixels and not 320 pixels as initially configured by previous call to HAL_LTDC_ConfigLayer().
-  * @note   This function should be called only after a previous call to HAL_LTDC_ConfigLayer() to modify the default pitch
-  *         configured by HAL_LTDC_ConfigLayer() when required (refer to example described just above).
+  * @brief  Function used to reconfigure the pitch for specific cases where the attached LayerIdx buffer have a width
+  *         that is larger than the one intended to be displayed on screen. Example of a buffer 800x480 attached to
+  *         layer for which we want to read and display on screen only a portion 320x240 taken in the center of the
+  *         buffer. The pitch in pixels will be in that case 800 pixels and not 320 pixels as initially configured
+  *         by previous call to HAL_LTDC_ConfigLayer().
+  * @note   This function should be called only after a previous call to HAL_LTDC_ConfigLayer() to modify the default
+  *         pitch configured by HAL_LTDC_ConfigLayer() when required (refer to example described just above).
   * @param  hltdc              pointer to a LTDC_HandleTypeDef structure that contains
   *                            the configuration information for the LTDC.
   * @param  LinePitchInPixels  New line pitch in pixels to configure for LTDC layer 'LayerIdx'.
@@ -2260,7 +2809,8 @@ HAL_StatusTypeDef  HAL_LTDC_Layer_Reload(LTDC_HandleTypeDef *hltdc,  uint32_t La
   *                    LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_LTDC_ConfigLayer_NoReload(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLayerCfg, uint32_t LayerIdx)
+HAL_StatusTypeDef HAL_LTDC_ConfigLayer_NoReload(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLayerCfg,
+                                                uint32_t LayerIdx)
 {
   /* Check the parameters */
   assert_param(IS_LTDC_LAYER(LayerIdx));
@@ -2309,7 +2859,8 @@ HAL_StatusTypeDef HAL_LTDC_ConfigLayer_NoReload(LTDC_HandleTypeDef *hltdc, LTDC_
   *                   LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
   * @retval  HAL status
   */
-HAL_StatusTypeDef HAL_LTDC_SetWindowSize_NoReload(LTDC_HandleTypeDef *hltdc, uint32_t XSize, uint32_t YSize, uint32_t LayerIdx)
+HAL_StatusTypeDef HAL_LTDC_SetWindowSize_NoReload(LTDC_HandleTypeDef *hltdc, uint32_t XSize, uint32_t YSize,
+                                                  uint32_t LayerIdx)
 {
   LTDC_LayerCfgTypeDef *pLayerCfg;
 
@@ -2363,7 +2914,8 @@ HAL_StatusTypeDef HAL_LTDC_SetWindowSize_NoReload(LTDC_HandleTypeDef *hltdc, uin
   *                         LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
   * @retval  HAL status
   */
-HAL_StatusTypeDef HAL_LTDC_SetWindowPosition_NoReload(LTDC_HandleTypeDef *hltdc, uint32_t X0, uint32_t Y0, uint32_t LayerIdx)
+HAL_StatusTypeDef HAL_LTDC_SetWindowPosition_NoReload(LTDC_HandleTypeDef *hltdc, uint32_t X0, uint32_t Y0,
+                                                      uint32_t LayerIdx)
 {
   LTDC_LayerCfgTypeDef *pLayerCfg;
 
@@ -2530,12 +3082,13 @@ HAL_StatusTypeDef HAL_LTDC_SetAddress_NoReload(LTDC_HandleTypeDef *hltdc, uint32
 }
 
 /**
-  * @brief  Function used to reconfigure the pitch for specific cases where the attached LayerIdx buffer have a width that is
-  *         larger than the one intended to be displayed on screen. Example of a buffer 800x480 attached to layer for which we
-  *         want to read and display on screen only a portion 320x240 taken in the center of the buffer. The pitch in pixels
-  *         will be in that case 800 pixels and not 320 pixels as initially configured by previous call to HAL_LTDC_ConfigLayer().
-  * @note   This function should be called only after a previous call to HAL_LTDC_ConfigLayer() to modify the default pitch
-  *         configured by HAL_LTDC_ConfigLayer() when required (refer to example described just above).
+  * @brief  Function used to reconfigure the pitch for specific cases where the attached LayerIdx buffer have a width
+  *         that is larger than the one intended to be displayed on screen. Example of a buffer 800x480 attached to
+  *         layer for which we want to read and display on screen only a portion 320x240 taken in the center of the
+  *         buffer. The pitch in pixels will be in that case 800 pixels and not 320 pixels as initially configured
+  *         by previous call to HAL_LTDC_ConfigLayer().
+  * @note   This function should be called only after a previous call to HAL_LTDC_ConfigLayer() to modify the default
+  *         pitch configured by HAL_LTDC_ConfigLayer() when required (refer to example described just above).
   *         Variant of the function HAL_LTDC_SetPitch without immediate reload.
   * @param  hltdc              pointer to a LTDC_HandleTypeDef structure that contains
   *                            the configuration information for the LTDC.
@@ -2792,7 +3345,7 @@ HAL_StatusTypeDef HAL_LTDC_DisableCLUT_NoReload(LTDC_HandleTypeDef *hltdc, uint3
   *                the configuration information for the LTDC.
   * @retval HAL state
   */
-HAL_LTDC_StateTypeDef HAL_LTDC_GetState(LTDC_HandleTypeDef *hltdc)
+HAL_LTDC_StateTypeDef HAL_LTDC_GetState(const LTDC_HandleTypeDef *hltdc)
 {
   return hltdc->State;
 }
@@ -2803,7 +3356,7 @@ HAL_LTDC_StateTypeDef HAL_LTDC_GetState(LTDC_HandleTypeDef *hltdc)
   *               the configuration information for the LTDC.
   * @retval LTDC Error Code
   */
-uint32_t HAL_LTDC_GetError(LTDC_HandleTypeDef *hltdc)
+uint32_t HAL_LTDC_GetError(const LTDC_HandleTypeDef *hltdc)
 {
   return hltdc->ErrorCode;
 }
@@ -2813,7 +3366,7 @@ uint32_t HAL_LTDC_GetError(LTDC_HandleTypeDef *hltdc)
   *               the configuration information for the LTDC.
   * @retval LTDC line position
   */
-uint32_t HAL_LTDC_GetLinePosition(LTDC_HandleTypeDef *hltdc)
+uint32_t HAL_LTDC_GetLinePosition(const LTDC_HandleTypeDef *hltdc)
 {
   return hltdc->Instance->CPSR & 0xFFFFU;
 }
@@ -2824,7 +3377,7 @@ uint32_t HAL_LTDC_GetLinePosition(LTDC_HandleTypeDef *hltdc)
   *               the configuration information for the LTDC.
   * @retval LTDC pixel position
   */
-uint32_t HAL_LTDC_GetPixelPosition(LTDC_HandleTypeDef *hltdc)
+uint32_t HAL_LTDC_GetPixelPosition(const LTDC_HandleTypeDef *hltdc)
 {
   return hltdc->Instance->CPSR >> 16U;
 }
@@ -2847,40 +3400,78 @@ uint32_t HAL_LTDC_GetPixelPosition(LTDC_HandleTypeDef *hltdc)
   *                   the configuration information for the LTDC.
   * @param  pLayerCfg Pointer LTDC Layer Configuration structure
   * @param  LayerIdx  LTDC Layer index.
-  *                   This parameter can be one of the following values: LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1) or LTDC_LAYER_3 (2)
+  *                   This parameter can be one of the following values: LTDC_LAYER_1 (0) or LTDC_LAYER_2 (1)
+  *                   or LTDC_LAYER_3 (2)
   * @retval None
   */
-static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLayerCfg, uint32_t LayerIdx)
+static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, const LTDC_LayerCfgTypeDef *pLayerCfg, uint32_t LayerIdx)
 {
-  uint32_t tmp = 0U, tmp1 = 0U, tmp2 = 0U, stride = 0U, ConfigPlane = 0U, HorInputSize = 0U;
-  uint32_t PSIZE = 0U, ALEN = 0U, APOS = 0U, RLEN = 0U, RPOS = 0U, BLEN = 0U, BPOS = 0U, GLEN = 0U, GPOS = 0U;
+  uint32_t ConfigPlane = 0U;
+  uint32_t stride;
+  uint32_t tmp2;
+  uint32_t tmp1;
+  uint32_t tmp;
+  uint32_t HorInputSize;
+  uint32_t PSIZE = 0U;
+  uint32_t ALEN = 0U;
+  uint32_t APOS = 0U;
+  uint32_t RLEN = 0U;
+  uint32_t RPOS = 0U;
+  uint32_t BLEN = 0U;
+  uint32_t BPOS = 0U;
+  uint32_t GLEN = 0U;
+  uint32_t GPOS = 0U;
 
-  if ((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) && (pLayerCfg->Scaler.Enable))
+  if (((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) == LTDC_LxC1R_SCA) && (pLayerCfg->Scaler.Enable == 1U))
+  {
     HorInputSize = pLayerCfg->Scaler.HorInputSize;
+  }
   else
+  {
     HorInputSize = pLayerCfg->WindowX1 - pLayerCfg->WindowX0;
+  }
 
-  if (!hltdc->Init.RotEn) {
+#if !defined(STM32MP21xxxx)
+  if (hltdc->Init.RotEn == 0U)
+  {
     /* Configure the horizontal start and stop position */
     tmp = ((pLayerCfg->WindowX1 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U);
     LTDC_LAYER(hltdc, LayerIdx)->WHPCR &= ~(LTDC_LxWHPCR_WHSTPOS | LTDC_LxWHPCR_WHSPPOS);
-    LTDC_LAYER(hltdc, LayerIdx)->WHPCR = ((pLayerCfg->WindowX0 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | tmp);
+    LTDC_LAYER(hltdc, LayerIdx)->WHPCR = ((pLayerCfg->WindowX0 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U) \
+                                           + 1U) | tmp);
 
     /* Configure the vertical start and stop position */
     tmp = ((pLayerCfg->WindowY1 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP)) << 16U);
     LTDC_LAYER(hltdc, LayerIdx)->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
-    LTDC_LAYER(hltdc, LayerIdx)->WVPCR  = ((pLayerCfg->WindowY0 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP) + 1U) | tmp);
-  } else {
+    LTDC_LAYER(hltdc, LayerIdx)->WVPCR  = ((pLayerCfg->WindowY0 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP) + 1U) \
+                                           | tmp);
+  }
+  else
+  {
     /* Configure the horizontal start and stop position */
     tmp = ((pLayerCfg->WindowX1 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP)) << 16U);
     LTDC_LAYER(hltdc, LayerIdx)->WHPCR &= ~(LTDC_LxWHPCR_WHSTPOS | LTDC_LxWHPCR_WHSPPOS);
-    LTDC_LAYER(hltdc, LayerIdx)->WHPCR = ((pLayerCfg->WindowX0 +  (hltdc->Instance->BPCR & LTDC_BPCR_AVBP) + 1U) | tmp);
+    LTDC_LAYER(hltdc, LayerIdx)->WHPCR = ((pLayerCfg->WindowX0 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP) + 1U) | tmp);
 
     /* Configure the vertical start and stop position */
     tmp = ((pLayerCfg->WindowY1 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U);
     LTDC_LAYER(hltdc, LayerIdx)->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
-    LTDC_LAYER(hltdc, LayerIdx)->WVPCR  = ((pLayerCfg->WindowY0 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | tmp);
+    LTDC_LAYER(hltdc, LayerIdx)->WVPCR  = ((pLayerCfg->WindowY0 \
+                                            + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U) + 1U) | tmp);
   }
+#else
+  /* Configure the horizontal start and stop position */
+  tmp = ((pLayerCfg->WindowX1 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U)) << 16U);
+  LTDC_LAYER(hltdc, LayerIdx)->WHPCR &= ~(LTDC_LxWHPCR_WHSTPOS | LTDC_LxWHPCR_WHSPPOS);
+  LTDC_LAYER(hltdc, LayerIdx)->WHPCR = ((pLayerCfg->WindowX0 + ((hltdc->Instance->BPCR & LTDC_BPCR_AHBP) >> 16U) \
+                                         + 1U) | tmp);
+
+  /* Configure the vertical start and stop position */
+  tmp = ((pLayerCfg->WindowY1 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP)) << 16U);
+  LTDC_LAYER(hltdc, LayerIdx)->WVPCR &= ~(LTDC_LxWVPCR_WVSTPOS | LTDC_LxWVPCR_WVSPPOS);
+  LTDC_LAYER(hltdc, LayerIdx)->WVPCR  = ((pLayerCfg->WindowY0 + (hltdc->Instance->BPCR & LTDC_BPCR_AVBP) + 1U) \
+                                         | tmp);
+#endif /* !defined(STM32MP21xxxx) */
 
   /* Configure the default color values */
   tmp = ((uint32_t)(pLayerCfg->Backcolor.Green) << 8U);
@@ -2895,7 +3486,8 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
   LTDC_LAYER(hltdc, LayerIdx)->CACR = (pLayerCfg->Alpha);
 
   /* Specifies the pixel format */
-  switch (pLayerCfg->PixelFormat) {
+  switch (pLayerCfg->PixelFormat)
+  {
     case LTDC_PIXEL_FORMAT_ARGB1555:
       PSIZE = 2U;
       ALEN = 1U;
@@ -2952,10 +3544,11 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
       BPOS = 0U;
       break;
     default :
-	  break;
+      break;
   }
 
-  switch (pLayerCfg->PixelFormat) {
+  switch (pLayerCfg->PixelFormat)
+  {
     case LTDC_PIXEL_FORMAT_ARGB8888:
     case LTDC_PIXEL_FORMAT_ABGR8888:
     case LTDC_PIXEL_FORMAT_RGBA8888:
@@ -2963,49 +3556,50 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
     case LTDC_PIXEL_FORMAT_RGB565:
     case LTDC_PIXEL_FORMAT_BGR565:
     case LTDC_PIXEL_FORMAT_RGB888:
-          LTDC_LAYER(hltdc, LayerIdx)->PFCR = (pLayerCfg->PixelFormat);
-          LTDC_LAYER(hltdc, LayerIdx)->FPF0R = 0U;
-          LTDC_LAYER(hltdc, LayerIdx)->FPF1R = 0U;
-          break;
+      LTDC_LAYER(hltdc, LayerIdx)->PFCR = (pLayerCfg->PixelFormat);
+      LTDC_LAYER(hltdc, LayerIdx)->FPF0R = 0U;
+      LTDC_LAYER(hltdc, LayerIdx)->FPF1R = 0U;
+      break;
     case LTDC_PIXEL_FORMAT_ARGB1555:
     case LTDC_PIXEL_FORMAT_ARGB4444:
     case LTDC_PIXEL_FORMAT_L8:
     case LTDC_PIXEL_FORMAT_AL44:
     case LTDC_PIXEL_FORMAT_AL88:
-          LTDC_LAYER(hltdc, LayerIdx)->PFCR = 0x7U;
-          LTDC_LAYER(hltdc, LayerIdx)->FPF0R = (RLEN << 14U)  + (RPOS << 9U) + (ALEN << 5U) + APOS;
-          LTDC_LAYER(hltdc, LayerIdx)->FPF1R = (PSIZE << 18U)  + (BLEN << 14U)  + (BPOS << 9U) + (GLEN << 5U) + GPOS;
-          break;
+      LTDC_LAYER(hltdc, LayerIdx)->PFCR = 0x7U;
+      LTDC_LAYER(hltdc, LayerIdx)->FPF0R = (RLEN << 14U)  + (RPOS << 9U) + (ALEN << 5U) + APOS;
+      LTDC_LAYER(hltdc, LayerIdx)->FPF1R = (PSIZE << 18U)  + (BLEN << 14U)  + (BPOS << 9U) + (GLEN << 5U) + GPOS;
+      break;
     default :
-	  break;
-	}
+      break;
+  }
 
-  switch (pLayerCfg->PixelFormat) {
+  switch (pLayerCfg->PixelFormat)
+  {
     case LTDC_PIXEL_FORMAT_ARGB8888:
     case LTDC_PIXEL_FORMAT_ABGR8888:
     case LTDC_PIXEL_FORMAT_RGBA8888:
     case LTDC_PIXEL_FORMAT_BGRA8888:
-          stride = 4U;
-          break;
+      stride = 4U;
+      break;
     case LTDC_PIXEL_FORMAT_RGB888:
-          stride = 3U;
-          break;
+      stride = 3U;
+      break;
     case LTDC_PIXEL_FORMAT_RGB565:
     case LTDC_PIXEL_FORMAT_BGR565:
     case LTDC_PIXEL_FORMAT_ARGB1555:
     case LTDC_PIXEL_FORMAT_ARGB4444:
     case LTDC_PIXEL_FORMAT_AL88:
     case LTDC_PIXEL_FORMAT_UYVY:
-      case LTDC_PIXEL_FORMAT_VYUY:
-      case LTDC_PIXEL_FORMAT_YVYU:
-      case LTDC_PIXEL_FORMAT_YUYV:
-          stride = 2U;
-          break;
+    case LTDC_PIXEL_FORMAT_VYUY:
+    case LTDC_PIXEL_FORMAT_YVYU:
+    case LTDC_PIXEL_FORMAT_YUYV:
+      stride = 2U;
+      break;
     case LTDC_PIXEL_FORMAT_L8:
     case LTDC_PIXEL_FORMAT_AL44:
     default:
-          stride = 1U;
-          break;
+      stride = 1U;
+      break;
   }
 
   /* Configure the frame buffer line number */
@@ -3014,13 +3608,15 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
 
   /* set the pitch */
   LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = ((((0x10000U - (pLayerCfg->ImageWidth * stride))) << 16U) |
-                                        ((HorInputSize * stride)  + 7U));
-
+                                         ((HorInputSize * stride)  + 7U));
   /* YUV configurations */
-  if (LTDC_LAYER(hltdc, LayerIdx)->C1R & (LTDC_LxC1R_YIA | LTDC_LxC1R_YSPA |LTDC_LxC1R_YFPA)) {
+  if ((LTDC_LAYER(hltdc, LayerIdx)->C1R & (LTDC_LxC1R_YIA | LTDC_LxC1R_YSPA | LTDC_LxC1R_YFPA)) ==
+      (LTDC_LxC1R_YIA | LTDC_LxC1R_YSPA | LTDC_LxC1R_YFPA))
+  {
     LTDC_LAYER(hltdc, LayerIdx)->PCR  &= ~(LTDC_LxPCR_VPDEN | LTDC_LxPCR_HPDEN | LTDC_LxPCR_YCEN | LTDC_LxPCR_YCM |
                                            LTDC_LxPCR_YF | LTDC_LxPCR_CBF | LTDC_LxPCR_YREN);
-    switch (pLayerCfg->PixelFormat) {
+    switch (pLayerCfg->PixelFormat)
+    {
       case LTDC_PIXEL_FORMAT_UYVY:
         LTDC_LAYER(hltdc, LayerIdx)->PCR  = LTDC_LxPCR_YCEN | LTDC_LxPCR_CBF;
         break;
@@ -3046,7 +3642,7 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
         LTDC_LAYER(hltdc, LayerIdx)->PCR  = LTDC_LxPCR_YCEN | (0x2U << LTDC_LxPCR_YCM_Pos);
         break;
       default :
-	    break;
+        break;
     }
   }
 
@@ -3058,9 +3654,10 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
   /* Configure the layer burst length configuration register */
   LTDC_LAYER(hltdc, LayerIdx)->BLCR  &= ~(LTDC_LxBLCR_BL);
   LTDC_LAYER(hltdc, LayerIdx)->BLCR  = (pLayerCfg->BurstLength);
-
-  if (LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) {
-    if (pLayerCfg->Scaler.Enable) {
+  if ((LTDC_LAYER(hltdc, LayerIdx)->C1R & LTDC_LxC1R_SCA) == LTDC_LxC1R_SCA)
+  {
+    if (pLayerCfg->Scaler.Enable != 0U)
+    {
       /* Configure the scaler input size */
       LTDC_LAYER(hltdc, LayerIdx)->SISR &= ~(LTDC_LxSISR_SIV | LTDC_LxSISR_SIH);
       tmp = ((uint32_t)(pLayerCfg->Scaler.VerInputSize) << 16U);
@@ -3086,13 +3683,15 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
       /* Configure the vertical scaling phase */
       LTDC_LAYER(hltdc, LayerIdx)->SHSPR = calculateScalingFactor(pLayerCfg->Scaler.HorInputSize,
                                                                   pLayerCfg->Scaler.HorOutputSize) +
-                                           (1 << SCALER_FRACTION);
+                                           (1UL << SCALER_FRACTION);
 
       ConfigPlane += (uint32_t)LTDC_LxCR_SCEN;
     }
   }
 
-  if (LTDC_LAYER(hltdc, LayerIdx)->C1R & (LTDC_LxC1R_YIA | LTDC_LxC1R_YSPA |LTDC_LxC1R_YFPA)) {
+  if ((LTDC_LAYER(hltdc, LayerIdx)->C1R & (LTDC_LxC1R_YIA | LTDC_LxC1R_YSPA | LTDC_LxC1R_YFPA)) ==
+      (LTDC_LxC1R_YIA | LTDC_LxC1R_YSPA | LTDC_LxC1R_YFPA))
+  {
     /* Configure the conversion YCbCr RGB */
     LTDC_LAYER(hltdc, LayerIdx)->CYR0R &= ~(LTDC_LxCYR0R_CB2B | LTDC_LxCYR0R_CR2R);
     LTDC_LAYER(hltdc, LayerIdx)->CYR0R = 0x02040199U;
@@ -3102,28 +3701,30 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
     LTDC_LAYER(hltdc, LayerIdx)->CYR1R = 0x006400D0U;
   }
 
-  if ((!pLayerCfg->HorMirrorEn) && (!pLayerCfg->VertMirrorEn)) {
+  if ((pLayerCfg->HorMirrorEn == 0U) && (pLayerCfg->VertMirrorEn == 0U))
+  {
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR = (pLayerCfg->FBStartAdress);
 
-    switch (pLayerCfg->PixelFormat) {
+    switch (pLayerCfg->PixelFormat)
+    {
       case LTDC_PIXEL_FORMAT_NV12:
       case LTDC_PIXEL_FORMAT_NV21:
-          /* Configure the auxiliary frame buffer address 0 */
-          LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
-          LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0;
+        /* Configure the auxiliary frame buffer address 0 */
+        LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
+        LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0;
 
-          /* Configure the auxiliary frame buffer address 1 */
-          LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
-          LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1;
+        /* Configure the auxiliary frame buffer address 1 */
+        LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
+        LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1;
 
-          /* Configure the buffer length */
-          LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
-          LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (pLayerCfg->ImageWidth << 16U) | (HorInputSize + 7U);
-          /* Configure the frame buffer line number */
-          LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
-          LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U ;
-          break;
+        /* Configure the buffer length */
+        LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
+        LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (pLayerCfg->ImageWidth << 16U) | (HorInputSize + 7U);
+        /* Configure the frame buffer line number */
+        LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
+        LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U ;
+        break;
       case LTDC_PIXEL_FORMAT_YUV420:
       case LTDC_PIXEL_FORMAT_YVU420:
         /* Configure the auxiliary frame buffer address 0 */
@@ -3138,28 +3739,29 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR = ((pLayerCfg->ImageWidth >> 1U) << 16U) |
                                              ((HorInputSize >> 1U) + 7U);
-
         /* Configure the frame buffer line number */
         LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
         LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = (pLayerCfg->ImageHeight) >> 1U;
         break;
       default :
-	    break;
+        break;
     }
 
     /* Configure the color frame buffer pitch in byte */
     LTDC_LAYER(hltdc, LayerIdx)->CFBLR  &= ~(LTDC_LxCFBLR_CFBLL | LTDC_LxCFBLR_CFBP);
     LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = (((pLayerCfg->ImageWidth * stride) << 16U) |
-                                          ((HorInputSize * stride)  + 7U));
+                                           ((HorInputSize * stride)  + 7U));
   }
 
-  if ((pLayerCfg->HorMirrorEn) && (!pLayerCfg->VertMirrorEn)) {
+  if ((pLayerCfg->HorMirrorEn != 0U) && (pLayerCfg->VertMirrorEn == 0U))
+  {
     /* Configure the color frame buffer start address */
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR = pLayerCfg->FBStartAdress +
                                          (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0)) - 1U;
 
-    switch (pLayerCfg->PixelFormat) {
+    switch (pLayerCfg->PixelFormat)
+    {
       case LTDC_PIXEL_FORMAT_NV12:
       case LTDC_PIXEL_FORMAT_NV21:
         /* Configure the auxiliary frame buffer address 0 */
@@ -3201,39 +3803,41 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
         LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U;
         break;
       default :
-	    break;
+        break;
     }
 
     /* Configure the color frame buffer pitch in byte */
     LTDC_LAYER(hltdc, LayerIdx)->CFBLR  &= ~(LTDC_LxCFBLR_CFBLL | LTDC_LxCFBLR_CFBP);
     LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = (((pLayerCfg->ImageWidth * stride) << 16U) |
-                                          ((HorInputSize * stride)  + 7U));
+                                           ((HorInputSize * stride)  + 7U));
 
     /* Enable horizontal mirroring bit */
     ConfigPlane += (uint32_t)LTDC_LxCR_HMEN;
   }
 
-  if ((!pLayerCfg->HorMirrorEn) && (pLayerCfg->VertMirrorEn)) {
+  if ((pLayerCfg->HorMirrorEn == 0U) && (pLayerCfg->VertMirrorEn != 0U))
+  {
     /* Configure the color frame buffer start address */
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR = pLayerCfg->FBStartAdress +
                                          (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
-                                         ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) - 1U));
+                                          ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) - 1U));
 
-    switch (pLayerCfg->PixelFormat) {
+    switch (pLayerCfg->PixelFormat)
+    {
       case LTDC_PIXEL_FORMAT_NV12:
       case LTDC_PIXEL_FORMAT_NV21:
         /* Configure the auxiliary frame buffer address 0 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
                                               (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
-                                              (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+                                               (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
 
         /* Configure the auxiliary frame buffer address 1 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
                                               (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
-                                              (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+                                               (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
 
         /* Configure the buffer length */
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
@@ -3250,53 +3854,54 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
                                               (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
-                                              (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+                                               (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
 
         /* Configure the auxiliary frame buffer address 1 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
                                               (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
-                                              (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
+                                               (((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U) - 1U));
 
         /* Configure the buffer length */
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR = (((0x10000U - (pLayerCfg->ImageWidth >> 1U)) * stride) << 16U) |
                                              (((HorInputSize >> 1U) * stride) + 7U);
-
         /* Configure the frame buffer line number */
         LTDC_LAYER(hltdc, LayerIdx)->AFBLNR &= ~(LTDC_LxAFBLNR_AFBLNBR);
         LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U;
         break;
       default :
-	    break;
-   }
+        break;
+    }
 
     /* set the pitch */
     LTDC_LAYER(hltdc, LayerIdx)->CFBLR  = ((((0x10000U - (pLayerCfg->ImageWidth * stride))) << 16U) |
-                                          ((HorInputSize * stride)  + 7U));
+                                           ((HorInputSize * stride)  + 7U));
   }
 
-  if ((pLayerCfg->HorMirrorEn) && (pLayerCfg->VertMirrorEn)) {
+  if ((pLayerCfg->HorMirrorEn != 0U) && (pLayerCfg->VertMirrorEn != 0U))
+  {
     /* Configure the color frame buffer start address */
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
     LTDC_LAYER(hltdc, LayerIdx)->CFBAR = pLayerCfg->FBStartAdress +
                                          (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
-                                         (pLayerCfg->WindowY1 - pLayerCfg->WindowY0)) - 1U;
+                                          (pLayerCfg->WindowY1 - pLayerCfg->WindowY0)) - 1U;
 
-    switch (pLayerCfg->PixelFormat) {
+    switch (pLayerCfg->PixelFormat)
+    {
       case LTDC_PIXEL_FORMAT_NV12:
       case LTDC_PIXEL_FORMAT_NV21:
         /* Configure the auxiliary frame buffer address 0 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
                                               (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
-                                              ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
+                                               ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
 
         /* Configure the auxiliary frame buffer address 1 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
                                               (stride * (pLayerCfg->WindowX1 - pLayerCfg->WindowX0) *
-                                              ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
+                                               ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
 
         /* Configure the buffer length */
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
@@ -3312,14 +3917,14 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
         /* Configure the auxiliary frame buffer address 0 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R &= ~(LTDC_LxAFBA0R_AFBADD0);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA0R = pLayerCfg->AuxiliaryFB.StartAddressBuffer0 +
-                                            (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
-                                            ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
+                                              (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
+                                               ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
 
         /* Configure the auxiliary frame buffer address 1 */
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R &= ~(LTDC_LxAFBA1R_AFBADD1);
         LTDC_LAYER(hltdc, LayerIdx)->AFBA1R = pLayerCfg->AuxiliaryFB.StartAddressBuffer1 +
                                               (stride * ((pLayerCfg->WindowX1 - pLayerCfg->WindowX0) >> 1U) *
-                                              ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
+                                               ((pLayerCfg->WindowY1 - pLayerCfg->WindowY0) >> 1U)) - 1U;
 
         /* Configure the buffer length */
         LTDC_LAYER(hltdc, LayerIdx)->AFBLR &= ~(LTDC_LxAFBLR_AFBLL | LTDC_LxAFBLR_AFBP);
@@ -3331,7 +3936,7 @@ static void LTDC_SetConfig(LTDC_HandleTypeDef *hltdc, LTDC_LayerCfgTypeDef *pLay
         LTDC_LAYER(hltdc, LayerIdx)->AFBLNR = pLayerCfg->ImageHeight >> 1U;
         break;
       default :
-	    break;
+        break;
     }
 
     /* Enable horizontal mirroring bit */

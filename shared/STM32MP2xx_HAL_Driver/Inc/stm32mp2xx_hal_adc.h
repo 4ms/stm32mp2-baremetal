@@ -118,7 +118,7 @@ typedef struct
                                         Gain range is 0.0000 to 3.999756
                                        This parameter value can be:
                                         - value "0": Gain compensation will be disabled and coefficient set to 0
-                                        - value in range [0x0001; 0x3FFF]: Gain compensation will enabled 
+                                        - value in range [0x0001; 0x3FFF]: Gain compensation will enabled
                                           and coefficient set to specified value */
 
   uint32_t ScanConvMode;          /*!< Configure the sequencer of ADC groups regular and injected.
@@ -138,17 +138,27 @@ typedef struct
                                        interruption: end of unitary conversion or end of sequence conversions.
                                        This parameter can be a value of @ref ADC_EOCSelection. */
 
-  FunctionalState LowPowerAutoWait; /*!< Select the dynamic low power Auto Delay: new conversion start only when the previous
-                                       conversion (for ADC group regular) or previous sequence (for ADC group injected) has been retrieved by user software,
+  FunctionalState LowPowerAutoWait; /*!< Select the dynamic low power Auto Delay: new conversion start only when the
+                                       previous conversion (for ADC group regular) or previous sequence (for ADC group
+                                       injected) has been retrieved by user software,
                                        using function HAL_ADC_GetValue() or HAL_ADCEx_InjectedGetValue().
-                                       This feature automatically adapts the frequency of ADC conversions triggers to the speed of the system that reads the data. Moreover, this avoids risk of overrun
-                                       for low frequency applications.
+                                       This feature automatically adapts the frequency of ADC conversions triggers to
+                                       the speed of the system that reads the data. Moreover, this avoids risk of
+                                       overrun for low frequency applications.
                                        This parameter can be set to ENABLE or DISABLE.
-                                       Note: It is not recommended to use with interruption or DMA (HAL_ADC_Start_IT(), HAL_ADC_Start_DMA()) since these modes have to clear immediately the EOC flag (by CPU to free the IRQ pending event or by DMA).
-                                             Auto wait will work but fort a very short time, discarding its intended benefit (except specific case of high load of CPU or DMA transfers which can justify usage of auto wait).
-                                             Do use with polling: 1. Start conversion with HAL_ADC_Start(), 2. Later on, when ADC conversion data is needed:
-                                             use HAL_ADC_PollForConversion() to ensure that conversion is completed and HAL_ADC_GetValue() to retrieve conversion result and trig another conversion start.
-                                             (in case of usage of ADC group injected, use the equivalent functions HAL_ADCExInjected_Start(), HAL_ADCEx_InjectedGetValue(), ...). */
+                                       Note: It is not recommended to use with interruption or DMA (HAL_ADC_Start_IT(),
+                                             HAL_ADC_Start_DMA()) since these modes have to clear immediately the EOC
+                                             flag (by CPU to free the IRQ pending event or by DMA).
+                                             Auto wait will work but fort a very short time, discarding its intended
+                                             benefit (except specific case of high load of CPU or DMA transfers which
+                                             can justify usage of auto wait).
+                                             Do use with polling: 1. Start conversion with HAL_ADC_Start(), 2. Later
+                                             on, when ADC conversion data is needed:
+                                             use HAL_ADC_PollForConversion() to ensure that conversion is completed
+                                             and HAL_ADC_GetValue() to retrieve conversion result and trig another
+                                             conversion start.
+                                             (in case of usage of ADC group injected, use the equivalent functions
+                                             HAL_ADCExInjected_Start(), HAL_ADCEx_InjectedGetValue(), ...). */
 
   FunctionalState ContinuousConvMode; /*!< Specify whether the conversion is performed in single mode (one conversion)
                                         or continuous mode for ADC group regular, after the first ADC conversion start
@@ -269,7 +279,8 @@ typedef struct
                                         (12.5 ADC clock cycles at ADC resolution 12 bits, 10.5 cycles at 10 bits,
                                         8.5 cycles at 8 bits, 6.5 cycles at 6 bits).
                                         This parameter can be a value of @ref ADC_HAL_EC_CHANNEL_SAMPLINGTIME
-                                        Caution: This parameter applies to a channel that can be used into regular and/or injected group.
+                                        Caution: This parameter applies to a channel that can be used into regular
+                                                 and/or injected group.
                                                  It overwrites the last setting.
                                         Note: In case of usage of internal measurement channels
                                               (VrefInt/Vbat/TempSensor), sampling time constraints must be respected
@@ -349,7 +360,8 @@ typedef struct
                                    For Analog Watchdog 1: Only 1 channel can be monitored (or overall group of
                                                           channels by setting parameter 'WatchdogMode').
                                    For Analog Watchdog 2 and 3: Several channels can be monitored
-                                                                (by successive calls of 'HAL_ADC_AnalogWDGConfig()' for each channel)
+                                                                (by successive calls of 'HAL_ADC_AnalogWDGConfig()'
+                                                                 for each channel)
                                    This parameter can be a value of @ref ADC_HAL_EC_AWD_NUMBER. */
 
   uint32_t WatchdogMode;      /*!< Configure the ADC analog watchdog mode: single/all/none channels.
@@ -365,10 +377,12 @@ typedef struct
 
   uint32_t Channel;           /*!< Select which ADC channel to monitor by analog watchdog.
                                    For Analog Watchdog 1: this parameter has an effect only if parameter 'WatchdogMode'
-                                                          is configured on single channel (only 1 channel can be monitored).
+                                                          is configured on single channel (only 1 channel can
+                                                          be monitored).
                                    For Analog Watchdog 2 and 3: Several channels can be monitored. To use this feature,
-                                                                call successively the function HAL_ADC_AnalogWDGConfig() for each channel to
-                                                                be added (or removed with value 'ADC_ANALOGWATCHDOG_NONE').
+                                                                call successively the function HAL_ADC_AnalogWDGConfig()
+                                                                for each channel to be added (or removed with value
+                                                                'ADC_ANALOGWATCHDOG_NONE').
                                    This parameter can be a value of @ref ADC_HAL_EC_CHANNEL. */
 
   FunctionalState ITMode;     /*!< Specify whether the analog watchdog is configured in interrupt or polling mode.
@@ -376,9 +390,11 @@ typedef struct
 
   uint32_t HighThreshold;     /*!< Configure the ADC analog watchdog High threshold value.
                                    Depending of ADC resolution selected (12, 10, 8 or 6 bits), this parameter
-                                   must be a number between Min_Data = 0x000 and Max_Data = 0xFFF, 0x3FF, 0xFF or 0x3F respectively.
-                                   Note: Analog watchdog 2 and 3 are limited to a resolution of 8 bits: if ADC resolution is 12 bits
-                                         the 4 LSB are ignored, if ADC resolution is 10 bits the 2 LSB are ignored.
+                                   must be a number between Min_Data = 0x000 and Max_Data = 0xFFF, 0x3FF,
+                                   0xFF or 0x3F respectively.
+                                   Note: Analog watchdog 2 and 3 are limited to a resolution of 8 bits: if
+                                         ADC resolution is 12 bits the 4 LSB are ignored, if ADC resolution
+                                         is 10 bits the 2 LSB are ignored.
                                    Note: If ADC oversampling is enabled, ADC analog watchdog thresholds are
                                          impacted: the comparison of analog watchdog thresholds is done on oversampling
                                           intermediate computation (after ratio, before shift application):
@@ -386,9 +402,11 @@ typedef struct
 
   uint32_t LowThreshold;      /*!< Configures the ADC analog watchdog Low threshold value.
                                    Depending of ADC resolution selected (12, 10, 8 or 6 bits), this parameter
-                                   must be a number between Min_Data = 0x000 and Max_Data = 0xFFF, 0x3FF, 0xFF or 0x3F respectively.
-                                   Note: Analog watchdog 2 and 3 are limited to a resolution of 8 bits: if ADC resolution is 12 bits
-                                         the 4 LSB are ignored, if ADC resolution is 10 bits the 2 LSB are ignored.
+                                   must be a number between Min_Data = 0x000 and Max_Data = 0xFFF, 0x3FF, 0xFF
+                                   or 0x3F respectively.
+                                   Note: Analog watchdog 2 and 3 are limited to a resolution of 8 bits: if
+                                         ADC resolution is 12 bits the 4 LSB are ignored, if ADC resolution
+                                         is 10 bits the 2 LSB are ignored.
                                    Note: If ADC oversampling is enabled, ADC analog watchdog thresholds are
                                          impacted: the comparison of analog watchdog thresholds is done on oversampling
                                           intermediate computation (after ratio, before shift application):
@@ -553,6 +571,7 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 #define ADC_CLOCK_CK_ICN_LS_MCU_DIV64             (LL_ADC_CLOCK_CK_ICN_LS_CSU | LL_ADC_CLOCK_DIV64)     /*!< ADC CK_ICN_LS_MCU clock with prescaler division by 64  */
 #define ADC_CLOCK_CK_ICN_LS_MCU_DIV128            (LL_ADC_CLOCK_CK_ICN_LS_CSU | LL_ADC_CLOCK_DIV128)    /*!< ADC CK_ICN_LS_MCU clock with prescaler division by 128 */
 #define ADC_CLOCK_CK_ICN_LS_MCU_DIV256            (LL_ADC_CLOCK_CK_ICN_LS_CSU | LL_ADC_CLOCK_DIV256)    /*!< ADC CK_ICN_LS_MCU clock with prescaler division by 256 */
+#if defined(ADC12_COMMON)
 #define ADC_CLOCK_CK_KER_ADC12_DIV1               (LL_ADC_CLOCK_KER_ADC12     | LL_ADC_CLOCK_DIV1)      /*!< ADC CK_KER_ADC12 clock without prescaler               */
 #define ADC_CLOCK_CK_KER_ADC12_DIV2               (LL_ADC_CLOCK_KER_ADC12     | LL_ADC_CLOCK_DIV2)      /*!< ADC CK_KER_ADC12 clock with prescaler division by 2    */
 #define ADC_CLOCK_CK_KER_ADC12_DIV4               (LL_ADC_CLOCK_KER_ADC12     | LL_ADC_CLOCK_DIV4)      /*!< ADC CK_KER_ADC12 clock with prescaler division by 4    */
@@ -565,6 +584,36 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 #define ADC_CLOCK_CK_KER_ADC12_DIV64              (LL_ADC_CLOCK_KER_ADC12     | LL_ADC_CLOCK_DIV64)     /*!< ADC CK_KER_ADC12 clock with prescaler division by 64   */
 #define ADC_CLOCK_CK_KER_ADC12_DIV128             (LL_ADC_CLOCK_KER_ADC12     | LL_ADC_CLOCK_DIV128)    /*!< ADC CK_KER_ADC12 clock with prescaler division by 128  */
 #define ADC_CLOCK_CK_KER_ADC12_DIV256             (LL_ADC_CLOCK_KER_ADC12     | LL_ADC_CLOCK_DIV256)    /*!< ADC CK_KER_ADC12 clock with prescaler division by 256  */
+#endif /* ADC12_COMMON */
+#if defined(ADC1_COMMON)
+#define ADC_CLOCK_CK_KER_ADC1_DIV1                (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV1)      /*!< ADC CK_KER_ADC3 clock without prescaler                */
+#define ADC_CLOCK_CK_KER_ADC1_DIV2                (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV2)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 2     */
+#define ADC_CLOCK_CK_KER_ADC1_DIV4                (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV4)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 4     */
+#define ADC_CLOCK_CK_KER_ADC1_DIV6                (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV6)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 6     */
+#define ADC_CLOCK_CK_KER_ADC1_DIV8                (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV8)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 8     */
+#define ADC_CLOCK_CK_KER_ADC1_DIV10               (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV10)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 10    */
+#define ADC_CLOCK_CK_KER_ADC1_DIV12               (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV12)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 12    */
+#define ADC_CLOCK_CK_KER_ADC1_DIV16               (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV16)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 16    */
+#define ADC_CLOCK_CK_KER_ADC1_DIV32               (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV32)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 32    */
+#define ADC_CLOCK_CK_KER_ADC1_DIV64               (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV64)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 64    */
+#define ADC_CLOCK_CK_KER_ADC1_DIV128              (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV128)    /*!< ADC CK_KER_ADC3 clock with prescaler division by 128   */
+#define ADC_CLOCK_CK_KER_ADC1_DIV256              (LL_ADC_CLOCK_KER_ADC1      | LL_ADC_CLOCK_DIV256)    /*!< ADC CK_KER_ADC3 clock with prescaler division by 256   */
+#endif /* ADC1_COMMON */
+#if defined(ADC2_COMMON)
+#define ADC_CLOCK_CK_KER_ADC2_DIV1                (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV1)      /*!< ADC CK_KER_ADC3 clock without prescaler                */
+#define ADC_CLOCK_CK_KER_ADC2_DIV2                (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV2)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 2     */
+#define ADC_CLOCK_CK_KER_ADC2_DIV4                (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV4)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 4     */
+#define ADC_CLOCK_CK_KER_ADC2_DIV6                (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV6)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 6     */
+#define ADC_CLOCK_CK_KER_ADC2_DIV8                (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV8)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 8     */
+#define ADC_CLOCK_CK_KER_ADC2_DIV10               (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV10)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 10    */
+#define ADC_CLOCK_CK_KER_ADC2_DIV12               (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV12)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 12    */
+#define ADC_CLOCK_CK_KER_ADC2_DIV16               (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV16)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 16    */
+#define ADC_CLOCK_CK_KER_ADC2_DIV32               (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV32)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 32    */
+#define ADC_CLOCK_CK_KER_ADC2_DIV64               (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV64)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 64    */
+#define ADC_CLOCK_CK_KER_ADC2_DIV128              (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV128)    /*!< ADC CK_KER_ADC3 clock with prescaler division by 128   */
+#define ADC_CLOCK_CK_KER_ADC2_DIV256              (LL_ADC_CLOCK_KER_ADC2      | LL_ADC_CLOCK_DIV256)    /*!< ADC CK_KER_ADC3 clock with prescaler division by 256   */
+#endif /* ADC2_COMMON */
+#if defined(ADC3_COMMON)
 #define ADC_CLOCK_CK_KER_ADC3_DIV1                (LL_ADC_CLOCK_KER_ADC3      | LL_ADC_CLOCK_DIV1)      /*!< ADC CK_KER_ADC3 clock without prescaler                */
 #define ADC_CLOCK_CK_KER_ADC3_DIV2                (LL_ADC_CLOCK_KER_ADC3      | LL_ADC_CLOCK_DIV2)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 2     */
 #define ADC_CLOCK_CK_KER_ADC3_DIV4                (LL_ADC_CLOCK_KER_ADC3      | LL_ADC_CLOCK_DIV4)      /*!< ADC CK_KER_ADC3 clock with prescaler division by 4     */
@@ -577,6 +626,7 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 #define ADC_CLOCK_CK_KER_ADC3_DIV64               (LL_ADC_CLOCK_KER_ADC3      | LL_ADC_CLOCK_DIV64)     /*!< ADC CK_KER_ADC3 clock with prescaler division by 64    */
 #define ADC_CLOCK_CK_KER_ADC3_DIV128              (LL_ADC_CLOCK_KER_ADC3      | LL_ADC_CLOCK_DIV128)    /*!< ADC CK_KER_ADC3 clock with prescaler division by 128   */
 #define ADC_CLOCK_CK_KER_ADC3_DIV256              (LL_ADC_CLOCK_KER_ADC3      | LL_ADC_CLOCK_DIV256)    /*!< ADC CK_KER_ADC3 clock with prescaler division by 256   */
+#endif /* ADC3_COMMON */
 /**
   * @}
   */
@@ -687,12 +737,19 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 /** @defgroup ADC_regular_sampling_mode ADC group regular sampling mode
   * @{
   */
-#define ADC_SAMPLING_MODE_NORMAL                (0x00000000UL)      /*!< ADC conversions sampling phase duration is defined using  @ref ADC_HAL_EC_CHANNEL_SAMPLINGTIME */
-#define ADC_SAMPLING_MODE_BULB                  (ADC_CFGR2_BULB)    /*!< ADC conversions sampling phase starts immediately after end of conversion, and stops upon trigger event.
-                                                                                Note: First conversion is using minimal sampling time (see @ref ADC_HAL_EC_CHANNEL_SAMPLINGTIME) */
-#define ADC_SAMPLING_MODE_TRIGGER_CONTROLED     (ADC_CFGR2_SMPTRIG) /*!< ADC conversions sampling phase is controlled by trigger events:
-                                                                                 Trigger rising edge  = start sampling
-                                                                                 Trigger falling edge = stop sampling and start conversion */
+#define ADC_SAMPLING_MODE_NORMAL                (0x00000000UL)   /*!< ADC conversions sampling phase duration is \
+                                                                     defined using \
+                                                                     @ref ADC_HAL_EC_CHANNEL_SAMPLINGTIME */
+#define ADC_SAMPLING_MODE_BULB                  (ADC_CFGR2_BULB) /*!< ADC conversions sampling phase starts immediately\
+                                                                      after end of conversion, and stops upon trigger\
+                                                                      event.Note: First conversion is using \
+                                                                      minimal sampling time \
+                                                                      (see @ref ADC_HAL_EC_CHANNEL_SAMPLINGTIME) */
+#define ADC_SAMPLING_MODE_TRIGGER_CONTROLED     (ADC_CFGR2_SMPTRIG) /*!< ADC conversions sampling phase is controlled \
+                                                                         by trigger events:\
+                                                                         Trigger rising edge  = start sampling\
+                                                                         Trigger falling edge = stop sampling and \
+                                                                                                start conversion */
 /**
   * @}
   */
@@ -810,14 +867,14 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 /** @defgroup ADC_analog_watchdog_filtering_config ADC Analog Watchdog filtering configuration
   * @{
   */
-#define ADC_AWD_FILTERING_NONE          LL_ADC_AWD_FILTERING_NONE                                     /*!< ADC analog wathdog no filtering, one out-of-window sample is needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_2SAMPLES      LL_ADC_AWD_FILTERING_2SAMPLES                                 /*!< ADC analog wathdog 2 consecutives out-of-window samples are needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_3SAMPLES      LL_ADC_AWD_FILTERING_3SAMPLES                                 /*!< ADC analog wathdog 3 consecutives out-of-window samples are needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_4SAMPLES      LL_ADC_AWD_FILTERING_4SAMPLES                                 /*!< ADC analog wathdog 4 consecutives out-of-window samples are needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_5SAMPLES      LL_ADC_AWD_FILTERING_5SAMPLES                                 /*!< ADC analog wathdog 5 consecutives out-of-window samples are needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_6SAMPLES      LL_ADC_AWD_FILTERING_6SAMPLES                                 /*!< ADC analog wathdog 6 consecutives out-of-window samples are needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_7SAMPLES      LL_ADC_AWD_FILTERING_7SAMPLES                                 /*!< ADC analog wathdog 7 consecutives out-of-window samples are needed to raise flag or interrupt */
-#define ADC_AWD_FILTERING_8SAMPLES      LL_ADC_AWD_FILTERING_8SAMPLES                                 /*!< ADC analog wathdog 8 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_NONE          LL_ADC_AWD_FILTERING_NONE                                     /*!< ADC analog watchdog no filtering, one out-of-window sample is needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_2SAMPLES      LL_ADC_AWD_FILTERING_2SAMPLES                                 /*!< ADC analog watchdog 2 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_3SAMPLES      LL_ADC_AWD_FILTERING_3SAMPLES                                 /*!< ADC analog watchdog 3 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_4SAMPLES      LL_ADC_AWD_FILTERING_4SAMPLES                                 /*!< ADC analog watchdog 4 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_5SAMPLES      LL_ADC_AWD_FILTERING_5SAMPLES                                 /*!< ADC analog watchdog 5 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_6SAMPLES      LL_ADC_AWD_FILTERING_6SAMPLES                                 /*!< ADC analog watchdog 6 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_7SAMPLES      LL_ADC_AWD_FILTERING_7SAMPLES                                 /*!< ADC analog watchdog 7 consecutives out-of-window samples are needed to raise flag or interrupt */
+#define ADC_AWD_FILTERING_8SAMPLES      LL_ADC_AWD_FILTERING_8SAMPLES                                 /*!< ADC analog watchdog 8 consecutives out-of-window samples are needed to raise flag or interrupt */
 /**
   * @}
   */
@@ -1010,19 +1067,19 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   */
 #define __HAL_ADC_DISABLE(__HANDLE__)                                          \
   do{                                                                          \
-         (__HANDLE__)->Instance->CR |= ADC_CR_ADDIS;                           \
-          __HAL_ADC_CLEAR_FLAG((__HANDLE__), (ADC_FLAG_EOSMP | ADC_FLAG_RDY)); \
+    (__HANDLE__)->Instance->CR |= ADC_CR_ADDIS;                           \
+    __HAL_ADC_CLEAR_FLAG((__HANDLE__), (ADC_FLAG_EOSMP | ADC_FLAG_RDY)); \
   } while(0)
-    
+
 /**
   * @brief Verification of hardware constraints before ADC can be disabled
   * @param __HANDLE__: ADC handle
   * @retval SET (ADC can be disabled) or RESET (ADC cannot be disabled)
   */
 #define ADC_DISABLING_CONDITIONS(__HANDLE__)                                   \
-       (( ( ((__HANDLE__)->Instance->CR) &                                     \
-            (ADC_CR_JADSTART | ADC_CR_ADSTART | ADC_CR_ADEN)) == ADC_CR_ADEN   \
-        ) ? SET : RESET)
+  (( ( ((__HANDLE__)->Instance->CR) &                                     \
+       (ADC_CR_JADSTART | ADC_CR_ADSTART | ADC_CR_ADEN)) == ADC_CR_ADEN   \
+   ) ? SET : RESET)
 
 /**
   * @brief Verification of ADC state: enabled or disabled.
@@ -1083,6 +1140,7 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   * @param __ADC_CLOCK__ programmed ADC clock.
   * @retval SET (__ADC_CLOCK__ is a valid value) or RESET (__ADC_CLOCK__ is invalid)
   */
+#if defined (ADC12_COMMON)
 #define IS_ADC12_CLOCKPRESCALER(__ADC_CLOCK__) (((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC12_DIV1)     || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC12_DIV2)     || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC12_DIV4)     || \
@@ -1106,8 +1164,64 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV32)    || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV64)    || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV128)   || \
-                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV256) )  
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV256) )
+#endif /* ADC12_COMMON */
 
+#if defined (ADC1_COMMON)
+#define IS_ADC1_CLOCKPRESCALER(__ADC_CLOCK__)  (((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV1)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV2)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV4)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV6)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV8)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV10)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV12)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV16)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV32)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV64)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV128)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC1_DIV256)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV1)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV2)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV4)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV6)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV8)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV10)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV12)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV16)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV32)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV64)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV128)   || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV256) )
+#endif /* ADC1_COMMON */
+
+#if defined (ADC2_COMMON)
+#define IS_ADC2_CLOCKPRESCALER(__ADC_CLOCK__)  (((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV1)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV2)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV4)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV6)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV8)       || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV10)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV12)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV16)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV32)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV64)      || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV128)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC2_DIV256)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV1)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV2)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV4)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV6)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV8)     || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV10)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV12)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV16)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV32)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV64)    || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV128)   || \
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV256) )
+#endif /* ADC2_COMMON */
+
+#if defined(ADC3_COMMON)
 #define IS_ADC3_CLOCKPRESCALER(__ADC_CLOCK__)  (((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC12_DIV1)     || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC12_DIV2)     || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_KER_ADC12_DIV4)     || \
@@ -1143,13 +1257,22 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV32)   || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV64)   || \
                                                 ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV128)  || \
-                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV256) )  
+                                                ((__ADC_CLOCK__) == ADC_CLOCK_CK_ICN_LS_MCU_DIV256) )
+#endif /* ADC3_COMMON */
 
+#if defined (ADC12_COMMON) && defined(ADC3_COMMON)
 #define IS_ADC_CLOCKPRESCALER(__INSTANCE__, __ADC_CLOCK__)                 \
-    (((     ((__INSTANCE__) == ADC1)||((__INSTANCE__) == ADC2))  && IS_ADC12_CLOCKPRESCALER(__ADC_CLOCK__))  \
-    ||                                                       \
-    ((((__INSTANCE__) == ADC3) && IS_ADC3_CLOCKPRESCALER(__ADC_CLOCK__))))
+  (((     ((__INSTANCE__) == ADC1)||((__INSTANCE__) == ADC2))  && IS_ADC12_CLOCKPRESCALER(__ADC_CLOCK__))  \
+   ||                                                       \
+   ((((__INSTANCE__) == ADC3) && IS_ADC3_CLOCKPRESCALER(__ADC_CLOCK__))))
+#endif /* defined (ADC12_COMMON) && defined(ADC3_COMMON) */
 
+#if defined (ADC1_COMMON) && defined(ADC2_COMMON)
+#define IS_ADC_CLOCKPRESCALER(__INSTANCE__, __ADC_CLOCK__)                 \
+  (((     ((__INSTANCE__) == ADC1))  && IS_ADC1_CLOCKPRESCALER(__ADC_CLOCK__))  \
+   ||                                                       \
+   ((((__INSTANCE__) == ADC2) && IS_ADC2_CLOCKPRESCALER(__ADC_CLOCK__))))
+#endif /* defined (ADC1_COMMON) && defined(ADC2_COMMON) */
 
 /**
   * @brief Verify the ADC resolution setting.
@@ -1196,80 +1319,90 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 
 /**
   * @brief Verify the ADC regular conversions external trigger.
-  * @param __ADC_INSTANCE__ ADC instance
-  * @param __REGTRIG__ programmed ADC regular conversions external trigger.
-  * @retval SET (__REGTRIG__ is a valid value) or RESET (__REGTRIG__ is invalid)
+  * @param __REG_TRIG_SOURCE__ programmed ADC regular conversions external trigger.
+  * @retval SET (__REG_TRIG_SOURCE__ is a valid value) or RESET (__REG_TRIG_SOURCE__ is invalid)
   */
 #define IS_ADC_EXTTRIG_ADC12(__REG_TRIG_SOURCE__)                         \
   (      ((__REG_TRIG_SOURCE__) == ADC_SOFTWARE_START)                    \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO2)            \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T6_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T15_TRGO_ADC12)       \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC2)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC1_ADC12)        \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC2)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC3)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_CC2)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_CC4)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_CC4)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T12_CC1)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_EXT_IT11)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM1_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM2_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM3_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM5_OUT)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO2)            \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T6_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T15_TRGO_ADC12)       \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC2)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC1_ADC12)        \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC2)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC3)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_CC2)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_CC4)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_CC4)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T12_CC1)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_EXT_IT11)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM1_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM2_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM3_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM5_OUT)           \
   )
 
+/**
+  * @brief Verify the ADC regular conversions external trigger.
+  * @param __REG_TRIG_SOURCE__ programmed ADC regular conversions external trigger.
+  * @retval SET (__REG_TRIG_SOURCE__ is a valid value) or RESET (__REG_TRIG_SOURCE__ is invalid)
+  */
 #define IS_ADC_EXTTRIG_ADC3(__REG_TRIG_SOURCE__)                          \
   (      ((__REG_TRIG_SOURCE__) == ADC_SOFTWARE_START)                    \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO2)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO)             \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO2)            \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T6_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T7_TRGO)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T15_TRGO_ADC3)        \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T17_CC1)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC1_ADC3)         \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_CC1)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_CC3)               \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T12_CC1)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_EXT_IT2)              \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM1_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM2_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM3_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM4_CH1)           \
-      || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM5_OUT)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_TRGO2)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO)             \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_TRGO2)            \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T6_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T7_TRGO)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T15_TRGO_ADC3)        \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T17_CC1)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T1_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T8_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T20_CC1_ADC3)         \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T2_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T3_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T4_CC1)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T5_CC3)               \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_T12_CC1)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_EXT_IT2)              \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM1_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM2_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM3_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM4_CH1)           \
+         || ((__REG_TRIG_SOURCE__) == ADC_EXTERNALTRIG_LPTIM5_OUT)           \
   )
 
+/**
+  * @brief Verify the ADC regular conversions external trigger.
+  * @param __ADC_INSTANCE__ ADC instance
+  * @param __REG_TRIG_SOURCE__ programmed ADC regular conversions external trigger.
+  * @retval SET (__REG_TRIG_SOURCE__ is a valid value) or RESET (__REG_TRIG_SOURCE__ is invalid)
+  */
 #define IS_ADC_EXTTRIG(__ADC_INSTANCE__, __REG_TRIG_SOURCE__)               \
   ((((__ADC_INSTANCE__) == ADC1) || ((__ADC_INSTANCE__) == ADC2))           \
-    ? IS_ADC_EXTTRIG_ADC12(__REG_TRIG_SOURCE__)                             \
-      :                                                                     \
-      IS_ADC_EXTTRIG_ADC3(__REG_TRIG_SOURCE__)                              \
+   ? IS_ADC_EXTTRIG_ADC12(__REG_TRIG_SOURCE__)                             \
+   :                                                                     \
+   IS_ADC_EXTTRIG_ADC3(__REG_TRIG_SOURCE__)                              \
   )
 
 
@@ -1304,13 +1437,13 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   * @retval SET (__SAMPLING_TIME__ is a valid value) or RESET (__SAMPLING_TIME__ is invalid)
   */
 #define IS_ADC_SAMPLING_TIME(__SAMPLING_TIME__) (((__SAMPLING_TIME__) == ADC_SAMPLETIME_2CYCLES_5)   || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_3CYCLES_5)   || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_7CYCLES_5)   || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_12CYCLES_5)  || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_24CYCLES_5)  || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_47CYCLES_5)  || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_247CYCLES_5) || \
-                                      ((__SAMPLING_TIME__) == ADC_SAMPLETIME_1501CYCLES_5)   )
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_3CYCLES_5)   || \
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_7CYCLES_5)   || \
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_12CYCLES_5)  || \
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_24CYCLES_5)  || \
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_47CYCLES_5)  || \
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_247CYCLES_5) || \
+                                                 ((__SAMPLING_TIME__) == ADC_SAMPLETIME_1501CYCLES_5)   )
 
 /**
   * @brief Verify the ADC regular channel setting.
@@ -1583,7 +1716,7 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   *         (3) On STM32MP2, fast channel (allows higher input impedance, refer to reference manual).
   *         (4) For ADC channel read back from ADC register,
   *             comparison with internal channel parameter to be done
-  *             using helper macro @ref __ADC_CHANNEL_INTERNAL_TO_EXTERNAL().
+  *             using helper macro @ref __HAL_ADC_CHANNEL_INTERNAL_TO_EXTERNAL().
   */
 #define __HAL_ADC_DECIMAL_NB_TO_CHANNEL(__DECIMAL_NB__)                        \
   __LL_ADC_DECIMAL_NB_TO_CHANNEL((__DECIMAL_NB__))
@@ -1935,7 +2068,8 @@ HAL_StatusTypeDef       HAL_ADC_Start_DMA(ADC_HandleTypeDef *hadc, const uint32_
 HAL_StatusTypeDef       HAL_ADC_Stop_DMA(ADC_HandleTypeDef *hadc);
 
 /* ADC retrieve conversion value intended to be used with polling or interruption */
-uint32_t                HAL_ADC_GetValue(ADC_HandleTypeDef *hadc);
+uint32_t                HAL_ADC_GetValue(const ADC_HandleTypeDef *hadc);
+int32_t                 HAL_ADC_GetSignedValue(const ADC_HandleTypeDef *hadc);
 
 /* ADC sampling control */
 HAL_StatusTypeDef HAL_ADC_StartSampling(ADC_HandleTypeDef *hadc);
@@ -1956,8 +2090,9 @@ void                    HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc);
   * @{
   */
 /* Peripheral Control functions ***********************************************/
-HAL_StatusTypeDef       HAL_ADC_ConfigChannel(ADC_HandleTypeDef *hadc, ADC_ChannelConfTypeDef *pConfig);
-HAL_StatusTypeDef       HAL_ADC_AnalogWDGConfig(ADC_HandleTypeDef *hadc, ADC_AnalogWDGConfTypeDef *pAnalogWDGConfig);
+HAL_StatusTypeDef       HAL_ADC_ConfigChannel(ADC_HandleTypeDef *hadc, const ADC_ChannelConfTypeDef *pConfig);
+HAL_StatusTypeDef       HAL_ADC_AnalogWDGConfig(ADC_HandleTypeDef *hadc,
+                                                const ADC_AnalogWDGConfTypeDef *pAnalogWDGConfig);
 
 /**
   * @}
@@ -1967,8 +2102,8 @@ HAL_StatusTypeDef       HAL_ADC_AnalogWDGConfig(ADC_HandleTypeDef *hadc, ADC_Ana
 /** @addtogroup ADC_Exported_Functions_Group4
   * @{
   */
-uint32_t                HAL_ADC_GetState(ADC_HandleTypeDef *hadc);
-uint32_t                HAL_ADC_GetError(ADC_HandleTypeDef *hadc);
+uint32_t                HAL_ADC_GetState(const ADC_HandleTypeDef *hadc);
+uint32_t                HAL_ADC_GetError(const ADC_HandleTypeDef *hadc);
 
 /**
   * @}

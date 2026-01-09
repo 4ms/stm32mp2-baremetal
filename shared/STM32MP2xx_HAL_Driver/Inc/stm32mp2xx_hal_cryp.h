@@ -24,6 +24,21 @@
 extern "C" {
 #endif
 
+#if defined(USE_HAL_SAES_ONLY) && (USE_HAL_SAES_ONLY == 1U)
+#if !defined(USE_HAL_CRYP_ONLY)
+#define USE_HAL_CRYP_ONLY       0U
+#elif (USE_HAL_CRYP_ONLY == 1U)
+#error ' USE_HAL_CRYP_ONLY and USE_HAL_SAES_ONLY cannot be set both to 1U '
+#endif /* defined (USE_HAL_CRYP_ONLY) */
+#endif /* defined (USE_HAL_SAES_ONLY) */
+
+#if defined(USE_HAL_CRYP_ONLY) && (USE_HAL_CRYP_ONLY == 1U)
+#if !defined(USE_HAL_SAES_ONLY)
+#define USE_HAL_SAES_ONLY       0U
+#elif (USE_HAL_SAES_ONLY == 1U)
+#error ' USE_HAL_CRYP_ONLY and USE_HAL_SAES_ONLY cannot be set both to 1U '
+#endif /* defined (USE_HAL_SAES_ONLY) */
+#endif /* defined (USE_HAL_CRYP_ONLY) */
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32mp2xx_hal_def.h"
@@ -31,7 +46,7 @@ extern "C" {
 /** @addtogroup STM32MP2xx_HAL_Driver
   * @{
   */
-#if (defined (CRYP1) || defined (CRYP2))
+#if (defined (CRYP1) || defined (CRYP2) || defined (SAES))
 /** @addtogroup CRYP
   * @{
   */
@@ -56,23 +71,28 @@ typedef struct
                                          counter in CTR mode */
   uint32_t Algorithm;                  /*!<  DES/ TDES Algorithm ECB/CBC
                                         AES Algorithm ECB/CBC/CTR/GCM or CCM
-                                        This parameter can be a value of @ref CRYP_Algorithm_Mode */
+                                        This parameter can be a value of @ref CRYP_CR_ALGOMODE */
   uint32_t *Header;                    /*!< used only in AES GCM and CCM Algorithm for authentication,
                                         GCM : also known as Additional Authentication Data
                                         CCM : named B1 composed of the associated data length and Associated Data. */
   uint32_t HeaderSize;                 /*!< The size of header buffer in word  */
   uint32_t *B0;                        /*!< B0 is first authentication block used only in AES CCM mode */
   uint32_t DataWidthUnit;              /*!< Data With Unit, this parameter can be value of @ref CRYP_Data_Width_Unit*/
-  uint32_t HeaderWidthUnit;            /*!< Header Width Unit, this parameter can be value of @ref CRYP_Header_Width_Unit */
-  uint32_t KeyIVConfigSkip;            /*!< CRYP peripheral Key and IV configuration skip, to configure Key and Initialization
-                                        Vector only once and to skip configuration for consecutive processing.
+  uint32_t HeaderWidthUnit;            /*!< Header Width Unit, this parameter can be value
+                                            of @ref CRYP_Header_Width_Unit */
+  uint32_t KeyIVConfigSkip;            /*!< CRYP peripheral Key and IV configuration skip,
+                                            to configure Key and Initialization
+                                            Vector only once and to skip configuration for consecutive processing.
                                         This parameter can be a value of @ref CRYP_Configuration_Skip */
   uint32_t KeyMode;                    /*!< Key mode selection, this parameter can be a value of @ref CRYP_Key_Mode */
-  uint32_t KeySelect;                  /*!< Only for SAES : Key selection, this parameter can be a value of @ref CRYP_Key_Select */
+#if defined (SAES_CR_WRAPEN)
+  uint32_t KeySharedDirection;         /*!< Only for SAES : this parameter can be a value of @ref CRYP_Key_Shared_Direction */
+#endif /* SAES_CR_WRAPEN */
+  uint32_t KeySelect;                  /*!< Only for SAES : Key selection, this parameter can be a value
+                                            of @ref CRYP_Key_Select */
   uint32_t KeyProtection;              /*!< Only for SAES : Key protection, this parameter can be a value of @ref CRYP_Key_Protection */
 
 } CRYP_ConfigTypeDef;
-
 
 /**
   * @brief  CRYP State Structure definition
@@ -115,9 +135,11 @@ typedef struct
 
   CRYP_ConfigTypeDef                Init;             /*!< CRYP required parameters */
 
-  uint32_t                          *pCrypInBuffPtr;  /*!< Pointer to CRYP processing (encryption, decryption,...) buffer */
+  uint32_t                          *pCrypInBuffPtr;  /*!< Pointer to CRYP processing (encryption, decryption,...)
+                                                           buffer */
 
-  uint32_t                          *pCrypOutBuffPtr; /*!< Pointer to CRYP processing (encryption, decryption,...) buffer */
+  uint32_t                          *pCrypOutBuffPtr; /*!< Pointer to CRYP processing (encryption, decryption,...)
+                                                           buffer */
 
   __IO uint16_t                     CrypHeaderCount;  /*!< Counter of header data */
 
@@ -125,7 +147,8 @@ typedef struct
 
   __IO uint16_t                     CrypOutCount;     /*!< Counter of output data */
 
-  uint16_t                          Size;             /*!< length of input data in word or in byte, according to DataWidthUnit */
+  uint16_t                          Size;             /*!< length of input data in word or in byte,
+                                                           according to DataWidthUnit */
 
   uint32_t                          Phase;            /*!< CRYP peripheral phase */
 
@@ -162,37 +185,47 @@ typedef struct
 
   __IO HAL_SuspendTypeDef     SuspendRequest;          /*!< CRYP peripheral suspension request flag */
 
-  CRYP_ConfigTypeDef          Init_saved;              /*!< copy of CRYP required parameters when processing is suspended */
+  CRYP_ConfigTypeDef          Init_saved;              /*!< copy of CRYP required parameters when processing
+                                                            is suspended */
 
-  uint32_t                    *pCrypInBuffPtr_saved;   /*!< copy of CRYP input pointer when processing is suspended */
+  uint32_t                    *pCrypInBuffPtr_saved;   /*!< copy of CRYP input pointer when processing
+                                                            is suspended */
 
-  uint32_t                    *pCrypOutBuffPtr_saved;  /*!< copy of CRYP output pointer when processing is suspended */
+  uint32_t                    *pCrypOutBuffPtr_saved;  /*!< copy of CRYP output pointer when processing
+                                                            is suspended */
 
-  uint32_t                    CrypInCount_saved;       /*!< copy of CRYP input data counter when processing is suspended */
+  uint32_t                    CrypInCount_saved;       /*!< copy of CRYP input data counter when processing
+                                                            is suspended */
 
-  uint32_t                    CrypOutCount_saved;      /*!< copy of CRYP output data counter when processing is suspended */
+  uint32_t                    CrypOutCount_saved;      /*!< copy of CRYP output data counter when processing
+                                                            is suspended */
 
-  uint32_t                    Phase_saved;             /*!< copy of CRYP authentication phase when processing is suspended */
+  uint32_t                    Phase_saved;             /*!< copy of CRYP authentication phase when processing
+                                                            is suspended */
 
-  __IO HAL_CRYP_STATETypeDef  State_saved;             /*!< copy of CRYP peripheral state when processing is suspended */
+  __IO HAL_CRYP_STATETypeDef  State_saved;             /*!< copy of CRYP peripheral state when processing
+                                                            is suspended */
 
   uint32_t                    IV_saved[4];             /*!< copy of Initialisation Vector registers */
 
   uint32_t                    SUSPxR_saved[16];        /*!< copy of suspension registers */
 
-  uint32_t                    CR_saved;                /*!< copy of CRYP control register  when processing is suspended*/
+  uint32_t                    CR_saved;                /*!< copy of CRYP control register  when processing
+                                                            is suspended*/
 
   uint32_t                    Key_saved[8];            /*!< copy of key registers */
 
   uint16_t                    Size_saved;              /*!< copy of input buffer size */
 
-  uint16_t                    CrypHeaderCount_saved;   /*!< copy of CRYP header data counter when processing is suspended */
+  uint16_t                    CrypHeaderCount_saved;   /*!< copy of CRYP header data counter when processing
+                                                            is suspended */
 
   uint32_t                    SizesSum_saved;          /*!< copy of SizesSum when processing is suspended */
 
   uint32_t                    ResumingFlag;            /*!< resumption flag to bypass steps already carried out */
 
-  uint32_t                    SuspendedProcessing;     /*< Report whether interruption or DMA-mode processing was suspended */
+  uint32_t                    SuspendedProcessing;     /*< Report whether interruption or DMA-mode processing
+                                                           was suspended */
 #endif /* USE_HAL_CRYP_SUSPEND_RESUME */
 
 } CRYP_HandleTypeDef;
@@ -236,17 +269,6 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 /* Exported constants --------------------------------------------------------*/
 /** @defgroup CRYP_Exported_Constants CRYP Exported Constants
   * @{
-  */
-
-/** @defgroup Inform about which IP is the current INSTANCE: CRYP or SAES
-  * @{
-  */
-
-#define IS_CRYP_INSTANCE(INSTANCE) ((INSTANCE) == CRYP1 || (INSTANCE) == CRYP2)
-#define IS_SAES_INSTANCE(INSTANCE) ((INSTANCE) == SAES)
-
-/**
-  * @}
   */
 
 /** @defgroup CRYP_Error_Definition   CRYP Error Definition
@@ -293,6 +315,7 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @}
   */
 
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 /** @defgroup SAES_CR_CHMOD SAES CHMOD Selection
   * @{
   */
@@ -306,6 +329,7 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 /**
   * @}
   */
+#endif /* USE_HAL_SAES_ONLY */
 
 /** @defgroup CRYP_CR_ALGOMODE CRYP Algorithm Mode
   * @{
@@ -385,16 +409,27 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 #define CRYP_FLAG_OUTRIS   0x01000002U  /*!< Output FIFO service raw interrupt status */
 #define CRYP_FLAG_INRIS    0x01000001U  /*!< Input FIFO service raw interrupt status*/
 
-
 #define CRYP_FLAG_BUSY     CRYP_SR_BUSY      /*!< The CRYP peripheral is currently processing a block of data
-                                                  or a key preparation (for AES decryption). */
-#define SAES_FLAG_BUSY     SAES_SR_BUSY      /*!< The SAES peripheral is currently processing a block of data
-                                                  or a key preparation (for AES decryption). */
+                                                 or a key preparation (for AES decryption). */
+
+
 #define CRYP_FLAG_KEYVALID CRYP_SR_KEYVALID  /*!< CRYP or SAES peripheral Key valid flag */
 
+#define SAES_FLAG_BUSY     SAES_SR_BUSY      /*!< The SAES peripheral is currently processing a block of data
+                                                  or a key preparation (for AES decryption). */
+
+#if defined(SAES_SR_WRERRF)
+#define CRYP_FLAG_WRERR    (SAES_SR_WRERRF | 0x80000000U) /*!< SAES peripheral Write Error flag */
+#else
 #define CRYP_FLAG_WRERR    (SAES_SR_WRERR | 0x80000000U) /*!< SAES peripheral Write Error flag */
+#endif /* SAES_SR_WRERRF */
+#if defined(SAES_SR_RDERRF)
+#define CRYP_FLAG_RDERR    (SAES_SR_RDERRF | 0x80000000U) /*!< SAES peripheral Read error flag */
+#else
 #define CRYP_FLAG_RDERR    (SAES_SR_RDERR | 0x80000000U) /*!< SAES peripheral Read error flag */
-#define CRYP_FLAG_CCF      SAES_SR_CCF                   /*!< SAES peripheral Computation completed flag as AES_ISR_CCF */
+#endif /* SAES_SR_RDERRF */
+#define CRYP_FLAG_CCF      SAES_ISR_CCF                   /*!< SAES peripheral Computation completed flag
+                                                              as AES_ISR_CCF */
 #define CRYP_FLAG_KEIF     SAES_ISR_KEIF                 /*!< SAES peripheral Key error interrupt flag */
 #define CRYP_FLAG_RWEIF    SAES_ISR_RWEIF                /*!< SAES peripheral Read or Write error Interrupt flag */
 #define CRYP_FLAG_RNGEIF   SAES_ISR_RNGEIF               /*!< SAES peripheral RNG error Interrupt flag */
@@ -405,22 +440,6 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 /** @defgroup CRYP_CLEAR_Flags SAES peripheral Clear Flags
   * @{
   */
-
-
-/** @defgroup SAES_Algorithm_Mode SAES Algorithm Mode
-  * @{
-  */
-
-#define SAES_ECB     SAES_CR_ALGOMODE_AES_ECB
-#define SAES_CBC     SAES_CR_ALGOMODE_AES_CBC
-#define SAES_CTR     SAES_CR_ALGOMODE_AES_CTR
-#define SAES_GCM     SAES_CR_ALGOMODE_AES_GCM
-#define SAES_CCM     SAES_CR_ALGOMODE_AES_CCM
-
-/**
-  * @}
-  */
-
 #define CRYP_CLEAR_CCF      SAES_ICR_CCF    /*!< SAES peripheral clear Computation Complete Flag */
 #define CRYP_CLEAR_RWEIF    SAES_ICR_RWEIF  /*!< SAES peripheral clear Error Flag : RWEIF in SAES_ISR and
                                               both RDERR and WRERR flags in SAES_SR */
@@ -436,8 +455,10 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @{
   */
 
-#define CRYP_KEYIVCONFIG_ALWAYS        0x00000000U            /*!< Peripheral Key and IV configuration to do systematically */
-#define CRYP_KEYIVCONFIG_ONCE          0x00000001U            /*!< Peripheral Key and IV configuration to do only once      */
+#define CRYP_KEYIVCONFIG_ALWAYS        0x00000000U            /*!< Peripheral Key and IV configuration 
+                                                                   to do systematically */
+#define CRYP_KEYIVCONFIG_ONCE          0x00000001U            /*!< Peripheral Key and IV configuration
+                                                                   to do only once */
 #define CRYP_KEYNOCONFIG               0x00000002U            /*!< Peripheral Key configuration to not do */
 
 /**
@@ -447,11 +468,14 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 /** @defgroup CRYP_Key_Mode CRYP or SAES Key Mode
   * @{
   */
-
-#define CRYP_KEYMODE_NORMAL         0x00000000U         /*!< Normal key usage, Key registers are freely useable */
-#define CRYP_KEYMODE_WRAPPED        SAES_CR_KMOD_0      /*!< Only for SAES, Wrapped key: to encrypt or decrypt AES keys */
-#define CRYP_KEYMODE_SHARED         SAES_CR_KMOD_1      /*!< Key shared by SAES peripheral */
-
+#define CRYP_KEYMODE_NORMAL         0x00000000UL              /*!< Normal key usage, Key registers are freely usable */
+#if defined (SAES_CR_WRAPEN)
+#define CRYP_KEYMODE_WRAPPED        SAES_CR_WRAPEN            /*!< Only for SAES, Wrapped key: to encrypt or decrypt AES keys */
+#define CRYP_KEYMODE_SHARED         (0x02UL << CRYP_CR_KMOD_Pos) /*!< Only for SAES, Wrapped key: to encrypt or decrypt AES keys */
+#else
+#define CRYP_KEYMODE_WRAPPED        SAES_CR_KMOD_0            /*!< Only for SAES, Wrapped key: to encrypt or decrypt AES keys */
+#define CRYP_KEYMODE_SHARED         (0x02UL << CRYP_CR_KMOD_Pos) /*!< Key shared by SAES peripheral */
+#endif /* SAES_CR_WRAPEN */
 /**
   * @}
   */
@@ -460,35 +484,47 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @{
   */
 
-#define CRYP_KEYSEL_NORMAL       0x00000000U                                            /*!< Normal key, key registers SAES_KEYx or CRYP_KEYx */
-#define CRYP_KEYSEL_HW           SAES_CR_KEYSEL_0                                       /*!< Only for SAES, Hardware key : derived hardware unique key (DHUK 256-bit) */
-#define CRYP_KEYSEL_SW           SAES_CR_KEYSEL_1                                       /*!< Only for SAES, Software key : boot hardware key BHK (256-bit) */
-#define CRYP_KEYSEL_HSW          SAES_CR_KEYSEL_2                                       /*!< Only for SAES, DHUK XOR BHK Hardware unique key XOR software key */
-#define CRYP_KEYSEL_AHK          (SAES_CR_KEYSEL_1|SAES_CR_KEYSEL_0)                    /*!< Only for SAES, Software key : application hardware key AHK (128- or 256-bit) */
-#define CRYP_KEYSEL_DUK_AHK      (SAES_CR_KEYSEL_2|SAES_CR_KEYSEL_0)                    /*!< Only for SAES, DHUK XOR AHK */
-#define CRYP_KEYSEL_TEST_KEY     (SAES_CR_KEYSEL_2|SAES_CR_KEYSEL_1|SAES_CR_KEYSEL_0)   /*!< Test mode key (256-bit hardware constant key 0xA5A5...A5A5) */
-
+#define CRYP_KEYSEL_NORMAL       0x00000000UL           /*!< Normal key, key registers SAES_KEYx or CRYP_KEYx */
+#define CRYP_KEYSEL_HW           SAES_CR_KEYSEL_0       /*!< Only for SAES, Hardware key : derived hardware 
+                                                             unique key (DHUK 256-bit) */
+#define CRYP_KEYSEL_SW           SAES_CR_KEYSEL_1       /*!< Only for SAES, Software key : boot hardware 
+                                                             key BHK (256-bit) */
+#define CRYP_KEYSEL_HSW          SAES_CR_KEYSEL_2       /*!< Only for SAES, DHUK XOR BHK Hardware unique 
+                                                             key XOR software key */
+#define CRYP_KEYSEL_AHK          (SAES_CR_KEYSEL_1|SAES_CR_KEYSEL_0)  /*!< Only for SAES, Software key : 
+                                                                      application hardware key AHK (128- or 256-bit) */
+#define CRYP_KEYSEL_DUK_AHK      (SAES_CR_KEYSEL_2|SAES_CR_KEYSEL_0)   /*!< Only for SAES, DHUK XOR AHK */
+#define CRYP_KEYSEL_TEST_KEY     (SAES_CR_KEYSEL_2|SAES_CR_KEYSEL_1|SAES_CR_KEYSEL_0) /*!< Test mode key (256-bit 
+                                                                               hardware constant key 0xA5A5...A5A5) */
 /**
   * @}
   */
 
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 /** @defgroup CRYP_Key_Protection SAES Key Protection
   * @{
   */
 
-#define CRYP_KEYPROT_ENABLE         SAES_CR_KEYPROT     /*!< Only for SAES, Key can't be shared between two applications with different security contexts */
-#define CRYP_KEYPROT_DISABLE        0x00000000U         /*!< Only for SAES, Key can be shared between two applications with different security contexts */
+#define CRYP_KEYPROT_ENABLE         SAES_CR_KEYPROT     /*!< Only for SAES, Key can't be shared between 
+                                                             two applications with different security contexts */
+#define CRYP_KEYPROT_DISABLE        0x00000000UL        /*!< Only for SAES, Key can be shared between 
+                                                             two applications with different security contexts */
 
 /**
   * @}
   */
 
-/** @defgroup CRYP_Key_Shared SAES Key Shared with Peripheral
+/** @defgroup CRYP_Key_Shared_Direction SAES Key Shared with Peripheral
   * @{
   */
-
-#define CRYP_KEYSHARED_CRYP         0x00000000U     /*!< Only for SAES, key is shared with CRYP peripheral */
-
+#if defined(SAES_CR_WRAPID)
+#define CRYP_KEYSHARED_SELF         0x00000000UL             /*!< Only for SAES, key is used by SAES peripheral */
+#define CRYP_KEYSHARED_CRYP1        SAES_CR_WRAPID_CRYP1     /*!< Only for SAES, key is shared with CRYP1 peripheral */
+#define CRYP_KEYSHARED_CRYP2        SAES_CR_WRAPID_CRYP2     /*!< Only for SAES, key is shared with CRYP2 peripheral */
+#else
+#define CRYP_KEYSHARED_CRYP1        0x00000000UL             /*!< Only for SAES, key is shared with CRYP1 peripheral */
+#define CRYP_KEYSHARED_CRYP2        SAES_CR_KSHAREID_0       /*!< Only for SAES, key is shared with CRYP2 peripheral */
+#endif /* SAES_CR_WRAPID */
 /**
   * @}
   */
@@ -497,19 +533,25 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @{
   */
 
-#define CRYP_MODE_ENCRYPT                0x00000000U             /*!< SAES peripheral encryption mode   */
+#define CRYP_MODE_ENCRYPT                0x00000000UL            /*!< SAES peripheral encryption mode   */
+#if defined (SAES_CR_WRAPEN)
+#define CRYP_MODE_KEY_DERIVATION         SAES_CR_OPMOD_0         /*!< SAES peripheral key derivation    */
+#define CRYP_MODE_DECRYPT                SAES_CR_OPMOD_1         /*!< SAES peripheral decryption mode   */
+#else
 #define CRYP_MODE_KEY_DERIVATION         SAES_CR_MODE_0          /*!< SAES peripheral key derivation    */
 #define CRYP_MODE_DECRYPT                SAES_CR_MODE_1          /*!< SAES peripheral decryption mode   */
+#endif /* SAES_CR_WRAPEN */
 
 /**
   * @}
   */
+#endif /* USE_HAL_SAES_ONLY */
 
 /** @defgroup CRYP_Mode SAES processing mode
   * @{
   */
 
-#define CRYP_OPERATINGMODE_ENCRYPT       0x00000000U             /*!< CRYP peripheral encryption mode   */
+#define CRYP_OPERATINGMODE_ENCRYPT       0x00000000UL            /*!< CRYP peripheral encryption mode   */
 #define CRYP_OPERATINGMODE_DECRYPT       CRYP_CR_ALGODIR         /*!< CRYP peripheral decryption mode   */
 
 /**
@@ -520,6 +562,14 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 /** @defgroup CRYP_Exported_Macros CRYP Exported Macros
   * @{
   */
+
+/**
+  * @brief  Inform about which IP is the current INSTANCE: CRYP or SAES.
+  * @param  INSTANCE: specifies the HW instance.
+  * @retval None
+  */
+#define IS_CRYP_INSTANCE(INSTANCE) (((INSTANCE) == CRYP1) || ((INSTANCE) == CRYP2))
+#define IS_SAES_INSTANCE(INSTANCE) ((INSTANCE) == SAES)
 
 /** @brief Reset CRYP handle state
   * @param  __HANDLE__ specifies the CRYP handle.
@@ -541,11 +591,13 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @retval None
   */
 
-#define __HAL_CRYP_ENABLE(__HANDLE__) ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ? (((CRYP_TypeDef *)((__HANDLE__)->Instance))->CR |=  CRYP_CR_CRYPEN) :\
-                                                                          (((SAES_TypeDef *)((__HANDLE__)->Instance))->CR |=  SAES_CR_EN))
+#define __HAL_CRYP_ENABLE(__HANDLE__) ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ? \
+                                       (((CRYP_TypeDef *)((__HANDLE__)->Instance))->CR |=  CRYP_CR_CRYPEN) :\
+                                       (((SAES_TypeDef *)((__HANDLE__)->Instance))->CR |=  SAES_CR_EN))
 
-#define __HAL_CRYP_DISABLE(__HANDLE__) ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ? (((CRYP_TypeDef *)((__HANDLE__)->Instance))->CR &=  ~CRYP_CR_CRYPEN) :\
-                                                                           (((SAES_TypeDef *)((__HANDLE__)->Instance))->CR &=  ~SAES_CR_EN))
+#define __HAL_CRYP_DISABLE(__HANDLE__) ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ? \
+                                        (((CRYP_TypeDef *)((__HANDLE__)->Instance))->CR &=  ~CRYP_CR_CRYPEN) :\
+                                        (((SAES_TypeDef *)((__HANDLE__)->Instance))->CR &=  ~SAES_CR_EN))
 
 /** @brief  Check whether the specified CRYP or SAES peripheral status flag is set or not.
   * @param  __FLAG__: specifies the flag to check.
@@ -570,33 +622,48 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 #define CRYP_FLAG_MASK  0x0000001FU
 
 #define __HAL_CRYP_GET_FLAG(__HANDLE__, __FLAG__) ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ?\
-                                                   ((__FLAG__) == CRYP_FLAG_KEYVALID )?((((((CRYP_TypeDef *)((__HANDLE__)->Instance))))->SR \
+                                                   ((__FLAG__) == CRYP_FLAG_KEYVALID )?((((((CRYP_TypeDef *) \
+                                                       ((__HANDLE__)->Instance))))->SR \
                                                        & (CRYP_FLAG_KEYVALID)) == (CRYP_FLAG_KEYVALID)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_BUSY )?((((((CRYP_TypeDef *)((__HANDLE__)->Instance))))->SR \
+                                                   ((__FLAG__) == CRYP_FLAG_BUSY )?((((((CRYP_TypeDef *) \
+                                                       ((__HANDLE__)->Instance))))->SR \
                                                        & (CRYP_FLAG_BUSY)) == (CRYP_FLAG_BUSY)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_KEIF )?((((((CRYP_TypeDef *)((__HANDLE__)->Instance))))->SR \
+                                                   ((__FLAG__) == CRYP_FLAG_KEIF )?((((((CRYP_TypeDef *) \
+                                                       ((__HANDLE__)->Instance))))->SR \
                                                        & (CRYP_FLAG_KERF)) == (CRYP_FLAG_KERF)) : \
-                                                  ((((uint8_t)((__FLAG__) >> 24)) == 0x01U)?(((((CRYP_TypeDef *)((__HANDLE__)->Instance))->RISR) & ((__FLAG__) & CRYP_FLAG_MASK)) == ((__FLAG__) & CRYP_FLAG_MASK)): \
-                                                   (((((CRYP_TypeDef *)((__HANDLE__)->Instance))->RISR) & ((__FLAG__) & CRYP_FLAG_MASK)) == ((__FLAG__) & CRYP_FLAG_MASK))) :\
+                                                   ((((uint8_t)((__FLAG__) >> 24)) == 0x01U)?(((((CRYP_TypeDef *) \
+                                                       ((__HANDLE__)->Instance))->RISR) & ((__FLAG__) & \
+                                                           CRYP_FLAG_MASK)) == ((__FLAG__) & CRYP_FLAG_MASK)): \
+                                                    (((((CRYP_TypeDef *)((__HANDLE__)->Instance))->RISR) & ((__FLAG__)\
+                                                        & CRYP_FLAG_MASK)) == ((__FLAG__) & CRYP_FLAG_MASK))) :\
                                                    (\
-                                                   ((__FLAG__) == CRYP_FLAG_KEYVALID )?((((SAES_TypeDef *)(((SAES_TypeDef *)((__HANDLE__)->Instance))))->SR \
-                                                       & (CRYP_FLAG_KEYVALID)) == (CRYP_FLAG_KEYVALID)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_BUSY )?((((SAES_TypeDef *)((__HANDLE__)->Instance))->SR \
-                                                       & (CRYP_FLAG_BUSY)) == (CRYP_FLAG_BUSY)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_WRERR )?((((SAES_TypeDef *)((__HANDLE__)->Instance))->SR \
-                                                       & (CRYP_FLAG_WRERR & 0x7FFFFFFFU)) == \
-                                                       (CRYP_FLAG_WRERR & 0x7FFFFFFFU)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_RDERR )?((((SAES_TypeDef *)((__HANDLE__)->Instance))->SR \
-                                                       & (CRYP_FLAG_RDERR & 0x7FFFFFFFU)) == \
-                                                       (CRYP_FLAG_RDERR & 0x7FFFFFFFU)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_RNGEIF )?((((SAES_TypeDef *)((__HANDLE__)->Instance))->ISR \
-                                                       & (CRYP_FLAG_RNGEIF)) == (CRYP_FLAG_RNGEIF)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_KEIF )?((((SAES_TypeDef *)((__HANDLE__)->Instance))->ISR \
-                                                       & (CRYP_FLAG_KEIF)) == (CRYP_FLAG_KEIF)) : \
-                                                   ((__FLAG__) == CRYP_FLAG_RWEIF )?((((SAES_TypeDef *)((__HANDLE__)->Instance))->ISR \
-                                                       & (CRYP_FLAG_RWEIF)) == (CRYP_FLAG_RWEIF)) : \
-                                                   ((((SAES_TypeDef *)((__HANDLE__)->Instance))->ISR & (CRYP_FLAG_CCF)) == (CRYP_FLAG_CCF))))
+                                                    ((__FLAG__) == CRYP_FLAG_KEYVALID )?((((SAES_TypeDef *)\
+                                                        (((SAES_TypeDef *)((__HANDLE__)->Instance))))->SR \
+                                                        & (CRYP_FLAG_KEYVALID)) == (CRYP_FLAG_KEYVALID)) : \
+                                                    ((__FLAG__) == CRYP_FLAG_BUSY )?((((SAES_TypeDef *) \
+                                                        ((__HANDLE__)->Instance))->SR \
+                                                        & (CRYP_FLAG_BUSY)) == (CRYP_FLAG_BUSY)) : \
+                                                    ((__FLAG__) == CRYP_FLAG_WRERR )?((((SAES_TypeDef *) \
+                                                        ((__HANDLE__)->Instance))->SR \
+                                                        & (CRYP_FLAG_WRERR & 0x7FFFFFFFU)) == \
+                                                        (CRYP_FLAG_WRERR & 0x7FFFFFFFU)) : \
+                                                    ((__FLAG__) == CRYP_FLAG_RDERR )?((((SAES_TypeDef *) \
+                                                        ((__HANDLE__)->Instance))->SR \
+                                                        & (CRYP_FLAG_RDERR & 0x7FFFFFFFU)) == \
+                                                        (CRYP_FLAG_RDERR & 0x7FFFFFFFU)) : \
+                                                    ((__FLAG__) == CRYP_FLAG_RNGEIF )?((((SAES_TypeDef *) \
+                                                        ((__HANDLE__)->Instance))->ISR \
+                                                        & (CRYP_FLAG_RNGEIF)) == (CRYP_FLAG_RNGEIF)) : \
+                                                    ((__FLAG__) == CRYP_FLAG_KEIF )?((((SAES_TypeDef *) \
+                                                        ((__HANDLE__)->Instance))->ISR \
+                                                        & (CRYP_FLAG_KEIF)) == (CRYP_FLAG_KEIF)) : \
+                                                    ((__FLAG__) == CRYP_FLAG_RWEIF )?((((SAES_TypeDef *) \
+                                                        ((__HANDLE__)->Instance))->ISR \
+                                                        & (CRYP_FLAG_RWEIF)) == (CRYP_FLAG_RWEIF)) : \
+                                                    ((((SAES_TypeDef *)((__HANDLE__)->Instance))->ISR & \
+                                                      (CRYP_FLAG_CCF)) == (CRYP_FLAG_CCF))))
 
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 /** @brief  Clear the SAES peripheral pending status flag.
   * @param  __HANDLE__ specifies the SAES handle.
   * @param  __FLAG__ specifies the flag to clear.
@@ -608,7 +675,9 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @retval None
   */
 #define __HAL_CRYP_CLEAR_FLAG(__HANDLE__, __FLAG__) SET_BIT(((SAES_TypeDef *)((__HANDLE__)->Instance))->ICR, (__FLAG__))
+#endif /* USE_HAL_SAES_ONLY */
 
+#if !defined(USE_HAL_CRYP_ONLY) || (USE_HAL_CRYP_ONLY == 1)
 /** @brief  Check whether the specified CRYP peripheral interrupt is set or not.
   * @param  __HANDLE__: specifies the CRYP handle.
   * @param  __INTERRUPT__: specifies the interrupt to check.
@@ -618,7 +687,9 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   * @retval The state of __INTERRUPT__ (TRUE or FALSE).
   */
 
-#define __HAL_CRYP_GET_IT(__HANDLE__, __INTERRUPT__) ((((CRYP_TypeDef *)((__HANDLE__)->Instance))->MISR & (__INTERRUPT__)) == (__INTERRUPT__))
+#define __HAL_CRYP_GET_IT(__HANDLE__, __INTERRUPT__) ((((CRYP_TypeDef *)((__HANDLE__)->Instance))->MISR\
+                                                       & (__INTERRUPT__)) == (__INTERRUPT__))
+#endif /* USE_HAL_CRYP_ONLY */
 
 /**
   * @brief  Enable the CRYP or SAES peripheral interrupt.
@@ -635,8 +706,9 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   */
 
 #define __HAL_CRYP_ENABLE_IT(__HANDLE__, __INTERRUPT__)  ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ?\
-                                                          ((((CRYP_TypeDef *)((__HANDLE__)->Instance))->IMSCR) |= (__INTERRUPT__)) :\
-                                                          ((((SAES_TypeDef *)((__HANDLE__)->Instance))->IER) |= (__INTERRUPT__)))
+                                                          ((((CRYP_TypeDef *)((__HANDLE__)->Instance))->IMSCR) |= \
+                                                              (__INTERRUPT__)) : ((((SAES_TypeDef *) \
+                                                                  ((__HANDLE__)->Instance))->IER) |= (__INTERRUPT__)))
 
 /**
   * @brief  Disable the CRYP or SAES peripheral interrupt.
@@ -653,9 +725,11 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
   */
 
 #define __HAL_CRYP_DISABLE_IT(__HANDLE__, __INTERRUPT__) ((IS_CRYP_INSTANCE((__HANDLE__)->Instance)) ?\
-                                                          ((((CRYP_TypeDef *)((__HANDLE__)->Instance))->IMSCR) &= ~(__INTERRUPT__)) :\
-                                                          ((((SAES_TypeDef *)((__HANDLE__)->Instance))->IER) &= ~(__INTERRUPT__)))
+                                                          ((((CRYP_TypeDef *)((__HANDLE__)->Instance))->IMSCR) &= \
+                                                              ~(__INTERRUPT__)) : ((((SAES_TypeDef *) \
+                                                                  ((__HANDLE__)->Instance))->IER) &= ~(__INTERRUPT__)))
 
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 /** @brief  Check whether the specified SAES peripheral interrupt source is enabled or not.
   * @param  __HANDLE__ specifies the CRYP handle.
   * @param __INTERRUPT__  interrupt source to check
@@ -669,6 +743,7 @@ typedef  void (*pCRYP_CallbackTypeDef)(CRYP_HandleTypeDef *hcryp);    /*!< point
 
 #define __HAL_CRYP_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__) ((((SAES_TypeDef *)((__HANDLE__)->Instance))->IER\
                                                               & (__INTERRUPT__)) == (__INTERRUPT__))
+#endif /* USE_HAL_SAES_ONLY */
 /**
   * @}
   */
@@ -700,7 +775,7 @@ void HAL_CRYP_ProcessSuspend(CRYP_HandleTypeDef *hcryp);
 HAL_StatusTypeDef HAL_CRYP_DMAProcessSuspend(CRYP_HandleTypeDef *hcryp);
 HAL_StatusTypeDef HAL_CRYP_Suspend(CRYP_HandleTypeDef *hcryp);
 HAL_StatusTypeDef HAL_CRYP_Resume(CRYP_HandleTypeDef *hcryp);
-#endif /* defined (USE_HAL_CRYP_SUSPEND_RESUME) */
+#endif /* USE_HAL_CRYP_SUSPEND_RESUME */
 /**
   * @}
   */
@@ -729,11 +804,11 @@ HAL_StatusTypeDef HAL_CRYP_Decrypt_DMA(CRYP_HandleTypeDef *hcryp, uint32_t *Inpu
   */
 /* Interrupt Handler functions  **********************************************/
 void HAL_CRYP_IRQHandler(CRYP_HandleTypeDef *hcryp);
-HAL_CRYP_STATETypeDef HAL_CRYP_GetState(CRYP_HandleTypeDef *hcryp);
+HAL_CRYP_STATETypeDef HAL_CRYP_GetState(const CRYP_HandleTypeDef *hcryp);
 void HAL_CRYP_InCpltCallback(CRYP_HandleTypeDef *hcryp);
 void HAL_CRYP_OutCpltCallback(CRYP_HandleTypeDef *hcryp);
 void HAL_CRYP_ErrorCallback(CRYP_HandleTypeDef *hcryp);
-uint32_t HAL_CRYP_GetError(CRYP_HandleTypeDef *hcryp);
+uint32_t HAL_CRYP_GetError(const CRYP_HandleTypeDef *hcryp);
 
 /**
   * @}
@@ -775,12 +850,13 @@ uint32_t HAL_CRYP_GetError(CRYP_HandleTypeDef *hcryp);
                               ((CONFIG) == CRYP_KEYIVCONFIG_ONCE)   || \
                               ((CONFIG) == CRYP_KEYNOCONFIG))
 
+#define IS_CRYP_KEYIVCONFIG(CONFIG) (((KEYSIZE) == CRYP_KEYSIZE_128B) || \
+                                     ((KEYSIZE) == CRYP_KEYSIZE_192B)  || \
+                                     ((KEYSIZE) == CRYP_KEYSIZE_256B))
+
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 #define IS_CRYP_KEYMODE(MODE) (((MODE) == CRYP_KEYMODE_NORMAL) || \
                                ((MODE) == CRYP_KEYMODE_SHARED))
-
-#define IS_CRYP_KEYIVCONFIG(CONFIG) (((KEYSIZE) == CRYP_KEYSIZE_128B) || \
-                                    ((KEYSIZE) == CRYP_KEYSIZE_192B)  || \
-                                    ((KEYSIZE) == CRYP_KEYSIZE_256B))
 
 #define IS_SAES_ALGORITHM(ALGORITHM) (((ALGORITHM) == CRYP_AES_ECB)   || \
                                       ((ALGORITHM) == CRYP_AES_CBC)   || \
@@ -789,6 +865,7 @@ uint32_t HAL_CRYP_GetError(CRYP_HandleTypeDef *hcryp);
                                       ((ALGORITHM) == CRYP_AES_CCM))
 
 #define IS_SAES_KEYSIZE(KEYSIZE) (((KEYSIZE) == CRYP_KEYSIZE_128B)  || \
+                                  ((KEYSIZE) == CRYP_KEYSIZE_192B)  || \
                                   ((KEYSIZE) == CRYP_KEYSIZE_256B))
 
 #define IS_SAES_DATATYPE(DATATYPE) (((DATATYPE) == SAES_DATATYPE_32B) || \
@@ -810,22 +887,44 @@ uint32_t HAL_CRYP_GetError(CRYP_HandleTypeDef *hcryp);
                                    ((SELECTION) == CRYP_KEYSEL_AHK)      || \
                                    ((SELECTION) == CRYP_KEYSEL_DUK_AHK)  || \
                                    ((SELECTION) == CRYP_KEYSEL_TEST_KEY))
-
-#define IS_SAES_KEYSHARED(PERIPHERAL) ((PERIPHERAL) == CRYP_KEYSHARED_CRYP)
+#if defined(SAES_CR_WRAPID)
+#define IS_SAES_KEYSHARED(PERIPHERAL) (((PERIPHERAL) == CRYP_KEYSHARED_SELF) ||\
+                                       ((PERIPHERAL) == CRYP_KEYSHARED_CRYP1) ||\
+                                       ((PERIPHERAL) == CRYP_KEYSHARED_CRYP2))
+#else
+#define IS_SAES_KEYSHARED(PERIPHERAL) (((PERIPHERAL) == SAES_CR_KSHAREID_0)  ||\
+                                       ((PERIPHERAL) == SAES_CR_KSHAREID_1))
+#endif /* SAES_CR_WRAPID */
 /**
   * @}
   */
+#endif /* USE_HAL_SAES_ONLY */
 
-/** @defgroup SAES_CONV_Definitions SAES Private macros to convert input parameters from CRYP peripheral to SAES peripheral format
+/** @defgroup SAES_CONV_Definitions SAES Private macros to convert input parameters from CRYP peripheral to
+     SAES peripheral format
   * @{
   */
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 #define SAES_CONV_DATATYPE(__DATATYPE__) ((__DATATYPE__) >> (CRYP_CR_DATATYPE_Pos - SAES_CR_DATATYPE_Pos))
 
-#define SAES_CONV_KEYSIZE(__KEY__) (((__KEY__) & CRYP_CR_KEYSIZE_1) << (SAES_CR_KEYSIZE_Pos - (CRYP_CR_KEYSIZE_Pos + 1U)))
-
-#define SAES_CONV_ALGO(__ALGO__) (((__ALGO__) & (CRYP_CR_ALGOMODE_1 | CRYP_CR_ALGOMODE_0)) << (SAES_CR_CHMOD_Pos - CRYP_CR_ALGOMODE_Pos))
-
-#define CRYP_CONV_ALGODIR(__ALGODIR__) (((__ALGODIR__) & SAES_CR_MODE_1) >> ((SAES_CR_MODE_Pos + 1U) - CRYP_CR_ALGODIR_Pos))
+#if defined(SAES_CR_WRAPEN)
+#define SAES_CONV_KEYSIZE(__KEY__) (((__KEY__)\
+                                     & CRYP_CR_KEYSIZE_Msk) << (SAES_CR_KEYSIZE_Pos - CRYP_CR_KEYSIZE_Pos))
+#else
+#define SAES_CONV_KEYSIZE(__KEY__) (((__KEY__)\
+                                     & CRYP_CR_KEYSIZE_Msk) << (SAES_CR_KEYSIZE_Pos - (CRYP_CR_KEYSIZE_Pos + 1U)))
+#endif /* SAES_CR_WRAPEN */
+#define SAES_CONV_ALGO(__ALGO__) (((__ALGO__)\
+                                   & (CRYP_CR_ALGOMODE_1 | CRYP_CR_ALGOMODE_0)) << (SAES_CR_CHMOD_Pos - \
+                                       CRYP_CR_ALGOMODE_Pos))
+#endif /* USE_HAL_SAES_ONLY */
+#if defined(SAES_CR_OPMOD)
+#define CRYP_CONV_ALGODIR(__ALGODIR__) (((__ALGODIR__)\
+                                         & CRYP_MODE_DECRYPT) >> ((SAES_CR_OPMOD_Pos + 1U) - CRYP_CR_ALGODIR_Pos))
+#else
+#define CRYP_CONV_ALGODIR(__ALGODIR__) (((__ALGODIR__)\
+                                         & CRYP_MODE_DECRYPT) >> ((SAES_CR_MODE_Pos + 1U) - CRYP_CR_ALGODIR_Pos))
+#endif /* SAES_CR_OPMOD */
 
 /**
   * @}
@@ -841,10 +940,32 @@ uint32_t HAL_CRYP_GetError(CRYP_HandleTypeDef *hcryp);
 /** @defgroup CRYP_Private_Constants CRYP Private Constants
   * @{
   */
+#if !defined(USE_HAL_CRYP_ONLY) || (USE_HAL_CRYP_ONLY == 1)
+#define CRYP_PHASE_INIT                  0x00000000U             /*!< GCM/GMAC (or CCM) init phase */
+#define CRYP_PHASE_HEADER                CRYP_CR_GCM_CCMPH_0     /*!< GCM/GMAC or CCM header phase */
+#define CRYP_PHASE_PAYLOAD               CRYP_CR_GCM_CCMPH_1     /*!< GCM(/CCM) payload phase      */
+#define CRYP_PHASE_FINAL                 CRYP_CR_GCM_CCMPH       /*!< GCM/GMAC or CCM  final phase */
+#endif /* USE_HAL_CRYP_ONLY */
 
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
+#if defined(SAES_CR_CPHASE)
+#define SAES_PHASE_INIT                  0x00000000U             /*!< GCM/GMAC (or CCM) init phase */
+#define SAES_PHASE_HEADER                SAES_CR_CPHASE_0        /*!< GCM/GMAC or CCM header phase */
+#define SAES_PHASE_PAYLOAD               SAES_CR_CPHASE_1        /*!< GCM(/CCM) payload phase      */
+#define SAES_PHASE_FINAL                 SAES_CR_CPHASE          /*!< GCM/GMAC or CCM  final phase */
+#define SAES_OPERATION_MODE              SAES_CR_OPMOD           /*!< SAES Mode Of Operation */
+#else
+#define SAES_PHASE_INIT                  0x00000000U             /*!< GCM/GMAC (or CCM) init phase */
+#define SAES_PHASE_HEADER                SAES_CR_GCMPH_0         /*!< GCM/GMAC or CCM header phase */
+#define SAES_PHASE_PAYLOAD               SAES_CR_GCMPH_1         /*!< GCM(/CCM) payload phase      */
+#define SAES_PHASE_FINAL                 SAES_CR_GCMPH           /*!< GCM/GMAC or CCM  final phase */
+#define SAES_OPERATION_MODE              SAES_CR_MODE            /*!< SAES Mode Of Operation */
+#endif /* SAES_CR_CPHASE */
+#endif /* USE_HAL_SAES_ONLY */
 /**
   * @}
   */
+
 /* Private defines -----------------------------------------------------------*/
 /** @defgroup CRYP_Private_Defines CRYP Private Defines
   * @{
@@ -886,7 +1007,7 @@ uint32_t HAL_CRYP_GetError(CRYP_HandleTypeDef *hcryp);
   */
 
 
-#endif /* (defined (CRYP1) || defined (CRYP2)) */
+#endif /* (defined (CRYP1) || defined (CRYP2) || defined (SAES)) */
 /**
   * @}
   */

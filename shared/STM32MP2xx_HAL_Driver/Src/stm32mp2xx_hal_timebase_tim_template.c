@@ -2,12 +2,12 @@
   ******************************************************************************
   * @file    stm32mp2xx_hal_timebase_tim.c
   * @brief   HAL time base based on the hardware TIM.
-  *    
+  *
   *          This file override the native HAL time base functions (defined as weak)
   *          the TIM time base:
-  *           + Intializes the TIM peripheral generate a Period elapsed Event each 1ms
+  *           + Initializes the TIM peripheral generate a Period elapsed Event each 1ms
   *           + HAL_IncTick is called inside HAL_TIM_PeriodElapsedCallback ie each 1ms
-  * 
+  *
   ******************************************************************************
   * @attention
   *
@@ -30,7 +30,7 @@
 
 /** @addtogroup HAL_TimeBase_TIM
   * @{
-  */ 
+  */
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -42,52 +42,53 @@ void TIM6_IRQHandler(void);
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  This function configures the TIM6 as a time base source. 
-  *         The time source is configured  to have 1ms time base with a dedicated 
-  *         Tick interrupt priority. 
+  * @brief  This function configures the TIM6 as a time base source.
+  *         The time source is configured  to have 1ms time base with a dedicated
+  *         Tick interrupt priority.
   * @note   This function is called  automatically at the beginning of program after
-  *         reset by HAL_Init() or at any time when clock is configured, by HAL_RCC_ClockConfig(). 
+  *         reset by HAL_Init() or at any time when clock is configured, by HAL_RCC_ClockConfig().
   * @param  TickPriority: Tick interrupt priority.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_InitTick (uint32_t TickPriority)
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 {
   RCC_ClkInitTypeDef    clkconfig;
-  uint32_t              uwTimclock, uwAPB1Prescaler = 0U;
+  uint32_t              uwTimclock = 0U;
+  uint32_t              uwAPB1Prescaler = 0U;
   uint32_t              uwPrescalerValue = 0U;
   uint32_t              pFLatency;
-  
-    /*Configure the TIM6 IRQ priority */
-  HAL_NVIC_SetPriority(TIM6_IRQn, TickPriority ,0U);
-  
+
+  /*Configure the TIM6 IRQ priority */
+  HAL_NVIC_SetPriority(TIM6_IRQn, TickPriority, 0U);
+
   /* Enable the TIM6 global Interrupt */
   HAL_NVIC_EnableIRQ(TIM6_IRQn);
-  
+
   /* Enable TIM6 clock */
   __HAL_RCC_TIM6_CLK_ENABLE();
-  
+
   /* Get clock configuration */
   HAL_RCC_GetClockConfig(&clkconfig, &pFLatency);
-  
+
   /* Get APB1 prescaler */
   uwAPB1Prescaler = clkconfig.APB1_Div;
-  
+
   /* Compute TIM6 clock */
-  if (uwAPB1Prescaler == RCC_APB1_DIV1) 
+  if (uwAPB1Prescaler == RCC_APB1_DIV1)
   {
     uwTimclock = HAL_RCC_GetFreq(RCC_CLOCKTYPE_ICN_APB1);
   }
   else
   {
-    uwTimclock = 2*HAL_RCC_GetFreq(RCC_CLOCKTYPE_ICN_APB1);
+    uwTimclock = 2 * HAL_RCC_GetFreq(RCC_CLOCKTYPE_ICN_APB1);
   }
-  
+
   /* Compute the prescaler value to have TIM6 counter clock equal to 1MHz */
-  uwPrescalerValue = (uint32_t) ((uwTimclock / 1000000U) - 1U);
-  
+  uwPrescalerValue = (uint32_t)((uwTimclock / 1000000U) - 1U);
+
   /* Initialize TIM6 */
   TimHandle.Instance = TIM6;
-  
+
   /* Initialize TIMx peripheral as follow:
   + Period = [(TIM6CLK/1000) - 1]. to have a (1/1000) s time base.
   + Prescaler = (uwTimclock/1000000 - 1) to have a 1MHz counter clock.
@@ -98,12 +99,12 @@ HAL_StatusTypeDef HAL_InitTick (uint32_t TickPriority)
   TimHandle.Init.Prescaler = uwPrescalerValue;
   TimHandle.Init.ClockDivision = 0U;
   TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
-  if(HAL_TIM_Base_Init(&TimHandle) == HAL_OK)
+  if (HAL_TIM_Base_Init(&TimHandle) == HAL_OK)
   {
     /* Start the TIM time Base generation in interrupt mode */
     return HAL_TIM_Base_Start_IT(&TimHandle);
   }
-  
+
   /* Return function status */
   return HAL_ERROR;
 }
@@ -157,8 +158,8 @@ void TIM6_IRQHandler(void)
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
-  */ 
+  */

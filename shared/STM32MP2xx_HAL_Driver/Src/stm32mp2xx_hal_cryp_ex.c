@@ -35,7 +35,7 @@
 /** @addtogroup STM32MP2xx_HAL_Driver
   * @{
   */
-#if (defined (CRYP1) || defined (CRYP2))
+#if (defined (CRYP1) || defined (CRYP2) || defined (SAES))
 /** @defgroup CRYPEx CRYPEx
   * @brief CRYP Extension HAL module driver.
   * @{
@@ -49,18 +49,9 @@
   * @{
   */
 
-#define CRYP_PHASE_INIT                 0x00000000U
-#define CRYP_PHASE_HEADER               CRYP_CR_GCM_CCMPH_0
-#define CRYP_PHASE_PAYLOAD              CRYP_CR_GCM_CCMPH_1
-#define CRYP_PHASE_FINAL                CRYP_CR_GCM_CCMPH
-
-#define SAES_PHASE_INIT                  0x00000000U             /*!< GCM/GMAC (or CCM) init phase */
-#define SAES_PHASE_HEADER                SAES_CR_GCMPH_0         /*!< GCM/GMAC or CCM header phase */
-#define SAES_PHASE_PAYLOAD               SAES_CR_GCMPH_1         /*!< GCM(/CCM) payload phase      */
-#define SAES_PHASE_FINAL                 SAES_CR_GCMPH           /*!< GCM/GMAC or CCM  final phase */
-
 #define  CRYPEx_PHASE_PROCESS       0x02U     /*!< CRYP peripheral is in processing phase */
-#define  CRYPEx_PHASE_FINAL         0x03U     /*!< CRYP peripheral is in final phase this is relevant only with CCM and GCM modes */
+#define  CRYPEx_PHASE_FINAL         0x03U     /*!< CRYP peripheral is in final phase this is relevant 
+                                                   only with CCM and GCM modes */
 
 /*  CTR0 information to use in CCM algorithm */
 #define CRYP_CCM_CTR0_0            0x07FFFFFFU
@@ -73,9 +64,11 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 static HAL_StatusTypeDef CRYPEx_KeyDecrypt(CRYP_HandleTypeDef *hcryp, uint32_t Timeout);
 static HAL_StatusTypeDef CRYPEx_KeyEncrypt(CRYP_HandleTypeDef *hcryp, uint32_t Timeout);
 static void CRYPEx_SetKey(CRYP_HandleTypeDef *hcryp, uint32_t KeySize);
+#endif /* USE_HAL_SAES_ONLY */
 /* Exported functions---------------------------------------------------------*/
 /** @addtogroup CRYPEx_Exported_Functions
   * @{
@@ -103,29 +96,30 @@ static void CRYPEx_SetKey(CRYP_HandleTypeDef *hcryp, uint32_t KeySize);
   * @brief  generate the GCM authentication TAG.
   * @param  hcryp: pointer to a CRYP_HandleTypeDef structure that contains
   *         the configuration information for CRYP module
-  * @param  AuthTag: Pointer to the authentication buffer
+  * @param  pAuthTag: Pointer to the authentication buffer
   *         the AuthTag generated here is 128bits length, if the TAG length is
   *         less than 128bits, user should consider only the valid part of AuthTag
   *         buffer which correspond exactly to TAG length.
   * @param  Timeout: Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, uint32_t *AuthTag, uint32_t Timeout)
+HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, const uint32_t *pAuthTag,
+                                                    uint32_t Timeout)
 {
   uint32_t tickstart;
   uint64_t headerlength;
   uint64_t inputlength = (uint64_t)hcryp->SizesSum * 8U; /* input length in bits */
-  uint32_t tagaddr = (uint32_t)AuthTag;
+  uint32_t tagaddr = (uint32_t)pAuthTag;
   uint8_t i;
 
 
   if (hcryp->Init.HeaderWidthUnit == CRYP_HEADERWIDTHUNIT_WORD)
   {
-    headerlength = (uint64_t)(hcryp->Init.HeaderSize) * 32U; /* Header lenght in bits */
+    headerlength = (uint64_t)(hcryp->Init.HeaderSize) * 32U; /* Header length in bits */
   }
   else
   {
-    headerlength = (uint64_t)(hcryp->Init.HeaderSize) * 8U;  /* Header lenght in bits */
+    headerlength = (uint64_t)(hcryp->Init.HeaderSize) * 8U;  /* Header length in bits */
   }
 
 
@@ -160,6 +154,7 @@ HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
     }
 
     /* Select final phase */
+#if !defined(USE_HAL_CRYP_ONLY) || (USE_HAL_CRYP_ONLY == 1)
     if (IS_CRYP_INSTANCE(hcryp->Instance))
     {
       /* Disable CRYP to start the final phase */
@@ -208,11 +203,18 @@ HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
         tagaddr += 4U;
       }
     }
-    else /* SAES peripheral */
+#endif /* USE_HAL_CRYP_ONLY */
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
+    if (IS_SAES_INSTANCE(hcryp->Instance))
     {
       /* Select final phase */
+#if defined(SAES_CR_CPHASE)
+      /* Select payload phase once the header phase is performed */
+      MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_CPHASE, SAES_PHASE_FINAL);
+#else
+      /* Select payload phase */
       MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_GCMPH, SAES_PHASE_FINAL);
-
+#endif /* SAES_CR_CPHASE */
       /* Write the number of bits in header (64 bits) followed by the number of bits
       in the payload */
       ((SAES_TypeDef *)(hcryp->Instance))->DINR = 0U;
@@ -222,7 +224,7 @@ HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
 
       /* Wait for CCF flag to be raised */
       tickstart = HAL_GetTick();
-      while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->SR, SAES_SR_CCF))
+      while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->ISR, SAES_ISR_CCF))
       {
         /* Check for the Timeout */
         if (Timeout != HAL_MAX_DELAY)
@@ -244,13 +246,14 @@ HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
       /* Read the authentication TAG in the output FIFO */
       for (i = 0U; i < 4U; i++)
       {
-       *(uint32_t *)(tagaddr) = ((SAES_TypeDef *)(hcryp->Instance))->DOUTR;
-       tagaddr += 4U;
+        *(uint32_t *)(tagaddr) = ((SAES_TypeDef *)(hcryp->Instance))->DOUTR;
+        tagaddr += 4U;
       }
 
       /* Clear CCF Flag */
       __HAL_CRYP_CLEAR_FLAG(hcryp, CRYP_CLEAR_CCF);
     }
+#endif /* USE_HAL_SAES_ONLY */
 
     /* Disable the peripheral */
     __HAL_CRYP_DISABLE(hcryp);
@@ -275,16 +278,17 @@ HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
   * @brief  AES CCM Authentication TAG generation.
   * @param  hcryp: pointer to a CRYP_HandleTypeDef structure that contains
   *         the configuration information for CRYP module
-  * @param  AuthTag: Pointer to the authentication buffer
+  * @param  pAuthTag: Pointer to the authentication buffer
   *         the AuthTag generated here is 128bits length, if the TAG length is
   *         less than 128bits, user should consider only the valid part of AuthTag
   *         buffer which correspond exactly to TAG length.
   * @param  Timeout: Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, uint32_t *AuthTag, uint32_t Timeout)
+HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, const uint32_t *pAuthTag,
+                                                    uint32_t Timeout)
 {
-  uint32_t tagaddr = (uint32_t)AuthTag;
+  uint32_t tagaddr = (uint32_t)pAuthTag;
   uint32_t ctr0 [4] = {0};
   uint32_t ctr0addr = (uint32_t)ctr0;
   uint32_t tickstart;
@@ -294,13 +298,13 @@ HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
   {
     /* Process locked */
     __HAL_LOCK(hcryp);
-
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
     if (IS_SAES_INSTANCE(hcryp->Instance))
     {
       /* Disable interrupts, we are now in polling mode to TAG generation */
       __HAL_CRYP_DISABLE_IT(hcryp, CRYP_IT_CCFIE | CRYP_IT_RWEIE | CRYP_IT_KEIE);
     }
-
+#endif /* USE_HAL_SAES_ONLY */
     /* Change the CRYP peripheral state */
     hcryp->State = HAL_CRYP_STATE_BUSY;
 
@@ -327,6 +331,7 @@ HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
     }
 
     /* Select final phase */
+#if !defined(USE_HAL_CRYP_ONLY) || (USE_HAL_CRYP_ONLY == 1)
     if (IS_CRYP_INSTANCE(hcryp->Instance))
     {
       /* Disable CRYP to start the final phase */
@@ -380,11 +385,17 @@ HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
         tagaddr += 4U;
       }
     }
-    else /* SAES peripheral */
+#endif /* USE_HAL_CRYP_ONLY */
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
+    if (IS_SAES_INSTANCE(hcryp->Instance))
     {
-      /* Change SAES final phase */
+#if defined(SAES_CR_CPHASE)
+      /* Select payload phase once the header phase is performed */
+      MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_CPHASE, SAES_PHASE_FINAL);
+#else
+      /* Select payload phase */
       MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_GCMPH, SAES_PHASE_FINAL);
-
+#endif /* SAES_CR_CPHASE */
       for (i = 0U; i < 4U; i++)
       {
         ((SAES_TypeDef *)(hcryp->Instance))->DINR = *(uint32_t *)(ctr0addr);
@@ -393,7 +404,7 @@ HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
 
       /* Wait for CCF flag to be raised */
       tickstart = HAL_GetTick();
-      while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->SR, CRYP_FLAG_CCF))
+      while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->ISR, SAES_ISR_CCF))
       {
         /* Check for the Timeout */
         if (Timeout != HAL_MAX_DELAY)
@@ -416,12 +427,13 @@ HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
       /* Read the authentication TAG in the output FIFO */
       for (i = 0U; i < 4U; i++)
       {
-       *(uint32_t *)(tagaddr) = ((SAES_TypeDef *)(hcryp->Instance))->DOUTR;
-       tagaddr += 4U;
+        *(uint32_t *)(tagaddr) = ((SAES_TypeDef *)(hcryp->Instance))->DOUTR;
+        tagaddr += 4U;
       }
       /* Clear CCF flag */
       __HAL_CRYP_CLEAR_FLAG(hcryp, CRYP_CLEAR_CCF);
     }
+#endif /* USE_HAL_SAES_ONLY */
 
     /* Change the CRYP peripheral state */
     hcryp->State = HAL_CRYP_STATE_READY;
@@ -462,6 +474,7 @@ HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, u
   * @{
   */
 
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
 /**
   * @brief  Wrap (encrypt) application keys .
   * @param  hcryp pointer to a CRYP_HandleTypeDef structure that contains
@@ -491,9 +504,13 @@ HAL_StatusTypeDef HAL_CRYPEx_WrapKey(CRYP_HandleTypeDef *hcryp, uint32_t *Input,
 
     /* Disable the CRYP peripheral clock */
     __HAL_CRYP_DISABLE(hcryp);
-
+#if defined (SAES_CR_WRAPEN)
+    /* Set the operating mode*/
+    MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_WRAPEN, CRYP_KEYMODE_WRAPPED);
+#else
     /* Set the operating mode*/
     MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_KMOD, CRYP_KEYMODE_WRAPPED);
+#endif /* SAES_CR_WRAPEN */
 
     status = CRYPEx_KeyEncrypt(hcryp, Timeout);
 
@@ -544,8 +561,13 @@ HAL_StatusTypeDef HAL_CRYPEx_UnwrapKey(CRYP_HandleTypeDef *hcryp, uint32_t *Inpu
     /* Disable the CRYP peripheral clock */
     __HAL_CRYP_DISABLE(hcryp);
 
+#if defined (SAES_CR_WRAPEN)
+    /* Set the operating mode*/
+    MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_WRAPEN, CRYP_KEYMODE_WRAPPED);
+#else
     /* Set the operating mode*/
     MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_KMOD, CRYP_KEYMODE_WRAPPED);
+#endif /* SAES_CR_WRAPEN */
 
     status = CRYPEx_KeyDecrypt(hcryp, Timeout);
 
@@ -617,8 +639,12 @@ HAL_StatusTypeDef HAL_CRYPEx_EncryptSharedKey(CRYP_HandleTypeDef *hcryp, uint32_
     /* Disable the CRYP peripheral clock */
     __HAL_CRYP_DISABLE(hcryp);
 
+#if defined (SAES_CR_WRAPEN)
     /* Set the operating mode*/
+    MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_WRAPEN | SAES_CR_WRAPID, SAES_CR_WRAPEN | ID);
+#else
     MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_KMOD | SAES_CR_KSHAREID, CRYP_KEYMODE_SHARED | ID);
+#endif /* SAES_CR_WRAPEN */
 
     status = CRYPEx_KeyEncrypt(hcryp, Timeout);
 
@@ -669,10 +695,12 @@ HAL_StatusTypeDef HAL_CRYPEx_DecryptSharedKey(CRYP_HandleTypeDef *hcryp, uint32_
 
     /* Disable the CRYP peripheral clock */
     __HAL_CRYP_DISABLE(hcryp);
-
+#if defined (SAES_CR_WRAPEN)
     /* Set the operating mode*/
+    MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_WRAPEN | SAES_CR_WRAPID, SAES_CR_WRAPEN | ID);
+#else
     MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_KMOD | SAES_CR_KSHAREID, CRYP_KEYMODE_SHARED | ID);
-
+#endif /* SAES_CR_WRAPEN */
     status = CRYPEx_KeyDecrypt(hcryp, Timeout);
 
     if (status == HAL_OK)
@@ -707,7 +735,7 @@ static HAL_StatusTypeDef CRYPEx_KeyDecrypt(CRYP_HandleTypeDef *hcryp, uint32_t T
   uint32_t tickstart;
 
   /* key preparation for decryption, operating mode 2*/
-  MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_MODE, CRYP_MODE_KEY_DERIVATION);
+  MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_OPERATION_MODE, CRYP_MODE_KEY_DERIVATION);
 
   /*It is strongly recommended to select hardware secret keys*/
   if (hcryp->Init.KeySelect == CRYP_KEYSEL_NORMAL)
@@ -720,7 +748,7 @@ static HAL_StatusTypeDef CRYPEx_KeyDecrypt(CRYP_HandleTypeDef *hcryp, uint32_t T
 
   /* Wait for CCF flag to be raised */
   tickstart = HAL_GetTick();
-  while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->SR, SAES_SR_CCF))
+  while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->ISR, SAES_ISR_CCF))
   {
     /* Check for the Timeout */
     if (Timeout != HAL_MAX_DELAY)
@@ -745,7 +773,7 @@ static HAL_StatusTypeDef CRYPEx_KeyDecrypt(CRYP_HandleTypeDef *hcryp, uint32_t T
 
   /*  End of Key preparation for ECB/CBC */
   /* Return to decryption operating mode(Mode 3)*/
-  MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_MODE, CRYP_MODE_DECRYPT);
+  MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_OPERATION_MODE, CRYP_MODE_DECRYPT);
 
 
   if (hcryp->Init.Algorithm != CRYP_AES_ECB)
@@ -784,7 +812,7 @@ static HAL_StatusTypeDef CRYPEx_KeyDecrypt(CRYP_HandleTypeDef *hcryp, uint32_t T
 
     /* Wait for CCF flag to be raised */
     tickstart = HAL_GetTick();
-    while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->SR, SAES_SR_CCF))
+    while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->ISR, SAES_ISR_CCF))
     {
       /* Check for the Timeout */
       if (Timeout != HAL_MAX_DELAY)
@@ -827,7 +855,7 @@ static HAL_StatusTypeDef CRYPEx_KeyEncrypt(CRYP_HandleTypeDef *hcryp, uint32_t T
   uint32_t tickstart;
   uint32_t temp;  /* Temporary CrypOutBuff */
 
-  MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_CR_MODE, CRYP_OPERATINGMODE_ENCRYPT);
+  MODIFY_REG(((SAES_TypeDef *)(hcryp->Instance))->CR, SAES_OPERATION_MODE, CRYP_OPERATINGMODE_ENCRYPT);
 
   if (hcryp->Init.Algorithm != CRYP_AES_ECB)
   {
@@ -891,7 +919,7 @@ static HAL_StatusTypeDef CRYPEx_KeyEncrypt(CRYP_HandleTypeDef *hcryp, uint32_t T
 
     /* Wait for CCF flag to be raised */
     tickstart = HAL_GetTick();
-    while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->SR, SAES_SR_CCF))
+    while (HAL_IS_BIT_CLR(((SAES_TypeDef *)(hcryp->Instance))->ISR, SAES_ISR_CCF))
     {
       /* Check for the Timeout */
       if (Timeout != HAL_MAX_DELAY)
@@ -977,6 +1005,7 @@ static void CRYPEx_SetKey(CRYP_HandleTypeDef *hcryp, uint32_t KeySize)
 /**
   * @}
   */
+#endif /* USE_HAL_SAES_ONLY */
 
 /**
   * @}
@@ -992,7 +1021,7 @@ static void CRYPEx_SetKey(CRYP_HandleTypeDef *hcryp, uint32_t KeySize)
   * @}
   */
 
-#endif /* (defined (CRYP1) || defined (CRYP2)) */
+#endif /* (defined (CRYP1) || defined (CRYP2) || defined (SAES)) */
 
 /**
   * @}

@@ -30,7 +30,7 @@ extern "C" {
 /** @addtogroup STM32MP2xx_HAL_Driver
   * @{
   */
-#if (defined (CRYP1) || defined (CRYP2))
+#if (defined (CRYP1) || defined (CRYP2) || defined (SAES))
 /** @addtogroup CRYPEx
   * @{
   */
@@ -91,13 +91,18 @@ extern "C" {
 /** @addtogroup CRYPEx_Exported_Functions_Group1
   * @{
   */
-HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, uint32_t *AuthTag, uint32_t Timeout);
-HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, uint32_t *AuthTag, uint32_t Timeout);
-HAL_StatusTypeDef HAL_CRYPEx_EncryptSharedKey(CRYP_HandleTypeDef *hcryp, uint32_t *Key, uint32_t *Output, uint32_t ID,
+HAL_StatusTypeDef HAL_CRYPEx_AESGCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, const uint32_t *pAuthTag,
+                                                    uint32_t Timeout);
+HAL_StatusTypeDef HAL_CRYPEx_AESCCM_GenerateAuthTAG(CRYP_HandleTypeDef *hcryp, const uint32_t *pAuthTag,
+                                                    uint32_t Timeout);
+#if !defined(USE_HAL_SAES_ONLY) || (USE_HAL_SAES_ONLY == 1)
+HAL_StatusTypeDef HAL_CRYPEx_EncryptSharedKey(CRYP_HandleTypeDef *hcryp, uint32_t *Key, uint32_t *Output,
+                                              uint32_t ID, uint32_t Timeout);
+HAL_StatusTypeDef HAL_CRYPEx_DecryptSharedKey(CRYP_HandleTypeDef *hcryp, uint32_t *Key, uint32_t ID,
                                               uint32_t Timeout);
-HAL_StatusTypeDef HAL_CRYPEx_DecryptSharedKey(CRYP_HandleTypeDef *hcryp, uint32_t *Key, uint32_t ID, uint32_t Timeout);
 HAL_StatusTypeDef HAL_CRYPEx_UnwrapKey(CRYP_HandleTypeDef *hcryp, uint32_t *Input, uint32_t Timeout);
 HAL_StatusTypeDef HAL_CRYPEx_WrapKey(CRYP_HandleTypeDef *hcryp, uint32_t *Input, uint32_t *Output, uint32_t Timeout);
+#endif /* USE_HAL_SAES_ONLY */
 
 /**
   * @}
@@ -111,7 +116,7 @@ HAL_StatusTypeDef HAL_CRYPEx_WrapKey(CRYP_HandleTypeDef *hcryp, uint32_t *Input,
 /**
   * @}
   */
-#endif /* (defined (CRYP1) || defined (CRYP2)) */
+#endif /* (defined (CRYP1) || defined (CRYP2) || defined (SAES)) */
 /**
   * @}
   */

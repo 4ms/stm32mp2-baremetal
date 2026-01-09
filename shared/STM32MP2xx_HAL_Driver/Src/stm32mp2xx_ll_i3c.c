@@ -18,8 +18,8 @@
 #if defined(USE_FULL_LL_DRIVER)
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32mp2xx_ll_i3c.h"
 #include "stm32mp2xx_ll_bus.h"
+#include "stm32mp2xx_ll_i3c.h"
 #ifdef  USE_FULL_ASSERT
 #include "stm32_assert.h"
 #else
@@ -72,7 +72,7 @@
   *          - SUCCESS: I3C registers are de-initialized
   *          - ERROR: I3C registers are not de-initialized
   */
-ErrorStatus LL_I3C_DeInit(I3C_TypeDef *I3Cx)
+ErrorStatus LL_I3C_DeInit(const I3C_TypeDef *I3Cx)
 {
   ErrorStatus status = SUCCESS;
 

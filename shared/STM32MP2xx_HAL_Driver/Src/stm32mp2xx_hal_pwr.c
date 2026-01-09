@@ -11,7 +11,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -24,7 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32mp2xx_hal.h"
 
-/** @addtogroup stm32mp2xx_HAL_Driver
+/** @addtogroup STM32MP2xx_HAL_Driver
 
   * @{
   */
@@ -47,7 +47,6 @@
   */
 
 
-
 #define PWR_FLAG_SETTING_DELAY_US  1000U
 /**
   * @}
@@ -58,23 +57,37 @@
   */
 
 /* Private macro -------------------------------------------------------------*/
+/** @defgroup PWR_Private_Macros PWR Private Macros
+  * @brief    PWR Private Macros
+  * @{
+  */
+
 #define WIO_CID_CFG_ADD_OFFSET 0x02u
 #define R_CID_CFG_ADD_OFFSET   0x01u
 #define WKUPCR_ADD_OFFSET      0x01u
 
+/**
+  * @}
+  */
 
 /* Private variable -------------------------------------------------------------*/
+/** @addtogroup PWR_Private_Variables PWR Private Variables
+  * @{
+  */
 #if !defined(CORE_CM0PLUS)
-  uint32_t extiImr2WakeUp[]= {
-      __HAL_WKUP_LINE0_EXTI_MSK,
-      __HAL_WKUP_LINE1_EXTI_MSK,
-      __HAL_WKUP_LINE2_EXTI_MSK,
-      __HAL_WKUP_LINE3_EXTI_MSK,
-      __HAL_WKUP_LINE4_EXTI_MSK,
-      __HAL_WKUP_LINE5_EXTI_MSK
-  };
-#endif
-
+static uint32_t extiImr2WakeUp[] =
+{
+  __HAL_WKUP_LINE0_EXTI_MSK,
+  __HAL_WKUP_LINE1_EXTI_MSK,
+  __HAL_WKUP_LINE2_EXTI_MSK,
+  __HAL_WKUP_LINE3_EXTI_MSK,
+  __HAL_WKUP_LINE4_EXTI_MSK,
+  __HAL_WKUP_LINE5_EXTI_MSK
+};
+#endif /* CORE_CM0PLUS */
+/**
+  * @}
+  */
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -86,9 +99,13 @@ static void KeepCortexSubsystemClockOnSleepEntry(void);
 static void ClearStandbyRequest();
 #if !defined(CORE_CM0PLUS)
 static void SetStandbyRequest(uint8_t STANDBYType);
-#endif
-static void SetRegulatorStopModeIndicator(uint32_t Regulator );
-static void ClearRegulatorStopModeIndicator();
+#endif /* CORE_CM0PLUS */
+static void SetRegulatorStopModeIndicator(uint32_t Regulator);
+static void ClearRegulatorStopModeIndicator(void);
+HAL_StatusTypeDef HAL_PWR_ConfigWioResourceAttributes(uint16_t Resource, uint32_t ResourceAttributes);
+HAL_StatusTypeDef HAL_PWR_GetConfigWioResourceAttributes(uint16_t Resource, uint32_t *pResourceAttributes);
+HAL_StatusTypeDef HAL_PWR_ConfigNonShareableResourceAttributes(uint16_t Resource, uint32_t ResourceAttributes);
+HAL_StatusTypeDef HAL_PWR_GetConfigNonShareableResourceAttributes(uint16_t Resource, uint32_t *pResourceAttributes);
 
 /** @defgroup PWR_Group1 Initialization and de-initialization functions
   *  @brief    Initialization and de-initialization functions
@@ -109,17 +126,18 @@ static void ClearRegulatorStopModeIndicator();
   */
 
 #if !defined(CORE_CM0PLUS)
+#if defined(PWR_BDCR1_DBD3P)
 /**
   * @brief  Enables WRITE access to the backup and D3 domain
   *         In reset state, the RCC_BDCR, PWR_CR2, RTC, and backup registers are
   *         protected against parasitic write access. DBP bit must be set to enable
   *         write access to these.
-  *         access write : Secure priviledge needed + CID filtering
+  *         access write : Secure privilege needed + CID filtering
   * @retval None
   */
 void HAL_PWR_EnableBkUpD3Access(void)
 {
-    SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
+  SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 }
 
 /**
@@ -129,9 +147,31 @@ void HAL_PWR_EnableBkUpD3Access(void)
   */
 void HAL_PWR_DisableBkUpD3Access(void)
 {
-    CLEAR_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
+  CLEAR_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 }
 
+#endif /* defined(PWR_BDCR1_DBD3P) */
+
+#if defined(PWR_BDCR_DBP)
+/**
+  * @brief  Enables WRITE access to the backup domain
+  *         access write : Secure privilege needed + CID filtering
+  * @retval None
+  */
+void HAL_PWR_EnableBkUpAccess(void)
+{
+  SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
+}
+/**
+  * @brief  Disables WRITE access to the backup domain
+  *         access write : Secure privilege needed + CID filtering
+  * @retval None
+  */
+void HAL_PWR_DisableBkUpAccess(void)
+{
+  CLEAR_BIT(PWR->BDCR, PWR_BDCR_DBP);
+}
+#endif /* defined(PWR_BDCR_DBP) */
 #else
 /**
   * @brief  Enables WRITE access to the backup domain
@@ -142,7 +182,7 @@ void HAL_PWR_DisableBkUpD3Access(void)
   */
 void HAL_PWR_EnableBkUpAccess(void)
 {
-    SET_BIT(PWR->BDCR2, PWR_BDCR2_DBP);
+  SET_BIT(PWR->BDCR2, PWR_BDCR2_DBP);
 }
 /**
   * @brief  Disables WRITE access to the backup domain
@@ -151,8 +191,9 @@ void HAL_PWR_EnableBkUpAccess(void)
   */
 void HAL_PWR_DisableBkUpAccess(void)
 {
-    CLEAR_BIT(PWR->BDCR2, PWR_BDCR2_DBP);
+  CLEAR_BIT(PWR->BDCR2, PWR_BDCR2_DBP);
 }
+
 #endif /*!defined(CORE_CM0PLUS)*/
 /**
   * @}
@@ -272,7 +313,7 @@ void HAL_PWR_DisableBkUpAccess(void)
   *         detection level.
   * @retval None
   */
-void HAL_PWR_ConfigPVD(PWR_PVDTypeDef *sConfigPVD)
+void HAL_PWR_ConfigPVD(const PWR_PVDTypeDef *sConfigPVD)
 {
   /* Check the parameters */
   assert_param(IS_PWR_PVD_MODE(sConfigPVD->Mode));
@@ -288,17 +329,17 @@ void HAL_PWR_ConfigPVD(PWR_PVDTypeDef *sConfigPVD)
   }
 
   /* Configure the edge */
-  if ((sConfigPVD->Mode ) == PWR_PVD_MODE_IT_RISING)
+  if ((sConfigPVD->Mode) == PWR_PVD_MODE_IT_RISING)
   {
     __HAL_PWR_PVD_EXTI_ENABLE_RISING_EDGE();
   }
 
-  if ((sConfigPVD->Mode ) == PWR_PVD_MODE_IT_FALLING)
+  if ((sConfigPVD->Mode) == PWR_PVD_MODE_IT_FALLING)
   {
     __HAL_PWR_PVD_EXTI_ENABLE_FALLING_EDGE();
   }
 
-  if ((sConfigPVD->Mode ) == PWR_PVD_MODE_IT_RISING_FALLING)
+  if ((sConfigPVD->Mode) == PWR_PVD_MODE_IT_RISING_FALLING)
   {
     __HAL_PWR_PVD_EXTI_ENABLE_RISING_FALLING_EDGE();
   }
@@ -326,7 +367,8 @@ void HAL_PWR_DisablePVD(void)
 
 /**
   * @brief  Indicate whether the VDD voltage level is between, above or below the threshold.
-  * @retval VDD level which can be PWR_NO_VDD_MEASUREMENT_AVAILABLE / PWR_VDD_BELOW_THRESHOLD / PWR_VDD_ABOVE_OR_EQUAL_THRESHOLD
+  * @retval VDD level which can be PWR_NO_VDD_MEASUREMENT_AVAILABLE / PWR_VDD_BELOW_THRESHOLD /
+  *         PWR_VDD_ABOVE_OR_EQUAL_THRESHOLD
   */
 uint32_t HAL_PWR_GetPVDRange(void)
 {
@@ -338,7 +380,7 @@ uint32_t HAL_PWR_GetPVDRange(void)
     return PWR_NO_VDD_MEASUREMENT_AVAILABLE;
   }
 
-   /* check VDDcore level */
+  /* check VDDcore level */
   if ((regValue & PWR_CR3_PVDO) == PWR_CR3_PVDO)
   {
     return PWR_VDD_BELOW_THRESHOLD;
@@ -385,11 +427,12 @@ __weak void HAL_PWR_PVD_LowerCallback(void)
             the HAL_PWR_PVD_LowerCallback could be implemented in the user file
    */
 }
-#endif /*#if defined(CORE_CM33)||defined(CORE_CA35)*/
+#endif /* defined(CORE_CM33)||defined(CORE_CA35) */
 
-
+#if defined(PWR_D3WKUPENR_TAMP_WKUPEN_D3)
 #if !defined(CORE_CM0PLUS)
-/*Below all fct to manage D3 wake-up from VBAT mode (ePOS) thru non secure TAMPERs, only M33/A35 can access  PWR register for this configuration*/
+/*Below all fct to manage D3 wake-up from VBAT mode (ePOS) thru non secure TAMPERs, only M33/A35 can access
+  PWR register for this configuration*/
 
 /**
   * @brief Enable D3 wake-up from TAMPERs event when system is in VBAT mode, mandatory if ePOS mode targeted
@@ -415,17 +458,16 @@ void HAL_PWR_DisableD3WakeUpTamper(void)
 
 /**
   * @brief return true if D3 can be wakeup from VBat mode thru  TAMPERs event
-  * @param none
   * @retval None
   */
 uint32_t HAL_PWR_IsTamperD3WakeUpCapable(void)
 {
-  return ((PWR->D3WKUPENR&PWR_D3WKUPENR_TAMP_WKUPEN_D3)==PWR_D3WKUPENR_TAMP_WKUPEN_D3);
+  return ((PWR->D3WKUPENR & PWR_D3WKUPENR_TAMP_WKUPEN_D3) == PWR_D3WKUPENR_TAMP_WKUPEN_D3) ? 1U : 0U;
 }
 
 #endif /*if !defined(CORE_CM0PLUS)*/
+#endif /* defined(PWR_D3WKUPENR_TAMP_WKUPEN_D3) */
 /* end of fct to manage D3 wake-up from Vbat mode thru non-secure TAMPERs*/
-
 
 
 #if !defined(CORE_CM0PLUS)
@@ -436,47 +478,50 @@ uint32_t HAL_PWR_IsTamperD3WakeUpCapable(void)
   * @note Enable wake up from standby mechanism with CPU#i_WAKEUP_PIN_IRQn generation
   * @note wakeup pin from stand-by are one of the 6 wakeup line of PWR IP
   *
-  * @note Note that handling of interruption (nvic/gic enable, priority setting callback) is out of scope of this function and
-  * @note is under caller responsibility BUT as this interruption may wake-up from standby, user shall take care that event is not lost
-  * @note when GIC/NVIC is powered again (GIC/NVIC  shall be level sensitive ). For same standby exit purpose, this function does not
-  * @note clear PWR WAKEUP line status, otherwise no wakeup event detected at CPU level on   standby exit.
-  * @param WakeUpPinEdge: Specifies on which edge  of Wake-Up pin detection is done
-  *                        This parameter can be rising edge   or  falling edge  :
-  * @arg                          PWR_WAKEUP_HIGH
-  * @arg                          PWR_WAKEUP_LOW
-  * @param WakeUpPinConfiguration : Specifies which pull configuration to set on  Wake-Up pin
-  *                        This parameter can be no pull edge   or  pull up or  pull down :
-  * @arg                           PWR_WAKEUP_NOPULL
-  * @arg                           PWR_WAKEUP_PULLUP
-  * @arg                           PWR_WAKEUP_PULLDOWN
-  * @param WakeUpPinx: Specifies the Power Wake-Up pin.
-  *         This parameter can be one of the following values:
-  *           @arg PWR_WAKEUP_PIN_ID1
-  *           @arg PWR_WAKEUP_PIN_ID2
-  *           @arg PWR_WAKEUP_PIN_ID3
-  *           @arg PWR_WAKEUP_PIN_ID4
-  *           @arg PWR_WAKEUP_PIN_ID5
-  *           @arg PWR_WAKEUP_PIN_ID6
-  * @to keep compatibility with legacy API, this 3 paramaters are gathered into one uint32_t polarity param
+  * @note Note that handling of interruption (nvic/gic enable, priority setting callback) is out of scope of this
+  * @note function and is under caller responsibility BUT as this interruption may wake-up from standby,
+  * @note user shall take care that event is not lost
+  * @note when GIC/NVIC is powered again (GIC/NVIC  shall be level sensitive ). For same standby exit purpose,
+  * @note this function does not clear PWR WAKEUP line status, otherwise no wakeup event detected at
+  * @note CPU level on standby exit.
+  * @param WakeUpPinPolarity: Specifies on which edge  of Wake-Up pin detection is done
+  *                           @arg PWR_WAKEUP_HIGH
+  *                           @arg PWR_WAKEUP_LOW
+  *                           @arg Specifies which pull configuration to set on  Wake-Up pin
+  *                                 This parameter can be no pull edge   or  pull up or  pull down :
+  *                           @arg  PWR_WAKEUP_NOPULL
+  *                           @arg  PWR_WAKEUP_PULLUP
+  *                           @arg  PWR_WAKEUP_PULLDOWN
+  *                           @arg  Specifies the Power Wake-Up pin.This parameter can be one of the following values:
+  *                           @arg PWR_WAKEUP_PIN_ID1
+  *                           @arg PWR_WAKEUP_PIN_ID2
+  *                           @arg PWR_WAKEUP_PIN_ID3
+  *                           @arg PWR_WAKEUP_PIN_ID4
+  *                           @arg PWR_WAKEUP_PIN_ID5
+  *                           @arg PWR_WAKEUP_PIN_ID6
+  * to keep compatibility with legacy API, this 3 parameters are gathered into one uint32_t polarity param
   * @retval None
   */
 void HAL_PWR_EnableWakeUpPin(uint32_t WakeUpPinPolarity)
 {
   __IO uint32_t *regaddr;
-  uint32_t WakeUpPinEdge = (WakeUpPinPolarity & PWR_WAKEUP_EDGE_Mask) >> PWR_WAKEUP_EDGE_Pos;
-  uint32_t WakeUpPinConfiguration = (WakeUpPinPolarity & PWR_WAKEUP_PULL_Mask) >> PWR_WAKEUP_PULL_Pos;
-  uint32_t WakeUpPinx = (WakeUpPinPolarity & PWR_WAKEUP_PIN_ID_Mask) >> PWR_WAKEUP_PIN_ID_Pos;
+  uint32_t WakeUpPinEdge = ((WakeUpPinPolarity & PWR_WAKEUP_EDGE_MASK) >> PWR_WAKEUP_EDGE_POS);
+  uint32_t WakeUpPinConfiguration = ((WakeUpPinPolarity & PWR_WAKEUP_PULL_MASK) >> PWR_WAKEUP_PULL_POS);
+  uint32_t WakeUpPinx = ((WakeUpPinPolarity & PWR_WAKEUP_PIN_ID_MASK) >> PWR_WAKEUP_PIN_ID_POS);
 
   assert_param(IS_PWR_WAKEUP_PIN_ID(WakeUpPinx));
   assert_param(IS_PWR_WAKEUP_PIN_CONFIG(WakeUpPinConfiguration));
   assert_param(IS_PWR_WAKEUP_PIN_EDGE(WakeUpPinEdge));
 
   /*setting at PWR IP level */
-  regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET*WakeUpPinx);                                       /* Selected register corresponding to input wakeup line*/
-  CLEAR_BIT(*regaddr, PWR_CPU_TO_WAKE_UP);                                                        /* Disable WKUP pinx interruption on current CPU */
-  MODIFY_REG(*regaddr, PWR_WKUPCR1_WKUPP,WakeUpPinEdge<<PWR_WKUPCR1_WKUPP_Pos);                   /* Set edge  configuration for wake-up pin*/
-  MODIFY_REG(*regaddr, PWR_WKUPCR1_WKUPPUPD,WakeUpPinConfiguration<<PWR_WKUPCR1_WKUPPUPD_Pos);    /* Set pull  configuration for wake-up pin*/
-  SET_BIT(*regaddr, PWR_CPU_TO_WAKE_UP);                                                          /* Enable  WKUP pinx interruption on current CPU */
+  regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET * WakeUpPinx); /* Selected register corresponding to input wakeup line*/
+  CLEAR_BIT(*regaddr, PWR_CPU_TO_WAKE_UP);                    /* Disable WKUP pinx interruption on current CPU */
+  /* Set edge  configuration for wake-up pin*/
+  MODIFY_REG(*regaddr, PWR_WKUPCR1_WKUPP, WakeUpPinEdge << PWR_WKUPCR1_WKUPP_Pos);
+  /* Set pull  configuration for wake-up pin*/
+  MODIFY_REG(*regaddr, PWR_WKUPCR1_WKUPPUPD, WakeUpPinConfiguration << PWR_WKUPCR1_WKUPPUPD_Pos);
+
+  SET_BIT(*regaddr, PWR_CPU_TO_WAKE_UP); /* Enable  WKUP pinx interruption on current CPU */
 }
 #endif /*!defined(CORE_CM0PLUS)*/
 
@@ -501,11 +546,10 @@ void HAL_PWR_DisableWakeUpPin(uint32_t WakeUpPinx)
 
   assert_param(IS_PWR_WAKEUP_PIN_ID(WakeUpPinx));
   /*Disable  at EXTI IP level */
-  regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET*WakeUpPinx);        /*selected register corresponding to input wakeup line*/
+  regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET * WakeUpPinx); /*selected register corresponding to input wakeup line*/
   CLEAR_BIT(*regaddr, PWR_CPU_TO_WAKE_UP);
 }
 #endif /*!defined(CORE_CM0PLUS)*/
-
 
 
 #if !defined(CORE_CM0PLUS)
@@ -524,11 +568,12 @@ void HAL_PWR_DisableWakeUpPin(uint32_t WakeUpPinx)
   */
 uint32_t HAL_PWR_IsWakeUpCapable(uint32_t WakeUpPinx)
 {
-  __IO uint32_t *regaddr;
+  const __IO uint32_t *regaddr;
 
   assert_param(IS_PWR_WAKEUP_PIN_ID(WakeUpPinx));
-  regaddr = &PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET*WakeUpPinx);        /*selected register corresponding to input wakeup line*/
-  return ((*regaddr & PWR_CPU_TO_WAKE_UP) == PWR_CPU_TO_WAKE_UP);
+  /*selected register corresponding to input wakeup line*/
+  regaddr = (__IO uint32_t *)(&PWR->WKUPCR1 + (WKUPCR_ADD_OFFSET * WakeUpPinx));
+  return ((*regaddr & PWR_CPU_TO_WAKE_UP) == PWR_CPU_TO_WAKE_UP) ? 1U : 0U;
 }
 #endif /*!defined(CORE_CM0PLUS)*/
 
@@ -537,8 +582,8 @@ uint32_t HAL_PWR_IsWakeUpCapable(uint32_t WakeUpPinx)
 /**
   * @brief unmask at EXTI level and for current CPU, EXTI_IRQn interruption associated to  wakeup pin  input parameter.
   *
-  * @note Note that handling of interruption (nvic/gic enable, priority setting callback) is out of scope of this function and
-  * @note is under caller responsibility
+  * @note Note that handling of interruption (nvic/gic enable, priority setting callback) is out of scope
+  * @note of this function and is under caller responsibility
   * @note connected to EXTI2 in direct event type B
   * @note when current CPU is A35 or M33 , wakeup event are one of 6 wakeup-line of PWR IP
   * @note connected to EXTI1 in direct event type B
@@ -605,113 +650,106 @@ uint32_t HAL_PWR_IsWakeUpExtiCapable(uint32_t WakeUpPinx)
 #endif /*!defined(CORE_CM0PLUS)*/
 
 
-
 /**
   * @brief Return PWR state of a CPU
-  * @param None
   * @retval return PWR_CPU_CRESET,PWR_CPU_CRUN,PWR_CPU_CSLEEP,PWR_CPU_CSTOP
   */
 uint32_t HAL_PWR_CPU1State(void)
 {
-  return ((PWR->CPU1D1SR & PWR_CPU1D1SR_CSTATE_Msk) >> PWR_CPU1D1SR_CSTATE_Pos );
+  return ((PWR->CPU1D1SR & PWR_CPU1D1SR_CSTATE_Msk) >> PWR_CPU1D1SR_CSTATE_Pos);
 }
 uint32_t HAL_PWR_CPU2State(void)
 {
-  return ((PWR->CPU2D2SR & PWR_CPU2D2SR_CSTATE_Msk) >> PWR_CPU2D2SR_CSTATE_Pos );
+  return ((PWR->CPU2D2SR & PWR_CPU2D2SR_CSTATE_Msk) >> PWR_CPU2D2SR_CSTATE_Pos);
 }
+#if defined(PWR_CPU3D3SR_CSTATE)
 uint32_t HAL_PWR_CPU3State(void)
 {
-  return ((PWR->CPU3D3SR & PWR_CPU3D3SR_CSTATE_Msk) >> PWR_CPU3D3SR_CSTATE_Pos );
+  return ((PWR->CPU3D3SR & PWR_CPU3D3SR_CSTATE_Msk) >> PWR_CPU3D3SR_CSTATE_Pos);
 }
-
+#endif /* defined(PWR_CPU3D3SR_CSTATE) */
 /**
   * @brief Return PWR state of a power D1 domain
-  * @param None
   * @retval return PWR_D1_DRUN, PWR_D1_DSTOP1, PWR_D1_DSTOP2, PWR_D1_DSTOP3, PWR_D1_DSTANDBY
   */
 uint32_t HAL_PWR_D1State(void)
 {
-  return ((PWR->CPU1D1SR & PWR_CPU1D1SR_DSTATE_Msk) >> PWR_CPU1D1SR_DSTATE_Pos );
+  return ((PWR->CPU1D1SR & PWR_CPU1D1SR_DSTATE_Msk) >> PWR_CPU1D1SR_DSTATE_Pos);
 }
 
 /**
   * @brief Return PWR state of a power D2 domain
-  * @param None
   * @retval return PWR_D2_RUN, PWR_D2_STOP, PWR_D2_LP_STOP, PWR_D2_LPLVSTOP2, PWR_D2_STANDBY, PWR_D2_VBAT
   */
 uint32_t HAL_PWR_D2State(void)
 {
-  return ((PWR->CPU2D2SR & PWR_CPU2D2SR_DSTATE_Msk) >> PWR_CPU2D2SR_DSTATE_Pos );
+  return ((PWR->CPU2D2SR & PWR_CPU2D2SR_DSTATE_Msk) >> PWR_CPU2D2SR_DSTATE_Pos);
 }
 
+#if defined(PWR_CPU3D3SR_DSTATE)
 /**
   * @brief Return PWR state of a power D3 domain
-  * @param None
   * @retval return PWR_D3_SRUN1, PWR_D3_SRUN2, PWR_D3_SRUN3, PWR_D3_SSTOP1, PWR_D3_SSTOP2, PWR_D3_SSTANDBY
   */
 uint32_t HAL_PWR_D3State(void)
 {
-  return ((PWR->CPU3D3SR & PWR_CPU3D3SR_DSTATE_Msk) >> PWR_CPU3D3SR_DSTATE_Pos );
+  return ((PWR->CPU3D3SR & PWR_CPU3D3SR_DSTATE_Msk) >> PWR_CPU3D3SR_DSTATE_Pos);
 }
+#endif /* defined(PWR_CPU3D3SR_DSTATE) */
 
 /**
   * @brief Return true if D#i domain has been in idle mode since last reset
-  * @param None
   * @retval return 0 if answer is false, not 0 if answer is true
   */
 uint32_t HAL_PWR_HasD1BeenInStandby(void)
 {
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D1));
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D1)) ? 1U : 0U;
 }
 
 uint32_t HAL_PWR_HasD2BeenInStandby(void)
 {
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D2));
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D2)) ? 1U : 0U;
 }
 
-uint32_t HAL_PWR_HasD3BeenInStandby (void)
+uint32_t HAL_PWR_HasD3BeenInStandby(void)
 {
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D3));
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D3)) ? 1U : 0U;
 }
 
 /**
   * @brief Return true if system wakes-up from standby (a reset occurs for system wake-up)
-  * @param None
   * @retval return 0 if answer is false, not 0 if answer is true
   */
 uint32_t HAL_PWR_HasSystemBeenInStandby(void)
 {
 #if defined(CORE_CA35) || defined(CORE_CM33)
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_SB));
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_SB)) ? 1U : 0U;
 #else
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D3));
-#endif
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_SB_D3));
+#endif /* defined(CORE_CA35) || defined(CORE_CM33) */
 }
 
 
 /**
   * @brief Return true if system  was in VBAT mode
-  * @param None
   * @retval return 0 if answer is false, not 0 if answer is true
   */
 uint32_t HAL_PWR_HasSystemBeenInVBAT(void)
 {
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_VB));
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_VB)) ? 1U : 0U;
 }
 
 
 #if defined(CORE_CM33)||defined(CORE_CA35)
 /**
   * @brief Return true if system wakes-up from cstop
-  * @param None
   * @retval return 0 if answer is false, not 0 if answer is true
   */
 uint32_t HAL_PWR_HasSystemBeenInStop(void)
 {
-  return(__HAL_PWR_GET_FLAG(PWR_FLAG_STOP));
+  return (__HAL_PWR_GET_FLAG(PWR_FLAG_STOP)) ? 1U : 0U;
 }
-#endif /*#if defined(CORE_CM33)||defined(CORE_CA35)*/
-
+#endif /* defined(CORE_CM33)||defined(CORE_CA35) */
 
 
 /**
@@ -725,7 +763,8 @@ uint32_t HAL_PWR_HasSystemBeenInStop(void)
   *
   * @note In Sleep mode, the systick can be  stopped to avoid exit from this mode with
   *       systick interrupt when used as time base for Timeout
-  *
+
+  * @param Regulator : unused variable but to keep compatibility with legacy API
   * @param SLEEPEntry: Specifies if SLEEP mode in entered with WFI or WFE instruction.
   *          This parameter can be one of the following values:
   *            @arg PWR_SLEEPENTRY_WFI: enter SLEEP mode with WFI instruction
@@ -807,9 +846,13 @@ void HAL_PWR_EnterSTOPMode(uint32_t Regulator, uint8_t STOPEntry)
     __WFE();
     __WFE();
   }
-
-  /*remove any low power indication for regulator when CPU is in stop mode*/
-  /*not mandatory as low power PWR output signal are not active when system is in RUN mode, but cleaner  to clear these bit inside PWR register*/
+  else
+  {
+    /* do nothing */
+  }
+  /*remove any low power indication for regulator when CPU is in stop mode
+    not mandatory as low power PWR output signal are not active when system is in RUN mode,
+    but cleaner  to clear these bit inside PWR register*/
   ClearRegulatorStopModeIndicator();
 
   /* remove 'clock gating on sleep entry' request  */
@@ -842,17 +885,18 @@ void HAL_PWR_EnterSTANDBYMode(uint8_t STANDBYType)
   /* This option is used to ensure that store operations are completed */
 #if defined ( __CC_ARM)
   __force_stores();
-#endif
+#endif /* __CC_ARM */
   /* Request Wait For Interrupt */
   __WFI();
 
-/*
-code below is never reached in case STD-BY is granted by PWR but
-only in case of wake-up from sleep/stop (case STD-BY not granted due to other cores activities
-*/
+  /*
+  code below is never reached in case STD-BY is granted by PWR but
+  only in case of wake-up from sleep/stop (case STD-BY not granted due to other cores activities
+  */
 
   /*remove CPU regulator from power saving state*/
-  /*not mandatory as low power PWR output signal are not active when system is in RUN mode, but cleaner  to clear these bit inside PWR register*/
+  /*not mandatory as low power PWR output signal are not active when system is in RUN mode,
+    but cleaner  to clear these bit inside PWR register*/
   ClearRegulatorStopModeIndicator();
 
   /* remove 'clock gating on sleep entry' request  */
@@ -883,7 +927,7 @@ void HAL_PWR_EnableSleepOnExit(void)
   /*insure standby request not set*/
   ClearStandbyRequest();
 }
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 
 /**
   * @brief Disables Sleep-On-Exit feature when returning from Handler mode to Thread mode.
@@ -896,7 +940,7 @@ void HAL_PWR_DisableSleepOnExit(void)
   /* Clear SLEEPONEXIT bit of Cortex System Control Register */
   CLEAR_BIT(SCB->SCR, ((uint32_t)SCB_SCR_SLEEPONEXIT_Msk));
 }
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 
 /**
   * @brief Indicates Stop-On-Exit when returning from Handler mode to Thread mode.
@@ -918,7 +962,7 @@ void HAL_PWR_EnableStopOnExit(uint32_t Regulator)
   /*insure standby request not set*/
   ClearStandbyRequest();
 }
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 
 /**
   * @brief Disables stop-On-Exit feature when returning from Handler mode to Thread mode.
@@ -933,7 +977,8 @@ void HAL_PWR_DisableStopOnExit(void)
   /* clear automatic cortex subsystem clock gating on sleep entry*/
   KeepCortexSubsystemClockOnSleepEntry();
   /*remove any low power indication for regulator when CPU is in stop mode*/
-  /*not mandatory as low power PWR output signal are not active when system is in RUN mode, but cleaner  to clear these bit inside PWR register*/
+  /*not mandatory as low power PWR output signal are not active when system is in RUN mode,
+    but cleaner  to clear these bit inside PWR register*/
   ClearRegulatorStopModeIndicator();
 }
 #endif /*(CORE_CM33)||defined(CORE_CM0PLUS)*/
@@ -950,19 +995,19 @@ void SetRegulatorStopModeIndicator(uint32_t Regulator)
   UNUSED(Regulator);
 #else /* CORE_CM0PLUS */
 #ifdef CORE_CA35
-  #define LP_LV_Msk (PWR_CPU1CR_LPDS_D1_Msk|PWR_CPU1CR_LVDS_D1_Msk)
-  #define REGU_SHIFT PWR_CPU1CR_LPDS_D1_Pos
+#define LP_LV_SET_MSK (PWR_CPU1CR_LPDS_D1_Msk|PWR_CPU1CR_LVDS_D1_Msk)
+#define REGU_SHIFT_SET PWR_CPU1CR_LPDS_D1_Pos
   __IO uint32_t *regaddr = &PWR->CPU1CR;
 #endif /*CORE_CA35*/
 #ifdef CORE_CM33
-  #define LP_LV_Msk (PWR_CPU2CR_LPDS_D2_Msk|PWR_CPU2CR_LVDS_D2_Msk)
-  #define REGU_SHIFT PWR_CPU2CR_LPDS_D2_Pos
+#define LP_LV_SET_MSK (PWR_CPU2CR_LPDS_D2_Msk|PWR_CPU2CR_LVDS_D2_Msk)
+#define REGU_SHIFT_SET PWR_CPU2CR_LPDS_D2_Pos
   __IO uint32_t *regaddr = &PWR->CPU2CR;
 #endif /*CORE_CM33*/
 
   /* Check  parameter */
   assert_param(IS_PWR_STOP_MODE_REGULATOR(Regulator));
-  *regaddr = ((*regaddr & (~LP_LV_Msk)) | (Regulator<<REGU_SHIFT));
+  *regaddr = ((*regaddr & (~LP_LV_SET_MSK)) | (Regulator << REGU_SHIFT_SET));
 #endif /* CORE_CM0PLUS */
 }
 
@@ -975,15 +1020,15 @@ void SetRegulatorStopModeIndicator(uint32_t Regulator)
 void ClearRegulatorStopModeIndicator()
 {
 #ifdef CORE_CA35
-  #define LP_LV_Msk (PWR_CPU1CR_LPDS_D1_Msk|PWR_CPU1CR_LVDS_D1_Msk)
-  #define REGU_SHIFT PWR_CPU1CR_LPDS_D1_Pos
-  MODIFY_REG(PWR->CPU1CR, LP_LV_Msk, PWR_REGULATOR_LP_OFF<<REGU_SHIFT);
-#endif
+#define LP_LV_CLR_MSK (PWR_CPU1CR_LPDS_D1_Msk|PWR_CPU1CR_LVDS_D1_Msk)
+#define REGU_SHIFT_CLR PWR_CPU1CR_LPDS_D1_Pos
+  MODIFY_REG(PWR->CPU1CR, LP_LV_CLR_MSK, PWR_REGULATOR_LP_OFF << REGU_SHIFT_CLR);
+#endif /*  CORE_CA35 */
 #ifdef CORE_CM33
-  #define LP_LV_Msk (PWR_CPU2CR_LPDS_D2_Msk|PWR_CPU2CR_LVDS_D2_Msk)
-  #define REGU_SHIFT PWR_CPU2CR_LPDS_D2_Pos
-  MODIFY_REG(PWR->CPU2CR, LP_LV_Msk, PWR_REGULATOR_LP_OFF<<REGU_SHIFT);
-#endif
+#define LP_LV_CLR_MSK (PWR_CPU2CR_LPDS_D2_Msk|PWR_CPU2CR_LVDS_D2_Msk)
+#define REGU_SHIFT_CLR PWR_CPU2CR_LPDS_D2_Pos
+  MODIFY_REG(PWR->CPU2CR, LP_LV_CLR_MSK, PWR_REGULATOR_LP_OFF << REGU_SHIFT_CLR);
+#endif /* CORE_CM33 */
 }
 
 
@@ -995,10 +1040,10 @@ void GateCortexSubsystemClockOnSleepEntry(void)
 {
 #if defined(CORE_CM33)||defined(CORE_CM0PLUS)
   /* Set DEEP SLEEP bit of Cortex System Control Register */
-  SET_BIT(SCB->SCR,SCB_SCR_SLEEPDEEP_Msk);
+  SET_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP_Msk);
 #else
   __HAL_RCC_ALLOW_CSTOP();
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 }
 
 
@@ -1006,13 +1051,14 @@ void GateCortexSubsystemClockOnSleepEntry(void)
   * @brief forbid  gating of cortex subsystem clock (e.g. GIC/NVIC, cache, ..) when CPU enters sleep mode
   * @retval None
   */
-void KeepCortexSubsystemClockOnSleepEntry(void){
+void KeepCortexSubsystemClockOnSleepEntry(void)
+{
 #if defined(CORE_CM33)||defined(CORE_CM0PLUS)
   /* clear DEEP SLEEP bit of Cortex System Control Register */
-  CLEAR_BIT(SCB->SCR,SCB_SCR_SLEEPDEEP_Msk);
+  CLEAR_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP_Msk);
 #else
   __HAL_RCC_PREVENT_CSTOP();
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 }
 
 /**
@@ -1024,12 +1070,16 @@ void ClearStandbyRequest(void)
 #ifdef CORE_CA35
   CLEAR_BIT(PWR->CPU1CR, SYSTEM_STANDBY_REQUEST);
   CLEAR_BIT(PWR->CPU1CR, DOMAIN2_STANDBY_REQUEST);
+#if defined(PWR_D3CR_PDDS_D3)
   CLEAR_BIT(PWR->D3CR, PWR_D3CR_PDDS_D3);
-#endif
+#endif /* defined(PWR_D3CR_PDDS_D3) */
+#endif /* CORE_CA35 */
 #ifdef CORE_CM33
   CLEAR_BIT(PWR->CPU2CR, SYSTEM_STANDBY_REQUEST);
+#if defined(PWR_D3CR_PDDS_D3)
   CLEAR_BIT(PWR->D3CR, PWR_D3CR_PDDS_D3);
-#endif
+#endif /* defined(PWR_D3CR_PDDS_D3) */
+#endif /* CORE_CM33 */
 }
 
 
@@ -1048,22 +1098,24 @@ void SetStandbyRequest(uint8_t STANDBYType)
 #ifdef CORE_CA35
   SET_BIT(PWR->CPU1CR, SYSTEM_STANDBY_REQUEST);
   SET_BIT(PWR->CPU1CR, DOMAIN2_STANDBY_REQUEST);   /*MPU power constraint on D2 domain*/
-#endif
+#endif /* CORE_CA35 */
 #ifdef CORE_CM33
   SET_BIT(PWR->CPU2CR, SYSTEM_STANDBY_REQUEST);
-#endif
+#endif /* CORE_CM33 */
+#if defined(PWR_D3CR_PDDS_D3)
   if (STANDBYType == PWR_STANDBY_2)
-  /*if standby2 is requested, CPU shall set D3 domain standby authorization*/
+    /*if standby2 is requested, CPU shall set D3 domain standby authorization*/
   {
     SET_BIT(PWR->D3CR, PWR_D3CR_PDDS_D3);
   }
+#endif /* defined(PWR_D3CR_PDDS_D3) */
 }
 #endif /*defined(CORE_CM33)||defined(CORE_CA35)*/
 
 /**
   * @brief Enables CORTEX SEVONPEND bit.
   * @note Sets SEVONPEND bit of SCR register. When this bit is set, pending
-  * @interruptions (even if interruption disable) can wakeup processor (cortexM) from WFE
+  * interruptions (even if interruption disable) can wakeup processor (cortexM) from WFE
   * @retval None
   */
 #if defined(CORE_CM33)||defined(CORE_CM0PLUS)
@@ -1072,12 +1124,12 @@ void HAL_PWR_EnableSEVOnPend(void)
   /* Set SEVONPEND bit of Cortex System Control Register */
   SET_BIT(SCB->SCR, ((uint32_t)SCB_SCR_SEVONPEND_Msk));
 }
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 
 /**
   * @brief Disables CORTEX SEVONPEND bit.
   * @note Clears SEVONPEND bit of SCR register. When this bit is clear, pending
-  * @interruptions (even if interruption disable) cannot wakeup processor (cortexM) from WFE
+  * interruptions (even if interruption disable) cannot wakeup processor (cortexM) from WFE
   * @retval None
   */
 #if defined(CORE_CM33)||defined(CORE_CM0PLUS)
@@ -1086,13 +1138,13 @@ void HAL_PWR_DisableSEVOnPend(void)
   /* Clear SEVONPEND bit of Cortex System Control Register */
   CLEAR_BIT(SCB->SCR, ((uint32_t)SCB_SCR_SEVONPEND_Msk));
 }
-#endif
+#endif /* defined(CORE_CM33)||defined(CORE_CM0PLUS) */
 
 /**
   * @brief  Configure RIF attribute of a WIO pin bitmap.
   *         Available RIF attributes are CID, security and privilege protection.
-  *         RIF attribut is applied on all pins of input param bitmap.
-  * @note   If no CID attribut provide, CID filtering is disabled.
+  *         RIF attribute is applied on all pins of input param bitmap.
+  * @note   If no CID attribute provide, CID filtering is disabled.
   * @param  Resource : wake-up io pin bitmap.
   * @param  ResourceAttributes: RIF (CID/secure/privilege) attributes.
 
@@ -1102,7 +1154,7 @@ void HAL_PWR_DisableSEVOnPend(void)
 HAL_StatusTypeDef HAL_PWR_ConfigWioResourceAttributes(uint16_t Resource, uint32_t ResourceAttributes)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent = 0x00;
+  uint32_t iocurrent;
   __IO uint32_t *regaddr;
 
   /* Check the parameters */
@@ -1110,16 +1162,16 @@ HAL_StatusTypeDef HAL_PWR_ConfigWioResourceAttributes(uint16_t Resource, uint32_
   assert_param(IS_WIO_PIN_ATTRIBUTES(ResourceAttributes));
 
   /* Configure WIO pin(s) */
-  while (((Resource >>WIO_RESOURCE_Pos) >> position) != 0U)
+  while (((Resource >> WIO_RESOURCE_POS) >> position) != 0U)
   {
     /* Get current io position */
-    iocurrent = (Resource >>WIO_RESOURCE_Pos) & (1U << position);
-    if(iocurrent)
+    iocurrent = ((uint32_t)Resource >> WIO_RESOURCE_POS) & (1UL << position);
+    if (iocurrent != 0U)
     {
-    #if defined (CORTEX_IN_SECURE_STATE)
+#if defined (CORTEX_IN_SECURE_STATE)
       if ((ResourceAttributes & WIO_PIN_ATTR_SEC_SELECT) == WIO_PIN_ATTR_SEC_SELECT)
       {
-      /* Configure secure/non-secure attribute */
+        /* Configure secure/non-secure attribute */
         if ((ResourceAttributes & WIO_PIN_SEC) == WIO_PIN_SEC)
         {
           PWR->WIOSECCFGR |= iocurrent;
@@ -1129,10 +1181,10 @@ HAL_StatusTypeDef HAL_PWR_ConfigWioResourceAttributes(uint16_t Resource, uint32_
           PWR->WIOSECCFGR &= (~iocurrent);
         }
       }
-    #endif
+#endif /* CORTEX_IN_SECURE_STATE */
       if ((ResourceAttributes & WIO_PIN_ATTR_PRIV_SELECT) == WIO_PIN_ATTR_PRIV_SELECT)
       {
-      /* Configure privilege/non-privilege attribute */
+        /* Configure privilege/non-privilege attribute */
         if ((ResourceAttributes & WIO_PIN_PRIV) == WIO_PIN_PRIV)
         {
           PWR->WIOPRIVCFGR |= iocurrent;
@@ -1142,20 +1194,24 @@ HAL_StatusTypeDef HAL_PWR_ConfigWioResourceAttributes(uint16_t Resource, uint32_
           PWR->WIOPRIVCFGR &= (~iocurrent);
         }
       }
-      regaddr = &PWR->WIO1CIDCFGR + (WIO_CID_CFG_ADD_OFFSET*position);  /*selected regsiter corresponding to current WIO resource*/
+      /* selected register corresponding to current WIO resource */
+      regaddr = &PWR->WIO1CIDCFGR + (WIO_CID_CFG_ADD_OFFSET * position);
 
-      *regaddr = 0;  /*remove any CID filtering on selected pin*/
-      if ((ResourceAttributes & (WIO_PIN_CID_DISABLE|WIO_PIN_ATTR_CID_STATIC_SELECT)) == WIO_PIN_ATTR_CID_STATIC_SELECT)
-      /*static CID field value used ONLY is CID filtering not disable */
+      *regaddr = 0;  /* remove any CID filtering on selected pin */
+      if ((ResourceAttributes & (WIO_PIN_CID_DISABLE | WIO_PIN_ATTR_CID_STATIC_SELECT)) == \
+          WIO_PIN_ATTR_CID_STATIC_SELECT)
+        /* static CID field value used ONLY is CID filtering not disable */
       {
         /* Write static CID configuration */
-        *regaddr =((ResourceAttributes & PWR_WIO1CIDCFGR_SCID_Msk) | PWR_WIO1CIDCFGR_CFEN);
+        *regaddr = ((ResourceAttributes & PWR_WIO1CIDCFGR_SCID_Msk) | PWR_WIO1CIDCFGR_CFEN);
       }
-      if ((ResourceAttributes & (WIO_PIN_CID_DISABLE | WIO_PIN_ATTR_CID_SHARED_SELECT)) == WIO_PIN_ATTR_CID_SHARED_SELECT)
-      /*shared CID field value used ONLY is CID filtering not disable */
+      if ((ResourceAttributes & (WIO_PIN_CID_DISABLE | WIO_PIN_ATTR_CID_SHARED_SELECT)) == \
+          WIO_PIN_ATTR_CID_SHARED_SELECT)
+        /*shared CID field value used ONLY is CID filtering not disable */
       {
         /* Write shared CID configuration */
-        *regaddr =((ResourceAttributes & WIO_PIN_ATTR_CID_SHARED_MASK) | PWR_WIO1CIDCFGR_SEM_EN | PWR_WIO1CIDCFGR_CFEN);
+        *regaddr = ((ResourceAttributes & WIO_PIN_ATTR_CID_SHARED_MASK) | PWR_WIO1CIDCFGR_SEM_EN | \
+                    PWR_WIO1CIDCFGR_CFEN);
       }
     }
     position++;
@@ -1173,50 +1229,50 @@ HAL_StatusTypeDef HAL_PWR_ConfigWioResourceAttributes(uint16_t Resource, uint32_
 HAL_StatusTypeDef HAL_PWR_GetConfigWioResourceAttributes(uint16_t Resource, uint32_t *pResourceAttributes)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent = 0x00;
+  uint32_t iocurrent;
   __IO uint32_t *regaddr;
 
   /* Check null pointer */
-  if(pResourceAttributes == NULL)
+  if (pResourceAttributes == NULL)
   {
     return HAL_ERROR;
   }
 
   /* Check the parameters */
   assert_param(IS_WIO_RESOURCE(Resource));
-  *pResourceAttributes=0;
+  *pResourceAttributes = 0;
 
   /* Get rif attribute of the WIO pin */
-  while (((Resource >>WIO_RESOURCE_Pos) >> position) != 0U)
+  while (((Resource >> WIO_RESOURCE_POS) >> position) != 0U)
   {
     /* Get current io position */
-    iocurrent = (Resource >>WIO_RESOURCE_Pos) & (1U << position);
+    iocurrent = ((uint32_t)Resource >> WIO_RESOURCE_POS) & (1UL << position);
 
-    if(iocurrent)
+    if (iocurrent != 0U)
     {
-    #if defined (CORTEX_IN_SECURE_STATE)
+#if defined (CORTEX_IN_SECURE_STATE)
       *pResourceAttributes |= ((PWR->WIOSECCFGR & iocurrent) == 0U) ? WIO_PIN_NSEC : WIO_PIN_SEC;
-    #endif
+#endif /* CORTEX_IN_SECURE_STATE */
       *pResourceAttributes |= ((PWR->WIOPRIVCFGR & iocurrent) == 0U) ? WIO_PIN_NPRIV : WIO_PIN_PRIV;
 
-      regaddr = &PWR->WIO1CIDCFGR + (WIO_CID_CFG_ADD_OFFSET*position);
+      regaddr = &PWR->WIO1CIDCFGR + (WIO_CID_CFG_ADD_OFFSET * position);
       if ((*regaddr & PWR_WIO1CIDCFGR_CFEN_Msk) == PWR_WIO1CIDCFGR_CFEN)
       {
         if ((*regaddr & PWR_WIO1CIDCFGR_SEM_EN_Msk) == PWR_WIO1CIDCFGR_SEM_EN)
         {
-         /* Get CIDs value from Semaphore white list */
+          /* Get CIDs value from Semaphore white list */
           *pResourceAttributes |= ((WIO_PIN_ATTR_CID_SHARED_SELECT) |
-                    (((*regaddr)) & (WIO_PIN_ATTR_CID_SHARED_MASK)));
+                                   (((*regaddr)) & (WIO_PIN_ATTR_CID_SHARED_MASK)));
         }
         else
         {
-         /* Get CIDs value from Static CID field */
+          /* Get CIDs value from Static CID field */
           *pResourceAttributes |= (WIO_PIN_ATTR_CID_STATIC_SELECT | ((*regaddr) & PWR_WIO1CIDCFGR_SCID_Msk));
         }
       }
       else
       {
-         *pResourceAttributes |= WIO_PIN_CID_DISABLE;
+        *pResourceAttributes |= WIO_PIN_CID_DISABLE;
       }
       break;
     }
@@ -1227,11 +1283,11 @@ HAL_StatusTypeDef HAL_PWR_GetConfigWioResourceAttributes(uint16_t Resource, uint
 }
 
 /**
-  * @brief  Configure RIF attribute of a non sharable resource bitmap.
+  * @brief  Configure RIF attribute of a non shareable resource bitmap.
   *         Available RIF attributes are CID, security and privilege protection.
-  *         RIF attribut is applied on all pins of input param bitmap.
-  * @note   If no CID attribut provide, CID filtering is disabled.
-  * @param  Resource : non sharable resource bitmap.
+  *         RIF attribute is applied on all pins of input param bitmap.
+  * @note   If no CID attribute provide, CID filtering is disabled.
+  * @param  Resource : non shareable resource bitmap.
   * @param  ResourceAttributes: RIF (CID/secure/privilege) attributes.
 
   * @retval HAL Status.
@@ -1240,24 +1296,24 @@ HAL_StatusTypeDef HAL_PWR_GetConfigWioResourceAttributes(uint16_t Resource, uint
 HAL_StatusTypeDef HAL_PWR_ConfigNonShareableResourceAttributes(uint16_t Resource, uint32_t ResourceAttributes)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent = 0x00;
+  uint32_t iocurrent;
   __IO uint32_t *regaddr;
 
   /* Check the parameters */
   assert_param(IS_NS_RESOURCE(Resource));
   assert_param(IS_NS_RESOURCE_ATTRIBUTES(ResourceAttributes));
 
-  /* Configure non sharable resource(s) */
-  while (((Resource >>NS_RESOURCE_Pos) >> position) != 0U)
+  /* Configure non shareable resource(s) */
+  while (((Resource >> NS_RESOURCE_POS) >> position) != 0U)
   {
     /* Get current io position */
-    iocurrent = (Resource >>NS_RESOURCE_Pos)& (1U << position);
-    if(iocurrent)
+    iocurrent = ((uint32_t)Resource >> NS_RESOURCE_POS) & (1UL << position);
+    if (iocurrent != 0U)
     {
-    #if defined (CORTEX_IN_SECURE_STATE)
+#if defined (CORTEX_IN_SECURE_STATE)
       if ((ResourceAttributes & NS_RESOURCE_ATTR_SEC_SELECT) == NS_RESOURCE_ATTR_SEC_SELECT)
       {
-      /* Configure secure/non-secure attribute */
+        /* Configure secure/non-secure attribute */
         if ((ResourceAttributes & NS_RESOURCE_SEC) == NS_RESOURCE_SEC)
         {
           PWR->RSECCFGR |= iocurrent;
@@ -1267,26 +1323,28 @@ HAL_StatusTypeDef HAL_PWR_ConfigNonShareableResourceAttributes(uint16_t Resource
           PWR->RSECCFGR &= (~iocurrent);
         }
       }
-    #endif
+#endif /* CORTEX_IN_SECURE_STATE */
       if ((ResourceAttributes & NS_RESOURCE_ATTR_PRIV_SELECT) == NS_RESOURCE_ATTR_PRIV_SELECT)
       {
-      /* Configure privilege/non-privilege attribute */
+        /* Configure privilege/non-privilege attribute */
         if ((ResourceAttributes & NS_RESOURCE_PRIV) == NS_RESOURCE_PRIV)
         {
-         PWR->RPRIVCFGR |= iocurrent;
+          PWR->RPRIVCFGR |= iocurrent;
         }
         else
         {
           PWR->RPRIVCFGR &= (~iocurrent);
         }
       }
-      regaddr = &PWR->RxCIDCFGR[0] + (R_CID_CFG_ADD_OFFSET*position);  /* select register corresponding to current non-shareable resource */
+      /* select register corresponding to current non-shareable resource */
+      regaddr = &PWR->RxCIDCFGR[0] + (R_CID_CFG_ADD_OFFSET * position);
       *regaddr = 0;  /*remove any CID filtering on selected pin*/
-      if ((ResourceAttributes & (NS_RESOURCE_CID_DISABLE|NS_RESOURCE_ATTR_CID_STATIC_SELECT)) == NS_RESOURCE_ATTR_CID_STATIC_SELECT)
-      /*static CID field value used ONLY is CID filtering not disable */
+      if ((ResourceAttributes & (NS_RESOURCE_CID_DISABLE | NS_RESOURCE_ATTR_CID_STATIC_SELECT)) ==
+          NS_RESOURCE_ATTR_CID_STATIC_SELECT)
+        /*static CID field value used ONLY is CID filtering not disable */
       {
         /* Write static CID configuration */
-        *regaddr =((ResourceAttributes & PWR_R0CIDCFGR_CID_Msk) | PWR_R0CIDCFGR_CFEN);
+        *regaddr = ((ResourceAttributes & PWR_R0CIDCFGR_SCID_Msk) | PWR_R0CIDCFGR_CFEN);
       }
     }
     position++;
@@ -1296,49 +1354,50 @@ HAL_StatusTypeDef HAL_PWR_ConfigNonShareableResourceAttributes(uint16_t Resource
 
 
 /**
-  * @brief  Get a RIF attributes a single non sharable resource.
+  * @brief  Get a RIF attributes a single non shareable resource.
   * @note   In case input bitmap selects several resource, RIF attributes of first low rank resource is returned
-  * @param  Resource : non sharable resource bitmap, should select only ONE resource
+  * @param  Resource : non shareable resource bitmap, should select only ONE resource
   * @param  pResourceAttributes : pointer of  RIF attributes.
   * @retval HAL Status.
   */
 HAL_StatusTypeDef HAL_PWR_GetConfigNonShareableResourceAttributes(uint16_t Resource, uint32_t *pResourceAttributes)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent = 0x00;
+  uint32_t iocurrent;
   __IO uint32_t *regaddr;
 
   /* Check null pointer */
-  if(pResourceAttributes == NULL)
+  if (pResourceAttributes == NULL)
   {
     return HAL_ERROR;
   }
 
   /* Check the parameters */
   assert_param(IS_NS_RESOURCE(Resource));
-  *pResourceAttributes=0;
+  *pResourceAttributes = 0;
 
   /* Get rif attribute of the non-shareable resource */
-  while (((Resource >>NS_RESOURCE_Pos) >> position) != 0U)
+  while (((Resource >> NS_RESOURCE_POS) >> position) != 0U)
   {
     /* Get current io position */
-    iocurrent = (Resource >>NS_RESOURCE_Pos) & (1U << position);
+    iocurrent = ((uint32_t)Resource >> NS_RESOURCE_POS) & (1UL << position);
 
-    if(iocurrent)
+    if (iocurrent != 0U)
     {
-    #if defined (CORTEX_IN_SECURE_STATE)
+#if defined (CORTEX_IN_SECURE_STATE)
       *pResourceAttributes |= ((PWR->RSECCFGR & iocurrent) == 0U) ? NS_RESOURCE_NSEC : NS_RESOURCE_SEC;
-    #endif
+#endif /* CORTEX_IN_SECURE_STATE */
       *pResourceAttributes |= ((PWR->RPRIVCFGR & iocurrent) == 0U) ? NS_RESOURCE_NPRIV : NS_RESOURCE_PRIV;
-      regaddr = &PWR->RxCIDCFGR[0] + (R_CID_CFG_ADD_OFFSET*position);  /* select register corresponding to current non-shareable resource */
+      /* select register corresponding to current non-shareable resource */
+      regaddr = &PWR->RxCIDCFGR[0] + (R_CID_CFG_ADD_OFFSET * position);
       if ((*regaddr & PWR_R0CIDCFGR_CFEN_Msk) == PWR_R0CIDCFGR_CFEN)
       {
-       /* Get CIDs value from Static CID field */
-        *pResourceAttributes |= (NS_RESOURCE_ATTR_CID_STATIC_SELECT | ((*regaddr) & PWR_R0CIDCFGR_CID_Msk));
+        /* Get CIDs value from Static CID field */
+        *pResourceAttributes |= (NS_RESOURCE_ATTR_CID_STATIC_SELECT | ((*regaddr) & PWR_R0CIDCFGR_SCID_Msk));
       }
       else
       {
-         *pResourceAttributes |= NS_RESOURCE_CID_DISABLE;
+        *pResourceAttributes |= NS_RESOURCE_CID_DISABLE;
       }
       break;
     }
@@ -1350,14 +1409,15 @@ HAL_StatusTypeDef HAL_PWR_GetConfigNonShareableResourceAttributes(uint16_t Resou
 
 /**
   * @brief  Attempt to acquire semaphore(s) of  WIO pin bitmap.
-  * @note   In case of semaphore acquisition failure, returned status is HAL_KO and semaphore acquition is abandoned  for all bitmap
+  * @note   In case of semaphore acquisition failure, returned status is HAL_KO and
+            semaphore acquisition is abandoned  for all bitmap
   * @param  Item : wake-up io pin bitmap
-  * @retval HAL Status, HAL_OK if semaphore acquisition for all pins of WIO_Pin is sucessful
+  * @retval HAL Status, HAL_OK if semaphore acquisition for all pins of WIO_Pin is successful
   */
 HAL_StatusTypeDef HAL_PWR_TakeResourceSemaphore(uint16_t Item)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent = 0x00;
+  uint32_t iocurrent;
   uint32_t msk = 0x00;
   __IO uint32_t *regaddr;
 
@@ -1365,25 +1425,27 @@ HAL_StatusTypeDef HAL_PWR_TakeResourceSemaphore(uint16_t Item)
   assert_param(IS_WIO_RESOURCE(Item));
 
   /* Get secure attribute of the port pin */
-  while (((Item >>WIO_RESOURCE_Pos) >> position) != 0U)
+  while (((Item >> WIO_RESOURCE_POS) >> position) != 0U)
   {
     /* Get current io position */
-    iocurrent = (Item >>WIO_RESOURCE_Pos) & (1U << position);
-    if(iocurrent)
+    iocurrent = ((uint32_t)Item >> WIO_RESOURCE_POS) & (1UL << position);
+    if (iocurrent != 0U)
     {
       /* Take Semaphore*/
-      regaddr = &PWR->WIO1SEMCR + (WIO_CID_CFG_ADD_OFFSET*position);
+      regaddr = &PWR->WIO1SEMCR + (WIO_CID_CFG_ADD_OFFSET * position);
       *regaddr = PWR_WIO1SEMCR_SEM_MUTEX;
       if (((*regaddr) & PWR_WIO1SEMCR_SEMCID_Msk) != (PWR_WIO1SEMCR_SEMCID_CURRENT))
       {
-        /* Mutex not taken with current CID - it means that other authorized CID has control, all previous acquired semaphores (if any) shall be released and status error is returned*/
-        if (((Item >>WIO_RESOURCE_Pos) & msk) != 0) {
-          HAL_PWR_ReleaseResourceSemaphore( (Item >>WIO_RESOURCE_Pos) & msk);
+        /* Mutex not taken with current CID - it means that other authorized CID has control,
+           all previous acquired semaphores (if any) shall be released and status error is returned*/
+        if ((((uint32_t)Item >> WIO_RESOURCE_POS) & msk) != 0U)
+        {
+          (void)HAL_PWR_ReleaseResourceSemaphore((Item >> WIO_RESOURCE_POS) & (uint16_t)msk);
         }
         return HAL_ERROR;
       }
     }
-    msk += (1U << position);
+    msk += (1UL << position);
     position++;
   }
   return HAL_OK;
@@ -1398,21 +1460,21 @@ HAL_StatusTypeDef HAL_PWR_TakeResourceSemaphore(uint16_t Item)
 HAL_StatusTypeDef HAL_PWR_ReleaseResourceSemaphore(uint16_t Item)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent = 0x00;
+  uint32_t iocurrent;
   __IO uint32_t *regaddr;
 
   /* Check the parameters */
   assert_param(IS_WIO_RESOURCE(Item));
 
   /* Get secure attribute of the port pin */
-  while (((Item >>WIO_RESOURCE_Pos) >> position) != 0U)
+  while (((Item >> WIO_RESOURCE_POS) >> position) != 0U)
   {
     /* Get current io position */
-    iocurrent = (Item >>WIO_RESOURCE_Pos) & (1U << position);
-    if(iocurrent)
+    iocurrent = ((uint32_t)Item >> WIO_RESOURCE_POS) & (1UL << position);
+    if (iocurrent != 0U)
     {
       /* Release Semaphore*/
-      regaddr = &PWR->WIO1SEMCR + (WIO_CID_CFG_ADD_OFFSET*position);
+      regaddr = &PWR->WIO1SEMCR + (WIO_CID_CFG_ADD_OFFSET * position);
       *regaddr = ~PWR_WIO1SEMCR_SEM_MUTEX;
     }
     position++;
@@ -1424,9 +1486,9 @@ HAL_StatusTypeDef HAL_PWR_ReleaseResourceSemaphore(uint16_t Item)
 /**
   * @brief  Configure RIF attribute of a PWR resource (bitmap).
   *         Available RIF attributes are CID, security and privilege protection.
-  *         RIF attribut is applied on all PWR resource of input param bitmap.
+  *         RIF attribute is applied on all PWR resource of input param bitmap.
   *         PWR resource is either a wake-up resource (WIO) or a Non Shareable resource (NS)
-  * @note   If no CID attribut provide, CID filtering is disabled.
+  * @note   If no CID attribute provide, CID filtering is disabled.
   * @param  Item : PWR resource bitmap.
   * @param  Attributes: RIF (CID/secure/privilege) attributes.
 
@@ -1434,14 +1496,16 @@ HAL_StatusTypeDef HAL_PWR_ReleaseResourceSemaphore(uint16_t Item)
   */
 void HAL_PWR_ConfigResourceAttributes(uint16_t Item, uint32_t Attributes)
 {
- /* Check the parameters */
+  /* Check the parameters */
   assert_param(IS_PWR_ITEMS(Item));
 
-  if (IS_WIO_RESOURCE(Item)) {
-    HAL_PWR_ConfigWioResourceAttributes(Item, Attributes);
+  if (IS_WIO_RESOURCE(Item))
+  {
+    (void)HAL_PWR_ConfigWioResourceAttributes(Item, Attributes);
   }
-  if (IS_NS_RESOURCE(Item)) {
-    HAL_PWR_ConfigNonShareableResourceAttributes(Item, Attributes);
+  if (IS_NS_RESOURCE(Item))
+  {
+    (void)HAL_PWR_ConfigNonShareableResourceAttributes(Item, Attributes);
   }
 }
 
@@ -1455,14 +1519,16 @@ void HAL_PWR_ConfigResourceAttributes(uint16_t Item, uint32_t Attributes)
   */
 HAL_StatusTypeDef HAL_PWR_GetConfigResourceAttributes(uint16_t Item, uint32_t *pAttributes)
 {
- /* Check the parameters */
+  /* Check the parameters */
   assert_param(IS_PWR_ITEMS(Item));
 
-  if (IS_WIO_RESOURCE(Item)) {
-    return( HAL_PWR_GetConfigWioResourceAttributes(Item, pAttributes));
+  if (IS_WIO_RESOURCE(Item))
+  {
+    return (HAL_PWR_GetConfigWioResourceAttributes(Item, pAttributes));
   }
-  if (IS_NS_RESOURCE(Item)) {
-    return(HAL_PWR_GetConfigNonShareableResourceAttributes(Item, pAttributes));
+  if (IS_NS_RESOURCE(Item))
+  {
+    return (HAL_PWR_GetConfigNonShareableResourceAttributes(Item, pAttributes));
   }
   return HAL_OK;
 }
@@ -1484,8 +1550,3 @@ HAL_StatusTypeDef HAL_PWR_GetConfigResourceAttributes(uint16_t Item, uint32_t *p
 /**
   * @}
   */
-
-
-
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

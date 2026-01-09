@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -38,26 +38,13 @@
 /* Private function prototypes -----------------------------------------------*/
 
 /* Exported functions --------------------------------------------------------*/
-/** @addtogroup PWR_LL_Exported_Functions
-  * @{
-  */
-
-/** @addtogroup PWR_LL_EF_Init
-  * @{
-  */
-
-/**
-  * @}
-  */
-/* Exported functions --------------------------------------------------------*/
 /** @defgroup PWR_LL_Exported_Functions PWR Exported Functions
   * @{
   */
 
-/** @defgroup PWR_LL_EF_Configuration Configuration
+/** @defgroup PWR_LL_EF_Init De-initialization function
   * @{
   */
-
 
 
 /**
@@ -88,5 +75,3 @@ ErrorStatus LL_PWR_DeInit(void)
   */
 
 #endif /* USE_FULL_LL_DRIVER */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

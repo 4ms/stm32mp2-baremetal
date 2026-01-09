@@ -7,10 +7,10 @@
   *          functionalities of the General Purpose Input/Output (GPIO) peripheral:
   *           + Initialization and de-initialization functions
   *           + IO operation functions
-   ******************************************************************************
+  ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -150,8 +150,8 @@
   */
 
 /** @addtogroup GPIO_Exported_Functions_Group1
- *  @brief    Initialization and Configuration functions
- *
+  *  @brief    Initialization and Configuration functions
+  *
 @verbatim
  ===============================================================================
               ##### Initialization and de-initialization functions #####
@@ -166,17 +166,18 @@
   * @param  GPIOx : pointer to GPIO peripheral instance
   * @param  GPIO_Init: pointer to a GPIO_InitTypeDef structure that contains
   *         the configuration information for the specified GPIO peripheral.
-  *         Note that EXTI instance (EXTI1/EXTI2) to use in case of interruption mode is part of GPIO_Init value (see mode field)
+  *         Note that EXTI instance (EXTI1/EXTI2) to use in case of interruption mode is part of
+  *         GPIO_Init value (see mode field)
   * @retval None
   */
-void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
+void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, const GPIO_InitTypeDef *GPIO_Init)
 {
   uint32_t position = 0x00u;
   uint32_t iocurrent;
   uint32_t temp;
   uint32_t extiRequested = 0;
-  EXTI_TypeDef* EXTI = NULL ;
-  EXTI_Core_TypeDef * EXTI_CurrentCPU = NULL;
+  EXTI_TypeDef *EXTI = NULL ;
+  EXTI_Core_TypeDef *EXTI_CurrentCPU = NULL;
 
   /* Check the parameters */
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
@@ -195,34 +196,34 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
     {
       /*--------------------- GPIO Mode Configuration ------------------------*/
       /* In case of Alternate function mode selection */
-      if((GPIO_Init->Mode == GPIO_MODE_AF_PP) || (GPIO_Init->Mode == GPIO_MODE_AF_OD))
+      if ((GPIO_Init->Mode == GPIO_MODE_AF_PP) || (GPIO_Init->Mode == GPIO_MODE_AF_OD))
       {
         /* Check the Alternate function parameters */
         assert_param(IS_GPIO_AF(GPIO_Init->Alternate));
 
         /* Configure Alternate function mapped with the current IO */
         temp = GPIOx->AFR[position >> 3U];
-        temp &= ~(0xFU << ((position & 0x07U) * 4U));
-        temp |= ((GPIO_Init->Alternate) << ((position & 0x07U) * 4U));
+        temp &= ~(GPIO_AFRL_AFSEL0 << ((position & 0x07U) * GPIO_AFRL_AFSEL1_Pos));
+        temp |= ((GPIO_Init->Alternate) << ((position & 0x07U) * GPIO_AFRL_AFSEL1_Pos));
         GPIOx->AFR[position >> 3u] = temp;
       }
 
       /* Configure IO Direction mode (Input, Output, Alternate or Analog) */
       temp = GPIOx->MODER;
-      temp &= ~(GPIO_MODER_MODE0 << (position * 2U));
-      temp |= ((GPIO_Init->Mode & GPIO_MODE) << (position * 2U));
+      temp &= ~(GPIO_MODER_MODE0 << (position * GPIO_MODER_MODE1_Pos));
+      temp |= ((GPIO_Init->Mode & GPIO_MODE) << (position * GPIO_MODER_MODE1_Pos));
       GPIOx->MODER = temp;
 
       /* In case of Output or Alternate function mode selection */
-      if((GPIO_Init->Mode == GPIO_MODE_OUTPUT_PP) || (GPIO_Init->Mode == GPIO_MODE_AF_PP) ||
-         (GPIO_Init->Mode == GPIO_MODE_OUTPUT_OD) || (GPIO_Init->Mode == GPIO_MODE_AF_OD))
+      if ((GPIO_Init->Mode == GPIO_MODE_OUTPUT_PP) || (GPIO_Init->Mode == GPIO_MODE_AF_PP) ||
+          (GPIO_Init->Mode == GPIO_MODE_OUTPUT_OD) || (GPIO_Init->Mode == GPIO_MODE_AF_OD))
       {
         /* Check the Speed parameter */
         assert_param(IS_GPIO_SPEED(GPIO_Init->Speed));
         /* Configure the IO Speed */
         temp = GPIOx->OSPEEDR;
-        temp &= ~(GPIO_OSPEEDR_OSPEED0 << (position * 2U));
-        temp |= (GPIO_Init->Speed << (position * 2U));
+        temp &= ~(GPIO_OSPEEDR_OSPEED0 << (position * GPIO_OSPEEDR_OSPEED1_Pos));
+        temp |= (GPIO_Init->Speed << (position * GPIO_OSPEEDR_OSPEED1_Pos));
         GPIOx->OSPEEDR = temp;
 
         /* Configure the IO Output Type */
@@ -234,52 +235,52 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
 
       /* Activate the Pull-up or Pull down resistor for the current IO */
       temp = GPIOx->PUPDR;
-      temp &= ~(GPIO_PUPDR_PUPD0 << (position * 2U));
-      temp |= ((GPIO_Init->Pull) << (position * 2U));
+      temp &= ~(GPIO_PUPDR_PUPD0 << (position * GPIO_PUPDR_PUPD1_Pos));
+      temp |= ((GPIO_Init->Pull) << (position * GPIO_PUPDR_PUPD1_Pos));
       GPIOx->PUPDR = temp;
 
       /*--------------------- EXTI Mode Configuration ------------------------*/
       /* Configure the External Interrupt or event for the current IO */
-      #if !defined(CORE_CM0PLUS)
-        if((GPIO_Init->Mode & EXTI1_MODE) == EXTI1_MODE)
-        {
-          extiRequested = 1;
-          EXTI = EXTI1;
-          #if defined(CORE_CM33)
-            EXTI_CurrentCPU = EXTI1_C2; /* GPIOs are connected to M33 NVIC via connection 2*/
-          #endif
-          #if defined(CORE_CA35)
-            EXTI_CurrentCPU = EXTI1_C1; /* GPIOs are connected to A35 GIC via connection 1*/
-          #endif
-        }
-      #endif
-      if((GPIO_Init->Mode & EXTI2_MODE) == EXTI2_MODE)
+#if !defined(CORE_CM0PLUS)
+      if ((GPIO_Init->Mode & EXTI1_MODE) == EXTI1_MODE)
+      {
+        extiRequested = 1;
+        EXTI = EXTI1;
+#if defined(CORE_CM33)
+        EXTI_CurrentCPU = EXTI1_C2; /* GPIOs are connected to M33 NVIC via connection 2*/
+#endif  /* CORE_CM33 */
+#if defined(CORE_CA35)
+        EXTI_CurrentCPU = EXTI1_C1; /* GPIOs are connected to A35 GIC via connection 1*/
+#endif  /* CORE_CA35 */
+      }
+#endif  /* !defined(CORE_CM0PLUS) */
+      if ((GPIO_Init->Mode & EXTI2_MODE) == EXTI2_MODE)
       {
         extiRequested = 1;
         EXTI = EXTI2;
-        #if defined(CORE_CM0PLUS)
-          EXTI_CurrentCPU = EXTI2_C3; /* GPIOs are connected to CM0PLUS NVIC via connection 3*/
-        #endif
-        #if defined(CORE_CM33)
-          EXTI_CurrentCPU = EXTI2_C2; /* GPIOs are connected to M33 NVIC via connection 2*/
-        #endif
-        #if defined(CORE_CA35)
-          EXTI_CurrentCPU = EXTI2_C1; /* GPIOs are connected to A35 GIC via connection 1*/
-        #endif
+#if defined(CORE_CM0PLUS)
+        EXTI_CurrentCPU = EXTI2_C3; /* GPIOs are connected to CM0PLUS NVIC via connection 3*/
+#endif  /* CORE_CM0PLUS */
+#if defined(CORE_CM33)
+        EXTI_CurrentCPU = EXTI2_C2; /* GPIOs are connected to M33 NVIC via connection 2*/
+#endif  /* CORE_CM33 */
+#if defined(CORE_CA35)
+        EXTI_CurrentCPU = EXTI2_C1; /* GPIOs are connected to A35 GIC via connection 1*/
+#endif  /* CORE_CA35 */
       }
 
 
-      if(extiRequested !=0U)
+      if (extiRequested != 0U)
       {
         temp = EXTI->EXTICR[position >> 2u];
-        temp &= ~(0xFFuL << (8U * (position & 0x03U)));
-        temp |= (GPIO_GET_INDEX(GPIOx) << (8U * (position & 0x03U)));
+        temp &= ~(EXTI_EXTICR1_EXTI0 << (EXTI_EXTICR1_EXTI1_Pos * (position & 0x03U)));
+        temp |= ((uint32_t)GPIO_GET_INDEX(GPIOx) << (EXTI_EXTICR1_EXTI1_Pos * (position & 0x03U)));
         EXTI->EXTICR[position >> 2u] = temp;
 
         /* Clear Rising Falling edge configuration */
         temp = EXTI->RTSR1;
         temp &= ~((uint32_t)iocurrent);
-        if((GPIO_Init->Mode & RISING_EDGE) == RISING_EDGE)
+        if ((GPIO_Init->Mode & RISING_EDGE) == RISING_EDGE)
         {
           temp |= iocurrent;
         }
@@ -287,7 +288,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
 
         temp = EXTI->FTSR1;
         temp &= ~((uint32_t)iocurrent);
-        if((GPIO_Init->Mode & FALLING_EDGE) == FALLING_EDGE)
+        if ((GPIO_Init->Mode & FALLING_EDGE) == FALLING_EDGE)
         {
           temp |= iocurrent;
         }
@@ -296,7 +297,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
         /* Clear EXTI line configuration */
         temp = EXTI_CurrentCPU->IMR1;
         temp &= ~((uint32_t)iocurrent);
-        if((GPIO_Init->Mode & GPIO_MODE_IT) == GPIO_MODE_IT)
+        if ((GPIO_Init->Mode & GPIO_MODE_IT) == GPIO_MODE_IT)
         {
           temp |= iocurrent;
         }
@@ -304,7 +305,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
 
         temp = EXTI_CurrentCPU->EMR1;
         temp &= ~((uint32_t)iocurrent);
-        if((GPIO_Init->Mode & GPIO_MODE_EVT) == GPIO_MODE_EVT)
+        if ((GPIO_Init->Mode & GPIO_MODE_EVT) == GPIO_MODE_EVT)
         {
           temp |= iocurrent;
         }
@@ -317,27 +318,32 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx,const GPIO_InitTypeDef *GPIO_Init)
 }
 
 #if !defined(CORE_CM0PLUS)
-EXTI_TypeDef* getUsedExti(const GPIO_TypeDef  *GPIOx, uint32_t pinPosition)
+EXTI_TypeDef *getUsedExti(const GPIO_TypeDef  *GPIOx, uint32_t pinPosition)
 {
-  #define EXTI_INSTANCE_NB 2U
+#define EXTI_INSTANCE_NB 2U
   uint32_t extiIndex;
-  uint32_t portIndex, GPIOx_index = 0xFF;
-  EXTI_TypeDef  *instanceEXTI;
-  EXTI_TypeDef* instanceTab[]  = {EXTI1, EXTI2};
+  uint32_t portIndex;
+  uint32_t GPIOx_index = 0xFF;
+  const EXTI_TypeDef  *instanceEXTI;
+  const EXTI_TypeDef *instanceTab[]  = {EXTI1, EXTI2};
   uint32_t temp;
-  GPIO_TypeDef *port[] = {GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI, GPIOJ, GPIOK, GPIOZ};
-  EXTI_Core_TypeDef * EXTI_CurrentCPU;
+#if defined(GPIOJ) && defined(GPIOK)
+  const GPIO_TypeDef *port[] = {GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI, GPIOJ, GPIOK, GPIOZ};
+#else   /* defined(GPIOJ) && defined(GPIOK) */
+  const GPIO_TypeDef *port[] = {GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI, GPIOZ};
+#endif  /* defined(GPIOJ) && defined(GPIOK) */
+  const EXTI_Core_TypeDef *EXTI_CurrentCPU;
 
 
-  #if defined(CORE_CM33)
-    EXTI_Core_TypeDef * EXTI_CPU[]  = {EXTI1_C2, EXTI2_C2};
-  #endif
-  #if defined(CORE_CA35)
-    EXTI_Core_TypeDef * EXTI_CPU[]  = {EXTI1_C1, EXTI2_C1};
-  #endif
+#if defined(CORE_CM33)
+  const EXTI_Core_TypeDef *EXTI_CPU[]  = {EXTI1_C2, EXTI2_C2};
+#endif  /* CORE_CM33 */
+#if defined(CORE_CA35)
+  const EXTI_Core_TypeDef *EXTI_CPU[]  = {EXTI1_C1, EXTI2_C1};
+#endif  /* CORE_CA35 */
 
   /* find port index */
-  for(portIndex = 0; portIndex < (sizeof(port)/sizeof(GPIO_TypeDef*)); portIndex++)
+  for (portIndex = 0; portIndex < (sizeof(port) / sizeof(GPIO_TypeDef *)); portIndex++)
   {
     if (GPIOx == port[portIndex])
     {
@@ -347,28 +353,28 @@ EXTI_TypeDef* getUsedExti(const GPIO_TypeDef  *GPIOx, uint32_t pinPosition)
   }
 
   /*parse all EXTI instance*/
-  for(extiIndex = 0; extiIndex < EXTI_INSTANCE_NB; extiIndex++)
+  for (extiIndex = 0; extiIndex < EXTI_INSTANCE_NB; extiIndex++)
   {
-     EXTI_CurrentCPU = EXTI_CPU[extiIndex];
+    EXTI_CurrentCPU = EXTI_CPU[extiIndex];
 
     /*check if parsed EXTI instance is configured for a connection with input param GPIO bank*/
     instanceEXTI = instanceTab[extiIndex];
     temp = instanceEXTI->EXTICR[pinPosition >> 2u];
-    if ( ( ( temp >> ((pinPosition%4U) *8U) ) & 0xFFU ) == GPIOx_index )
+    if (((temp >> ((pinPosition % 4U) * EXTI_EXTICR1_EXTI1_Pos)) & EXTI_EXTICR1_EXTI0) == GPIOx_index)
     {
       /*check if interruption mode is selected for input pin*/
-      if ( (((EXTI_CurrentCPU->IMR1) >> pinPosition) & 0x1U) != 0U )
+      if ((((EXTI_CurrentCPU->IMR1) >> pinPosition) & 0x1U) != 0U)
       {
-        return instanceEXTI; //both GPIO bank and interruption mode are OK
+        return (EXTI_TypeDef *)instanceEXTI;  /* both GPIO bank and interruption mode are OK */
       }
       /*check if event mode is selected for input pin*/
-      if ( (((EXTI_CurrentCPU->EMR1) >> pinPosition) & 0x1U) != 0U )
+      if ((((EXTI_CurrentCPU->EMR1) >> pinPosition) & 0x1U) != 0U)
       {
-        return instanceEXTI; //both GPIO bank and event mode are OK
+        return (EXTI_TypeDef *)instanceEXTI;  /* both GPIO bank and event mode are OK */
       }
     }
   }
-  return NULL; //EXTI instance not founded
+  return NULL;  /* EXTI instance not founded */
 }
 #endif /*!defined(CORE_CM0PLUS)*/
 
@@ -381,11 +387,11 @@ EXTI_TypeDef* getUsedExti(const GPIO_TypeDef  *GPIOx, uint32_t pinPosition)
   */
 void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
 {
-  uint32_t position = 0x00u;
+  uint32_t position = 0x00uL;
   uint32_t iocurrent;
   uint32_t tmp;
-  EXTI_TypeDef* EXTI;
-  EXTI_Core_TypeDef* EXTI_CurrentCPU;
+  EXTI_TypeDef *EXTI;
+  EXTI_Core_TypeDef *EXTI_CurrentCPU;
 
   /* Check the parameters */
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
@@ -403,23 +409,23 @@ void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
       /*------------------------- EXTI Mode Configuration --------------------*/
       /* Clear the External Interrupt or Event for the current IO */
       {
-        #if defined(CORE_CM0PLUS)
-          EXTI = EXTI2;
-          EXTI_CurrentCPU = EXTI2_C3;
-        #else
-          EXTI = getUsedExti(GPIOx, position);
-          #if defined(CORE_CM33)
-            EXTI_CurrentCPU = (EXTI == EXTI2)? (EXTI2_C2) : (EXTI1_C2);
-          #endif
-          #if defined(CORE_CA35)
-            EXTI_CurrentCPU = (EXTI == EXTI2)? (EXTI2_C1) : (EXTI1_C1);
-          #endif
-        #endif
+#if defined(CORE_CM0PLUS)
+        EXTI = EXTI2;
+        EXTI_CurrentCPU = EXTI2_C3;
+#else   /* CORE_CM0PLUS */
+        EXTI = getUsedExti(GPIOx, position);
+#if defined(CORE_CM33)
+        EXTI_CurrentCPU = (EXTI == EXTI2) ? (EXTI2_C2) : (EXTI1_C2);
+#endif  /* CORE_CM33 */
+#if defined(CORE_CA35)
+        EXTI_CurrentCPU = (EXTI == EXTI2) ? (EXTI2_C1) : (EXTI1_C1);
+#endif  /* CORE_CA35 */
+#endif  /* CORE_CM0PLUS */
         if (EXTI != NULL)
         {
           tmp = EXTI->EXTICR[position >> 2u];
-          tmp &= (0xFFuL << (8U * (position & 0x03U)));
-          if(tmp == ((uint32_t)GPIO_GET_INDEX(GPIOx) << (8U * (position & 0x03U))))
+          tmp &= ((uint32_t)EXTI_EXTICR1_EXTI0 << (EXTI_EXTICR1_EXTI1_Pos  * (position & 0x03UL)));
+          if (tmp == ((uint32_t)GPIO_GET_INDEX(GPIOx) << (EXTI_EXTICR1_EXTI1_Pos * (position & 0x03UL))))
           {
             /* Clear EXTI line configuration */
             /* Clear the External Interrupt or Event for the current IO */
@@ -431,7 +437,7 @@ void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
             EXTI->FTSR1 &= ~(iocurrent);
 
             /* Clear EXTICR configuration */
-            tmp = 0xFFuL << (8u * (position & 0x03U));
+            tmp = (uint32_t)EXTI_EXTICR1_EXTI0 << (EXTI_EXTICR1_EXTI1_Pos * (position & 0x03U));
             EXTI->EXTICR[position >> 2u] &= ~tmp;
           }
         }
@@ -439,19 +445,19 @@ void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
 
       /*------------------------- GPIO Mode Configuration --------------------*/
       /* Configure IO in Analog Mode */
-      GPIOx->MODER |= (GPIO_MODER_MODE0 << (position * 2U));
+      GPIOx->MODER |= ((uint32_t)GPIO_MODER_MODE0 << (position * GPIO_MODER_MODE1_Pos));
 
       /* Configure the default Alternate Function in current IO */
-      GPIOx->AFR[position >> 3U] &= ~(0xFU << ((position & 0x07U) * 4U)) ;
+      GPIOx->AFR[position >> 3U] &= ~(GPIO_AFRL_AFSEL0 << ((position & 0x07U) * GPIO_AFRL_AFSEL1_Pos)) ;
 
       /* Configure the default value for IO Speed */
-      GPIOx->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED0 << (position * 2U));
+      GPIOx->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED0 << (position * GPIO_OSPEEDR_OSPEED1_Pos));
 
       /* Configure the default value IO Output Type */
       GPIOx->OTYPER  &= ~(GPIO_OTYPER_OT0 << position) ;
 
       /* Deactivate the Pull-up and Pull-down resistor for the current IO */
-      GPIOx->PUPDR &= ~(GPIO_PUPDR_PUPD0 << (position * 2U));
+      GPIOx->PUPDR &= ~(GPIO_PUPDR_PUPD0 << (position * GPIO_PUPDR_PUPD1_Pos));
     }
     position++;
   }
@@ -462,8 +468,8 @@ void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
   */
 
 /** @addtogroup GPIO_Exported_Functions_Group2
- *  @brief GPIO Read, Write, Toggle, Lock and EXTI management functions.
- *
+  *  @brief GPIO Read, Write, Toggle, Lock and EXTI management functions.
+  *
 @verbatim
  ===============================================================================
                        ##### IO operation functions #####
@@ -480,7 +486,7 @@ void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
   *         This parameter can be any combination of GPIO_PIN_x where x can be (0..15).
   * @retval The input port pin value.
   */
-GPIO_PinState HAL_GPIO_ReadPin(const GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+GPIO_PinState HAL_GPIO_ReadPin(const GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
   GPIO_PinState bitstatus;
 
@@ -515,14 +521,14 @@ GPIO_PinState HAL_GPIO_ReadPin(const GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
   *            @arg GPIO_PIN_SET: to set the port pin
   * @retval None
   */
-void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
+void HAL_GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
 {
   /* Check the parameters */
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
   assert_param(IS_GPIO_PIN(GPIO_Pin));
   assert_param(IS_GPIO_PIN_ACTION(PinState));
 
-  if(PinState != GPIO_PIN_RESET)
+  if (PinState != GPIO_PIN_RESET)
   {
     GPIOx->BSRR = (uint32_t)GPIO_Pin;
   }
@@ -566,7 +572,7 @@ void HAL_GPIO_WriteMultipleStatePin(GPIO_TypeDef *GPIOx, uint16_t PinReset, uint
   *         This parameter can be any combination of GPIO_Pin_x where x can be (0..15).
   * @retval None
   */
-void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+void HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
   /* Check the parameters */
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
@@ -583,7 +589,7 @@ void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 }
 
 /**
-* @brief  Lock GPIO Pins configuration registers.
+  * @brief  Lock GPIO Pins configuration registers.
   * @note   The locked registers are GPIOx_MODER, GPIOx_OTYPER, GPIOx_OSPEEDR,
   *         GPIOx_PUPDR, GPIOx_AFRL and GPIOx_AFRH.
   * @note   The configuration of the locked GPIO pins can no longer be modified
@@ -593,7 +599,7 @@ void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
   *         This parameter can be any combination of GPIO_Pin_x where x can be (0..15).
   * @retval None
   */
-HAL_StatusTypeDef HAL_GPIO_LockPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+HAL_StatusTypeDef HAL_GPIO_LockPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
   __IO uint32_t tmp = GPIO_LCKR_LCKK;
 
@@ -632,13 +638,13 @@ HAL_StatusTypeDef HAL_GPIO_LockPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 void HAL_GPIO_EXTI1_IRQHandler(uint16_t GPIO_Pin)
 {
   /* EXTI line interrupt detected */
-  if (__HAL_GPIO_EXTI1_GET_RISING_IT(GPIO_Pin) != RESET)
+  if (__HAL_GPIO_EXTI1_GET_RISING_IT(GPIO_Pin) != (uint32_t)RESET)
   {
     __HAL_GPIO_EXTI1_CLEAR_RISING_IT(GPIO_Pin);
     HAL_GPIO_EXTI1_Rising_Callback(GPIO_Pin);
   }
 
-  if (__HAL_GPIO_EXTI1_GET_FALLING_IT(GPIO_Pin) != RESET)
+  if (__HAL_GPIO_EXTI1_GET_FALLING_IT(GPIO_Pin) != (uint32_t)RESET)
   {
     __HAL_GPIO_EXTI1_CLEAR_FALLING_IT(GPIO_Pin);
     HAL_GPIO_EXTI1_Falling_Callback(GPIO_Pin);
@@ -649,13 +655,13 @@ void HAL_GPIO_EXTI1_IRQHandler(uint16_t GPIO_Pin)
 void HAL_GPIO_EXTI_IRQHandler(uint16_t GPIO_Pin)
 {
   /* EXTI line interrupt detected */
-  if (__HAL_GPIO_EXTI_GET_RISING_IT(GPIO_Pin) != RESET)
+  if (__HAL_GPIO_EXTI_GET_RISING_IT(GPIO_Pin) != (uint32_t)RESET)
   {
     __HAL_GPIO_EXTI_CLEAR_RISING_IT(GPIO_Pin);
     HAL_GPIO_EXTI_Rising_Callback(GPIO_Pin);
   }
 
-  if (__HAL_GPIO_EXTI_GET_FALLING_IT(GPIO_Pin) != RESET)
+  if (__HAL_GPIO_EXTI_GET_FALLING_IT(GPIO_Pin) != (uint32_t)RESET)
   {
     __HAL_GPIO_EXTI_CLEAR_FALLING_IT(GPIO_Pin);
     HAL_GPIO_EXTI_Falling_Callback(GPIO_Pin);
@@ -722,8 +728,8 @@ __weak void HAL_GPIO_EXTI1_Falling_Callback(uint16_t GPIO_Pin)
 /**
   * @brief  Configure RIF attribute of a GPIO pin bitmap.
   *         Available RIF attributes are CID, security and privilege protection.
-  *         RIF attribut is applied on all pins of input param bitmap.
-  * @note   If no CID attribut provide, CID filtering is disabled.
+  *         RIF attribute is applied on all pins of input param bitmap.
+  * @note   If no CID attribute provide, CID filtering is disabled.
   * @param  GPIOx : pointer to GPIO peripheral instance
   * @param  GPIO_Pin : gpio pin bitmap.
   * @param  PinAttributes: RIF (CID/secure/privilege) attributes.
@@ -731,7 +737,7 @@ __weak void HAL_GPIO_EXTI1_Falling_Callback(uint16_t GPIO_Pin)
   * @retval HAL Status.
 
   */
-HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, uint32_t PinAttributes)
+HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint32_t PinAttributes)
 {
   uint32_t position = 0x00;
   uint32_t iocurrent;
@@ -748,12 +754,12 @@ HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPI
   {
     /* Get current io position */
     iocurrent = GPIO_Pin & (1uL << position);
-    if(iocurrent!=0U)
+    if (iocurrent != 0U)
     {
-    #if defined (CORTEX_IN_SECURE_STATE)
+#if defined (CORTEX_IN_SECURE_STATE)
       if ((PinAttributes & GPIO_PIN_ATTR_SEC_SELECT) == GPIO_PIN_ATTR_SEC_SELECT)
       {
-      /* Configure secure/non-secure attribute */
+        /* Configure secure/non-secure attribute */
         if ((PinAttributes & GPIO_PIN_SEC) == GPIO_PIN_SEC)
         {
           GPIOx->SECCFGR |= iocurrent;
@@ -763,10 +769,10 @@ HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPI
           GPIOx->SECCFGR &= (~iocurrent);
         }
       }
-    #endif
+#endif  /* CORTEX_IN_SECURE_STATE */
       if ((PinAttributes & GPIO_PIN_ATTR_PRIV_SELECT) == GPIO_PIN_ATTR_PRIV_SELECT)
       {
-      /* Configure privilege/non-privilege attribute */
+        /* Configure privilege/non-privilege attribute */
         if ((PinAttributes & GPIO_PIN_PRIV) == GPIO_PIN_PRIV)
         {
           GPIOx->PRIVCFGR |= iocurrent;
@@ -778,17 +784,17 @@ HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPI
       }
       regaddr = &GPIOx->CIDCFGR0 + (GPIO_CIDCFGR_OFFSET * position);
       *regaddr = 0;  /*remove any CID filtering on selected pin*/
-      if ((PinAttributes & (GPIO_PIN_CID_DISABLE|GPIO_PIN_ATTR_CID_STATIC_SELECT)) == GPIO_PIN_ATTR_CID_STATIC_SELECT)
-      /*static CID field value used ONLY is CID filtering not disable */
+      if ((PinAttributes & (GPIO_PIN_CID_DISABLE | GPIO_PIN_ATTR_CID_STATIC_SELECT)) == GPIO_PIN_ATTR_CID_STATIC_SELECT)
+        /*static CID field value used ONLY is CID filtering not disable */
       {
         /* Write static CID configuration */
-        *regaddr =((PinAttributes&GPIO_CIDCFGR0_SCID_Msk)|GPIO_CIDCFGR0_CFEN);
+        *regaddr = ((PinAttributes & GPIO_CIDCFGR0_SCID_Msk) | GPIO_CIDCFGR0_CFEN);
       }
-      if ((PinAttributes & (GPIO_PIN_CID_DISABLE|GPIO_PIN_ATTR_CID_SHARED_SELECT)) == GPIO_PIN_ATTR_CID_SHARED_SELECT)
-      /*shared CID field value used ONLY is CID filtering not disable */
+      if ((PinAttributes & (GPIO_PIN_CID_DISABLE | GPIO_PIN_ATTR_CID_SHARED_SELECT)) == GPIO_PIN_ATTR_CID_SHARED_SELECT)
+        /*shared CID field value used ONLY is CID filtering not disable */
       {
         /* Write shared CID configuration */
-        *regaddr =((PinAttributes&GPIO_PIN_ATTR_CID_SHARED_MASK)|GPIO_CIDCFGR0_SEM_EN|GPIO_CIDCFGR0_CFEN);
+        *regaddr = ((PinAttributes & GPIO_PIN_ATTR_CID_SHARED_MASK) | GPIO_CIDCFGR0_SEM_EN | GPIO_CIDCFGR0_CFEN);
       }
     }
     position++;
@@ -805,22 +811,23 @@ HAL_StatusTypeDef HAL_GPIO_ConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPI
   * @param  pPinAttributes: pointer of  RIF attributes.
   * @retval HAL Status.
   */
-HAL_StatusTypeDef HAL_GPIO_GetConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, uint32_t *pPinAttributes)
+HAL_StatusTypeDef HAL_GPIO_GetConfigPinAttributes(const GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,
+                                                  uint32_t *pPinAttributes)
 {
   uint32_t position = 0x00;
   uint32_t iocurrent;
-  __IO uint32_t *regaddr;
+  __I uint32_t *regaddr;
 
   /* Check null pointer */
-  if(pPinAttributes == NULL)
+  if (pPinAttributes == NULL)
   {
     return HAL_ERROR;
   }
 
   /* Check the parameters */
   assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
-  assert_param(IS_GPIO_PIN(GPIO_Pin) && (GPIO_Pin != GPIO_PIN_All));
-  *pPinAttributes=0;
+  assert_param(IS_GPIO_PIN(GPIO_Pin) && (GPIO_Pin != GPIO_PIN_ALL));
+  *pPinAttributes = 0;
 
   /* Get secure attribute of the port pin */
   while ((GPIO_Pin >> position) != 0U)
@@ -828,34 +835,35 @@ HAL_StatusTypeDef HAL_GPIO_GetConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t 
     /* Get current io position */
     iocurrent = (GPIO_Pin & (1UL << position));
 
-    if(iocurrent!=0U)
+    if (iocurrent != 0U)
     {
-    #if defined (CORTEX_IN_SECURE_STATE)
+#if defined (CORTEX_IN_SECURE_STATE)
       *pPinAttributes |= ((GPIOx->SECCFGR & iocurrent) == 0U) ? GPIO_PIN_NSEC : GPIO_PIN_SEC;
-    #endif
+#endif  /* CORTEX_IN_SECURE_STATE */
       *pPinAttributes |= ((GPIOx->PRIVCFGR & iocurrent) == 0U) ? GPIO_PIN_NPRIV : GPIO_PIN_PRIV;
       regaddr = &GPIOx->CIDCFGR0 + (GPIO_CIDCFGR_OFFSET * position);
       if ((*regaddr & GPIO_CIDCFGR0_CFEN_Msk) == GPIO_CIDCFGR0_CFEN)
       {
         if ((*regaddr & GPIO_CIDCFGR0_SEM_EN_Msk) == GPIO_CIDCFGR0_SEM_EN)
         {
-         /* Get CIDs value from Semaphore white list */
+          /* Get CIDs value from Semaphore white list */
           *pPinAttributes |= ((GPIO_PIN_ATTR_CID_SHARED_SELECT) |
-                    (((*regaddr)) &
-                     (GPIO_CIDCFGR0_SEMWLC3_Msk |
-                      GPIO_CIDCFGR0_SEMWLC2_Msk |
-                      GPIO_CIDCFGR0_SEMWLC1_Msk |
-                      GPIO_CIDCFGR0_SEMWLC0_Msk)));
+                              (((*regaddr)) &
+                               (GPIO_CIDCFGR0_SEMWLC3_Msk |
+                                GPIO_CIDCFGR0_SEMWLC2_Msk |
+                                GPIO_CIDCFGR0_SEMWLC1_Msk |
+                                GPIO_CIDCFGR0_SEMWLC0_Msk)));
         }
         else
         {
-         /* Get CIDs value from Static CID field and translate it in bitfield value as defined by GPIO attribute definition */
+          /* Get CIDs value from Static CID field and translate it in bitfield value as
+           * defined by GPIO attribute definition */
           *pPinAttributes |= (GPIO_PIN_ATTR_CID_STATIC_SELECT | ((*regaddr) & GPIO_CIDCFGR0_SCID_Msk));
         }
       }
       else
       {
-         *pPinAttributes |= GPIO_PIN_CID_DISABLE;
+        *pPinAttributes |= GPIO_PIN_CID_DISABLE;
       }
       break;
     }
@@ -867,16 +875,18 @@ HAL_StatusTypeDef HAL_GPIO_GetConfigPinAttributes(GPIO_TypeDef* GPIOx, uint16_t 
 
 /**
   * @brief  Attempt to acquire semaphore(s) of  GPIO pin bitmap.
-  * @note   In case of semaphore acquisition failure, returned status is HAL_KO and semaphore acquition is abandoned  for all bitmap
+  * @note   In case of semaphore acquisition failure, returned status is HAL_KO and
+  *         semaphore acquisition is abandoned  for all bitmap
   * @param  GPIOx : pointer to GPIO peripheral instance
   * @param  GPIO_Pin : gpio pin bitmap
-  * @retval HAL Status, HAL_OK if semaphore acquisition for all pins of GPIO_Pin is sucessful
+  * @retval HAL Status, HAL_OK if semaphore acquisition for all pins of GPIO_Pin is successful
   */
 
-HAL_StatusTypeDef HAL_GPIO_TakePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+HAL_StatusTypeDef HAL_GPIO_TakePinSemaphore(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
   uint32_t position = 0x00;
-  uint32_t iocurrent, cidcurrent;
+  uint32_t iocurrent;
+  uint32_t cidcurrent;
   uint32_t msk = 0x00;
   __IO uint32_t *regaddr;
 
@@ -886,28 +896,30 @@ HAL_StatusTypeDef HAL_GPIO_TakePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPIO_P
 
 #if defined(CORE_CM0PLUS)
   cidcurrent = RIF_CID_CPU3_CM0;
-#endif
+#endif  /* CORE_CM0PLUS */
 #if defined(CORE_CM33)
   cidcurrent = RIF_CID_CPU2_CM33;
-#endif
+#endif  /* CORE_CM33 */
 #if defined(CORE_CA35)
   cidcurrent = RIF_CID_CPU1_CA35;
-#endif
+#endif  /* CORE_CA35 */
   /* Get secure attribute of the port pin */
   while ((GPIO_Pin >> position) != 0U)
   {
     /* Get current io position */
     iocurrent = GPIO_Pin & (1UL << position);
-    if(iocurrent!=0U)
+    if (iocurrent != 0U)
     {
       /* Take Semaphore*/
       regaddr = &GPIOx->SEMCR0 + (GPIO_SEMCFGR_OFFSET * position);
       *regaddr = GPIO_SEMCR0_SEM_MUTEX;
-      if (((*regaddr) & GPIO_SEMCR0_SEMCID_Msk) != (cidcurrent<<GPIO_SEMCR0_SEMCID_Pos))
+      if (((*regaddr) & GPIO_SEMCR0_SEMCID_Msk) != (cidcurrent << GPIO_SEMCR0_SEMCID_Pos))
       {
-        /* Mutex not taken with current CID - it means that other authorized CID has control, all previous acquired semaphores (if any) shall be released and status error is returned*/
-        if ((GPIO_Pin&msk) != 0U) {
-          HAL_GPIO_ReleasePinSemaphore(GPIOx, (GPIO_Pin & (uint16_t)msk));
+        /* Mutex not taken with current CID - it means that other authorized CID has control,
+         * all previous acquired semaphores (if any) shall be released and status error is returned */
+        if ((GPIO_Pin & msk) != 0U)
+        {
+          (void)HAL_GPIO_ReleasePinSemaphore(GPIOx, (GPIO_Pin & (uint16_t)msk));
         }
         return HAL_ERROR;
       }
@@ -924,7 +936,7 @@ HAL_StatusTypeDef HAL_GPIO_TakePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPIO_P
   * @param  GPIO_Pin : gpio pin bitmap
   * @retval HAL Status, HAL_OK
   */
-HAL_StatusTypeDef HAL_GPIO_ReleasePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+HAL_StatusTypeDef HAL_GPIO_ReleasePinSemaphore(const GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
   uint32_t position = 0x00;
   uint32_t iocurrent;
@@ -939,10 +951,10 @@ HAL_StatusTypeDef HAL_GPIO_ReleasePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPI
   {
     /* Get current io position */
     iocurrent = GPIO_Pin & (1UL << position);
-    if(iocurrent!=0U)
+    if (iocurrent != 0U)
     {
       /* Release Semaphore*/
-      regaddr = &GPIOx->SEMCR0 + (GPIO_SEMCFGR_OFFSET * position);
+      regaddr = (__IO uint32_t *)&GPIOx->SEMCR0 + (GPIO_SEMCFGR_OFFSET * position);
       *regaddr = ~GPIO_SEMCR0_SEM_MUTEX;
     }
     position++;
@@ -954,9 +966,6 @@ HAL_StatusTypeDef HAL_GPIO_ReleasePinSemaphore(GPIO_TypeDef* GPIOx, uint16_t GPI
 /**
   * @}
   */
-
-
-
 
 
 /**

@@ -13,7 +13,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2020 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -433,9 +433,25 @@ HAL_StatusTypeDef HAL_I2CEx_GetConfigAutonomousMode(const I2C_HandleTypeDef *hi2
   autocr_tmp = hi2c->Instance->AUTOCR;
 
   sConfig->TriggerState     = (autocr_tmp & I2C_AUTOCR_TRIGEN);
+#if defined(I2C_TRIG_GRP1) || defined(I2C_TRIG_GRP2)
+#if defined(I2C_TRIG_GRP2)
+#if defined(I2C_TRIG_GRP1)
+  if (IS_I2C_GRP2_INSTANCE(hi2c->Instance))
+  {
+    sConfig->TriggerSelection = ((autocr_tmp & I2C_AUTOCR_TRIGSEL) | I2C_TRIG_GRP2);
+  }
+  else
+  {
+    sConfig->TriggerSelection = ((autocr_tmp & I2C_AUTOCR_TRIGSEL) | I2C_TRIG_GRP1);
+  }
+#else
+  sConfig->TriggerSelection = ((autocr_tmp & I2C_AUTOCR_TRIGSEL) | I2C_TRIG_GRP2);
+#endif /* I2C_TRIG_GRP1 */
+#else
   sConfig->TriggerSelection = ((autocr_tmp & I2C_AUTOCR_TRIGSEL) | I2C_TRIG_GRP1);
+#endif /* I2C_TRIG_GRP2 */
   sConfig->TriggerPolarity  = (autocr_tmp & I2C_AUTOCR_TRIGPOL);
-
+#endif /* defined(I2C_TRIG_GRP1) || defined(I2C_TRIG_GRP2) */
   return HAL_OK;
 }
 

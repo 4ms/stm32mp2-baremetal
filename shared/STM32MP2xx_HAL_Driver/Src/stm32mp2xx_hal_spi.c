@@ -253,22 +253,30 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
   assert_param(IS_SPI_ALL_INSTANCE(hspi->Instance));
   assert_param(IS_SPI_MODE(hspi->Init.Mode));
   assert_param(IS_SPI_DIRECTION(hspi->Init.Direction));
+#if defined (IS_SPI_LIMITED_INSTANCE)
   if (IS_SPI_LIMITED_INSTANCE(hspi->Instance))
   {
     assert_param(IS_SPI_LIMITED_DATASIZE(hspi->Init.DataSize));
     assert_param(IS_SPI_LIMITED_FIFOTHRESHOLD(hspi->Init.FifoThreshold));
   }
-  else if (IS_SPI_PARTIAL_INSTANCE(hspi->Instance))
+#endif /* (IS_SPI_LIMITED_INSTANCE) */
+#if defined (IS_SPI_PARTIAL_INSTANCE)
+  if (IS_SPI_PARTIAL_INSTANCE(hspi->Instance))
   {
     assert_param(IS_SPI_PARTIAL_DATASIZE(hspi->Init.DataSize));
     assert_param(IS_SPI_LIMITED_FIFOTHRESHOLD(
-                   hspi->Init.FifoThreshold)); /* SPI PARTIAL Instance and SPI_LIMITED Instance have the same size of FIFOs (8x8-bit) */
+                   hspi->Init.FifoThreshold)); /* SPI PARTIAL Instance and SPI_LIMITED \
+                                                  Instance have the same size of \
+                                                  FIFOs (8x8-bit) */
   }
-  else
+#endif /* (IS_SPI_PARTIAL_INSTANCE) */
+#if defined (IS_SPI_FULL_INSTANCE)
+  if (IS_SPI_FULL_INSTANCE(hspi->Instance))
   {
     assert_param(IS_SPI_DATASIZE(hspi->Init.DataSize));
     assert_param(IS_SPI_FIFOTHRESHOLD(hspi->Init.FifoThreshold));
   }
+#endif /* (IS_SPI_FULL_INSTANCE) */
   assert_param(IS_SPI_NSS(hspi->Init.NSS));
   assert_param(IS_SPI_NSSP(hspi->Init.NSSPMode));
   assert_param(IS_SPI_BAUDRATE_PRESCALER(hspi->Init.BaudRatePrescaler));
@@ -283,18 +291,24 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
   assert_param(IS_SPI_CRC_CALCULATION(hspi->Init.CRCCalculation));
   if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE)
   {
+#if defined (IS_SPI_LIMITED_INSTANCE)
     if (IS_SPI_LIMITED_INSTANCE(hspi->Instance))
     {
       assert_param(IS_SPI_LIMITED_CRC_LENGTH(hspi->Init.CRCLength));
     }
-    else if (IS_SPI_PARTIAL_INSTANCE(hspi->Instance))
+#endif /* (IS_SPI_LIMITED_INSTANCE) */
+#if defined (IS_SPI_PARTIAL_INSTANCE)
+    if (IS_SPI_PARTIAL_INSTANCE(hspi->Instance))
     {
       assert_param(IS_SPI_PARTIAL_CRC_LENGTH(hspi->Init.CRCLength));
     }
-    else
+#endif /* (IS_SPI_PARTIAL_INSTANCE) */
+#if defined (IS_SPI_FULL_INSTANCE)
+    if (IS_SPI_FULL_INSTANCE(hspi->Instance))
     {
       assert_param(IS_SPI_CRC_LENGTH(hspi->Init.CRCLength));
     }
+#endif /* (IS_SPI_FULL_INSTANCE) */
     assert_param(IS_SPI_CRC_POLYNOMIAL(hspi->Init.CRCPolynomial));
     assert_param(IS_SPI_CRC_INITIALIZATION_PATTERN(hspi->Init.TxCRCInitializationPattern));
     assert_param(IS_SPI_CRC_INITIALIZATION_PATTERN(hspi->Init.RxCRCInitializationPattern));
@@ -308,20 +322,31 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
   assert_param(IS_SPI_MASTER_RX_AUTOSUSP(hspi->Init.MasterReceiverAutoSusp));
 
   /* Verify that the SPI instance supports Data Size higher than 16bits */
+#if defined (IS_SPI_LIMITED_INSTANCE)
   if ((IS_SPI_LIMITED_INSTANCE(hspi->Instance)) && (hspi->Init.DataSize > SPI_DATASIZE_16BIT))
   {
     return HAL_ERROR;
   }
-
+#endif /* (IS_SPI_LIMITED_INSTANCE) */
+#if defined (IS_SPI_PARTIAL_INSTANCE)
   if ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (hspi->Init.DataSize > SPI_DATASIZE_16BIT))
   {
     return HAL_ERROR;
   }
+#endif /* (IS_SPI_PARTIAL_INSTANCE) */
   /* Verify that the SPI instance supports requested data packing */
   packet_length = SPI_GetPacketSize(hspi);
-  if (((IS_SPI_LIMITED_INSTANCE(hspi->Instance)) && (packet_length > SPI_LOWEND_FIFO_SIZE)) ||
-      ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (packet_length > SPI_LOWEND_FIFO_SIZE)) ||
-      ((IS_SPI_FULL_INSTANCE(hspi->Instance)) && (packet_length > SPI_HIGHEND_FIFO_SIZE)))
+  if (
+#if defined (IS_SPI_LIMITED_INSTANCE)
+    ((IS_SPI_LIMITED_INSTANCE(hspi->Instance)) && (packet_length > SPI_LOWEND_FIFO_SIZE)) ||
+#endif /* (IS_SPI_LIMITED_INSTANCE) */
+#if defined (IS_SPI_PARTIAL_INSTANCE)
+    ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (packet_length > SPI_LOWEND_FIFO_SIZE)) ||
+#endif /* (IS_SPI_PARTIAL_INSTANCE) */
+#if defined (IS_SPI_FULL_INSTANCE)
+    ((IS_SPI_FULL_INSTANCE(hspi->Instance)) && (packet_length > SPI_HIGHEND_FIFO_SIZE))
+#endif /* (IS_SPI_FULL_INSTANCE) */
+  )
   {
     return HAL_ERROR;
   }
@@ -329,16 +354,20 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
 #if (USE_SPI_CRC != 0UL)
   if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE)
   {
+#if defined (IS_SPI_LIMITED_INSTANCE)
     /* Verify that the SPI instance supports CRC Length higher than 16bits */
     if ((IS_SPI_LIMITED_INSTANCE(hspi->Instance)) && (hspi->Init.CRCLength > SPI_CRC_LENGTH_16BIT))
     {
       return HAL_ERROR;
     }
+#endif /* (IS_SPI_LIMITED_INSTANCE) */
+#if defined (IS_SPI_PARTIAL_INSTANCE)
     /* Verify that the SPI instance supports CRC Length higher than 16bits */
-    else if ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (hspi->Init.CRCLength > SPI_CRC_LENGTH_16BIT))
+    if ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (hspi->Init.CRCLength > SPI_CRC_LENGTH_16BIT))
     {
       return HAL_ERROR;
     }
+#endif /* (IS_SPI_PARTIAL_INSTANCE) */
 
     /* Align the CRC Length on the data size */
     if (hspi->Init.CRCLength == SPI_CRC_LENGTH_DATASIZE)
@@ -464,9 +493,17 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
     }
 
     /* Enable 33/17 bits CRC computation */
-    if (((IS_SPI_LIMITED_INSTANCE(hspi->Instance)) && (crc_length == SPI_CRC_LENGTH_16BIT)) ||
-        ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (crc_length == SPI_CRC_LENGTH_16BIT)) ||
-        ((IS_SPI_FULL_INSTANCE(hspi->Instance)) && (crc_length == SPI_CRC_LENGTH_32BIT)))
+    if (
+#if defined (IS_SPI_LIMITED_INSTANCE)
+      ((IS_SPI_LIMITED_INSTANCE(hspi->Instance)) && (crc_length == SPI_CRC_LENGTH_16BIT)) ||
+#endif /* (IS_SPI_LIMITED_INSTANCE) */
+#if defined (IS_SPI_PARTIAL_INSTANCE)
+      ((IS_SPI_PARTIAL_INSTANCE(hspi->Instance)) && (crc_length == SPI_CRC_LENGTH_16BIT)) ||
+#endif /* (IS_SPI_PARTIAL_INSTANCE) */
+#if defined (IS_SPI_FULL_INSTANCE)
+      ((IS_SPI_FULL_INSTANCE(hspi->Instance)) && (crc_length == SPI_CRC_LENGTH_32BIT))
+#endif /* (IS_SPI_FULL_INSTANCE) */
+    )
     {
       SET_BIT(hspi->Instance->CR1, SPI_CR1_CRC33_17);
     }
@@ -1042,7 +1079,7 @@ HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint
   }
 
   /* Wait for Tx (and CRC) data to be sent */
-  if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, tickstart, Timeout) != HAL_OK)
+  if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, Timeout, tickstart) != HAL_OK)
   {
     SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
   }
@@ -1240,7 +1277,7 @@ HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint1
   }
 
   /* Wait for Rx (and CRC) data to be received */
-  if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, tickstart, Timeout) != HAL_OK)
+  if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, Timeout, tickstart) != HAL_OK)
   {
     SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
   }
@@ -1470,7 +1507,7 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxD
   }
 
   /* Wait for Tx/Rx (and CRC) data to be sent/received */
-  if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, tickstart, Timeout) != HAL_OK)
+  if (SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_EOT, RESET, Timeout, tickstart) != HAL_OK)
   {
     SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
   }
@@ -1846,8 +1883,6 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive_IT(SPI_HandleTypeDef *hspi, uint8_t *p
   __HAL_UNLOCK(hspi);
   return errorcode;
 }
-
-
 
 
 /**
@@ -2448,8 +2483,10 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive_DMA(SPI_HandleTypeDef *hspi, uint8_t *
   is performed in DMA reception complete callback  */
   hspi->hdmatx->XferHalfCpltCallback = NULL;
   hspi->hdmatx->XferCpltCallback     = NULL;
-  hspi->hdmatx->XferErrorCallback    = NULL;
   hspi->hdmatx->XferAbortCallback    = NULL;
+
+  /* Set the DMA error callback */
+  hspi->hdmatx->XferErrorCallback    = SPI_DMAError;
 
   if (hspi->Init.DataSize <= SPI_DATASIZE_8BIT)
   {
@@ -2586,6 +2623,8 @@ HAL_StatusTypeDef HAL_SPI_Abort(SPI_HandleTypeDef *hspi)
       }
     } while (HAL_IS_BIT_SET(hspi->Instance->IER, SPI_IT_EOT));
 
+    count = SPI_DEFAULT_TIMEOUT * (SystemCoreClock / 24UL / 1000UL);
+
     /* Request a Suspend transfer */
     SET_BIT(hspi->Instance->CR1, SPI_CR1_CSUSP);
     do
@@ -2597,6 +2636,8 @@ HAL_StatusTypeDef HAL_SPI_Abort(SPI_HandleTypeDef *hspi)
         break;
       }
     } while (HAL_IS_BIT_SET(hspi->Instance->CR1, SPI_CR1_CSTART));
+
+    count = SPI_DEFAULT_TIMEOUT * (SystemCoreClock / 24UL / 1000UL);
 
     /* Clear SUSP flag */
     __HAL_SPI_CLEAR_SUSPFLAG(hspi);
@@ -2717,6 +2758,8 @@ HAL_StatusTypeDef HAL_SPI_Abort_IT(SPI_HandleTypeDef *hspi)
       }
     } while (HAL_IS_BIT_SET(hspi->Instance->IER, SPI_IT_EOT));
 
+    count = SPI_DEFAULT_TIMEOUT * (SystemCoreClock / 24UL / 1000UL);
+
     /* Request a Suspend transfer */
     SET_BIT(hspi->Instance->CR1, SPI_CR1_CSUSP);
     do
@@ -2728,6 +2771,8 @@ HAL_StatusTypeDef HAL_SPI_Abort_IT(SPI_HandleTypeDef *hspi)
         break;
       }
     } while (HAL_IS_BIT_SET(hspi->Instance->CR1, SPI_CR1_CSTART));
+
+    count = SPI_DEFAULT_TIMEOUT * (SystemCoreClock / 24UL / 1000UL);
 
     /* Clear SUSP flag */
     __HAL_SPI_CLEAR_SUSPFLAG(hspi);
@@ -3855,7 +3900,7 @@ static void SPI_CloseTransfer(SPI_HandleTypeDef *hspi)
   * @retval HAL status
   */
 static HAL_StatusTypeDef SPI_WaitOnFlagUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, FlagStatus Status,
-                                                    uint32_t Tickstart, uint32_t Timeout)
+                                                    uint32_t Timeout, uint32_t Tickstart)
 {
   /* Wait until flag is set */
   while ((__HAL_SPI_GET_FLAG(hspi, Flag) ? SET : RESET) == Status)

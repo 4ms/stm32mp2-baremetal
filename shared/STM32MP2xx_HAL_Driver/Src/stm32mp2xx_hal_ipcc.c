@@ -9,6 +9,17 @@
   *           + Initialization and de-initialization functions
   *           + Configuration, notification and interrupts handling
   *           + Peripheral State and Error functions
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
   @verbatim
   ==============================================================================
                         ##### How to use this driver #####
@@ -39,17 +50,6 @@
 
 @endverbatim
   ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
   */
 
 /* Includes ------------------------------------------------------------------*/
@@ -71,25 +71,25 @@
 /** @defgroup IPCC_Private_Constants IPCC Private Constants
   * @{
   */
-#define CHANNEL_INDEX_Msk 0x0000000FU /*!< Mask the channel index to avoid overflow */
+#define CHANNEL_INDEX_MSK 0x0000000FU /*!< Mask the channel index to avoid overflow */
 /**
   * @}
   */
 
 /* Private macros ------------------------------------------------------------*/
-#define IPCC_ALL_RX_BUF (((1U << hipcc->channelNumber) - 1) << IPCC_C1MR_CH1OM_Pos)
-#define IPCC_ALL_TX_BUF (((1U << hipcc->channelNumber) - 1) << IPCC_C1MR_CH1FM_Pos)
+#define IPCC_ALL_RX_BUF (((1UL << hipcc->channelNumber) - 1U) << IPCC_C1MR_CH1OM_Pos)
+#define IPCC_ALL_TX_BUF (((1UL << hipcc->channelNumber) - 1U) << IPCC_C1MR_CH1FM_Pos)
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /** @defgroup IPCC_Private_Functions IPCC Private Functions
   * @{
   */
 void IPCC_MaskInterrupt(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir);
-void IPCC_UnmaskInterrupt(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir);
+void IPCC_UnmaskInterrupt(const IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir);
 void IPCC_SetDefaultCallbacks(IPCC_HandleTypeDef *hipcc);
 void IPCC_Reset_Register(IPCC_HandleTypeDef *hipcc);
-IPCC_CommonTypeDef *IPCC_GetCurrentInstance(IPCC_HandleTypeDef *hipcc);
-IPCC_CommonTypeDef *IPCC_GetOtherInstance(IPCC_HandleTypeDef *hipcc);
+IPCC_CommonTypeDef *IPCC_GetCurrentInstance(const IPCC_HandleTypeDef *hipcc);
+IPCC_CommonTypeDef *IPCC_GetOtherInstance(const IPCC_HandleTypeDef *hipcc);
 /**
   * @}
   */
@@ -99,8 +99,8 @@ IPCC_CommonTypeDef *IPCC_GetOtherInstance(IPCC_HandleTypeDef *hipcc);
   */
 
 /** @addtogroup IPCC_Exported_Functions_Group1
- *  @brief    Initialization and de-initialization functions
- *
+  *  @brief    Initialization and de-initialization functions
+  *
 @verbatim
  ===============================================================================
              ##### Initialization and de-initialization functions  #####
@@ -245,8 +245,8 @@ __weak void HAL_IPCC_MspDeInit(IPCC_HandleTypeDef *hipcc)
 
 
 /** @addtogroup IPCC_Exported_Functions_Group2
- *  @brief    Configuration, notification and Irq handling functions.
- *
+  *  @brief    Configuration, notification and Irq handling functions.
+  *
 @verbatim
  ===============================================================================
               ##### IO operation functions #####
@@ -304,7 +304,8 @@ __weak void HAL_IPCC_MspDeInit(IPCC_HandleTypeDef *hipcc)
   * @param  cb Interrupt callback
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_IPCC_ActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir, ChannelCb cb)
+HAL_StatusTypeDef HAL_IPCC_ActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex,
+                                                IPCC_CHANNELDirTypeDef ChannelDir, ChannelCb cb)
 {
   HAL_StatusTypeDef err = HAL_OK;
 
@@ -321,12 +322,12 @@ HAL_StatusTypeDef HAL_IPCC_ActivateNotification(IPCC_HandleTypeDef *hipcc, uint3
       if (ChannelDir == IPCC_CHANNEL_DIR_TX)
       {
         hipcc->ChannelCallbackTx[ChannelIndex] = cb;
-        hipcc->callbackRequest |= (IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+        hipcc->callbackRequest |= ((uint32_t)IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
       }
       else
       {
         hipcc->ChannelCallbackRx[ChannelIndex] = cb;
-        hipcc->callbackRequest |= (IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+        hipcc->callbackRequest |= ((uint32_t)IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
       }
 
       /* Unmask only the channels in reception (Transmission channel mask/unmask is done in HAL_IPCC_NotifyCPU) */
@@ -358,7 +359,8 @@ HAL_StatusTypeDef HAL_IPCC_ActivateNotification(IPCC_HandleTypeDef *hipcc, uint3
   * @param  ChannelDir Channel direction
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_IPCC_DeActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir)
+HAL_StatusTypeDef HAL_IPCC_DeActivateNotification(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex,
+                                                  IPCC_CHANNELDirTypeDef ChannelDir)
 {
   HAL_StatusTypeDef err = HAL_OK;
 
@@ -375,12 +377,12 @@ HAL_StatusTypeDef HAL_IPCC_DeActivateNotification(IPCC_HandleTypeDef *hipcc, uin
       if (ChannelDir == IPCC_CHANNEL_DIR_TX)
       {
         hipcc->ChannelCallbackTx[ChannelIndex] = HAL_IPCC_TxCallback;
-        hipcc->callbackRequest &= ~(IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+        hipcc->callbackRequest &= ~(IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
       }
       else
       {
         hipcc->ChannelCallbackRx[ChannelIndex] = HAL_IPCC_RxCallback;
-        hipcc->callbackRequest &= ~(IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+        hipcc->callbackRequest &= ~(IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
       }
 
       /* Mask the interrupt */
@@ -409,7 +411,8 @@ HAL_StatusTypeDef HAL_IPCC_DeActivateNotification(IPCC_HandleTypeDef *hipcc, uin
   * @param  ChannelDir Channel direction
   * @retval Channel status
   */
-IPCC_CHANNELStatusTypeDef HAL_IPCC_GetChannelStatus(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir)
+IPCC_CHANNELStatusTypeDef HAL_IPCC_GetChannelStatus(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex,
+                                                    IPCC_CHANNELDirTypeDef ChannelDir)
 {
   uint32_t channel_state;
   IPCC_CHANNELStatusTypeDef status;
@@ -419,17 +422,17 @@ IPCC_CHANNELStatusTypeDef HAL_IPCC_GetChannelStatus(IPCC_HandleTypeDef const *co
   {
     /* Check the parameters */
     assert_param(IS_IPCC_ALL_INSTANCE(hipcc->Instance));
-    IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance((IPCC_HandleTypeDef *)hipcc);
-    IPCC_CommonTypeDef *otherInstance = IPCC_GetOtherInstance((IPCC_HandleTypeDef *)hipcc);
+    __I IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance(hipcc);
+    __I IPCC_CommonTypeDef *otherInstance = IPCC_GetOtherInstance(hipcc);
 
     /* Read corresponding channel depending of the MCU and the direction */
     if (ChannelDir == IPCC_CHANNEL_DIR_TX)
     {
-      channel_state = (currentInstance->SR) & (IPCC_SR_CH1F_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+      channel_state = (currentInstance->SR) & ((uint32_t)IPCC_SR_CH1F_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
     }
     else
     {
-      channel_state = (otherInstance->SR) & (IPCC_SR_CH1F_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+      channel_state = (otherInstance->SR) & ((uint32_t)IPCC_SR_CH1F_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
     }
     status = (channel_state == 0UL) ? IPCC_CHANNEL_STATUS_FREE : IPCC_CHANNEL_STATUS_OCCUPIED;
   }
@@ -452,26 +455,29 @@ IPCC_CHANNELStatusTypeDef HAL_IPCC_GetChannelStatus(IPCC_HandleTypeDef const *co
   * @param  ChannelDir Channel direction
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_IPCC_NotifyCPU(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir)
+HAL_StatusTypeDef HAL_IPCC_NotifyCPU(IPCC_HandleTypeDef const *const hipcc, uint32_t ChannelIndex,
+                                     IPCC_CHANNELDirTypeDef ChannelDir)
 {
   HAL_StatusTypeDef err = HAL_OK;
   uint32_t mask;
 
   /* Check the parameters */
   assert_param(IS_IPCC_ALL_INSTANCE(hipcc->Instance));
-  IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance((IPCC_HandleTypeDef *)hipcc);
+  IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance(hipcc);
 
-  /* Check if IPCC is initiliased and the if ChannelIndex is valid */
+  /* Check if IPCC is initialised and the if ChannelIndex is valid */
   if ((hipcc->State == HAL_IPCC_STATE_READY) && (ChannelIndex < hipcc->channelNumber))
   {
     /* For IPCC_CHANNEL_DIR_TX, set the status. For IPCC_CHANNEL_DIR_RX, clear the status */
-    currentInstance->SCR |= ((ChannelDir == IPCC_CHANNEL_DIR_TX) ? IPCC_SCR_CH1S : IPCC_SCR_CH1C) << (ChannelIndex & CHANNEL_INDEX_Msk) ;
+    currentInstance->SCR |= ((ChannelDir == IPCC_CHANNEL_DIR_TX) ? (uint32_t)IPCC_SCR_CH1S : \
+                             (uint32_t)IPCC_SCR_CH1C) << (ChannelIndex & CHANNEL_INDEX_MSK) ;
 
     /* Unmask interrupt if the callback is requested */
-    mask = ((ChannelDir == IPCC_CHANNEL_DIR_TX) ? IPCC_MR_CH1FM_Msk : IPCC_MR_CH1OM_Msk) << (ChannelIndex & CHANNEL_INDEX_Msk) ;
+    mask = ((ChannelDir == IPCC_CHANNEL_DIR_TX) ? (uint32_t)IPCC_MR_CH1FM_Msk : \
+            (uint32_t)IPCC_MR_CH1OM_Msk) << (ChannelIndex & CHANNEL_INDEX_MSK) ;
     if ((hipcc->callbackRequest & mask) == mask)
     {
-      IPCC_UnmaskInterrupt((IPCC_HandleTypeDef *)hipcc, ChannelIndex, ChannelDir);
+      IPCC_UnmaskInterrupt(hipcc, ChannelIndex, ChannelDir);
     }
   }
   else
@@ -487,8 +493,8 @@ HAL_StatusTypeDef HAL_IPCC_NotifyCPU(IPCC_HandleTypeDef const *const hipcc, uint
   */
 
 /** @addtogroup IPCC_IRQ_Handler_and_Callbacks
- * @{
- */
+  * @{
+  */
 
 /**
   * @brief  This function handles IPCC Tx Free interrupt request.
@@ -508,7 +514,7 @@ void HAL_IPCC_TX_IRQHandler(IPCC_HandleTypeDef *const hipcc)
 
   while (irqmask != 0UL)  /* if several bits are set, it loops to serve all of them */
   {
-    bit_pos = 1UL << (IPCC_MR_CH1FM_Pos + (ch_count & CHANNEL_INDEX_Msk));
+    bit_pos = 1UL << (IPCC_MR_CH1FM_Pos + (ch_count & CHANNEL_INDEX_MSK));
 
     if ((irqmask & bit_pos) != 0U)
     {
@@ -535,7 +541,7 @@ void HAL_IPCC_RX_IRQHandler(IPCC_HandleTypeDef *const hipcc)
   uint32_t bit_pos;
   uint32_t ch_count = 0U;
   IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance(hipcc);
-  IPCC_CommonTypeDef *otherInstance = IPCC_GetOtherInstance(hipcc);
+  __I IPCC_CommonTypeDef *otherInstance = IPCC_GetOtherInstance(hipcc);
 
   /* check the Rx occupied channels which are not masked */
   irqmask = ~(currentInstance->MR) & IPCC_ALL_RX_BUF;
@@ -543,7 +549,7 @@ void HAL_IPCC_RX_IRQHandler(IPCC_HandleTypeDef *const hipcc)
 
   while (irqmask != 0UL)  /* if several bits are set, it loops to serve all of them */
   {
-    bit_pos = 1UL << (ch_count & CHANNEL_INDEX_Msk);
+    bit_pos = 1UL << (ch_count & CHANNEL_INDEX_MSK);
 
     if ((irqmask & bit_pos) != 0U)
     {
@@ -608,8 +614,8 @@ __weak void HAL_IPCC_TxCallback(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex
   */
 
 /** @addtogroup IPCC_Exported_Functions_Group3
- *  @brief   IPCC Peripheral State and Error functions
- *
+  *  @brief   IPCC Peripheral State and Error functions
+  *
 @verbatim
   ==============================================================================
             ##### Peripheral State and Error functions #####
@@ -637,7 +643,7 @@ HAL_IPCC_StateTypeDef HAL_IPCC_GetState(IPCC_HandleTypeDef const *const hipcc)
   * @param  hipcc IPCC handle
   * @retval number of IPCC channels, 0 if IPCC is not initialized
   */
-uint32_t HAL_IPCC_GetChannelNumber(IPCC_HandleTypeDef *hipcc)
+uint32_t HAL_IPCC_GetChannelNumber(const IPCC_HandleTypeDef *hipcc)
 {
   uint32_t channelNumber = 0;
 
@@ -653,8 +659,8 @@ uint32_t HAL_IPCC_GetChannelNumber(IPCC_HandleTypeDef *hipcc)
   */
 
 /** @addtogroup IPCC_Exported_Functions_Group4
- *  @brief   RIF protection configuration functions
- *
+  *  @brief   RIF protection configuration functions
+  *
 @verbatim
   ==============================================================================
             ##### RIF protection configuration functions #####
@@ -680,12 +686,13 @@ uint32_t HAL_IPCC_GetChannelNumber(IPCC_HandleTypeDef *hipcc)
   *            @arg IPCC_CHANNEL_16: IPCC Channel 16
   * @param ChannelAttributes RIF security and privilege protections attributes.
   *          Combination (logical OR) of
-  *            @arg IPCC_CHANNEL_PRIV | IPCC_CHANNEL_NPRIV | <empty>
+  *            @arg IPCC_CHANNEL_PRIV | IPCC_CHANNEL_NPRIV
   *          with
-  *            @arg IPCC_CHANNEL_SEC  | IPCC_CHANNEL_NSEC  | <empty>
+  *            @arg IPCC_CHANNEL_SEC  | IPCC_CHANNEL_NSEC
   * @retval HAL_OK if the configuration is successfully set, HAL_ERROR otherwise
   */
-HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId, uint32_t ChannelIndex, uint32_t ChannelAttributes)
+HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId,
+                                                   uint32_t ChannelIndex, uint32_t ChannelAttributes)
 {
   HAL_StatusTypeDef err;
   __IO uint32_t *regaddr;
@@ -695,13 +702,13 @@ HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, ui
     assert_param(IS_IPCC_ALL_INSTANCE(hipcc->Instance));
 
     /* Configure privilege attribute */
-    if ((ChannelAttributes & IPCC_CHANNEL_PRIV_SELECT) != 0)
+    if ((ChannelAttributes & IPCC_CHANNEL_PRIV_SELECT) != 0UL)
     {
       regaddr = (LocalProcessorId == IPCC_CPU1) ? &hipcc->Instance->C1PRIVCFGR : &hipcc->Instance->C2PRIVCFGR;
 
       if ((ChannelAttributes & IPCC_CHANNEL_PRIV) == IPCC_CHANNEL_PRIV)
       {
-        *regaddr |= 1U << ChannelIndex;
+        *regaddr |= 1UL << ChannelIndex;
       }
       else
       {
@@ -710,17 +717,17 @@ HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, ui
     }
 
     /* Configure secure attribute */
-    if ((ChannelAttributes & IPCC_CHANNEL_SEC_SELECT) != 0)
+    if ((ChannelAttributes & IPCC_CHANNEL_SEC_SELECT) != 0UL)
     {
       regaddr = (LocalProcessorId == IPCC_CPU1) ? &hipcc->Instance->C1SECCFGR : &hipcc->Instance->C2SECCFGR;
 
       if ((ChannelAttributes & IPCC_CHANNEL_SEC) == IPCC_CHANNEL_SEC)
       {
-        *regaddr |= 1U << ChannelIndex;
+        *regaddr |= 1UL << ChannelIndex;
       }
       else
       {
-        *regaddr &= ~(1U << ChannelIndex);
+        *regaddr &= ~(1UL << ChannelIndex);
       }
     }
     err = HAL_OK;
@@ -751,10 +758,11 @@ HAL_StatusTypeDef HAL_IPCC_ConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, ui
   *            @arg IPCC_CHANNEL_SEC  | IPCC_CHANNEL_NSEC
   * @retval HAL_OK if the configuration is successfully read, HAL_ERROR otherwise
   */
-HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId, uint32_t ChannelIndex, uint32_t *pChannelAttributes)
+HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t LocalProcessorId,
+                                                      uint32_t ChannelIndex, uint32_t *pChannelAttributes)
 {
   HAL_StatusTypeDef err;
-  __IO uint32_t *regaddr;
+  __I uint32_t *regaddr;
 
   if ((hipcc != NULL) && (pChannelAttributes != NULL))
   {
@@ -763,7 +771,7 @@ HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(IPCC_HandleTypeDef *hipcc,
 
     /* Privilege attribute */
     regaddr = (LocalProcessorId == IPCC_CPU1) ? &hipcc->Instance->C1PRIVCFGR : &hipcc->Instance->C2PRIVCFGR;
-    if ((*regaddr & (1U << ChannelIndex)) != 0)
+    if ((*regaddr & (1UL << ChannelIndex)) != 0UL)
     {
       *pChannelAttributes |= IPCC_CHANNEL_PRIV;
     }
@@ -774,7 +782,7 @@ HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(IPCC_HandleTypeDef *hipcc,
 
     /* Secure attribute */
     regaddr = (LocalProcessorId == IPCC_CPU1) ? &hipcc->Instance->C1SECCFGR : &hipcc->Instance->C2SECCFGR;
-    if ((*regaddr & (1U << ChannelIndex)) != 0)
+    if ((*regaddr & (1UL << ChannelIndex)) != 0UL)
     {
       *pChannelAttributes |= IPCC_CHANNEL_SEC;
     }
@@ -805,7 +813,7 @@ HAL_StatusTypeDef HAL_IPCC_GetConfigChannelAttributes(IPCC_HandleTypeDef *hipcc,
   *          @arg IPCC_CPU_CID_STATIC_7
   * @retval HAL_OK if the configuration is successfully set, HAL_ERROR otherwise
   */
-HAL_StatusTypeDef HAL_IPCC_ConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t Attributes)
+HAL_StatusTypeDef HAL_IPCC_ConfigAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t Attributes)
 {
   HAL_StatusTypeDef err;
   __IO uint32_t *regaddr;
@@ -818,14 +826,18 @@ HAL_StatusTypeDef HAL_IPCC_ConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32_t 
     /* Configure CID attribute */
     regaddr = (Item == IPCC_CPU1) ? &hipcc->Instance->C1CIDCFGR : &hipcc->Instance->C2CIDCFGR;
 
-    if ((Attributes & IPCC_CPU_CID_DISABLE_SELECT) != 0)
+    if ((Attributes & IPCC_CPU_CID_DISABLE_SELECT) != 0U)
     {
       *regaddr &= ~IPCC_C1CIDCFGR_CFEN;
     }
-    else if ((Attributes & IPCC_CPU_CID_STATIC_SELECT) != 0)
+    else if ((Attributes & IPCC_CPU_CID_STATIC_SELECT) != 0U)
     {
       cid = (Attributes & IPCC_CPU_CID_VAL_Msk) >> IPCC_CPU_CID_VAL_Pos;
       *regaddr = IPCC_C1CIDCFGR_CFEN | (cid << IPCC_C1CIDCFGR_CID_Pos);
+    }
+    else
+    {
+      /* Nothing to do */
     }
     err = HAL_OK;
   }
@@ -850,10 +862,10 @@ HAL_StatusTypeDef HAL_IPCC_ConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32_t 
   *          @arg IPCC_CPU_CID_STATIC_7
   * @retval HAL_OK if the configuration is successfully read, HAL_ERROR otherwise
   */
-HAL_StatusTypeDef HAL_IPCC_GetConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t *pAttributes)
+HAL_StatusTypeDef HAL_IPCC_GetConfigAttributes(const IPCC_HandleTypeDef *hipcc, uint32_t Item, uint32_t *pAttributes)
 {
   HAL_StatusTypeDef err;
-  __IO uint32_t *regaddr;
+  __I uint32_t *regaddr;
   uint32_t cid;
 
   if ((hipcc != NULL) && (pAttributes != NULL))
@@ -862,7 +874,7 @@ HAL_StatusTypeDef HAL_IPCC_GetConfigAttributes(IPCC_HandleTypeDef *hipcc, uint32
 
     /* CID attribute */
     regaddr = (Item == IPCC_CPU1) ? &hipcc->Instance->C1CIDCFGR : &hipcc->Instance->C2CIDCFGR;
-    if ((*regaddr & IPCC_C1CIDCFGR_CFEN) == 0)
+    if ((*regaddr & IPCC_C1CIDCFGR_CFEN) == 0U)
     {
       *pAttributes = IPCC_CPU_CID_DISABLE;
     }
@@ -910,12 +922,12 @@ void IPCC_MaskInterrupt(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_C
   if (ChannelDir == IPCC_CHANNEL_DIR_TX)
   {
     /* Mask interrupt */
-    currentInstance->MR |= (IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+    currentInstance->MR |= ((uint32_t)IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
   }
   else
   {
     /* Mask interrupt */
-    currentInstance->MR |= (IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+    currentInstance->MR |= ((uint32_t)IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
   }
 }
 /**
@@ -928,19 +940,19 @@ void IPCC_MaskInterrupt(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_C
   *            @arg IPCC_CHANNEL_16: IPCC Channel 16
   * @param  ChannelDir Channel direction
   */
-void IPCC_UnmaskInterrupt(IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir)
+void IPCC_UnmaskInterrupt(const IPCC_HandleTypeDef *hipcc, uint32_t ChannelIndex, IPCC_CHANNELDirTypeDef ChannelDir)
 {
   IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance(hipcc);
 
   if (ChannelDir == IPCC_CHANNEL_DIR_TX)
   {
     /* Unmask interrupt */
-    currentInstance->MR &= ~(IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+    currentInstance->MR &= ~(IPCC_MR_CH1FM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
   }
   else
   {
     /* Unmask interrupt */
-    currentInstance->MR &= ~(IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_Msk));
+    currentInstance->MR &= ~(IPCC_MR_CH1OM_Msk << (ChannelIndex & CHANNEL_INDEX_MSK));
   }
 }
 
@@ -961,7 +973,7 @@ void IPCC_SetDefaultCallbacks(IPCC_HandleTypeDef *hipcc)
 
 /**
   * @brief Reset IPCC register to default value for the concerned instance.
-  * @param  Instance pointer to register
+  * @param  hipcc IPCC handle
   */
 void IPCC_Reset_Register(IPCC_HandleTypeDef *hipcc)
 {
@@ -981,73 +993,65 @@ void IPCC_Reset_Register(IPCC_HandleTypeDef *hipcc)
   * @brief Return the current core endpoint of the current IPCC instance
   * @param  hipcc IPCC handle
   */
-IPCC_CommonTypeDef *IPCC_GetCurrentInstance(IPCC_HandleTypeDef *hipcc)
+IPCC_CommonTypeDef *IPCC_GetCurrentInstance(const IPCC_HandleTypeDef *hipcc)
 {
-  IPCC_CommonTypeDef *instance;
-#if !defined(IPCC1)
-#if defined (CORE_CA35) || defined(CORE_CM33)
-  instance = IPCC2_C2;
-#else
-  instance = IPCC2_C1;
-#endif
-#else /* !IPCC1 */
+
+#if defined(IPCC1)
   if (hipcc->Instance == IPCC1)
   {
 #if defined(CORE_CM33)
-    instance = IPCC1_C2;
-#else
-    instance = IPCC1_C1;
-#endif
+    return IPCC1_C2;
+#else   /* CORE_CM33 */
+    return IPCC1_C1;
+#endif  /* CORE_CM33 */
   }
-  else
+#endif /* IPCC1 */
+
+#if  defined(IPCC2)
+  if (hipcc->Instance == IPCC2)
   {
 #if defined (CORE_CA35) || defined(CORE_CM33)
-    instance = IPCC2_C2;
-#else
-    instance = IPCC2_C1;
-#endif
+    return IPCC2_C2;
+#else   /* (CORE_CA35) || (CORE_CM33) */
+    return IPCC2_C1;
+#endif  /* (CORE_CA35) || (CORE_CM33) */
   }
-#endif /* !IPCC1 */
-  return instance;
+#endif /* IPCC2 */
+
+  return NULL;
 }
 
 /**
   * @brief Return the other core endpoint of the current IPCC instance
   * @param  hipcc IPCC handle
   */
-IPCC_CommonTypeDef *IPCC_GetOtherInstance(IPCC_HandleTypeDef *hipcc)
+IPCC_CommonTypeDef *IPCC_GetOtherInstance(const IPCC_HandleTypeDef *hipcc)
 {
-  IPCC_CommonTypeDef *currentInstance, *otherInstance;
+  const IPCC_CommonTypeDef *currentInstance = IPCC_GetCurrentInstance(hipcc);
 
-  currentInstance = IPCC_GetCurrentInstance(hipcc);
-#if !defined (IPCC1)
-  if (currentInstance == IPCC2_C1)
-  {
-    otherInstance = IPCC2_C2;
-  }
-  else
-  {
-    otherInstance = IPCC2_C1;
-  }
-#else /* !IPCC1 */
+#if defined (IPCC1)
   if (currentInstance == IPCC1_C1)
   {
-    otherInstance = IPCC1_C2;
-  }
-  else if (currentInstance == IPCC1_C2)
-  {
-    otherInstance = IPCC1_C1;
-  }
-  else if (currentInstance == IPCC2_C1)
-  {
-    otherInstance = IPCC2_C2;
+    return  IPCC1_C2;
   }
   else
   {
-    otherInstance = IPCC2_C1;
+    return IPCC1_C1;
   }
-#endif /* !IPCC1 */
-  return otherInstance;
+#endif /* IPCC1 */
+
+#if defined (IPCC2)
+  if (currentInstance == IPCC2_C1)
+  {
+    return IPCC2_C2;
+  }
+  else
+  {
+    return IPCC2_C1;
+  }
+#endif /* IPCC2 */
+
+  return NULL;
 }
 
 /**
@@ -1064,4 +1068,3 @@ IPCC_CommonTypeDef *IPCC_GetOtherInstance(IPCC_HandleTypeDef *hipcc)
   * @}
   */
 #endif /* IPCC || IPCC1 || IPCC2 */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
