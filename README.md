@@ -417,3 +417,62 @@ Copy the fip.bin to partition 5 of the sd card:
 sudo dd if=baremetal-1/fip.bin of=/dev/diskXs5 
 ```
 
+## SD Card info
+
+From TF-A boot, the SD card is organized:
+```
+Partition table with 8 entries:
+1: fsbla1                              4400-443fc
+2: fsbla2                              44400-843fc
+3: metadata1                           84400-c43fc
+4: metadata2                           c4400-1043fc
+5: fip-a                               104400-5043fc
+6: fip-b                               504400-9043fc
+7: u-boot-env                          904400-9843fc
+8: bootfs                              984400-49843fc
+```
+
+## FIP info
+
+
+Given a fip.bin with no op-tee:
+```
+tools/fiptool/fiptool create \
+    --hw-config ../build-baremetal-uboot/u-boot.dtb \
+    --fw-config build/stm32mp2/release/fdts/stm32mp257f-ev1-fw-config.dtb \
+    --soc-fw-config stm32mp2/release/fdts/stm32mp257f-ev1-bl31.dtb \
+    --ddr-fw drivers/st/ddr/phy/firmware/bin/stm32mp2/ddr4_pmu_train.bin \
+    --soc-fw build/stm32mp2/release/bl31.bin \
+    --nt-fw ../build-baremetal-uboot/u-boot-nodtb.bin \
+    build/stm32mp2/release/fip.bin
+
+ EL3 Runtime Firmware BL31: offset=0x128, size=0x124BD, cmdline="--soc-fw"
+ Non-Trusted Firmware BL33: offset=0x125E5, size=0x15A248, cmdline="--nt-fw"
+ FW_CONFIG: offset=0x16C82D, size=0x326, cmdline="--fw-config"
+ HW_CONFIG: offset=0x16CB53, size=0x17290, cmdline="--hw-config"
+ SOC_FW_CONFIG: offset=0x183DE3, size=0x39FF, cmdline="--soc-fw-config"
+ DDR_FW: offset=0x1877E2, size=0x7524, cmdline="--ddr-fw"
+```
+
+TF-A BL2 loads images from the FIP in this order:
+(The image ids are from plat/st/stm32mp2/include/plat_tbbr_img_def.h)
+
+- Image id 26 (DDR_FW_ID): DDR firmware to 0xe041000 - 0xe048524
+  This initializes DDR RAM
+
+- Image id 1 (FW_CONFIG_ID): to 0xe000000 - 0xe000326
+  This is the DTB for something, probably for BL2? It seems to contain RISAF section definitions
+
+- Image id 3 (BL31_IMAGE_ID) to 0xe000000 - 0x0e0124BD  (max size is 0x17000)
+  This is the secure monitor TF-A
+
+- Image id 19: (SOC_FW_CONFIG_ID): to 0x81fc0000 - 0x81fc39ff
+  This is the DTB for BL31
+
+- Image id 2: to 0x84400000 - 0x84417290
+  This is the DTB for U-Boot (BL33)
+
+- Image id 5: to 0x84000000 - 0x841560b0
+  This is U-Boot (BL33)
+
+
