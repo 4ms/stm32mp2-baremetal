@@ -12,6 +12,20 @@ void GIC_ClearActiveIRQ(IRQn_Type IRQn)
 void IRQ_Dist_Initialize(void)
 {
 	GIC_DistInit();
+
+	unsigned num_irq = 32U * ((GIC_DistributorInfo() & 0x1FU) + 1U);
+
+	// Clear any pending interrupts for the Distributer
+	for (unsigned i = 32; i < num_irq; i++) {
+		int act_pend = GIC_GetIRQStatus(i);
+		int active = (act_pend & 0b10) >> 1;
+		int pending = act_pend & 0b01;
+
+		if (active)
+			GIC_ClearActiveIRQ(i);
+		if (pending)
+			GIC_ClearPendingIRQ(i);
+	}
 }
 
 /// Initialize interrupt controller.
@@ -19,6 +33,7 @@ int32_t IRQ_Initialize(void)
 {
 	GIC_CPUInterfaceInit();
 
+	// Clear any pending interrupts for this CPU
 	unsigned num_irq = 32U * ((GIC_DistributorInfo() & 0x1FU) + 1U);
 	int x;
 	do {
@@ -30,17 +45,6 @@ int32_t IRQ_Initialize(void)
 		__DSB();
 		__ISB();
 	} while (x >= 0 && x < num_irq);
-
-	for (unsigned i = 32; i < num_irq; i++) {
-		int act_pend = GIC_GetIRQStatus(i);
-		int active = (act_pend & 0b10) >> 1;
-		int pending = act_pend & 0b01;
-
-		if (active)
-			GIC_ClearActiveIRQ(i);
-		if (pending)
-			GIC_ClearPendingIRQ(i);
-	}
 
 	// Reset the active priority register, in case we halted/reset during an ISR
 	// FixMe: This doesn't always work! Sometimes if we halt during an ISR handler, and upload new code, we have to
