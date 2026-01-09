@@ -155,19 +155,19 @@ inline void disable_fiq()
 }
 
 // Read counter freq
-inline uint32_t read_cntfreq()
+inline uint64_t read_cntfreq()
 {
 	uint64_t v;
 	asm volatile("mrs %0, cntfrq_el0" : "=r"(v));
-	return (uint32_t)v;
+	return v;
 }
 
 // Read physical counter ticks (cntpct)
-inline uint32_t read_cntpct()
+inline uint64_t read_cntpct()
 {
 	uint64_t v;
 	asm volatile("mrs %0, cntpct_el0" : "=r"(v));
-	return (uint32_t)v;
+	return v;
 }
 
 //
@@ -249,4 +249,3 @@ inline void zero_dcache_address(uintptr_t addr)
 {
 	asm volatile("dc zva, %0" ::"r"(addr));
 }
-
