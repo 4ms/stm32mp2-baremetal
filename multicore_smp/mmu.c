@@ -255,10 +255,10 @@ void mmu_enable(void)
 	//  isb
 
 	// Enable MMU + caches
-	uint64_t sctlr = read_sctlr_el1();
+	// uint64_t sctlr = read_sctlr_el1();
 	// sctlr |= (SCTLR_M | SCTLR_C | SCTLR_I);
-	sctlr |= (SCTLR_M | SCTLR_C);
-	sctlr &= ~(SCTLR_I);
-	write_sctlr_el1(sctlr);
-	isb();
+	// // sctlr |= (SCTLR_M | SCTLR_C);
+	// // sctlr &= ~(SCTLR_I);
+	// write_sctlr_el1(sctlr);
+	// isb();
 }
