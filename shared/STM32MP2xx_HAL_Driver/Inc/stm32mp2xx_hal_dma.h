@@ -1049,10 +1049,10 @@ HAL_StatusTypeDef HAL_DMA_ReleaseChannelSemaphore(DMA_HandleTypeDef *hdma);
   * @{
   */
 #define GET_DMA_INSTANCE(__HANDLE__) \
-  ((DMA_TypeDef *)((uint32_t)((__HANDLE__)->Instance) & (~HAL_DMA_OFFSET_MASK)))
+  ((DMA_TypeDef *)((uintptr_t)((__HANDLE__)->Instance) & (~HAL_DMA_OFFSET_MASK)))
 
 #define GET_DMA_CHANNEL(__HANDLE__) \
-  ((((uint32_t)((__HANDLE__)->Instance) & HAL_DMA_OFFSET_MASK) - HAL_DMA_CHANNEL_START) / HAL_DMA_CHANNEL_SIZE)
+  ((((uintptr_t)((__HANDLE__)->Instance) & HAL_DMA_OFFSET_MASK) - HAL_DMA_CHANNEL_START) / HAL_DMA_CHANNEL_SIZE)
 
 #define IS_DMA_MODE(MODE) \
   (((MODE) == DMA_NORMAL) || \
