@@ -1,6 +1,7 @@
 #include "interrupt.hh"
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
+#include "watchdog.hh"
 
 constexpr inline uint32_t BufferWords = 8 * 1024;
 
@@ -96,9 +97,7 @@ int main()
 		x = x + 1;
 		if ((x % 10'000'000) == 0) {
 			print("Tick = ", HAL_GetTick(), "\n");
-			// ???
-			// IWDG1->KR = 0x5555;
-			// IWDG1->KR = 0xAAAA;
+			watchdog_pet();
 		}
 
 		asm("nop");

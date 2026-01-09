@@ -30,7 +30,7 @@ struct InterruptControl {
 		GIC_DisableIRQ(irqn);
 
 		uint32_t current_core = get_mpid() & 0xFF; // 0 = Core 1, 1 = Core 2
-		GIC_SetTarget(irqn, current_core + 1);	   // convert 0/1 to bitmask: 0=>0b01, 1=>0b10
+		GIC_SetTarget(irqn, (1 << current_core));
 		GIC_SetConfiguration(irqn, trig == LevelTriggered ? 0b00 : 0b10);
 		GIC_ClearPendingIRQ(irqn);
 

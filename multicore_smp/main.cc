@@ -1,6 +1,7 @@
 #include "interrupt.hh"
 #include "print.hh"
 #include "psci.hh"
+#include "watchdog.hh"
 
 void delay(unsigned x)
 {
@@ -56,6 +57,8 @@ extern "C" void aux_main()
 			print("T1ck\n");
 			// FixMe: Why does this not trigger SGI6 on core0? It works when called from Core0
 			GIC_SendSGI(SGI6_IRQn, 0b01, 0b00);
+
+			watchdog_pet();
 		}
 	}
 }
