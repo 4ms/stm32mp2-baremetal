@@ -27,7 +27,6 @@ el1_entry:
     // Enable FP+SIMD at EL1
 	mrs     x1, cpacr_el1
 	orr	    x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
-	// orr	    x1, x1, #3 << 22        /* Don't trap SIMD at EL1 or EL0*/
 	msr	    cpacr_el1, x1
 	isb
 
@@ -46,7 +45,9 @@ bss_done:
 	bl delay_100
 	bl led1_off
 
-    bl system_init
+    bl mmu_enable
+	bl IRQ_Dist_Initialize
+	bl IRQ_Initialize
 
 	mrs x1, sctlr_el1
 	orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
@@ -60,6 +61,7 @@ bss_done:
 
 	bl __libc_init_array
 
+    // Unmask interrupts
     msr     daifclr, #0xf
 
     // Call main

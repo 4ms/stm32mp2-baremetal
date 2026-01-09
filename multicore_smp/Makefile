@@ -5,7 +5,6 @@ SHAREDDIR = ../shared
 SOURCES := startup.s
 SOURCES += vector_table.s
 SOURCES += mmu.c
-SOURCES += system_init.cc
 SOURCES += main.cc
 SOURCES += led.c
 SOURCES += psci.cc
