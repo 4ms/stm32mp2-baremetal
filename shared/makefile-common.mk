@@ -33,6 +33,8 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 
 OPTFLAG ?= -O0
 
+FREESTANDING ?= -ffreestanding
+
 AFLAGS =  \
 	-fdata-sections -ffunction-sections \
 	-fno-builtin \
@@ -43,7 +45,7 @@ AFLAGS =  \
 	-std=gnu99 \
 	-nostdinc \
 	-nostdlib \
-	-ffreestanding \
+	$(FREESTANDING) 
 
 CFLAGS ?= -g2 \
 		 -fno-common \
@@ -53,7 +55,7 @@ CFLAGS ?= -g2 \
 		 $(INCLUDES) \
 		 -fdata-sections -ffunction-sections \
 		 -nostartfiles \
-		 -ffreestanding \
+		 $(FREESTANDING) \
 		 $(EXTRACFLAGS)\
 		 -c \
 
@@ -78,7 +80,7 @@ LFLAGS ?= -Wl,--gc-sections \
 		 $(MCU) \
 		 -nostartfiles \
 		 $(EXTRALDFLAGS) \
-		 -ffreestanding \
+		 $(FREESTANDING) \
 		 
 # LFLAGS := --hash-style=gnu \
 # 		  --as-needed \
