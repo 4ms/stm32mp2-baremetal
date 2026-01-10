@@ -9,7 +9,7 @@ SOURCES += main.cc
 SOURCES += led.c
 SOURCES += $(SHAREDDIR)/drivers/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/drivers/irq_init.c
-SOURCES += $(SHAREDDIR)/system/libc_stub.c
+SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
 SOURCES += $(SHAREDDIR)/uart_print.c
 SOURCES += $(SHAREDDIR)/print.cc
 

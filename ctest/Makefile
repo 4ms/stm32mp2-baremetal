@@ -7,7 +7,7 @@ SOURCES += mmu.c
 SOURCES += system_init.c
 SOURCES += main.cc
 SOURCES += led.c
-SOURCES += $(SHAREDDIR)/system/libc_stub.c
+SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
 SOURCES += $(SHAREDDIR)/uart_print.c
 
 INCLUDES := -I.

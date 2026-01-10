@@ -1,8 +1,6 @@
 SDCARD_MOUNT_PATH ?= /Volumes/BAREAPP
 
 LINKSCR ?= linkscript.ld
-# EXTLIBDIR ?= ../../third-party
-# UBOOTDIR ?= $(EXTLIBDIR)/u-boot/build
 BUILDDIR ?= build
 BINARYNAME ?= main
 UIMAGENAME ?= $(BUILDDIR)/main.uimg
