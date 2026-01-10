@@ -85,7 +85,7 @@
 /**
   * @brief DWC3 Specific macros
   */
-#define DWC3_REG32(base, x) (*(__IO uint32_t *)(((uint32_t)(base)) + (x)))
+#define DWC3_REG32(base, x) (*(__IO uint32_t *)(((uintptr_t)(base)) + (x)))
 
 /* DWC3 IP Parameter */
 #define DWC3_IP_DEVICE_NUM_INT  2U
@@ -93,95 +93,95 @@
 #define DWC3_IP_NUM_IN_EPS    16U
 
 /* Global Registers */
-#define DWC3_GSBUSCFG0    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSBUSCFG0
-#define DWC3_GSBUSCFG1    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSBUSCFG1
-#define DWC3_GTXTHRCFG    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GTXTHRCFG
-#define DWC3_GRXTHRCFG    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GRXTHRCFG
-#define DWC3_GCTL     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GCTL
-#define DWC3_GPMSTS    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPMSTS
-#define DWC3_GSTS     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSTS
-#define DWC3_GUCTL1     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL1
-#define DWC3_GSNPSID    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSNPSID
-#define DWC3_GGPIO      (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GGPIO
-#define DWC3_GUID     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUID
-#define DWC3_GUCTL      (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL
-#define DWC3_GBUSERRADDR0 (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GBUSERRADDRLO
-#define DWC3_GBUSERRADDR1 (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GBUSERRADDRHI
-#define DWC3_GPRTBIMAP0   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAPLO
-#define DWC3_GPRTBIMAP1   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAPHI
-#define DWC3_GHWPARAMS0   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS0
-#define DWC3_GHWPARAMS1   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS1
-#define DWC3_GHWPARAMS2   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS2
-#define DWC3_GHWPARAMS3   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS3
-#define DWC3_GHWPARAMS4   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS4
-#define DWC3_GHWPARAMS5   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS5
-#define DWC3_GHWPARAMS6   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS6
-#define DWC3_GHWPARAMS7   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS7
-#define DWC3_GHWPARAMS8   (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS8
-#define DWC3_GDBGFIFOSPACE  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGFIFOSPACE
-#define DWC3_GDBGLTSSM    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLTSSM
-#define DWC3_GDBGLNMCC    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLNMCC
-#define DWC3_GDBGBMU    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGBMU
-#define DWC3_GDBGLSPMUX_HST    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLSPMUX_HST
-#define DWC3_GDBGLSP    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLSP
-#define DWC3_GDBGEPINFO0    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGEPINFO0
-#define DWC3_GDBGEPINFO1    (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGEPINFO1
-#define DWC3_GPRTBIMAP_HS0  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_HSLO
-#define DWC3_GPRTBIMAP_HS1  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_HSHI
-#define DWC3_GPRTBIMAP_FS0  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_FSLO
-#define DWC3_GPRTBIMAP_FS1  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_FSHI
-#define DWC3_GUCTL2  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL2
+#define DWC3_GSBUSCFG0    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSBUSCFG0
+#define DWC3_GSBUSCFG1    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSBUSCFG1
+#define DWC3_GTXTHRCFG    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GTXTHRCFG
+#define DWC3_GRXTHRCFG    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GRXTHRCFG
+#define DWC3_GCTL     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GCTL
+#define DWC3_GPMSTS    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPMSTS
+#define DWC3_GSTS     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSTS
+#define DWC3_GUCTL1     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL1
+#define DWC3_GSNPSID    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GSNPSID
+#define DWC3_GGPIO      (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GGPIO
+#define DWC3_GUID     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUID
+#define DWC3_GUCTL      (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL
+#define DWC3_GBUSERRADDR0 (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GBUSERRADDRLO
+#define DWC3_GBUSERRADDR1 (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GBUSERRADDRHI
+#define DWC3_GPRTBIMAP0   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAPLO
+#define DWC3_GPRTBIMAP1   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAPHI
+#define DWC3_GHWPARAMS0   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS0
+#define DWC3_GHWPARAMS1   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS1
+#define DWC3_GHWPARAMS2   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS2
+#define DWC3_GHWPARAMS3   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS3
+#define DWC3_GHWPARAMS4   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS4
+#define DWC3_GHWPARAMS5   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS5
+#define DWC3_GHWPARAMS6   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS6
+#define DWC3_GHWPARAMS7   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS7
+#define DWC3_GHWPARAMS8   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GHWPARAMS8
+#define DWC3_GDBGFIFOSPACE  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGFIFOSPACE
+#define DWC3_GDBGLTSSM    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLTSSM
+#define DWC3_GDBGLNMCC    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLNMCC
+#define DWC3_GDBGBMU    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGBMU
+#define DWC3_GDBGLSPMUX_HST    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLSPMUX_HST
+#define DWC3_GDBGLSP    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGLSP
+#define DWC3_GDBGEPINFO0    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGEPINFO0
+#define DWC3_GDBGEPINFO1    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDBGEPINFO1
+#define DWC3_GPRTBIMAP_HS0  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_HSLO
+#define DWC3_GPRTBIMAP_HS1  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_HSHI
+#define DWC3_GPRTBIMAP_FS0  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_FSLO
+#define DWC3_GPRTBIMAP_FS1  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GPRTBIMAP_FSHI
+#define DWC3_GUCTL2  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL2
 
-#define DWC3_GUSB2PHYCFG(n) (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GUSB2PHYCFG + n)
+#define DWC3_GUSB2PHYCFG(n) (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GUSB2PHYCFG + n)
 
-#define DWC3_GUSB2PHYACC(n) (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GUSB2PHYACC_UTMI + n)
+#define DWC3_GUSB2PHYACC(n) (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GUSB2PHYACC_UTMI + n)
 
-#define DWC3_GUSB3PIPECTL(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GUSB3PIPECTL + n)
+#define DWC3_GUSB3PIPECTL(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GUSB3PIPECTL + n)
 
-#define DWC3_GTXFIFOSIZ(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GTXFIFOSIZ0 + n)
-#define DWC3_GRXFIFOSIZ(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GRXFIFOSIZ0 + n)
+#define DWC3_GTXFIFOSIZ(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GTXFIFOSIZ0 + n)
+#define DWC3_GRXFIFOSIZ(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GRXFIFOSIZ0 + n)
 
-#define DWC3_GEVNTADRLO(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTADRLO + (4UL*n))
-#define DWC3_GEVNTADRHI(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTADRHI + (4UL*n))
-#define DWC3_GEVNTSIZ(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTSIZ + (4UL*n))
-#define DWC3_GEVNTCOUNT(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTCOUNT + (4UL*n))
+#define DWC3_GEVNTADRLO(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTADRLO + (4UL*n))
+#define DWC3_GEVNTADRHI(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTADRHI + (4UL*n))
+#define DWC3_GEVNTSIZ(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTSIZ + (4UL*n))
+#define DWC3_GEVNTCOUNT(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->GBLREGS.GEVNTCOUNT + (4UL*n))
 
-#define DWC3_GUCTL3            (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL3
-#define DWC3_GTXFIFOPRIDEV     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GTXFIFOPRIDEV
-#define DWC3_GTXFIFOPRIHST     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GTXFIFOPRIHST
-#define DWC3_GRXFIFOPRIHST     (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GRXFIFOPRIHST
-#define DWC3_GDMAHLRATIO       (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDMAHLRATIO
-#define DWC3_GFLADJ            (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GFLADJ
-#define DWC3_USB3_GUSB2RHBCTL  (uint32_t)&((USB3_TypeDef *)(NULL))->GBLREGS.USB3_GUSB2RHBCTL
+#define DWC3_GUCTL3            (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GUCTL3
+#define DWC3_GTXFIFOPRIDEV     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GTXFIFOPRIDEV
+#define DWC3_GTXFIFOPRIHST     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GTXFIFOPRIHST
+#define DWC3_GRXFIFOPRIHST     (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GRXFIFOPRIHST
+#define DWC3_GDMAHLRATIO       (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GDMAHLRATIO
+#define DWC3_GFLADJ            (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.GFLADJ
+#define DWC3_USB3_GUSB2RHBCTL  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->GBLREGS.USB3_GUSB2RHBCTL
 
 #define DWC3_GUSB2PHYACC_ADDR(n)  ((n) << USB3_GUSB2PHYACC_UTMI_REGADDR_Pos)
 #define DWC3_GUSB2PHYACC_EXTEND_ADDR(n) ((n) << USB3_GUSB2PHYACC_UTMI_EXTREGADDR_Pos)
 #define DWC3_GUSB2PHYACC_DATA(n)  ((n) & USB3_GUSB2PHYACC_UTMI_REGDATA_Msk)
 
 /* Device Registers */
-#define DWC3_DCFG   (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DCFG
-#define DWC3_DCTL   (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DCTL
-#define DWC3_DEVTEN   (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DEVTEN
-#define DWC3_DSTS   (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DSTS
-#define DWC3_DGCMDPAR (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DGCMDPAR
-#define DWC3_DGCMD    (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DGCMD
-#define DWC3_DALEPENA (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DALEPENA
-#define DWC3_DEPCMDPAR2(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMDPAR20 + (4UL*n))
-#define DWC3_DEPCMDPAR1(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMDPAR10 + (4UL*n))
-#define DWC3_DEPCMDPAR0(n)  (uint32_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMDPAR00 + (4UL*n))
-#define DWC3_DEPCMD(n)    (uint32_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMD0 + (4UL*n))
-#define DWC3_DEV_IMOD (uint32_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DEV_IMOD
+#define DWC3_DCFG   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DCFG
+#define DWC3_DCTL   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DCTL
+#define DWC3_DEVTEN   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DEVTEN
+#define DWC3_DSTS   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DSTS
+#define DWC3_DGCMDPAR (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DGCMDPAR
+#define DWC3_DGCMD    (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DGCMD
+#define DWC3_DALEPENA (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DALEPENA
+#define DWC3_DEPCMDPAR2(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMDPAR20 + (4UL*n))
+#define DWC3_DEPCMDPAR1(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMDPAR10 + (4UL*n))
+#define DWC3_DEPCMDPAR0(n)  (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMDPAR00 + (4UL*n))
+#define DWC3_DEPCMD(n)    (uint32_t)(uintptr_t)(&((USB3_TypeDef *)(NULL))->DEVREGS.DEPCMD0 + (4UL*n))
+#define DWC3_DEV_IMOD (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->DEVREGS.DEV_IMOD
 
 /* Battery Charger Registers */
-#define DWC3_BCFG   (uint32_t)&((USB3_TypeDef *)(NULL))->BCREGS.BCFG
-#define DWC3_BCEVT   (uint32_t)&((USB3_TypeDef *)(NULL))->BCREGS.BCEVT
-#define DWC3_BCEVTEN   (uint32_t)&((USB3_TypeDef *)(NULL))->BCREGS.BCEVTEN
+#define DWC3_BCFG   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->BCREGS.BCFG
+#define DWC3_BCEVT   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->BCREGS.BCEVT
+#define DWC3_BCEVTEN   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->BCREGS.BCEVTEN
 
 /* Link Registers */
-#define DWC3_LU1LFPSRXTIM  (uint32_t)&((USB3_TypeDef *)(NULL))->LINKREGS.LU1LFPSRXTIM
-#define DWC3_SETTINGS      (uint32_t)&((USB3_TypeDef *)(NULL))->LINKREGS.SETTINGS
-#define DWC3_LLUCTL        (uint32_t)&((USB3_TypeDef *)(NULL))->LINKREGS.LLUCTL
-#define DWC3_LPTMDPDELAY   (uint32_t)&((USB3_TypeDef *)(NULL))->LINKREGS.LPTMDPDELAY
+#define DWC3_LU1LFPSRXTIM  (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->LINKREGS.LU1LFPSRXTIM
+#define DWC3_SETTINGS      (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->LINKREGS.SETTINGS
+#define DWC3_LLUCTL        (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->LINKREGS.LLUCTL
+#define DWC3_LPTMDPDELAY   (uint32_t)(uintptr_t)&((USB3_TypeDef *)(NULL))->LINKREGS.LPTMDPDELAY
 
 /* The EP number goes 0..31 so ep0 is always out and ep1 is always in */
 #define DWC3_DALEPENA_EP(n)   (1UL << (n))
@@ -422,6 +422,8 @@ static void USB_PHYUnInit(void)
 {
   return;
 }
+
+uint32_t SystemCoreClock = 1200000;
 
 static void USB_Delay(uint32_t time_in_us)
 {
