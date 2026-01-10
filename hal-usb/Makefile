@@ -8,6 +8,7 @@ SOURCES += mmu.c
 SOURCES += system_init.cc
 SOURCES += main.cc
 SOURCES += usb_serial_device.cc
+SOURCES += usbd_conf.cc
 
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
 SOURCES += $(SHAREDDIR)/drivers/irq_init.c

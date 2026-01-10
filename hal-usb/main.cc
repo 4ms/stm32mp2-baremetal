@@ -6,7 +6,7 @@
 #include <cstdio>
 
 // global so can be accessed by ST's HAL
-PCD_HandleTypeDef hpcd;
+extern PCD_HandleTypeDef hpcd;
 USBD_HandleTypeDef pDevice;
 
 int main()
