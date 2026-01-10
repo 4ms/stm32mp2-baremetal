@@ -218,18 +218,20 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 {
 	/* Set LL Driver parameters */
-	hpcd.Instance = USB_OTG_HS;
-	hpcd.Init.dev_endpoints = 9;
+	hpcd.Instance = USB3;
+
+	// TODO: fill in these fields from drd.h
+	// hpcd.Init.dev_endpoints = 9;
 	hpcd.Init.use_dedicated_ep1 = 0;
 
 	/* Be aware that enabling DMA mode will result in data being sent only by
 	 * multiple of 4 packet sizes. This is due to the fact that USB DMA does not
 	 * allow sending data from non word-aligned addresses. For this specific
 	 * application, it is advised to not enable this option unless required. */
-	hpcd.Init.dma_enable = 1;
+	// hpcd.Init.dma_enable = 1;
 	hpcd.Init.low_power_enable = 0;
 	hpcd.Init.lpm_enable = 0;
-	hpcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
+	// hpcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
 	hpcd.Init.Sof_enable = 0;
 	hpcd.Init.speed = PCD_SPEED_HIGH;
 	hpcd.Init.vbus_sensing_enable = 1;
@@ -414,25 +416,6 @@ uint32_t USBD_LL_GetRxDataSize(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
 	return HAL_PCD_EP_GetRxCount((PCD_HandleTypeDef *)pdev->pData, ep_addr);
 }
-
-/**
- * @brief  Static single allocation.
- * @param  size: Size of allocated memory
- * @retval None
- */
-void *USBD_static_malloc(uint32_t size)
-{
-	static uint32_t mem[(sizeof(USBD_MSC_BOT_HandleTypeDef) / 4) + 1]; /* On 32-bit boundary */
-	return mem;
-}
-
-/**
- * @brief  Dummy memory free
- * @param  p: Pointer to allocated  memory address
- * @retval None
- */
-void USBD_static_free(void *p)
-{}
 
 /**
  * @brief  Delays routine for the USB Device Library.
