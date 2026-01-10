@@ -12,13 +12,13 @@ SOURCES += $(SHAREDDIR)/drivers/irq_init.c
 SOURCES += $(SHAREDDIR)/drivers/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
 SOURCES += $(SHAREDDIR)/system/syscall_stdio.c
-SOURCES += $(SHAREDDIR)/system/new.cc
+SOURCES += $(SHAREDDIR)/system/sbrk.cc
 SOURCES += $(SHAREDDIR)/uart_print.c
 SOURCES += $(SHAREDDIR)/print.cc
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal.c
-# SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_cortex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_pcd.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_ll_usb_drd.c
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)

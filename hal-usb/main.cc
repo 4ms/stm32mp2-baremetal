@@ -8,8 +8,8 @@ int main()
 	print("HAL USB Example\n");
 	HAL_Init();
 
-	PCD_HandleTypeDef pcd;
-	HAL_PCD_Init(&pcd);
+	// PCD_HandleTypeDef pcd;
+	// HAL_PCD_Init(&pcd);
 
 	while (true) {
 		HAL_Delay(1000);
