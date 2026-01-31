@@ -247,6 +247,10 @@ But they are here in the DDR Firmware repo:
 https://github.com/STMicroelectronics/STM32DDRFW-UTIL/tree/main/Drivers/CMSIS/Device/ST/STM32MP2xx/Include
 I've copied them into this repo in the shared/cmsis-device dir.
 
+There is a serious issue in the stm32mp2xx.h file provided by ST, that breaks
+several HAL peripherals. The issue is the POSITION_VAL function macro does not
+work on 64-bit systems. This has been corrected in the version in this repo.
+
 
 # Bootloaders:
 
