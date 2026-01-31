@@ -31,7 +31,7 @@ The goal is to run full applications with access:
 # Project setup
 
 Clone the repo into a parent directory, which will help keep things organized if you do any
-work with U-boot, TF-A, or U-Boot:
+work with U-boot, TF-A, or OP-TEE:
 
 ```bash
 mkdir mp2-dev    # The project parent dir
@@ -52,11 +52,16 @@ We'll add some more build dirs to the mp2-dev dir as we go along.
 
 # Baremetal Application
 
-We will skip the topic of bootloaders so we can get started more quickly. To do this, we'll use
-the stock SD Card supplied by ST (or flash your own card using their Starter Package or Developer Package
-instructions on their wiki)
+We will skip the topic of bootloaders so we can get started more quickly. To do
+this, we'll use the stock SD card supplied by ST (or flash your own card using
+their [Starter
+Package](https://www.st.com/en/embedded-software/stm32mp2starter.html) or
+[Developer Package](https://www.st.com/en/embedded-software/stm32mp2dev.html)
+following instructions on the [ST
+wiki](https://wiki.st.com/stm32mpu/wiki/Getting_started/STM32MP2_boards/STM32MP257x-EV1/Let%27s_start/Populate_the_target_and_boot_the_image)
+)
 
-For building your own bootloader, skip down to `Bootloaders`
+For building your own bootloaders, skip down to `Bootloaders`
 
 
 ## Building a baremetal application
@@ -72,11 +77,12 @@ ls -l build/main.uimg
 
 ## Copying the baremetal application to an SD Card:
 
-Using the stock SD Card from ST, you first need to format partition 11 as FATFS
+Using the stock SD card from ST, you first need to format partition 11 as FATFS
 (it's in ext4 by default). Doing so is OS-specific. 
 
-*With a Linux host, you could leave partition 11 as ext4, and change the `fatload` command
-below to ext4load, but FAT is easier for Mac and Windows to use, so we'll go with that.*
+*Note: If you are using a Linux host, you could leave partition 11 as ext4, and
+change the `fatload` command below to ext4load, but FAT is easier for Mac and
+Windows to use, so we'll be using that in this tutorial.*
 
 Then, copy the `main.uimg` file onto the SD Card partition 11 using your OS (not dd).
 
@@ -86,10 +92,19 @@ cp build/main.uimg /Volumes/sd-part11/
 
 ## Running a baremetal application without custom FIP or U-Boot
 
-You can boot with the stock SD Card image provided by ST, and then halt U-Boot
-when it asks "Hit any key..." 
+Connect your computer via USB to the USB jack marked "ST-LINK" on the EV1 board.
 
-Then type in the boot command:
+Power on with the SD card installed, and open a console terminal on your
+computer to the TTY port that the USB connection provides. The baud rate is
+115200 8N1. For example, using minicom on macOS (the device number varies): 
+
+```bash
+minicom -D /dev/cu.usbmodem1102
+```
+
+Halt U-Boot when it asks "Hit any key..." by pressing a key.
+
+Then at the U-BOOT prompt, type in the boot command:
 
 ```
 mmc dev 0
@@ -101,7 +116,7 @@ This of course requires partition 11 to be already formatted as FATFS and that
 you already copied main.uimg to it (see previous step).
 
 You can also save this command in U-boot's environment variables, so that you don't have to 
-type it each time. In fact if you save it in `bootcmd` then it'll run automatically without
+type it each time. In fact, if you save it in `bootcmd` then it'll run automatically without
 you needing to press a key:
 
 ```
@@ -126,10 +141,10 @@ sudo dd if=/dev/zero of=/dev/diskX7
 ## Debugging (and a faster way to load an app)
 
 1. The Discovery and Eval boards have an SWD connection via the USB jack marked
-   "ST-LINK". Connect that to your computer.
+   "ST-LINK" which you are already using for the console terminial.
 
-2. Power on with the SD card installed, and hit a key to stop U-boot from
-   continuing.
+3. Power on, and watch the console for "Hit any key...". Then hit a key to
+   stop U-boot from continuing. You should be at the U-BOOT prompt now.
 
 3. Start openocd. The scripts for the stm32mp2 chips are included in this repo,
    as well as the openocd config file (`openocd.cfg`). So start openocd in a
@@ -182,12 +197,13 @@ Info : [stm32mp25x.m0p] external reset detected`
 
 ```bash
 cd [example project dir]
+make
 aarch64-none-elf-gdb build/main.elf
 ```
 
 If gdb complains that it has a security setting preventing it from running the
 .gdbinit script, then either follow the instructions it provides to allow this
-directory, or run the command yourself:
+directory, or run the command contained in the .gdbinit file yourself:
 
 ```
 target extended-remote:3333
