@@ -3,25 +3,35 @@
 This contains works-in-progress exploring using the STM32MP2xx chips in a
 bare-metal context on all cores.
 
+I have only had access to an STM32MP257F-EV1 board, so all these examples
+are designed to run on that board.
+
 The goal is to run full applications with access:
+  - √ Nested interrupts (using the GIC)
+  - √ DMA memory-to-memory transfers
   - Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
-  √ Nested interrupts (using the GIC)
+    (currently provided by TF-A or OP-TEE) 
+  - SAI (audio)
+     - √ Using DMA
+     - √ SAI TX (DAC audio out)
+     - SAI RX (ADC audio in)
   - USB dual-role host/device, leveraging the STM32 USB library
-  - SAI (audio), 
-     - Using DMA
-     - 2 SAI instances, each capable of 8in/8out at 96kHz and block size of 16 frames
+     - Device via USB3DR
+     - Host via EHCI USBH (WIP partially working)
   - RGB or MIPI/DSI video
   - I2C
   - ADC running with DMA
-  - Multi-core operation:
-     - Startup code for each core (main CA35, aux CA35, CM33)
-     - IPCC and HSEM
-     - core-specific interrupts (SGI)
+  - SMP Multi-core (dual CA35):
+     - √ Startup code for each core
+     - √ core-specific interrupts (SGI)
+     - IPCC and HSEM for sharing data 
+  - AMP multi-core (CM33)
+  - AMP multi-core (CM0+)
 
 # Project setup
 
 Clone the repo into a parent directory, which will help keep things organized if you do any
-work with U-boot or TF-A:
+work with U-boot, TF-A, or U-Boot:
 
 ```bash
 mkdir mp2-dev    # The project parent dir
@@ -63,7 +73,10 @@ ls -l build/main.uimg
 ## Copying the baremetal application to an SD Card:
 
 Using the stock SD Card from ST, you first need to format partition 11 as FATFS
-(it's in ext4 by default). Doing so is OS-specific.
+(it's in ext4 by default). Doing so is OS-specific. 
+
+*With a Linux host, you could leave partition 11 as ext4, and change the `fatload` command
+below to ext4load, but FAT is easier for Mac and Windows to use, so we'll go with that.*
 
 Then, copy the `main.uimg` file onto the SD Card partition 11 using your OS (not dd).
 
@@ -110,15 +123,18 @@ sudo dd if=/dev/zero of=/dev/diskX7
 
 
 
-## Debugging
+## Debugging (and a faster way to load an app)
 
-1. The Discovery and Eval boards have an SWD connection via the USB jack marked "ST-LINK". 
-Connect that to your computer.
+1. The Discovery and Eval boards have an SWD connection via the USB jack marked
+   "ST-LINK". Connect that to your computer.
 
-2. Power on with the SD card installed, and hit a key to stop U-boot from doing anything.
+2. Power on with the SD card installed, and hit a key to stop U-boot from
+   continuing.
 
-3. Start openocd. The scripts for the stm32mp2 chips are included in this repo, as well as 
-the openocd config file (`openocd.cfg`). So start openocd in a new terminal window like this:
+3. Start openocd. The scripts for the stm32mp2 chips are included in this repo,
+   as well as the openocd config file (`openocd.cfg`). So start openocd in a
+   new terminal window like this:
+
 ```bash
 cd stm32mp2-baremetal     # must be in this dir where the openocd.cfg file lives
 openocd
@@ -165,11 +181,13 @@ Info : [stm32mp25x.m0p] external reset detected`
 4. Connect via gdb in another terminal window:
 
 ```bash
+cd [example project dir]
 aarch64-none-elf-gdb build/main.elf
 ```
 
-If gdb complains that it has a security setting preventing it from running the .gdbinit script, then
-either follow the instructions it provides to allow this directory, or run the command yourself:
+If gdb complains that it has a security setting preventing it from running the
+.gdbinit script, then either follow the instructions it provides to allow this
+directory, or run the command yourself:
 
 ```
 target extended-remote:3333
@@ -179,6 +197,7 @@ You can then do normal gdb stuff to load the image and debug it.
 
 ```
 load build/main.elf
+thbreak main
 disassemble
 list main
 continue
@@ -187,7 +206,14 @@ n
 x/64i 0x88000040
 ```
 
-TODO: Figure out reliable way of resetting without power cycling. `monitor halt/resume`?
+If you re-compile and need to load the new binary, unfortunately the best way
+I've found is to press the hard reset button on the EVK board. Usually openocd
+will re-connect, but if it doesn't then you have to unplug/plug the USB cable
+so it can re-enumerate the ST-LINK USB device. After doing this, you need to
+quit gdb and re-start it. This process is could use improvement (especially
+losing the gdb history), so if anyone has a better way, please let me know
+(open an issue, PR, or comment). I've tried various commands like `monitor
+halt` and `monitor reset` but they inevitably make it harder to connect.
 
 
 ### Support files:
@@ -203,25 +229,35 @@ https://github.com/STMicroelectronics/meta-st-stm32mp/tree/scarthgap/recipes-dev
 The CA35 CMSIS device headers are missing from the STM32MP2 Cube HAL (only the M33 and M0 are present).
 But they are here in the DDR Firmware repo:
 https://github.com/STMicroelectronics/STM32DDRFW-UTIL/tree/main/Drivers/CMSIS/Device/ST/STM32MP2xx/Include
+I've copied them into this repo in the shared/cmsis-device dir.
 
 
 # Bootloaders:
 
-__Note: you can skip this entire Bootloaders section and use the stock SD Card from ST. (see above)__
+__Note: you can skip this entire Bootloaders section and use the stock SD card from ST. (see above)__
+
+## Overview 
 
 **Boot stages**
-- Boot Loader stage 1 (BL1) _AP Trusted ROM_ == BOOTROM on MP2
-- Boot Loader stage 2 (BL2) _Trusted Boot Firmware_ runs at EL3 == TF-A
-- Boot Loader stage 3-1 (BL31) _EL3 Runtime Software_ aka Secure Monitor. SYSRAM == also is TF-A
-- Boot Loader stage 3-2 (BL32) _Secure-EL1 Payload_ = OPTEE or SP_min, or none
+- Boot Loader stage 1 (BL1) _AP Trusted ROM_ == BOOTROM
+- Boot Loader stage 2 (BL2) _Trusted Boot Firmware_ == TF-A
+- Boot Loader stage 3-1 (BL31) _EL3 Runtime Software_ == Secure Monitor, which also is TF-A
+- Boot Loader stage 3-2 (BL32) _Secure-EL1 Payload_ == OPTEE (or SP_min or none)
 - Boot Loader stage 3-3 (BL33) _Non-trusted Firmware_ == U-boot
 
 
-We ultimately build a FIP that integrates all the required bootloaders into one file.
-Then we flash that fip file to an SD Card (or some other media like internal flash or eMMC).
-The bootloaders setup the system and then finally load our application from an SD Card (or 
-some other media, but we'll assume SD Card since it's most accessible).
+The bootloaders setup the system and then finally load our application
+from an SD card (or some other media, but we'll assume SD Card since it's most
+accessible).
 
+All these bootloaders plus their support files are combined together into a FIP file.
+Then we flash that FIP file to a particular partition of the SD card.
+
+You don't have to build all of them. You can use the FIP file from your existing
+SD card and just replace the ones you recompiled.
+
+
+## Setup
 
 First, let's clone the bootloader repos:
 
@@ -247,16 +283,19 @@ mp2-dev/
 
 Read the docs: https://trustedfirmware-a.readthedocs.io/en/v2.11/plat/st/stm32mp2.html
 
-TF-A is the BL2 bootloader. It also is the BL31 bootloader.
+TF-A is the BL2 bootloader. This mostly just loads the fip file into the correct places 
+in memory and also starts some of the images executing. 
 
-To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3 and 13.1 have been tested but
+TF-A also contains the BL31 "Secure Monitor". The Secure Monitor runs
+in the background while your app runs, handling some system calls via interrupts.
+
+To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3, 13.1, and 14.2 have been tested but
 probably any later version will also work (please open an issue if you find a version that doesn't).
 
 Set the path to it like this (notice the trailing dash `-`)
 
 ```bash
 export PATH=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/:$PATH
-export CROSS_COMPILE=aarch64-none-elf-
 ```
 
 
@@ -264,7 +303,7 @@ Build TF-A like this:
 
 ```bash
 cd tf-a-stm32mp25
-make PLAT=stm32mp2 DTB_FILE_NAME=stm32mp257f-ev1.dtb STM32MP_SDMMC=1 SPD=opteed STM32MP_DDR4_TYPE=1
+make PLAT=stm32mp2 DTB_FILE_NAME=stm32mp257f-ev1.dtb STM32MP_SDMMC=1 SPD=opteed STM32MP_DDR4_TYPE=1 CROSS_COMPILE=aarch64-none-elf-
 
 # See the files we built:
 ls -l build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32
@@ -289,7 +328,6 @@ On macOS, install like this:
 ```bash
 brew install openssl@1.1
 ```
-
 
 This also requires the `CROSS_COMPILE` variable to be set (See TF-A section above).
 
@@ -323,25 +361,146 @@ source .venv/bin/activate
 pip install cffi crytpography pyelftools pillow
 ```
 
-You can use ST's fork of op-tee (v4.0), or our fork (which just has building instructions in the README).
-
-I had to disable the CFG_SCMI_SCPFW flag, which is not mentioned on ST's wiki, but I'm not sure
-this is the correct thing to do.
+You may also need to install the python package `cffi` (TODO: confirm).
 
 ```bash
 cd optee-stm32mp25
 
+# Make sure you're on the right branch
+git checkout mp257-ev1-baremetal
+
+# Make sure the arm-none-eabi-gcc and aarch64-none-elf-gcc toolchains are on your PATH:
+# These versions are known to work, but other later versions probably work too.
 export PATH=/path/to/arm-gnu-toolchain-12.3.rel1-darwin-arm64-aarch64-none-elf/bin/:$PATH
-export CROSS_COMPILE=aarch64-linux-gnu-
-export CROSS_COMPILE64=aarch64-linux-gnu-
-make PLATFORM=stm32mp2 CFG_EMBED_DTB_SOURCE_FILE=stm32mp257f-ev1.dts CFG_TEE_CORE_LOG_LEVEL=2 O=build CFG_SCMI_SCPFW=n all
+export PATH=/path/to/arm-gnu-toolchain-13.2.rel1-darwin-arm64-arm-none-eabi/bin/:$PATH
+
+# Build
+make -j4    PLATFORM=stm32mp2  PLATFORM_FLAVOR=257F_EV1 ARCH=arm ARM64_core=y \
+            CFG_EMBED_DTB_SOURCE_FILE=stm32mp257f-ev1.dts \
+            CROSS_COMPILE64=aarch64-none-elf- \
+            CROSS_COMPILE=arm-none-eabi- \
+            CFG_TEE_CORE_LOG_LEVEL=4 \
+            O=build
 ```
 
-ST has some info here, but not all of it seems to work:
-https://wiki.st.com/stm32mpu/wiki/How_to_build_OP-TEE_components
+The `mp257-ev1-baremetal` branch is based on ST's v3.19.0-stm32mp branch. I was
+only able to get v3.19.0 to work, not the latest v4.0.0 from ST's fork.
+
+The only modifications is to open up more access to various peripherals in the
+device tree. The git log is the best way to see all the changes.
+
+You may need to change the device tree file and re-compile in order give you
+app permission to use certain peripherals. 
+
+### Giving your app access to peripherals
+
+OP-TEE is responsible for setting up the RIFSC peripheral which grants permission
+to access certain peripherals from the non-secure world (i.e. your app).
+By default, many peripherals are not given permission to the non-secure world.
+
+If you try to use one of
+them in your app, you'll get a RIF error: the console will display an error message
+that includes an ID number and will freeze.
+
+The ID number can be used to determine which peripheral access caused the fault.
+Table 38 of the Reference Manual lists these IDs. For example, if you try to run
+the hal-audio example with the stock OP-TEE, you'll get a RIF error with ID 50.
+Looking at Table 38, we see that SAI2 is ID 50, and indeed SAI2 is the audio peripheral
+used in that example (or maybe you see 147 for the HPDMA, or 137 for the DDR/SRAM).
+
+The solution is to modify the dtsi file in OP-TEE.
+Typically this is in the `&rifsc` section of `core/arch/arm/dts/stm32mp257f-ev1-ca35tdcid-rif.dtsi`. 
+Then re-compile, install the op-tee binaries into the FIP, and put that onto the SD card.
+
+
+For example, in this line which controls RCC resource 108 (MCO1):
+```dtsi
+&rifsc {
+	st,protreg = <
+        //...
+        RIFPROT(RIF_RCC_RESOURCE(108), RIF_UNUSED, RIF_UNLOCK, RIF_SEC, RIF_PRIV, RIF_CID1, RIF_SEM_DIS, RIF_CFEN)
+```
+
+I changed the `RIF_SEC` to `RIF_NSEC` to give the app permission to configure the MCO1
+peripheral via the MCO1CFGR register. The `RIF_SEC` flag refers to Secure world,
+but we only have access to the non-secure world
+from our app, so we have to change it to NSEC (non-secure) to use it.
+
+I don't believe changing RIF_PRIV to RIF_NPRIV has an effect since we are
+operating in priviledged status (EL1), but I'm not positive. `RIF_CFDIS` seems
+like the most open setting, though `RIF_CFEN` in combination with
+`RIF_CID1` also seems to work since that means the RIFSC will filter for CID1
+(which is what out app is running on).
+
+### Giving your app access to peripherals
+
+In addition to peripherals, you might need to give your app access to clocks.
+
+For example:
+- MCO1 has a setting for the configuration (MCO1CFGR) and another access
+  setting for the clock (CK_MCO1). 
+
+- The SAI peripherals have a kernel clock that must be opened up in the `&rcc`
+  section, in addition to peripheral access setting in the `&rifsc` section. 
+
+I'm still learning all the details of the RIFSC peripheral, so consult the
+Reference Manual if you need to give your app access to something. 
+
+Table 133 of the Reference Manual lists all the kernel clocks. This table 
+tells you the FLEXGEN Channel Number for a particular kernel clock. For 
+example SAI2 has the ck_ker_sai2 clock which is channel number 24.
+This number is the same as the RCC Resource ID. 
+
+If your clock is not on this table, then look at Table 183 to find the RCC
+resource ID. For example, PLL7 has the ID 64.
+
+Knowing the RCC Resource ID, you can check if the clock already has non-secure
+permissions by looking at the corresponding bit in `RCC->SECCFGR[]`, or check
+the settings in `RCC->R[x].CIDCFGR`. Or you can just change the line in the 
+OP-TEE rif dtsi file in the `&rcc` section. For example:
+
+```dts
+&rcc {
+    st,protreg = <
+    //...
+    RIFPROT(RIF_RCC_RESOURCE(24), RIF_UNUSED, RIF_UNLOCK, RIF_NSEC, RIF_NPRIV, RIF_CID1, RIF_SEM_DIS, RIF_CFEN) /* CK_KER_SAI2 */
+
+```
+
+This line controls the RIFSC setings for SAI2's kernel clock. To set this clock's
+speed you will need to set the XBAR (aka Flexbar) configuration
+Usually this means choosing one of the PLL's from PLL4 to PLL7 and setting an integer
+division amount. In order to have access to the XBAR configuration registers, you will
+need to tell OP-TEE to give permission to the non-secure world to access this.
+
+This clock is not to be confused with the SAI peripheral clock, which is APB2. The SAI
+peripheral runs off the bus clock, but also needs an additional clock (the kernel clock)
+to derive the audio sample rate.
+
+### Modifying the dtsi file
+
+ST's CubeMX software will generate the rif dtsi file for optee, though it
+doesn't let you check/uncheck all boxes so it's impossible to create certain
+useful and valid settings. But it does generate comments in the that helps
+decipher some of the cryptic IDs.
+
+I've made manual modifications in a somewhat haphhazard way, just giving access
+where needed for my own purposes. In some cases I wasn't sure what the correct
+setting was, as you can see if you look at the git log for our optee fork.
+
+For a real application, you should review the security settings and
+be more intentional about the choices.
+
+After making modifications to the dtsi file, make sure to rebuild. The dtsi and dts
+files are compiled into the op-tee binary (as opposed to Linux where the dts is
+compiled into a dtb and included seperately from the kernel).
 
 
 ## Creating a FIP
+
+Once you have all the bootloaders compiled, you can create a FIP file.
+
+We will use TF-A to create the FIP, since it has a built in make target for doing so.
 
 ```bash
 cd tf-a-stm32mp25
@@ -351,9 +510,8 @@ make ARCH=aarch64 PLAT=stm32mp2 \
     STM32MP_DDR4_TYPE=1 \
     STM32MP_SDMMC=1 \
     DTB_FILE_NAME=stm32mp257f-ev1.dtb \
-    BL32=../optee-stm32mp25/build/core/tee-header_v2.bin \
-    BL32_EXTRA1=../optee-stm32mp25/build/core/tee-pager_v2.bin \
-    BL32_EXTRA2=../optee-stm32mp25/build/core/tee-pageable_v2.bin \
+    BL32=../optee-stm32mp25/out/arm-plat-stm32mp2/core/tee-header_v2.bin \
+    BL32_EXTRA1=../optee-stm32mp25/out/arm-plat-stm32mp2/core/tee-pager_v2.bin \
     BL33=../build-baremetal-uboot/u-boot-nodtb.bin \
     BL33_CFG=../build-baremetal-uboot/u-boot.dtb \
     fip
@@ -361,24 +519,13 @@ make ARCH=aarch64 PLAT=stm32mp2 \
 ls -l build/release/stm32mp2/fip.bin
 ```
 
-
-
-## Using an existing FIP so we don't have to build OP-TEE
-
-Instead of building OP-TEE, you could use an existing fip file
-provided by ST, and replace the U-boot component with our own.
-
-Download the STM32MP2 developer package, and copy one of the fip files:
-
-```bash
-cp stm32mp25-openstlinux-6.1-yocto-mickledore-mp2-v23.12.06/images/stm32mp25/fip/fip-stm32mp257f-ev1-ca35tdcid-ostl-m33-examples-ddr.bin fip.bin
-```
+TF-A also has the `fiptool` command line tool, which you can use instead of the above.
 
 Build fiptool, which is located in the TF-A project:
 
 ```bash
 cd tf-a-stm32mp25
-make fiptool
+make fiptool PLAT=stm32mp2
 
 # Verify it built:
 ./tools/fiptool/fiptool help
@@ -386,24 +533,58 @@ make fiptool
 
 On macOS, you might need to change `make fiptool` to this:
 ```
-make fiptool OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1 HOSTCCFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+make fiptool PLAT=stm32mp2 OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1 HOSTCCFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
 ```
 
-Now use fiptool to replace the U-boot binary:
+This does the same thing as above.
+See `tools/fiptool/fiptool help`
+
+```bash
+cd tf-a-stm32mp25
+
+tools/fiptool/fiptool create \
+    --ddr-fw drivers/st/ddr/phy/firmware/bin/stm32mp2/ddr4_pmu_train.bin \
+    --soc-fw-config build/stm32mp2/release/fdts/stm32mp257f-ev1-bl31.dtb \
+    --soc-fw build/stm32mp2/release/bl31.bin \
+    --fw-config build/stm32mp2/release/fdts/stm32mp257f-ev1-fw-config.dtb \
+    --tos-fw ../optee-stm32mp25/out/arm-plat-stm32mp2/core/tee-header_v2.bin \
+    --tos-fw-extra1 ../optee-stm32mp25/out/arm-plat-stm32mp2/core/tee-pager_v2.bin \
+    --nt-fw ../build-baremetal-uboot/u-boot-nodtb.bin \
+    --hw-config ../build-baremetal-uboot/u-boot.dtb \
+    build/stm32mp2/release/fip.bin
+
+ls -l build/release/stm32mp2/fip.bin
+```
+
+
+## Using an existing FIP so we don't have to build all the bootloaders
+
+Instead of building everything from scratch, you could use an existing fip file
+provided by ST, and replace one or more components with one you built.
+
+Download the STM32MP2 developer package, and copy one of the fip files:
+
+```bash
+cp stm32mp25-openstlinux-6.1-yocto-mickledore-mp2-v23.12.06/images/stm32mp25/fip/fip-stm32mp257f-ev1-ca35tdcid-ostl-m33-examples-ddr.bin fip.bin
+```
+
+
+Now use fiptool to replace just one binary. For example, this will replace the U-boot binary:
 
 ```bash
 cd .. # run from the mp2-dev project root
 tf-a-stm32mp25/tools/fiptool/fiptool --verbose update --nt-fw build-baremetal-uboot/u-boot-nodtb.bin fip.bin
 ```
 
-You should see this output (size might vary):
-```
-DEBUG: Adding image build-baremetal-uboot/u-boot-nodtb.bin
-DEBUG: Metadata size: 96 bytes
-DEBUG: Payload size: 1418400 bytes
+Or this will replace the OP-TEE binary:
+```bash
+cd .. # run from the mp2-dev project root
+tf-a-stm32mp25/tools/fiptool/fiptool --verbose update \
+    --tos-fw ../optee-stm32mp25/out/core/tee-header_v2.bin \
+    --tos-fw-extra1 ../optee-stm32mp25/out/core/tee-pager_v2.bin fip.bin
 ```
 
-The `fip.bin` file now contains our custom-built U-boot.
+The `fip.bin` file will be updated.
 
 ## Installing the bootloader FIP onto an SD Card
 
@@ -411,11 +592,22 @@ TODO: how to partition and format the disk.
 
 For now, use the SD Card that came with the EV1 board.
 
-Copy the fip.bin to partition 5 of the sd card:
+First -- make a backup of the FIP file. It will come in handy if something goes wrong:
+Copy partition 5 of your SD card to a file, and keep that file safe.
+
+```bash
+sudo dd if=/dev/diskX5 of=fip-original-backup.bin
+```
+
+Next, copy the fip.bin you made to partition 5 of the SD card:
 
 ```bash
 sudo dd if=baremetal-1/fip.bin of=/dev/diskXs5 
 ```
+
+Insert the card into the EV board and power cycle.
+
+# Misc Info
 
 ## SD Card info
 
@@ -435,27 +627,21 @@ Partition table with 8 entries:
 ## FIP info
 
 
-Given a fip.bin with no op-tee:
+ Example output from fiptool (the offsets are not valid)
 ```
-tools/fiptool/fiptool create \
-    --hw-config ../build-baremetal-uboot/u-boot.dtb \
-    --fw-config build/stm32mp2/release/fdts/stm32mp257f-ev1-fw-config.dtb \
-    --soc-fw-config stm32mp2/release/fdts/stm32mp257f-ev1-bl31.dtb \
-    --ddr-fw drivers/st/ddr/phy/firmware/bin/stm32mp2/ddr4_pmu_train.bin \
-    --soc-fw build/stm32mp2/release/bl31.bin \
-    --nt-fw ../build-baremetal-uboot/u-boot-nodtb.bin \
-    build/stm32mp2/release/fip.bin
-
- EL3 Runtime Firmware BL31: offset=0x128, size=0x124BD, cmdline="--soc-fw"
- Non-Trusted Firmware BL33: offset=0x125E5, size=0x15A248, cmdline="--nt-fw"
- FW_CONFIG: offset=0x16C82D, size=0x326, cmdline="--fw-config"
- HW_CONFIG: offset=0x16CB53, size=0x17290, cmdline="--hw-config"
- SOC_FW_CONFIG: offset=0x183DE3, size=0x39FF, cmdline="--soc-fw-config"
- DDR_FW: offset=0x1877E2, size=0x7524, cmdline="--ddr-fw"
+EL3 Runtime Firmware BL31: offset=0x178, size=0x114BD, cmdline="--soc-fw"
+Secure Payload BL32 (Trusted OS): offset=0x11635, size=0x1C, cmdline="--tos-fw"
+Secure Payload BL32 Extra1 (Trusted OS Extra1): offset=0x11651, size=0xD0788, cmdline="--tos-fw-extra1"
+Non-Trusted Firmware BL33: offset=0xE1DD9, size=0x15A4A0, cmdline="--nt-fw"
+FW_CONFIG: offset=0x23C279, size=0x326, cmdline="--fw-config"
+HW_CONFIG: offset=0x23C59F, size=0x17290, cmdline="--hw-config"
+SOC_FW_CONFIG: offset=0x25382F, size=0x39FF, cmdline="--soc-fw-config"
+DDR_FW: offset=0x25722E, size=0x7524, cmdline="--ddr-fw"
 ```
 
 TF-A BL2 loads images from the FIP in this order:
 (The image ids are from plat/st/stm32mp2/include/plat_tbbr_img_def.h)
+(Note that the sizes don't match above because this info was collected from different builds)
 
 - Image id 26 (DDR_FW_ID): DDR firmware to 0xe041000 - 0xe048524
   This initializes DDR RAM
@@ -469,10 +655,16 @@ TF-A BL2 loads images from the FIP in this order:
 - Image id 19: (SOC_FW_CONFIG_ID): to 0x81fc0000 - 0x81fc39ff
   This is the DTB for BL31
 
+- Image id 4: to 0x82000000 - 0x8200001c
+  This is tee-header_v2.bin contains: magic=0x4554504f version=0x2 arch=0x1 flags=0x0 nb_images=0x1, and the address to load 0x82000000
+
+- Image id 8: to 0x82000000 - 0x820d4398
+  This is probably tee-pager_v2.bin 
+  Note that tee-pageable_v2.bin is 0 bytes
+
 - Image id 2: to 0x84400000 - 0x84417290
   This is the DTB for U-Boot (BL33)
 
 - Image id 5: to 0x84000000 - 0x841560b0
   This is U-Boot (BL33)
-
 
