@@ -92,23 +92,32 @@ int main()
 		print("Read 0x", Hex{data[0]}, " from register 0x", Hex{read_mem_address}, "\n");
 	}
 
-	data[0] = 0;
+	data[0] = 0x55;
+
+	print("Writing 0x", Hex{data[0]}, " to register 0x", Hex{write_mem_address}, " in blocking mode\n");
+	if (auto res = HAL_I2C_Mem_Write(&hi2c, dev_address, write_mem_address, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
+		res != HAL_OK)
+	{
+		print("ERROR: HAL_I2C_Mem_Write returned ", res, "\n");
+	}
+
+	data[0] = 0x00;
 
 	print("Reading memory via interrupt\n");
-	if (auto res = HAL_I2C_Mem_Read_IT(&hi2c, dev_address, read_mem_address, I2C_MEMADD_SIZE_8BIT, data, 1);
+	if (auto res = HAL_I2C_Mem_Read_IT(&hi2c, dev_address, write_mem_address, I2C_MEMADD_SIZE_8BIT, data, 1);
 		res != HAL_OK)
 	{
 		print("ERROR: HAL_I2C_Mem_Read_IT returned ", res, "\n");
-	}
-
-	uint32_t timeout_tm = HAL_GetTick() + 5000;
-	while (HAL_I2C_GetState(&hi2c) != HAL_I2C_STATE_READY) {
-		if (HAL_GetTick() >= timeout_tm) {
-			print("ERROR: Timed out waiting for Mem Read interrupt\n");
-			break;
+	} else {
+		uint32_t timeout_tm = HAL_GetTick() + 5000;
+		while (HAL_I2C_GetState(&hi2c) != HAL_I2C_STATE_READY) {
+			if (HAL_GetTick() >= timeout_tm) {
+				print("ERROR: Timed out waiting for Mem Read interrupt\n");
+				break;
+			}
 		}
+		print("Read 0x", Hex{data[0]}, " from register 0x", Hex{write_mem_address}, "\n");
 	}
-	print("Read 0x", Hex{data[0]}, " from register 0x", Hex{read_mem_address}, "\n");
 
 	// Endless loop
 	volatile int x = 0x10000000;
