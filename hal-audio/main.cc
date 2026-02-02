@@ -2,6 +2,7 @@
 #include "dma.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
+#include "i2c_codec.hh"
 #include "interrupt.hh"
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
@@ -183,6 +184,15 @@ int main()
 	if (auto res = HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer.data(), tx_buffer.size()); res != HAL_OK) {
 		print("ERROR: HAL_SAI_Transmit_DMA returned ", res, "\n");
 	}
+
+	CodecI2C2 i2c;
+	Pin codec_reset{GPIO::B, PinNum::_12, PinMode::Output}; // pin 37
+	codec_reset.off();
+	HAL_Delay(100);
+	codec_reset.on();
+	HAL_Delay(1);
+	auto d = i2c.read_register(0x8C, 0x41);
+	print("Read register, got ", d, "\n");
 
 	// Endless loop
 	volatile int x = 0x10000000;

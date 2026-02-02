@@ -35,6 +35,8 @@ extern "C" {
 /**
  * @brief This is the list of modules to be used in the HAL driver
  */
+#define USE_HAL_I2C_REGISTER_CALLBACKS 1
+
 #define HAL_MODULE_ENABLED
 #if defined(CORE_CA35)
 #define HAL_A35_WRAPPER_ENABLED
@@ -57,7 +59,7 @@ extern "C" {
 #define HAL_GPIO_MODULE_ENABLED
 // #define HAL_HASH_MODULE_ENABLED
 // #define HAL_HSEM_MODULE_ENABLED
-// #define HAL_I2C_MODULE_ENABLED
+#define HAL_I2C_MODULE_ENABLED
 // #define HAL_I2S_MODULE_ENABLED
 /* #define HAL_I3C_MODULE_ENABLED */ /* Disabled because I3C HAL not available yet */
 // #define HAL_ICACHE_MODULE_ENABLED
