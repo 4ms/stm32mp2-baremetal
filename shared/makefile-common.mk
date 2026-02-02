@@ -60,7 +60,7 @@ CFLAGS ?= -g2 \
 		 -c \
 
 CXXFLAGS ?= $(CFLAGS) \
-		-std=c++20 \
+		-std=c++23 \
 		-fno-rtti \
 		-fno-exceptions \
 		-fno-unwind-tables \
