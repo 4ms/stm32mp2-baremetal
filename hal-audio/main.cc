@@ -175,31 +175,29 @@ int main()
 		clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		clean_dcache_address((uintptr_t)(&rx_buffer[i]));
 	}
+	// Shifted address, PCM3168 datasheet section 9.3.14
+	constexpr uint8_t PCM3168_ADDR = 0b10001010;
+	CodecI2C i2c{PCM3168_ADDR};
+	if (!i2c.init_codec())
+		print("Failed to init codec via I2C\n");
 
 	print("Start transmitting/receiving\n");
-	if (auto res = HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer.data(), rx_buffer.size()); res != HAL_OK) {
+	if (auto res = HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer.data(), rx_buffer.size() / 4); res != HAL_OK) {
 		print("ERROR: HAL_SAI_Receive_DMA returned ", res, "\n");
 	}
 
-	if (auto res = HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer.data(), tx_buffer.size()); res != HAL_OK) {
+	if (auto res = HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer.data(), tx_buffer.size() / 4); res != HAL_OK) {
 		print("ERROR: HAL_SAI_Transmit_DMA returned ", res, "\n");
 	}
 
-	CodecI2C2 i2c;
-	Pin codec_reset{GPIO::B, PinNum::_12, PinMode::Output}; // pin 37
-	codec_reset.off();
-	HAL_Delay(100);
-	codec_reset.on();
-	HAL_Delay(1);
-	auto d = i2c.read_register(0x8C, 0x41);
-	print("Read register, got ", d, "\n");
-
 	// Endless loop
-	volatile int x = 0x10000000;
+	auto last_pet = HAL_GetTick();
+
 	while (true) {
-		x = x + 1;
-		if ((x % 10'000'000) == 0) {
-			print("Tick = ", HAL_GetTick(), "\n");
+		auto now = HAL_GetTick();
+		if (now - last_pet > 5000) {
+			last_pet = now;
+			print("Tick = ", now, "\n");
 
 			watchdog_pet();
 		}
