@@ -1,6 +1,7 @@
 #include "audio_generators.hh"
 #include "dma.hh"
 #include "drivers/pin.hh"
+#include "drivers/rcc_xbar.hh"
 #include "interrupt.hh"
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
@@ -43,13 +44,8 @@ int main()
 	HAL_Init();
 
 	print("Setting SAI2 XBAR\n");
-	RCC->PREDIVxCFGR[24] = 0;
-	RCC->XBARxCFGR[24] = RCC_XBARxCFGR_XBARxEN | RCC_XBAR_CLKSRC_PLL4;
-	while (RCC->XBARxCFGR[24] & RCC_XBARxCFGR_XBARxSTS) // 1 = ongoing change
-		;
-	RCC->FINDIVxCFGR[24] = RCC_FINDIVxCFGR_FINDIVxEN | 0x30;
-	while (RCC->FINDIVSR1 & (1 << 24))
-		;
+	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x30, .prediv = 0};
+	sai2_xbar.init(24);
 
 	print("PLL4 freq = ", HAL_RCCEx_GetPLL4ClockFreq(), "\n");
 	uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SAI2);
@@ -150,6 +146,7 @@ int main()
 	print("Link DMA RX and SAI RX\n");
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
+	// DMA IRQ setup
 	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 1, 1, [&hdma_tx, &sines]() {
 		for (auto i = 0u; i < tx_buffer.size(); i += 2) {
 			tx_buffer[i] = sines.L.sample(150);
