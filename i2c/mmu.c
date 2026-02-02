@@ -188,8 +188,8 @@ void mmu_enable(void)
 	const uint64_t attr_device = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(0) | // MAIR idx 0: Device-nGnRnE
 								 PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
 
-	// const uint64_t attr_noncache = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(2) | // MAIR idx 2: Non-cacheable
-	// 							 PTE_SH_INNER | PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
+	// 	const uint64_t attr_noncache = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(2) | // MAIR idx 2: Non-cacheable
+	// 								   PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
 	zero_tables();
 
 	// L0[0] -> L1
@@ -199,7 +199,7 @@ void mmu_enable(void)
 	tt_l1[0] = ((uint64_t)tt_l2_low) | DESC_VALID | DESC_TABLE;
 
 	// SRAM/SYSRAM region (2 MiB window at 0x0E00_0000) cacheable
-	map_l2_block_low_2m(IRAM2M_BASE, IRAM2M_BASE, attr_normal);
+	map_l2_block_low_2m(IRAM2M_BASE, IRAM2M_BASE, attr_device);
 
 	// Peripherals 0x4000_0000..0x7FFF_FFFF as Device
 	map_l1_block(PERIPH_BASE, PERIPH_BASE, attr_device);
