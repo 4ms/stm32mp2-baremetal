@@ -6,6 +6,7 @@
 #include "stm32mp2xx_hal_def.h"
 #include "watchdog.hh"
 #include <cmath>
+#include <cstring>
 
 static_assert(I2C2_BASE == 0x40130000);
 // RIF resource ID 42
@@ -40,8 +41,9 @@ int main()
 
 	print("Init I2C2 periph\n");
 	I2C_HandleTypeDef hi2c;
+	memset(&hi2c, 0, sizeof hi2c);
 	hi2c.Instance = I2C2;
-	hi2c.Init.Timing = 0x507075B1;
+	hi2c.Init.Timing = 0x10702525; // about 100kHz
 	hi2c.Init.OwnAddress1 = 0x33;
 	hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
 	hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -79,7 +81,7 @@ int main()
 
 	// Un-shifted address: 0x46
 	// Shifted: 0x8C for write, 0x8D for read
-	constexpr uint8_t dev_address = 0b1000110;
+	constexpr uint8_t dev_address = 0b10001100;
 	constexpr uint8_t read_mem_address = 70;  // default value is 0b1101'0111 = 0xD7
 	constexpr uint8_t write_mem_address = 65; // can write and read 8 bits
 
@@ -124,6 +126,9 @@ int main()
 	while (true) {
 		x = x + 1;
 		if ((x % 10'000'000) == 0) {
+
+			HAL_I2C_Mem_Read(&hi2c, dev_address, read_mem_address, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
+
 			print("Tick = ", HAL_GetTick(), "\n");
 			watchdog_pet();
 		}
