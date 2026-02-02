@@ -1,4 +1,6 @@
 #pragma once
+#include "bitfield.hh"
+#include "codec_PCM3168_registers.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
 #include "interrupt.hh"
@@ -7,15 +9,19 @@
 #include <cstdint>
 #include <cstring>
 
-struct CodecI2C2 {
+using namespace CodecPCM3168;
+
+struct CodecI2C {
 	uint8_t data[4]{0, 0, 0, 0};
 	I2C_HandleTypeDef hi2c;
+	uint8_t dev_addr;
 
-	CodecI2C2()
+	CodecI2C(uint8_t address)
+		: dev_addr{address}
 	{
 		print("Setting I2C2 XBAR\n");
-		FlexbarConf i2c2_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x3F, .prediv = 0};
-		i2c2_xbar.init(12);
+		FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x30, .prediv = 0};
+		i2c_xbar.init(12);
 
 		print("PLL4 freq = ", HAL_RCCEx_GetPLL4ClockFreq(), "\n");
 		uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C1_2);
@@ -27,8 +33,24 @@ struct CodecI2C2 {
 		__HAL_RCC_I2C2_RELEASE_RESET();
 
 		print("Init I2C2 pins\n");
-		Pin scl{GPIO::B, PinNum::_5, PinMode::Alt, AltFunc9, PinPull::Up}; // header pin 28
-		Pin sda{GPIO::B, PinNum::_4, PinMode::Alt, AltFunc9, PinPull::Up}; // header pin 27
+		// SCL: header pin 28
+		Pin scl{GPIO::B,
+				PinNum::_5,
+				PinMode::Alt,
+				AltFunc9,
+				PinPull::None,
+				PinPolarity::Normal,
+				PinSpeed::Medium,
+				PinOType::OpenDrain};
+		// SDA: header pin 27
+		Pin sda{GPIO::B,
+				PinNum::_4,
+				PinMode::Alt,
+				AltFunc9,
+				PinPull::None,
+				PinPolarity::Normal,
+				PinSpeed::Medium,
+				PinOType::OpenDrain};
 
 		print("Init I2C2 periph\n");
 		std::memset(&hi2c, 0, sizeof hi2c);
@@ -57,89 +79,72 @@ struct CodecI2C2 {
 		if (auto res = HAL_I2CEx_ConfigDigitalFilter(&hi2c, 8); res != HAL_OK) {
 			print("ERROR: HAL_I2CEx_ConfigDigitalFilter returned ", res, "\n");
 		}
-
-		InterruptManager::register_and_start_isr(I2C2_IRQn, 1, 1, [this]() {
-			HAL_I2C_EV_IRQHandler(&hi2c);
-			HAL_I2C_ER_IRQHandler(&hi2c);
-			print("I2C IRQ\n");
-		});
-
-		HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_MEM_TX_COMPLETE_CB_ID, i2c_mem_tx_complete_cb);
-		HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, i2c_mem_rx_complete_cb);
-		HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_ERROR_CB_ID, i2c_error_cb);
 	}
 
-	uint8_t read_register(uint8_t dev_addr, uint8_t reg_addr)
+	bool init_codec()
 	{
-		print("Reading I2C device register, blocking\n");
+		// Reset pin low->high
+
+		Pin codec_reset{GPIO::B, PinNum::_12, PinMode::Output}; // pin 37
+		codec_reset.off();
+		HAL_Delay(100);
+		codec_reset.on();
+		HAL_Delay(1);
+
+		for (auto packet : stereo_codec_init) {
+			if (!write_register(packet.reg_num, packet.value))
+				return false;
+		}
+		return true;
+	}
+
+	uint8_t read_register(uint8_t reg_addr)
+	{
+		print("Reading I2C device 0x", Hex{dev_addr}, " register 0x", Hex{reg_addr}, " in blocking mode\n");
 		if (auto res = HAL_I2C_Mem_Read(&hi2c, dev_addr, reg_addr, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
 			res != HAL_OK)
 		{
 			print("ERROR: HAL_I2C_Mem_Read returned ", res, "\n");
 		} else {
-			print("Read 0x", Hex{data[0]}, " from register 0x", Hex{dev_addr}, "\n");
+			print("Read 0x", Hex{data[0]}, "\n");
 		}
 		return data[0];
 	}
 
-	void write_register(uint8_t dev_addr, uint8_t reg_addr, uint8_t value)
+	bool write_register(uint8_t reg_addr, uint8_t value)
 	{
 		data[0] = value;
-		print("Writing 0x", Hex{data[0]}, " to register 0x", Hex{reg_addr}, " in blocking mode\n");
+
+		print("Writing 0x", Hex{data[0]}, " to device 0x", Hex{dev_addr}, " register 0x", Hex{reg_addr}, "\n");
+
 		if (auto res = HAL_I2C_Mem_Write(&hi2c, dev_addr, reg_addr, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
 			res != HAL_OK)
 		{
 			print("ERROR: HAL_I2C_Mem_Write returned ", res, "\n");
+			return false;
 		}
+
+		return true;
 	}
 
-	uint8_t read_register_interrupt(uint8_t dev_addr, uint8_t reg_addr)
-	{
-		print("Reading I2C device memory via interrupt\n");
-		if (auto res = HAL_I2C_Mem_Read_IT(&hi2c, dev_addr, reg_addr, I2C_MEMADD_SIZE_8BIT, data, 1); res != HAL_OK) {
-			print("ERROR: HAL_I2C_Mem_Read_IT returned ", res, "\n");
-		} else {
-			uint32_t timeout_tm = HAL_GetTick() + 2000;
-			while (HAL_I2C_GetState(&hi2c) != HAL_I2C_STATE_READY) {
-				if (HAL_GetTick() >= timeout_tm) {
-					print("ERROR: Timed out waiting for Mem Read interrupt\n");
-					break;
-				}
-			}
-			print("Read 0x", Hex{data[0]}, " from register 0x", Hex{reg_addr}, "\n");
-		}
-		return data[0];
-	}
+private:
+	constexpr static RegisterData stereo_codec_init[] = {
+		{ResetControl::Address, bitfield(ResetControl::NoReset, ResetControl::NoResync, ResetControl::Single)}, // 41 c1
+		{DacControl1::Address, bitfield(DacControl1::I2S_24bit, DacControl1::SlaveMode)},						// 42 00
+		{DacControl2::Address,
+		 bitfield(DacControl2::Dac12Enable,
+				  DacControl2::Dac34Disable,
+				  DacControl2::Dac56Disable,
+				  DacControl2::Dac78Disable)},					   // 43 e0
+		{DacSoftMute::Address, bitfield(DacSoftMute::NoDacMuted)}, // 44 00
+		{DacAllAtten::Address, bitfield(DacAtten::ZeroDB)},
+		{AdcSamplingMode::Address, bitfield(AdcSamplingMode::Single)},
+		{AdcControl1::Address, bitfield(AdcControl1::SlaveMode, AdcControl1::I2S_24bit)},
+		{AdcControl2::Address, bitfield(AdcControl2::AdcAllHPFDisabled)},
+		{AdcSoftMute::Address,
+		 bitfield(AdcSoftMute::Adc3Mute, AdcSoftMute::Adc4Mute, AdcSoftMute::Adc5Mute, AdcSoftMute::Adc6Mute)},
+		{AdcAllAtten::Address, bitfield(AdcAtten::ZeroDB)},
+		{AdcInputType::Address, bitfield(AdcInputType::AllAdcDifferential)},
 
-	void write_register_interrupt(uint8_t dev_addr, uint8_t reg_addr, uint8_t value)
-	{
-		print("Writing I2C device memory via interrupt\n");
-		data[0] = value;
-		if (auto res = HAL_I2C_Mem_Write_IT(&hi2c, dev_addr, reg_addr, I2C_MEMADD_SIZE_8BIT, data, 1); res != HAL_OK) {
-			print("ERROR: HAL_I2C_Mem_Write_IT returned ", res, "\n");
-		} else {
-			uint32_t timeout_tm = HAL_GetTick() + 2000;
-			while (HAL_I2C_GetState(&hi2c) != HAL_I2C_STATE_READY) {
-				if (HAL_GetTick() >= timeout_tm) {
-					print("ERROR: Timed out waiting for Mem Write interrupt\n");
-					break;
-				}
-			}
-		}
-	}
-
-	static void i2c_mem_tx_complete_cb(I2C_HandleTypeDef *hi2c)
-	{
-		print("I2C mem tx callback\n");
-	}
-
-	static void i2c_mem_rx_complete_cb(I2C_HandleTypeDef *hi2c)
-	{
-		print("I2C mem rx callback\n");
-	}
-
-	static void i2c_error_cb(I2C_HandleTypeDef *hi2c)
-	{
-		print("I2C error callback\n");
-	}
+	};
 };
