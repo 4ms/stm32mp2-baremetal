@@ -1,0 +1,27 @@
+STM32MP257C-EVK (rev A -- pre-production) pinout of GPIO Expander 40-pin header
+
+Function     Port/Pin   EV1-name  Pin #     EV1-name Port/Pin  Function
+------------|----------|--------|----------|---------|--------|---------------
+                        V+      (1)  | (2)  5V      
+            ?           GPIO2   (3)  | (4)  5V      
+            ?           GPIO3   (5)  | (6)  GND     
+            ?           GPIO4   (7)  | (8)  GPIO14   PF13
+                        GND     (9)  | (10) GPIO15   PF14
+                 PG5    GPIO17  (11) | (12) GPIO18   PJ11      SAI2_SCK_A (af3)
+                 PI11   GPIO27  (13) | (14) GND      
+                 PB2    GPIO22  (15) | (16) GPIO23   PD12
+                        V+      (17) | (18) GPIO24   PB14
+            ?           GPIO10  (19) | (20) GND      
+            ?           GPIO9   (21) | (22) GPIO25   PD13
+            ?           GPIO11  (23) | (24) GPIO8              ?
+                        GND     (25) | (26) GPIO7    PJ1
+                 PB4    ID SD   (27) | (28) ID SC    PB5
+            ?           GPIO5   (29) | (30) GND      
+            ?           GPIO6   (31) | (32) GPIO12   PB9
+            ?           GPIO13  (33) | (34) GND      
+SAI2_FS_A(af3)   PJ3    GPIO19  (35) | (36) GPIO16   PF15
+                 PB12   GPIO26  (37) | (38) GPIO20   PJ12      SAI2_SD_A (af3)
+                        GND     (39) | (40) GPIO21   PJ2       SAI2_SD_B (af3)
+
+Resistor R34: PJ13 SAI2_MCLK_A
+LD4: PJ7  SAI2_MCLK_B (af4)
