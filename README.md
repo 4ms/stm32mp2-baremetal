@@ -19,7 +19,7 @@ The goal is to run full applications with access:
      - Device via USB3DR
      - Host via EHCI USBH (WIP partially working)
   - RGB or MIPI/DSI video
-  - I2C
+  - √ I2C
   - ADC running with DMA
   - SMP Multi-core (dual CA35):
      - √ Startup code for each core
