@@ -18,8 +18,10 @@ static void dump_sai_registers();
 static void test_pins();
 
 constexpr uint32_t BufferWords = 64; // audio block size
-alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> tx_buffer;
-alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> rx_buffer;
+// alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> tx_buffer;
+// alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> rx_buffer;
+alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
+alignas(64) static std::array<uint32_t, BufferWords> rx_buffer;
 constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
 struct Params {
@@ -204,7 +206,6 @@ int main()
 			float outR = 0;
 			for (auto dj_idx = 0u; auto &dj : djs) {
 				unsigned hit_time = dj_idx * params.hit_rate / djs.size();
-				// unsigned hit_time = params.hit_rate;
 				dj.set_input(4, params.hit_ctr % hit_time == 0 ? 1 : 0);
 
 				dj.update();
@@ -219,6 +220,10 @@ int main()
 
 			tx_buffer[i] = 0x7FFFFFL * outL;
 			tx_buffer[i + 1] = 0x7FFFFFL * outR;
+		}
+
+		for (auto i = start; i < end; i += 16) {
+			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		}
 
 		debug.off();
