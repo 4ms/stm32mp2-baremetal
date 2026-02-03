@@ -149,13 +149,12 @@ int main()
 	print("Link DMA RX and SAI RX\n");
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
-	auto process_audio = [&sines](bool first) {
+	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
+	// Pin debug2{GPIO::B, PinNum::_9, PinMode::Output};
+	auto process_audio = [&sines, &debug](bool first) {
+		debug.on();
 		auto start = first ? 0 : BufferWords / 2;
 		auto end = start + BufferWords / 2;
-
-		// for (auto i = start; i < end; i += 16) {
-		// 	invalidate_dcache_address((uintptr_t)(&tx_buffer[i]));
-		// }
 
 		for (auto i = start; i < end; i += 2) {
 			tx_buffer[i] = sines.L.sample(10000);
@@ -165,60 +164,29 @@ int main()
 		for (auto i = start; i < end; i += 16) {
 			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		}
+		debug.off();
 	};
 
-	// DMA IRQ setu2
+	// DMA IRQ setup
 	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 1, 1, [&hdma_tx, &process_audio]() {
-		// Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
-		// Pin debug2{GPIO::B, PinNum::_9, PinMode::Output};
-		// debug.on();
-
+		// Fill the right half of the tx buffer.
 		if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_HT) != 0U)) {
-			if (__HAL_DMA_GET_IT_SOURCE(&hdma_tx, DMA_IT_HT) != 0U) {
-				__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_HT);
-				process_audio(1);
-			}
+			// if (__HAL_DMA_GET_IT_SOURCE(&hdma_tx, DMA_IT_HT) != 0U) {
+			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_HT);
+			process_audio(1);
+			// }
 		} else if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_TC) != 0U)) {
-			if (__HAL_DMA_GET_IT_SOURCE(&hdma_tx, DMA_IT_TC) != 0U) {
-				__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_TC);
-				process_audio(0);
-			}
+			// if (__HAL_DMA_GET_IT_SOURCE(&hdma_tx, DMA_IT_TC) != 0U) {
+			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_TC);
+			process_audio(0);
+			// }
 		}
-		// debug.off();
-
-		// for (auto i = 0u; i < BufferWords; i += 16) {
-		// 	invalidate_dcache_address((uintptr_t)(&tx_buffer[i]));
-		// }
-
-		// for (auto i = 0u; i < tx_buffer.size(); i += 2) {
-		// 	// 0x7F'FFFF => -10V
-		// 	// 0x40'0000 => -5V
-		// 	// 0x00'0000 => 0V
-		// 	// 0xC0'0000 => +5V
-		// 	// 0x80'0000 => +10V
-		// 	tx_buffer[i] = sines.L.sample(1);
-		// 	tx_buffer[i + 1] = sines.R.sample(2);
-		// }
-
-		// 		for (auto i = 0u; i < BufferWords; i += 16) {
-		// 			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
-		// 		}
-
-		// HAL_DMA_IRQHandler(&hdma_tx);
-
-		// if (hdma_tx.ErrorCode != 0)
-		// 	print("DMA err = ", hdma_tx.ErrorCode, " state=", hdma_tx.State, "\n");
 	});
-	// 688us about 32 frames
 
-	// Pre-fill first block of tx buffer, and clear rx buffer
-	// for (auto i = 0u; i < tx_buffer.size(); i += 2) {
-	// 	tx_buffer[i] = sines.L.process() / 256L;
-	// 	tx_buffer[i + 1] = sines.R.process() / 256L;
-
-	// 	rx_buffer[i] = 0;
-	// 	rx_buffer[i + 1] = 0;
-	// }
+	for (auto i = 0; i < BufferWords; i += 2) {
+		tx_buffer[i] = sines.L.sample(10000);
+		tx_buffer[i + 1] = sines.R.sample(100);
+	}
 
 	// Clean tx_buffer so DMA sees what we just wrote.
 	// Clean rx_buffer so we don't have any dirty lines that won't get invalidated later
@@ -243,11 +211,11 @@ int main()
 	}
 
 	// Endless loop
-	auto last_pet = HAL_GetTick();
+	auto last_pet = read_cntpct() / (read_cntfreq() / 1000); // HAL_GetTick();
 
 	while (true) {
-		auto now = HAL_GetTick();
-		if (now - last_pet > 5000) {
+		auto now = read_cntpct() / (read_cntfreq() / 1000); // HAL_GetTick();
+		if (now - last_pet >= 5000) {
 			last_pet = now;
 			print("Tick = ", now, "\n");
 
