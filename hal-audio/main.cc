@@ -1,4 +1,5 @@
 #include "audio_generators.hh"
+#include "djembecore.hh"
 #include "dma.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
@@ -16,6 +17,18 @@ static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_n
 static void dump_sai_registers();
 static void test_pins();
 
+constexpr uint32_t BufferWords = 64; // audio block size
+alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> tx_buffer;
+alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> rx_buffer;
+constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
+
+struct Params {
+	unsigned hit_ctr = 0;
+	unsigned hit_rate = 12'000;
+	std::array<bool, 4> knob_changed{true, true, true, true};
+	std::array<float, 4> knobs{0.5f, 0.5f, 0.5f, 0.5f};
+};
+
 int main()
 {
 
@@ -24,6 +37,7 @@ int main()
 		SineGen R{48000};
 	};
 	AudioGen sines{};
+	Params params;
 
 	constexpr uint32_t BufferWords = 64; // audio buffer size. Block size in frames is BufferWords/4
 	alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
@@ -145,32 +159,66 @@ int main()
 	print("Link DMA RX and SAI RX\n");
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
-	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
+	////////////////////////////
+	std::array<MetaModule::DjembeCore, 24> djs;
 
-	auto process_audio = [&sines, &debug](bool first) {
+	for (auto i = 0u; auto &dj : djs) {
+		dj.set_samplerate(48000);
+		dj.set_param(0, float(i) / float(djs.size()) + 0.1f);
+		dj.set_param(1, 0.5f);
+		dj.set_param(2, 0.5f);
+		dj.set_param(3, 0.5f);
+		dj.set_input(0, 0);
+		dj.set_input(1, 0);
+		dj.set_input(2, 0);
+		dj.set_input(3, 0);
+		dj.set_input(4, 0);
+		i++;
+	}
+
+	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
+	auto process_audio = [&djs, &debug, &params](bool first) {
 		debug.on();
 
-		// find start/end of the correct buffer half:
-		auto tx_start = first ? 0 : BufferWords / 2;
-		auto tx_end = tx_start + BufferWords / 2;
-		auto rx_start = first ? BufferWords / 2 : 0;
-		auto rx_end = tx_start + BufferWords / 2;
+		// for (auto i = start; i < end; i += 2) {
+		// 	tx_buffer[i] = sines.L.sample(10000);
+		// 	tx_buffer[i + 1] = sines.R.sample(100);
+		// }
 
-		for (auto i = rx_start; i < rx_end; i += 16) {
-			invalidate_dcache_address((uintptr_t)(&rx_buffer[i]));
-		}
+		for (auto i = start; i < end; i += 2) {
+			params.hit_ctr++;
 
-		for (auto i = tx_start; i < tx_end; i += 2) {
-			// Add two sines for output L
-			tx_buffer[i] = sines.L.sample(10000) / 2;
-			tx_buffer[i] += sines.R.sample(100) / 2;
+			// for (auto knob_id = 0; auto &changed : params.knob_changed) {
+			// 	if (changed) {
 
-			// Passthrough input R to output R
-			tx_buffer[i + 1] = rx_buffer[i + 1 - tx_start + rx_start];
-		}
+			// 		for (auto &dj : djs) {
+			// 			dj.set_param(knob_id, params.knobs[knob_id]);
+			// 			changed = false;
+			// 		}
 
-		for (auto i = tx_start; i < tx_end; i += 16) {
-			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
+			// 		knob_id++;
+			// 	}
+			// }
+
+			float outL = 0;
+			float outR = 0;
+			for (auto dj_idx = 0u; auto &dj : djs) {
+				unsigned hit_time = dj_idx * params.hit_rate / djs.size();
+				// unsigned hit_time = params.hit_rate;
+				dj.set_input(4, params.hit_ctr % hit_time == 0 ? 1 : 0);
+
+				dj.update();
+
+				if (dj_idx & 1)
+					outR += dj.get_output(0); // / djs.size();
+				else
+					outL += dj.get_output(0); // / djs.size();
+
+				dj_idx++;
+			}
+
+			tx_buffer[i] = 0x7FFFFFL * outL;
+			tx_buffer[i + 1] = 0x7FFFFFL * outR;
 		}
 
 		debug.off();
@@ -192,6 +240,8 @@ int main()
 	for (auto i = 0u; i < BufferWords; i += 16) {
 		clean_dcache_address((uintptr_t)(&rx_buffer[i]));
 	}
+
+	////////////////////
 
 	// Shifted address, PCM3168 datasheet section 9.3.14
 	CodecI2C i2c{};
