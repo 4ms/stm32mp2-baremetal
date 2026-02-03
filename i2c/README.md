@@ -11,9 +11,9 @@ Using an oscilloscope, you can verify yourself that the I2C messages are indeed 
 TCPP03 chip is responding to the requests to read and write (however, it just always returns 0's).
 If you change the address of the chip, then you'll get I2C errors, which again confirms that I2C is working.
 
-If you have your own dev board with an I2C chip on it, you can change the address
+If you have your own dev board with an I2C chip on it, you can change the device address to match your chip,
 and use the I2C2 peripheral on the GPIO header (header pins 27 and 28, port
-pins PB4 and PB5). The pin setup for these is commented out. Also don't forget
+pins PB4 and PB5). The pin setup for these is already being done. Also don't forget
 to change all occurances of I2C1 to I2C2. The Flexbar clock init is shared between I2C1 and I2C2,
 so no changes there are needed.
 
