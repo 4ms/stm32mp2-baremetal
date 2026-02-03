@@ -7,15 +7,16 @@ MEMORY
 {
     ROM (rx) :   ORIGIN = 0x88000040, LENGTH = 16M
     RAM (rwx):   ORIGIN = 0x90000000, LENGTH = 16M
+    NCRAM (rwx):   ORIGIN = 0x98000000, LENGTH = 16M
 
-	/* Non-Secure Boot Aliases */
+	/* Secure Boot Aliases */
 	B_S_VDERAM (rw): ORIGIN = 0x0A0A0000, LENGTH = 128K
 	B_S_RETRAM (rw): ORIGIN = 0x0A080000, LENGTH = 128K
 	B_S_SRAM2 (rw):  ORIGIN = 0x0A060000, LENGTH = 128K
 	B_S_SRAM1 (rw):  ORIGIN = 0x0A040000, LENGTH = 128K
 	B_S_SYSRAM (rw): ORIGIN = 0x0A000000, LENGTH = 256K
 
-	/* Secure Boot Aliases */
+	/* Non-Secure Boot Aliases */
 	B_NS_VDERAM (rw): ORIGIN = 0x0E0A0000, LENGTH = 128K
 	B_NS_RETRAM (rw): ORIGIN = 0x0E080000, LENGTH = 128K
 	B_NS_SRAM2 (rw):  ORIGIN = 0x0E060000, LENGTH = 128K
@@ -48,6 +49,11 @@ SECTIONS
 		*(.ddma)
 		*(.ddma*)
 	} > B_NS_SRAM2
+
+	.noncache (NOLOAD): {
+		*(.noncache)
+		*(.noncache*)
+	} > NCRAM
 
     .text : {
         *(.vector_table)
