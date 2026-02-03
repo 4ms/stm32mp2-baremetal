@@ -34,6 +34,7 @@
 //  AttrIdx1: Normal WBWA   = 0xFF
 #define MAIR_ATTR_DEVICE_nGnRnE 0x00ULL
 #define MAIR_ATTR_NORMAL_WBWA 0xFFULL
+#define MAIR_ATTR_NORMAL_NC 0x44ULL
 
 // ==========================
 // TCR_EL1 (4KB granule, 48-bit VA, 40-bit PA)
@@ -188,8 +189,9 @@ void mmu_enable(void)
 	const uint64_t attr_device = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(0) | // MAIR idx 0: Device-nGnRnE
 								 PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
 
-	// const uint64_t attr_noncache = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(2) | // MAIR idx 2: Non-cacheable
-	// 							 PTE_SH_INNER | PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
+	const uint64_t attr_noncache = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(2) | // MAIR idx 2: Non-cacheable
+								   PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
+
 	zero_tables();
 
 	// L0[0] -> L1
@@ -200,6 +202,13 @@ void mmu_enable(void)
 
 	// SRAM/SYSRAM region (2 MiB window at 0x0E00_0000) cacheable
 	map_l2_block_low_2m(IRAM2M_BASE, IRAM2M_BASE, attr_normal);
+	map_l2_block_low_2m(0x20000000ULL, 0x20000000ULL, attr_normal);
+
+	// This seems to have no effect on anything:
+	// map_l2_block_low_2m(0x98000000ULL, 0x98000000ULL, attr_noncache);
+
+	// This does work as Non-cacheable
+	map_l1_block(0xC0000000ULL, 0xC0000000ULL, attr_noncache);
 
 	// Peripherals 0x4000_0000..0x7FFF_FFFF as Device
 	map_l1_block(PERIPH_BASE, PERIPH_BASE, attr_device);
@@ -219,8 +228,10 @@ void mmu_enable(void)
 	////(0 = uncacheable, 1 = normal, 2 = device)
 	// mov		x1, #0x00ff44
 	// msr		MAIR_EL3, x1
-	//  MAIR: idx0 Device, idx1 Normal WBWA
-	const uint64_t mair = (MAIR_ATTR_DEVICE_nGnRnE << (8 * 0)) | (MAIR_ATTR_NORMAL_WBWA << (8 * 1));
+
+	//  MAIR: idx0 Device, idx1 Normal WBWA, idx2 Normal Non-cacheable
+	const uint64_t mair =
+		(MAIR_ATTR_DEVICE_nGnRnE << (8 * 0)) | (MAIR_ATTR_NORMAL_WBWA << (8 * 1)) | (MAIR_ATTR_NORMAL_NC << (8 * 2));
 	write_mair_el1(mair);
 
 	// Translation regime configuration

@@ -7,7 +7,7 @@ MEMORY
 {
     ROM (rx) :   ORIGIN = 0x88000040, LENGTH = 16M
     RAM (rwx):   ORIGIN = 0x90000000, LENGTH = 16M
-    NCRAM (rwx):   ORIGIN = 0x98000000, LENGTH = 16M
+    NCRAM (rwx):   ORIGIN = 0xC0000000, LENGTH = 16M
 
 	/* Secure Boot Aliases */
 	B_S_VDERAM (rw): ORIGIN = 0x0A0A0000, LENGTH = 128K
