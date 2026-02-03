@@ -2,6 +2,7 @@
 #include "djembecore.hh"
 #include "dma.hh"
 #include "drivers/pin.hh"
+#include "drivers/rcc_pll1.hh"
 #include "drivers/rcc_xbar.hh"
 #include "i2c_codec.hh"
 #include "interrupt.hh"
@@ -17,11 +18,14 @@ static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_n
 static void dump_sai_registers();
 static void test_pins();
 
-constexpr uint32_t BufferWords = 64; // audio block size
-// alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> tx_buffer;
-// alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> rx_buffer;
-alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
-alignas(64) static std::array<uint32_t, BufferWords> rx_buffer;
+static_assert(CA35SSC_BASE == 0x48800000);
+static_assert(CA35SYSCFG_BASE == 0x48802000);
+
+// audio block size: is actually 4x number of frames that are processed at once (8 => 2 stereo pairs per block)
+constexpr uint32_t BufferWords = 8;
+
+alignas(64) static std::array<int32_t, BufferWords> tx_buffer;
+alignas(64) static std::array<int32_t, BufferWords> rx_buffer;
 constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
 struct Params {
@@ -33,6 +37,8 @@ struct Params {
 
 int main()
 {
+
+	set_pll1(38); // 40MHz * 38 = 1.52GHz
 
 	struct AudioGen {
 		SineGen L{48000};
@@ -162,7 +168,10 @@ int main()
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
 	////////////////////////////
-	std::array<MetaModule::DjembeCore, 24> djs;
+	// 24 djembes = 44%
+	// 32 djembes = 60%
+	// 40 => 80%
+	std::array<MetaModule::DjembeCore, 32> djs;
 
 	for (auto i = 0u; auto &dj : djs) {
 		dj.set_samplerate(48000);
@@ -182,25 +191,11 @@ int main()
 	auto process_audio = [&djs, &debug, &params](bool first) {
 		debug.on();
 
-		// for (auto i = start; i < end; i += 2) {
-		// 	tx_buffer[i] = sines.L.sample(10000);
-		// 	tx_buffer[i + 1] = sines.R.sample(100);
-		// }
+		auto start = first ? 0 : BufferWords / 2;
+		auto end = start + BufferWords / 2;
 
 		for (auto i = start; i < end; i += 2) {
 			params.hit_ctr++;
-
-			// for (auto knob_id = 0; auto &changed : params.knob_changed) {
-			// 	if (changed) {
-
-			// 		for (auto &dj : djs) {
-			// 			dj.set_param(knob_id, params.knobs[knob_id]);
-			// 			changed = false;
-			// 		}
-
-			// 		knob_id++;
-			// 	}
-			// }
 
 			float outL = 0;
 			float outR = 0;
@@ -211,15 +206,15 @@ int main()
 				dj.update();
 
 				if (dj_idx & 1)
-					outR += dj.get_output(0); // / djs.size();
+					outR += dj.get_output(0);
 				else
-					outL += dj.get_output(0); // / djs.size();
+					outL += dj.get_output(0);
 
 				dj_idx++;
 			}
 
-			tx_buffer[i] = 0x7FFFFFL * outL;
-			tx_buffer[i + 1] = 0x7FFFFFL * outR;
+			tx_buffer[i] = std::clamp<int32_t>(600000 * outL, 0xFF800000, 0x007F0000);
+			tx_buffer[i + 1] = std::clamp<int32_t>(600000 * outR, 0xFF800000, 0x007F0000);
 		}
 
 		for (auto i = start; i < end; i += 16) {

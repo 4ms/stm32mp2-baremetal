@@ -1236,8 +1236,8 @@ public:
 
 	float get_output(const int output_id) const
 	{
-		constexpr float algorithmScale = 16.f;
-		return signalOut * (outputScalingVolts / algorithmScale);
+		// constexpr float algorithmScale = 16.f;
+		return signalOut;// * (outputScalingVolts / algorithmScale);
 	}
 
 private:
