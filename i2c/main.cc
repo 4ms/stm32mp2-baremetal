@@ -22,32 +22,44 @@ int main()
 	print("I2C Example\n");
 	HAL_Init();
 
-	print("Setting I2C1 XBAR\n");
+	print("Setting I2C2 XBAR\n");
 	FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_7, .findiv = 0x3F, .prediv = 0};
 	i2c_xbar.init(12);
 
 	print("PLL7 freq = ", HAL_RCCEx_GetPLL7ClockFreq(), "\n");
 	uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C1_2);
-	print("I2C1 kernel clock freq = ", freq, "\n");
+	print("I2C2 kernel clock freq = ", freq, "\n");
 
-	print("Enable I2C1 clock\n");
-	__HAL_RCC_I2C1_CLK_ENABLE();
-	__HAL_RCC_I2C1_FORCE_RESET();
-	__HAL_RCC_I2C1_RELEASE_RESET();
+	print("Enable I2C2 clock\n");
+	__HAL_RCC_I2C2_CLK_ENABLE();
 
 	// I2C2 pins are on the GPIO header and can be used to communicate with off-board I2C chips:
-	// print("Init I2C2 pins\n");
-	// Pin scl{GPIO::B, PinNum::_5, PinMode::Alt, AltFunc9, PinPull::Up}; // header pin 28
-	// Pin sda{GPIO::B, PinNum::_4, PinMode::Alt, AltFunc9, PinPull::Up}; // header pin 27
+	print("Init I2C2 pins\n");
+	Pin scl{GPIO::B,
+			PinNum::_5,
+			PinMode::Alt,
+			AltFunc9,
+			PinPull::None,
+			PinPolarity::Normal,
+			PinSpeed::Medium,
+			PinOType::OpenDrain}; // header pin 28
+	Pin sda{GPIO::B,
+			PinNum::_4,
+			PinMode::Alt,
+			AltFunc9,
+			PinPull::None,
+			PinPolarity::Normal,
+			PinSpeed::Medium,
+			PinOType::OpenDrain}; // header pin 27
 
-	print("Init I2C1 pins\n");
-	Pin scl{GPIO::G, PinNum::_13, PinMode::Alt, AltFunc9, PinPull::Up};
-	Pin sda{GPIO::I, PinNum::_1, PinMode::Alt, AltFunc9, PinPull::Up};
+	// print("Init I2C1 pins\n");
+	// Pin scl{GPIO::G, PinNum::_13, PinMode::Alt, AltFunc9, PinPull::Up};
+	// Pin sda{GPIO::I, PinNum::_1, PinMode::Alt, AltFunc9, PinPull::Up};
 
-	print("Init I2C1 periph\n");
+	print("Init I2C2 periph\n");
 	I2C_HandleTypeDef hi2c;
 	memset(&hi2c, 0, sizeof hi2c);
-	hi2c.Instance = I2C1;
+	hi2c.Instance = I2C2;
 	hi2c.Init.Timing = 0x10702525; // about 100kHz
 	hi2c.Init.OwnAddress1 = 0x33;
 	hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -75,7 +87,7 @@ int main()
 
 	static __attribute((section(".ddma"))) uint8_t data[4]{0, 0, 0, 0};
 
-	InterruptManager::register_and_start_isr(I2C1_IRQn, 1, 1, [&hi2c]() {
+	InterruptManager::register_and_start_isr(I2C2_IRQn, 1, 1, [&hi2c]() {
 		HAL_I2C_EV_IRQHandler(&hi2c);
 		HAL_I2C_ER_IRQHandler(&hi2c);
 		print("I2C IRQ\n");
@@ -85,13 +97,20 @@ int main()
 	HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_ERROR_CB_ID, i2c_error_cb);
 
 	// TCPP03-M20 needs to be enabled before it will respond to I2C:
-	Pin enable{GPIO::G, PinNum::_2, PinMode::Output};
+	// Pin enable{GPIO::G, PinNum::_2, PinMode::Output};
+	// enable.on();
+	// // TCPP03-M20 address: 34 unshifted
+	// constexpr uint8_t dev_address = 0b01101000;
+	// constexpr uint8_t read_mem_address = 0; //
+	// constexpr uint8_t write_mem_address = 0;
+	// constexpr uint8_t write_mem_value = 0x21; // Low Power Mode, VC1 open, VC2 closed
+
+	Pin enable{GPIO::B, PinNum::_12, PinMode::Output};
 	enable.on();
-	// TCPP03-M20 address: 34 unshifted
-	constexpr uint8_t dev_address = 0b01101000;
-	constexpr uint8_t read_mem_address = 0; //
+	constexpr uint8_t dev_address = 0x21 << 1;
+	constexpr uint8_t read_mem_address = 0;
 	constexpr uint8_t write_mem_address = 0;
-	constexpr uint8_t write_mem_value = 0x21; // Low Power Mode, VC1 open, VC2 closed
+	constexpr uint8_t write_mem_value = 0xFF;
 
 	print("Reading memory, blocking\n");
 	if (auto res = HAL_I2C_Mem_Read(&hi2c, dev_address, read_mem_address, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
