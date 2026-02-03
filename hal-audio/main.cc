@@ -10,30 +10,19 @@
 #include "watchdog.hh"
 #include <cmath>
 
-static_assert(SAI2_BASE == 0x402a0000);
-static_assert(SAI4_BASE == 0x40340000);
-static_assert(RIFSC_BASE == 0x42080000);
-
 static void verify_apb2_works_via_tim15();
 static void print_security_settings();
 static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_node_config);
 static void dump_sai_registers();
 static void test_pins();
 
-constexpr uint32_t BufferWords = 64;
-// In SRAM:
-alignas(64) static /*__attribute__((section(".normal"))) */ std::array<uint32_t, BufferWords> tx_buffer;
-alignas(64) static /*__attribute__((section(".normal"))) */ std::array<uint32_t, BufferWords> rx_buffer;
-alignas(64) static /*__attribute__((section(".normal"))) */ DMA_NodeTypeDef dma_tx_node1;
-alignas(64) static /*__attribute__((section(".normal"))) */ DMA_QListTypeDef dma_tx_queue;
-alignas(64) static /*__attribute__((section(".normal"))) */ DMA_NodeTypeDef dma_rx_node1;
-alignas(64) static /*__attribute__((section(".normal"))) */ DMA_QListTypeDef dma_rx_queue;
+constexpr uint32_t BufferWords = 64; // audio block size
+alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> tx_buffer;
+alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> rx_buffer;
 constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
 int main()
 {
-	DMA_HandleTypeDef hdma_tx;
-	DMA_HandleTypeDef hdma_rx;
 
 	struct AudioGen {
 		SineGen L{48000};
@@ -118,6 +107,10 @@ int main()
 	}
 
 	// DMA TX Setup
+	DMA_HandleTypeDef hdma_tx;
+	alignas(64) DMA_NodeTypeDef dma_tx_node1;
+	alignas(64) DMA_QListTypeDef dma_tx_queue;
+
 	hdma_tx.Instance = HPDMA1_Channel0;
 	hdma_tx.Init.Request = HPDMA_REQUEST_SAI2_A;
 	hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
@@ -134,6 +127,9 @@ int main()
 	__HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
 
 	// DMA RX Setup
+	DMA_HandleTypeDef hdma_rx;
+	alignas(64) DMA_NodeTypeDef dma_rx_node1;
+	alignas(64) DMA_QListTypeDef dma_rx_queue;
 	hdma_rx.Instance = HPDMA1_Channel1;
 	hdma_rx.Init.Request = HPDMA_REQUEST_SAI2_B;
 	hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
@@ -150,7 +146,6 @@ int main()
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
 	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
-	// Pin debug2{GPIO::B, PinNum::_9, PinMode::Output};
 	auto process_audio = [&sines, &debug](bool first) {
 		debug.on();
 		auto start = first ? 0 : BufferWords / 2;
@@ -161,9 +156,9 @@ int main()
 			tx_buffer[i + 1] = sines.R.sample(100);
 		}
 
-		for (auto i = start; i < end; i += 16) {
-			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
-		}
+		// for (auto i = start; i < end; i += 16) {
+		// 	clean_dcache_address((uintptr_t)(&tx_buffer[i]));
+		// }
 		debug.off();
 	};
 
@@ -171,27 +166,16 @@ int main()
 	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 1, 1, [&hdma_tx, &process_audio]() {
 		// Fill the right half of the tx buffer.
 		if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_HT) != 0U)) {
-			// if (__HAL_DMA_GET_IT_SOURCE(&hdma_tx, DMA_IT_HT) != 0U) {
 			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_HT);
 			process_audio(1);
-			// }
 		} else if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_TC) != 0U)) {
-			// if (__HAL_DMA_GET_IT_SOURCE(&hdma_tx, DMA_IT_TC) != 0U) {
 			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_TC);
 			process_audio(0);
-			// }
 		}
 	});
 
-	for (auto i = 0; i < BufferWords; i += 2) {
-		tx_buffer[i] = sines.L.sample(10000);
-		tx_buffer[i + 1] = sines.R.sample(100);
-	}
-
-	// Clean tx_buffer so DMA sees what we just wrote.
 	// Clean rx_buffer so we don't have any dirty lines that won't get invalidated later
 	for (auto i = 0u; i < BufferWords; i += 16) {
-		clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		clean_dcache_address((uintptr_t)(&rx_buffer[i]));
 	}
 
@@ -211,11 +195,12 @@ int main()
 	}
 
 	// Endless loop
-	auto last_pet = read_cntpct() / (read_cntfreq() / 1000); // HAL_GetTick();
+	auto last_pet = HAL_GetTick();
 
 	while (true) {
-		auto now = read_cntpct() / (read_cntfreq() / 1000); // HAL_GetTick();
-		if (now - last_pet >= 5000) {
+		auto now = 1000 * read_cntpct() / read_cntfreq();
+		// auto now = HAL_GetTick();
+		if (now - last_pet >= 3000) {
 			last_pet = now;
 			print("Tick = ", now, "\n");
 
