@@ -9,24 +9,23 @@ are designed to run on that board.
 The goal is to run full applications with access:
   - √ Nested interrupts (using the GIC)
   - √ DMA memory-to-memory transfers
-  - Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
-    (currently provided by TF-A or OP-TEE) 
-  - SAI (audio)
+  - √ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
+  - √ SAI (audio)
      - √ Using DMA
      - √ SAI TX (DAC audio out)
-     - SAI RX (ADC audio in)
-  - USB dual-role host/device, leveraging the STM32 USB library
-     - Device via USB3DR
-     - Host via EHCI USBH (WIP partially working)
-  - RGB or MIPI/DSI video
+     - √ SAI RX (ADC audio in)
   - √ I2C
-  - ADC running with DMA
   - SMP Multi-core (dual CA35):
      - √ Startup code for each core
      - √ core-specific interrupts (SGI)
      - IPCC and HSEM for sharing data 
   - AMP multi-core (CM33)
   - AMP multi-core (CM0+)
+  - USB dual-role host/device, leveraging the STM32 USB library
+     - Device via USB3DR
+     - Host via EHCI USBH (WIP partially working)
+  - RGB or MIPI/DSI video
+  - ADC running with DMA
 
 # Project setup
 
