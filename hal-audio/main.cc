@@ -191,8 +191,7 @@ int main()
 	}
 
 	// Shifted address, PCM3168 datasheet section 9.3.14
-	constexpr uint8_t PCM3168_ADDR = 0b10001010;
-	CodecI2C i2c{PCM3168_ADDR};
+	CodecI2C i2c{};
 	if (!i2c.init_codec())
 		print("Failed to init codec via I2C\n");
 

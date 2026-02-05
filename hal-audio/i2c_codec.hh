@@ -15,9 +15,10 @@ struct CodecI2C {
 	uint8_t data[4]{0, 0, 0, 0};
 	I2C_HandleTypeDef hi2c;
 	uint8_t dev_addr;
+	constexpr static uint8_t PCM3168_ADDR = 0b10001010;
 
-	CodecI2C(uint8_t address)
-		: dev_addr{address}
+	CodecI2C()
+		: dev_addr{PCM3168_ADDR}
 	{
 		print("Setting I2C2 XBAR\n");
 		FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x30, .prediv = 0};
