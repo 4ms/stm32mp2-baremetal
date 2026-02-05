@@ -15,13 +15,11 @@ DEPS   	  = $(addprefix $(OBJDIR)/, $(addsuffix .d, $(basename $(SOURCES))))
 
 
 MCU := -mcpu=cortex-a35 
-MCU += -march=armv8-a
+MCU += -march=armv8-a+fp+simd
 MCU += -mtune=cortex-a35
 MCU += -mlittle-endian
 
-# FIXME: unrecognized by aarch64-none-elf-g++:
-# FPU := -mfpu=neon
-# FPU += -mfloat-abi=hard
+FPU ?=
 
 EXTRA_ARCH_CFLAGS ?= 
 
@@ -37,15 +35,14 @@ FREESTANDING ?= "-ffreestanding "
 
 AFLAGS =  \
 		-fdata-sections -ffunction-sections \
-		-fno-builtin \
 		-fno-common \
-		-march=armv8-a \
-		-mgeneral-regs-only \
-		-mstrict-align \
 		-std=gnu99 \
 		-nostdinc \
 		-nostdlib \
-		 ${FREESTANDING} \
+		$(MCU) \
+		${FREESTANDING} \
+
+		#-mstrict-align \
 
 CFLAGS ?= -g2 \
 		 -fno-common \
