@@ -25,7 +25,7 @@ int main()
 	};
 	AudioGen sines{};
 
-	constexpr uint32_t BufferWords = 64; // audio block size
+	constexpr uint32_t BufferWords = 64; // audio buffer size. Block size in frames is BufferWords/4
 	alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
 	alignas(64) static std::array<uint32_t, BufferWords> rx_buffer;
 	constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
@@ -146,39 +146,42 @@ int main()
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
 	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
+
 	auto process_audio = [&sines, &debug](bool first) {
 		debug.on();
-		auto start = first ? 0 : BufferWords / 2;
-		auto end = start + BufferWords / 2;
 
+		// find start/end of the correct buffer half:
+		auto tx_start = first ? 0 : BufferWords / 2;
+		auto tx_end = tx_start + BufferWords / 2;
 		auto rx_start = first ? BufferWords / 2 : 0;
-		auto rx_end = start + BufferWords / 2;
+		auto rx_end = tx_start + BufferWords / 2;
 
 		for (auto i = rx_start; i < rx_end; i += 16) {
 			invalidate_dcache_address((uintptr_t)(&rx_buffer[i]));
 		}
 
-		for (auto i = start; i < end; i += 2) {
+		for (auto i = tx_start; i < tx_end; i += 2) {
 			// Add two sines for output L
 			tx_buffer[i] = sines.L.sample(10000) / 2;
 			tx_buffer[i] += sines.R.sample(100) / 2;
 
 			// Passthrough input R to output R
-			tx_buffer[i + 1] = rx_buffer[i + 1 - start + rx_start];
+			tx_buffer[i + 1] = rx_buffer[i + 1 - tx_start + rx_start];
+		}
+
+		for (auto i = tx_start; i < tx_end; i += 16) {
+			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		}
 
 		debug.off();
-		for (auto i = start; i < end; i += 16) {
-			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
-		}
 	};
 
 	// DMA IRQ setup
 	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 1, 1, [&hdma_tx, &process_audio]() {
-		// Fill the right half of the tx buffer.
 		if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_HT) != 0U)) {
 			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_HT);
 			process_audio(1);
+
 		} else if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_TC) != 0U)) {
 			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_TC);
 			process_audio(0);
