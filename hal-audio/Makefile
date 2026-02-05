@@ -12,6 +12,7 @@ SOURCES += $(SHAREDDIR)/drivers/irq_init.c
 SOURCES += $(SHAREDDIR)/drivers/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/drivers/pin.cc
 SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
+SOURCES += $(SHAREDDIR)/system/libcpp_stub.cc
 SOURCES += $(SHAREDDIR)/uart_print.c
 SOURCES += $(SHAREDDIR)/print.cc
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal.c

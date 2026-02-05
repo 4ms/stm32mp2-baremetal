@@ -12,6 +12,7 @@ SOURCES += aux_core_startup.s
 SOURCES += $(SHAREDDIR)/drivers/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/drivers/irq_init.c
 SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
+SOURCES += $(SHAREDDIR)/system/libcpp_stub.cc
 SOURCES += $(SHAREDDIR)/uart_print.c
 SOURCES += $(SHAREDDIR)/print.cc
 

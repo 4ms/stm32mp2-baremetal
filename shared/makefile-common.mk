@@ -31,7 +31,7 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 
 OPTFLAG ?= -O0
 
-FREESTANDING ?= "-ffreestanding "
+FREESTANDING ?= -ffreestanding
 
 AFLAGS =  \
 		-fdata-sections -ffunction-sections \
