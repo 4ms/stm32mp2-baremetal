@@ -36,7 +36,8 @@ INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 EXTRA_ARCH_CFLAGS := -DA35_NON_SECURE \
 					 -DUSE_HAL_DRIVER
 
-OPTFLAG := -O2
+OPTFLAG := -Ofast 
+FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
 
 FREESTANDING := 
 
