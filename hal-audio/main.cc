@@ -35,11 +35,11 @@ int main()
 
 	print("tx buffer: ", Hex{(uint32_t)(uintptr_t)tx_buffer.data()}, "\n");
 
-	print("Setting SAI2 XBAR\n");
-	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x30, .prediv = 0};
+	print("Setting SAI2 XBAR to use PLL8\n");
+	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_8, .findiv = 24, .prediv = 0};
 	sai2_xbar.init(24);
 
-	print("PLL4 freq = ", HAL_RCCEx_GetPLL4ClockFreq(), "\n");
+	print("PLL8 freq = ", HAL_RCCEx_GetPLL8ClockFreq(), "\n");
 	uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SAI2);
 	print("SAI2 kernel clock freq = ", freq, "\n");
 
