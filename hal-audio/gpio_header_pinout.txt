@@ -14,14 +14,13 @@ Function     Port/Pin   EV1-name  Pin #     EV1-name Port/Pin  Function
             ?           GPIO10  (19) | (20) GND      
             ?           GPIO9   (21) | (22) GPIO25   PD13
             ?           GPIO11  (23) | (24) GPIO8              ?
-                        GND     (25) | (26) GPIO7    PJ1
-                 PB4    ID SD   (27) | (28) ID SC    PB5
+                        GND     (25) | (26) GPIO7    PJ1       debug2
+   I2C SDA       PB4    ID SD   (27) | (28) ID SC    PB5       I2C SCL
             ?           GPIO5   (29) | (30) GND      
-            ?           GPIO6   (31) | (32) GPIO12   PB9
+            ?           GPIO6   (31) | (32) GPIO12   PB9       debug1
             ?           GPIO13  (33) | (34) GND      
-SAI2_FS_A(af3)   PJ3    GPIO19  (35) | (36) GPIO16   PF15
-                 PB12   GPIO26  (37) | (38) GPIO20   PJ12      SAI2_SD_A (af3)
+SAI2_FS_A(af3)   PJ3    GPIO19  (35) | (36) GPIO16   PF15      debug0
+  Codec Reset    PB12   GPIO26  (37) | (38) GPIO20   PJ12      SAI2_SD_A (af3)
                         GND     (39) | (40) GPIO21   PJ2       SAI2_SD_B (af3)
 
 Resistor R34: PJ13 SAI2_MCLK_A
-LD4: PJ7  SAI2_MCLK_B (af4)

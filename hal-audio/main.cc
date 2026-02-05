@@ -2,6 +2,7 @@
 #include "dma.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
+#include "i2c_codec.hh"
 #include "interrupt.hh"
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
@@ -9,30 +10,14 @@
 #include "watchdog.hh"
 #include <cmath>
 
-static_assert(SAI2_BASE == 0x402a0000);
-static_assert(SAI4_BASE == 0x40340000);
-static_assert(RIFSC_BASE == 0x42080000);
-
 static void verify_apb2_works_via_tim15();
 static void print_security_settings();
 static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_node_config);
 static void dump_sai_registers();
 static void test_pins();
 
-constexpr uint32_t BufferWords = 64;
-// In SRAM:
-alignas(64) static __attribute__((section(".ddma"))) std::array<uint32_t, BufferWords> tx_buffer;
-alignas(64) static __attribute__((section(".ddma"))) std::array<uint32_t, BufferWords> rx_buffer;
-alignas(64) static __attribute__((section(".ddma"))) DMA_NodeTypeDef dma_tx_node1;
-alignas(64) static __attribute__((section(".ddma"))) DMA_QListTypeDef dma_tx_queue;
-alignas(64) static __attribute__((section(".ddma"))) DMA_NodeTypeDef dma_rx_node1;
-alignas(64) static __attribute__((section(".ddma"))) DMA_QListTypeDef dma_rx_queue;
-constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
-
 int main()
 {
-	DMA_HandleTypeDef hdma_tx;
-	DMA_HandleTypeDef hdma_rx;
 
 	struct AudioGen {
 		SineGen L{48000};
@@ -40,14 +25,21 @@ int main()
 	};
 	AudioGen sines{};
 
+	constexpr uint32_t BufferWords = 64; // audio buffer size. Block size in frames is BufferWords/4
+	alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
+	alignas(64) static std::array<uint32_t, BufferWords> rx_buffer;
+	constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
+
 	print("HAL Audio Example\n");
 	HAL_Init();
 
-	print("Setting SAI2 XBAR\n");
-	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x30, .prediv = 0};
+	print("tx buffer: ", Hex{(uint32_t)(uintptr_t)tx_buffer.data()}, "\n");
+
+	print("Setting SAI2 XBAR to use PLL8\n");
+	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_8, .findiv = 24, .prediv = 0};
 	sai2_xbar.init(24);
 
-	print("PLL4 freq = ", HAL_RCCEx_GetPLL4ClockFreq(), "\n");
+	print("PLL8 freq = ", HAL_RCCEx_GetPLL8ClockFreq(), "\n");
 	uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SAI2);
 	print("SAI2 kernel clock freq = ", freq, "\n");
 
@@ -75,7 +67,7 @@ int main()
 	hsai_tx.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
 	hsai_tx.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
 	hsai_tx.Init.AudioFrequency = 48000;
-	hsai_tx.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_ENABLE;
+	hsai_tx.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
 	hsai_tx.Init.MonoStereoMode = SAI_STEREOMODE;
 	hsai_tx.Init.CompandingMode = SAI_NOCOMPANDING;
 	hsai_tx.Init.TriState = SAI_OUTPUT_NOTRELEASED;
@@ -100,7 +92,7 @@ int main()
 	hsai_rx.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
 	hsai_rx.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
 	hsai_rx.Init.AudioFrequency = 48000;
-	hsai_rx.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_ENABLE;
+	hsai_rx.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
 	hsai_rx.Init.MonoStereoMode = SAI_STEREOMODE;
 	hsai_rx.Init.CompandingMode = SAI_NOCOMPANDING;
 	hsai_rx.Init.TriState = SAI_OUTPUT_NOTRELEASED;
@@ -115,6 +107,10 @@ int main()
 	}
 
 	// DMA TX Setup
+	DMA_HandleTypeDef hdma_tx;
+	alignas(64) DMA_NodeTypeDef dma_tx_node1;
+	alignas(64) DMA_QListTypeDef dma_tx_queue;
+
 	hdma_tx.Instance = HPDMA1_Channel0;
 	hdma_tx.Init.Request = HPDMA_REQUEST_SAI2_A;
 	hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
@@ -131,6 +127,9 @@ int main()
 	__HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
 
 	// DMA RX Setup
+	DMA_HandleTypeDef hdma_rx;
+	alignas(64) DMA_NodeTypeDef dma_rx_node1;
+	alignas(64) DMA_QListTypeDef dma_rx_queue;
 	hdma_rx.Instance = HPDMA1_Channel1;
 	hdma_rx.Init.Request = HPDMA_REQUEST_SAI2_B;
 	hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
@@ -146,50 +145,77 @@ int main()
 	print("Link DMA RX and SAI RX\n");
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
 
-	// DMA IRQ setup
-	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 1, 1, [&hdma_tx, &sines]() {
-		for (auto i = 0u; i < tx_buffer.size(); i += 2) {
-			tx_buffer[i] = sines.L.sample(150);
-			tx_buffer[i + 1] = sines.R.sample(500);
+	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
+
+	auto process_audio = [&sines, &debug](bool first) {
+		debug.on();
+
+		// find start/end of the correct buffer half:
+		auto tx_start = first ? 0 : BufferWords / 2;
+		auto tx_end = tx_start + BufferWords / 2;
+		auto rx_start = first ? BufferWords / 2 : 0;
+		auto rx_end = tx_start + BufferWords / 2;
+
+		for (auto i = rx_start; i < rx_end; i += 16) {
+			invalidate_dcache_address((uintptr_t)(&rx_buffer[i]));
 		}
 
-		for (auto i = 0u; i < BufferWords; i += 16) {
+		for (auto i = tx_start; i < tx_end; i += 2) {
+			// Add two sines for output L
+			tx_buffer[i] = sines.L.sample(10000) / 2;
+			tx_buffer[i] += sines.R.sample(100) / 2;
+
+			// Passthrough input R to output R
+			tx_buffer[i + 1] = rx_buffer[i + 1 - tx_start + rx_start];
+		}
+
+		for (auto i = tx_start; i < tx_end; i += 16) {
 			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		}
 
-		HAL_DMA_IRQHandler(&hdma_tx);
+		debug.off();
+	};
 
-		if (hdma_tx.ErrorCode != 0)
-			print("DMA err = ", hdma_tx.ErrorCode, " state=", hdma_tx.State, "\n");
+	// DMA IRQ setup
+	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 1, 1, [&hdma_tx, &process_audio]() {
+		if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_HT) != 0U)) {
+			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_HT);
+			process_audio(1);
+
+		} else if ((__HAL_DMA_GET_FLAG(&hdma_tx, DMA_FLAG_TC) != 0U)) {
+			__HAL_DMA_CLEAR_FLAG(&hdma_tx, DMA_FLAG_TC);
+			process_audio(0);
+		}
 	});
 
-	for (auto i = 0u; i < tx_buffer.size(); i += 2) {
-		tx_buffer[i] = sines.L.sample(150);
-		tx_buffer[i + 1] = sines.R.sample(500);
-	}
-
-	// Write tx_buffer cache to memory
-	// Cleaning rx_buffer makes sure we don't have any dirty lines that won't get invalidated later
+	// Clean rx_buffer so we don't have any dirty lines that won't get invalidated later
 	for (auto i = 0u; i < BufferWords; i += 16) {
-		clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		clean_dcache_address((uintptr_t)(&rx_buffer[i]));
 	}
 
+	// Shifted address, PCM3168 datasheet section 9.3.14
+	CodecI2C i2c{};
+	if (!i2c.init_codec())
+		print("Failed to init codec via I2C\n");
+
 	print("Start transmitting/receiving\n");
-	if (auto res = HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer.data(), rx_buffer.size()); res != HAL_OK) {
+	if (auto res = HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer.data(), rx_buffer.size() / 4); res != HAL_OK) {
 		print("ERROR: HAL_SAI_Receive_DMA returned ", res, "\n");
 	}
 
-	if (auto res = HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer.data(), tx_buffer.size()); res != HAL_OK) {
+	if (auto res = HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer.data(), tx_buffer.size() / 4); res != HAL_OK) {
 		print("ERROR: HAL_SAI_Transmit_DMA returned ", res, "\n");
 	}
 
 	// Endless loop
-	volatile int x = 0x10000000;
+	auto last_pet = HAL_GetTick();
+
 	while (true) {
-		x = x + 1;
-		if ((x % 10'000'000) == 0) {
-			print("Tick = ", HAL_GetTick(), "\n");
+		auto now = 1000 * read_cntpct() / read_cntfreq();
+		// auto now = HAL_GetTick();
+		if (now - last_pet >= 3000) {
+			last_pet = now;
+			print("Tick = ", now, "\n");
 
 			watchdog_pet();
 		}

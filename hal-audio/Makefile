@@ -21,6 +21,8 @@ SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_sai.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_rcc.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_rcc_ex.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c_ex.c
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
@@ -34,7 +36,8 @@ INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 EXTRA_ARCH_CFLAGS := -DA35_NON_SECURE \
 					 -DUSE_HAL_DRIVER
 
-OPTFLAG := -O0
+OPTFLAG := -Ofast 
+FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
 
 FREESTANDING := 
 
