@@ -746,9 +746,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruc
 
           /* Enable write access to Backup domain */
 #if defined(PWR_BDCR1_DBD3P)
-          HAL_PWR_EnableBkUpD3Access();
+          // HAL_PWR_EnableBkUpD3Access();
+          SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-          HAL_PWR_EnableBkUpAccess();
+          // HAL_PWR_EnableBkUpAccess();
+          SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
 
           /* Wait for Backup domain Write protection disable */
@@ -807,9 +809,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruc
         if (backup_domain == 1U)
         {
 #if defined(PWR_BDCR1_DBD3P)
-          HAL_PWR_EnableBkUpD3Access();
+      // HAL_PWR_EnableBkUpD3Access();
+      SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-          HAL_PWR_EnableBkUpAccess();
+      // HAL_PWR_EnableBkUpAccess();
+      SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
         }
       }
@@ -846,9 +850,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruc
 
       /* Enable write access to Backup domain */
 #if defined(PWR_BDCR1_DBD3P)
-      HAL_PWR_EnableBkUpD3Access();
+      // HAL_PWR_EnableBkUpD3Access();
+      SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-      HAL_PWR_EnableBkUpAccess();
+      // HAL_PWR_EnableBkUpAccess();
+      SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
 
       /* Wait for Backup domain Write protection disable */
@@ -913,9 +919,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruc
     if (backup_domain == 1U)
     {
 #if defined(PWR_BDCR1_DBD3P)
-      HAL_PWR_DisableBkUpD3Access();
+      // HAL_PWR_DisableBkUpD3Access();
+      CLEAR_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-      HAL_PWR_DisableBkUpAccess();
+      // HAL_PWR_DisableBkUpAccess();
+      CLEAR_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
 
     }
@@ -945,9 +953,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruc
 
       /* Enable write access to Backup domain */
 #if defined(PWR_BDCR1_DBD3P)
-      HAL_PWR_EnableBkUpD3Access();
+      // HAL_PWR_EnableBkUpD3Access();
+      SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-      HAL_PWR_EnableBkUpAccess();
+      // HAL_PWR_EnableBkUpAccess();
+      SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
 
       /* Wait for Backup domain Write protection disable */
@@ -1024,9 +1034,11 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(const RCC_OscInitTypeDef  *pRCC_OscInitStruc
     if (backup_domain == 1U)
     {
 #if defined(PWR_BDCR1_DBD3P)
-      HAL_PWR_DisableBkUpD3Access();
+      // HAL_PWR_DisableBkUpD3Access();
+      CLEAR_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-      HAL_PWR_DisableBkUpAccess();
+      // HAL_PWR_DisableBkUpAccess();
+      CLEAR_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
     }
   }
@@ -1794,9 +1806,11 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef   *const pRCC_Clk
 
       /* Enable write access to Backup domain */
 #if defined(PWR_BDCR1_DBD3P)
-      HAL_PWR_EnableBkUpD3Access();
+      // HAL_PWR_EnableBkUpD3Access();
+      SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-      HAL_PWR_EnableBkUpAccess();
+      // HAL_PWR_EnableBkUpAccess();
+      SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
 
       /* Wait for Backup domain Write protection disable */
@@ -1839,9 +1853,11 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef   *const pRCC_Clk
     if (backup_domain == 1U)
     {
 #if defined(PWR_BDCR1_DBD3P)
-      HAL_PWR_DisableBkUpD3Access();
+      // HAL_PWR_EnableBkUpD3Access();
+      SET_BIT(PWR->BDCR1, PWR_BDCR1_DBD3P);
 #else
-      HAL_PWR_DisableBkUpAccess();
+      // HAL_PWR_EnableBkUpAccess();
+       SET_BIT(PWR->BDCR, PWR_BDCR_DBP);
 #endif /* PWR_BDCR1_DBD3P */
     }
   }
