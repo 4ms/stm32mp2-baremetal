@@ -26,10 +26,6 @@ int main()
 	FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_7, .findiv = 0x3F, .prediv = 0};
 	i2c_xbar.init(12);
 
-	print("PLL7 freq = ", HAL_RCCEx_GetPLL7ClockFreq(), "\n");
-	uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C1_2);
-	print("I2C1/2 kernel clock freq = ", freq, "\n");
-
 	print("Enable I2C1/2 clock\n");
 	__HAL_RCC_I2C1_CLK_ENABLE();
 	__HAL_RCC_I2C2_CLK_ENABLE();
