@@ -51,8 +51,8 @@ We'll add some more build dirs to the mp2-dev dir as we go along.
 
 # Baremetal Application
 
-We will skip the topic of bootloaders so we can get started more quickly. To do
-this, we'll use the stock SD card supplied by ST (or flash your own card using
+We will skip the topic of bootloaders for now so we can get started more quickly.
+We'll use the stock SD card supplied by ST (or flash your own card using
 their [Starter
 Package](https://www.st.com/en/embedded-software/stm32mp2starter.html) or
 [Developer Package](https://www.st.com/en/embedded-software/stm32mp2dev.html)
@@ -60,21 +60,38 @@ following instructions on the [ST
 wiki](https://wiki.st.com/stm32mpu/wiki/Getting_started/STM32MP2_boards/STM32MP257x-EV1/Let%27s_start/Populate_the_target_and_boot_the_image)
 )
 
-For building your own bootloaders, skip down to `Bootloaders`
+With the stock SD card, you can run only some of the projects:
+- minimal_boot
+- interrupts
+- multicore_smp
+- watchdog
+
+In order to run the more advanced projects that use the peripherals, you need
+to have a custom build of OP-TEE which gives security permissions. Skip down to
+`Bootloaders` for instructions how to do this.
 
 
 ## Building a baremetal application
 
+If you've already installed our build of OP-TEE your SD Card, then you can try any project.
+Otherwise, if you're using the stock card from ST, then the projects mentioned
+above will work. The other projects use various peripherals which ST's OP-TEE
+does not allow to be accessed by a non-secure app.
+
 ```bash
 cd stm32mp2-baremetal
-cd minimal_boot  #pick a project
+cd minimal_boot
 make
 
 # View the output file:
 ls -l build/main.uimg
 ```
 
-## Copying the baremetal application to an SD Card:
+
+## Running a baremetal application via U-Boot
+
+To load an application with U-Boot, you need to copy the uimg file to
+the SD card.
 
 Using the stock SD card from ST, you first need to format partition 11 as FATFS
 (it's in ext4 by default). Doing so is OS-specific. 
@@ -89,7 +106,6 @@ Then, copy the `main.uimg` file onto the SD Card partition 11 using your OS (not
 cp build/main.uimg /Volumes/sd-part11/
 ```
 
-## Running a baremetal application without custom FIP or U-Boot
 
 Connect your computer via USB to the USB jack marked "ST-LINK" on the EV1 board.
 
@@ -136,14 +152,13 @@ sudo dd if=/dev/zero of=/dev/diskX7
 ```
 
 
-
-## Debugging (and a faster way to load an app)
+## Loading an app via SWD (and how to debug)
 
 1. The Discovery and Eval boards have an SWD connection via the USB jack marked
    "ST-LINK" which you are already using for the console terminial.
 
 3. Power on, and watch the console for "Hit any key...". Then hit a key to
-   stop U-boot from continuing. You should be at the U-BOOT prompt now.
+   stop U-boot from continuing. You should be at the U-Boot prompt now.
 
 3. Start openocd. The scripts for the stm32mp2 chips are included in this repo,
    as well as the openocd config file (`openocd.cfg`). So start openocd in a
@@ -221,6 +236,8 @@ n
 x/64i 0x88000040
 ```
 
+### Resetting
+
 If you re-compile and need to load the new binary, unfortunately the best way
 I've found is to press the hard reset button on the EVK board. Usually openocd
 will re-connect, but if it doesn't then you have to unplug/plug the USB cable
@@ -250,10 +267,53 @@ There is a serious issue in the stm32mp2xx.h file provided by ST, that breaks
 several HAL peripherals. The issue is the POSITION_VAL function macro does not
 work on 64-bit systems. This has been corrected in the version in this repo.
 
+# Replacing the OP-TEE binaries
 
-# Bootloaders:
+In order to run all the projects, you need a custom version of OP-TEE loaded.
+The fastest way to run all the example projects is to replace OP-TEE with our custom build on your SD card.
 
-__Note: you can skip this entire Bootloaders section and use the stock SD card from ST. (see above)__
+1. Insert your SD card into your computer
+
+2. In the terminal run this command to copy the original FIP file to your computer. Replace /dev/diskX5 with the device name for partition 5.
+ ``` bash
+ sudo dd if=/dev/diskX5 of=fip-original.bin
+ ```
+
+3. Build TF-A fiptool:
+```bash
+cd ..   # go to the overall project dir, the parent dir of stm32mp2-baremetal/
+git clone https://github.com/4ms/tf-a-stm32mp25.git
+cd tf-a-stm32mp25
+make fiptool PLAT=stm32mp2
+
+# on MacOS you may need to do this instead:
+make fiptool PLAT=stm32mp2 OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1 HOSTCCFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+
+# Check fiptool works:
+tools/fiptool/fiptool help
+```
+
+4. Download pre-built `tee-header_v2.bin` and `tee-pager_v2.bin` OP-TEE binaries from [here](https://github.com/4ms/optee-stm32mp25/releases)
+
+5. Install the new OP-TEE binaries onto your fip file:
+```bash
+cp fip-original.bin fip-modified.bin
+tf-a-stm32mp25/tools/fiptool/fiptool --verbose update \
+    --tos-fw /path/to/tee-header_v2.bin \
+    --tos-fw-extra1 /path/to/tee-pager_v2.bin fip-modified.bin
+```
+
+6. Install the modified fip file back onto the SD card (use the same partition as step 2)
+ ``` bash
+ sudo dd if=fip-modified.bin of=/dev/diskX5 
+ ```
+
+7. Boot the EV1 board as normal via the SD card, halting at the U-Boot prompt. Load your example project as described above.
+
+
+
+# Bootloaders In Depth:
+
 
 ## Overview 
 
@@ -266,15 +326,18 @@ __Note: you can skip this entire Bootloaders section and use the stock SD card f
 
 
 The bootloaders setup the system and then finally load our application
-from an SD card (or some other media, but we'll assume SD Card since it's most
+from an SD card (or some other media, but we'll assume SD card since it's most
 accessible).
 
 All these bootloaders plus their support files are combined together into a FIP file.
 Then we flash that FIP file to a particular partition of the SD card.
 
-You don't have to build all of them. You can use the FIP file from your existing
-SD card and just replace the ones you recompiled.
+We only need to replace OP-TEE, since that contains security settings that severly limit
+what peripherals our application has access to.
 
+The easiest thing to do is to use ST's stock SD card, read the FIP file off the card,
+then replace only the OP-TEE binary in the FIP file, and finally write the modified FIP
+back to the card. Details on how to do this are below.
 
 ## Setup
 
@@ -307,6 +370,8 @@ in memory and also starts some of the images executing.
 
 TF-A also contains the BL31 "Secure Monitor". The Secure Monitor runs
 in the background while your app runs, handling some system calls via interrupts.
+
+TF-A also contains the fiptool, which is required for modifying the FIP binary. 
 
 To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3, 13.1, and 14.2 have been tested but
 probably any later version will also work (please open an issue if you find a version that doesn't).
@@ -370,7 +435,11 @@ ls -l build-baremetal-uboot/u-boot-notdb.bin
 
 ## Building OP-TEE
 
-TODO: get a working OP-TEE build, or disable it.
+### Download pre-built binaries
+
+If you just want to run the example projects, you can use [our build of OP-TEE here](https://github.com/4ms/optee-stm32mp25/releases)
+
+### Building on your own
 
 To build, first you will need the python prerequisites:
 
@@ -407,9 +476,6 @@ only able to get v3.19.0 to work, not the latest v4.0.0 from ST's fork.
 
 The only modifications is to open up more access to various peripherals in the
 device tree. The git log is the best way to see all the changes.
-
-You may need to change the device tree file and re-compile in order give you
-app permission to use certain peripherals. 
 
 ### Giving your app access to peripherals
 
@@ -451,7 +517,7 @@ like the most open setting, though `RIF_CFEN` in combination with
 `RIF_CID1` also seems to work since that means the RIFSC will filter for CID1
 (which is what out app is running on).
 
-### Giving your app access to peripherals
+### Giving your app access to clocks 
 
 In addition to peripherals, you might need to give your app access to clocks.
 
@@ -555,9 +621,8 @@ On macOS, you might need to change `make fiptool` to this:
 make fiptool PLAT=stm32mp2 OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1 HOSTCCFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
 ```
 
-This does the same thing as above.
-See `tools/fiptool/fiptool help`
 
+To use fiptool to create a FIP file, instead of TF-A's make target, you would do this:
 ```bash
 cd tf-a-stm32mp25
 
@@ -580,6 +645,7 @@ ls -l build/release/stm32mp2/fip.bin
 
 Instead of building everything from scratch, you could use an existing fip file
 provided by ST, and replace one or more components with one you built.
+This method was outlined briefly above.
 
 Download the STM32MP2 developer package, and copy one of the fip files:
 
@@ -587,6 +653,11 @@ Download the STM32MP2 developer package, and copy one of the fip files:
 cp stm32mp25-openstlinux-6.1-yocto-mickledore-mp2-v23.12.06/images/stm32mp25/fip/fip-stm32mp257f-ev1-ca35tdcid-ostl-m33-examples-ddr.bin fip.bin
 ```
 
+Or copy the existing fip file off your SD card:
+
+```bash
+sudo dd if=/dev/diskX5 of=fip.bin
+```
 
 Now use fiptool to replace just one binary. For example, this will replace the U-boot binary:
 
@@ -605,20 +676,7 @@ tf-a-stm32mp25/tools/fiptool/fiptool --verbose update \
 
 The `fip.bin` file will be updated.
 
-## Installing the bootloader FIP onto an SD Card
-
-TODO: how to partition and format the disk.
-
-For now, use the SD Card that came with the EV1 board.
-
-First -- make a backup of the FIP file. It will come in handy if something goes wrong:
-Copy partition 5 of your SD card to a file, and keep that file safe.
-
-```bash
-sudo dd if=/dev/diskX5 of=fip-original-backup.bin
-```
-
-Next, copy the fip.bin you made to partition 5 of the SD card:
+Copy the fip.bin to partition 5 of the SD card:
 
 ```bash
 sudo dd if=baremetal-1/fip.bin of=/dev/diskXs5 
