@@ -16,11 +16,6 @@ static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_n
 static void dump_sai_registers();
 static void test_pins();
 
-constexpr uint32_t BufferWords = 64; // audio block size
-alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> tx_buffer;
-alignas(64) static __attribute__((section(".noncache"))) std::array<uint32_t, BufferWords> rx_buffer;
-constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
-
 int main()
 {
 
@@ -29,6 +24,11 @@ int main()
 		SineGen R{48000};
 	};
 	AudioGen sines{};
+
+	constexpr uint32_t BufferWords = 64; // audio block size
+	alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
+	alignas(64) static std::array<uint32_t, BufferWords> rx_buffer;
+	constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
 	print("HAL Audio Example\n");
 	HAL_Init();
@@ -151,15 +151,26 @@ int main()
 		auto start = first ? 0 : BufferWords / 2;
 		auto end = start + BufferWords / 2;
 
-		for (auto i = start; i < end; i += 2) {
-			tx_buffer[i] = sines.L.sample(10000);
-			tx_buffer[i + 1] = sines.R.sample(100);
+		auto rx_start = first ? BufferWords / 2 : 0;
+		auto rx_end = start + BufferWords / 2;
+
+		for (auto i = rx_start; i < rx_end; i += 16) {
+			invalidate_dcache_address((uintptr_t)(&rx_buffer[i]));
 		}
 
-		// for (auto i = start; i < end; i += 16) {
-		// 	clean_dcache_address((uintptr_t)(&tx_buffer[i]));
-		// }
+		for (auto i = start; i < end; i += 2) {
+			// Add two sines for output L
+			tx_buffer[i] = sines.L.sample(10000) / 2;
+			tx_buffer[i] += sines.R.sample(100) / 2;
+
+			// Passthrough input R to output R
+			tx_buffer[i + 1] = rx_buffer[i + 1 - start + rx_start];
+		}
+
 		debug.off();
+		for (auto i = start; i < end; i += 16) {
+			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
+		}
 	};
 
 	// DMA IRQ setup
