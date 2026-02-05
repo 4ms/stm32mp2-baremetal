@@ -15,6 +15,7 @@ struct CodecI2C {
 	uint8_t data[4]{0, 0, 0, 0};
 	I2C_HandleTypeDef hi2c;
 	uint8_t dev_addr;
+	// Shifted address, PCM3168 datasheet section 9.3.14
 	constexpr static uint8_t PCM3168_ADDR = 0b10001010;
 
 	CodecI2C()
@@ -24,9 +25,7 @@ struct CodecI2C {
 		FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_4, .findiv = 0x30, .prediv = 0};
 		i2c_xbar.init(12);
 
-		print("PLL4 freq = ", HAL_RCCEx_GetPLL4ClockFreq(), "\n");
 		uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_I2C1_2);
-		print("I2C2 kernel clock freq = ", freq, "\n");
 
 		print("Enable I2C2 clock\n");
 		__HAL_RCC_I2C2_CLK_ENABLE();
@@ -101,13 +100,14 @@ struct CodecI2C {
 
 	uint8_t read_register(uint8_t reg_addr)
 	{
-		print("Reading I2C device 0x", Hex{dev_addr}, " register 0x", Hex{reg_addr}, " in blocking mode\n");
+		// print("Reading I2C device 0x", Hex{dev_addr}, " register 0x", Hex{reg_addr}, " in blocking mode\n");
+
 		if (auto res = HAL_I2C_Mem_Read(&hi2c, dev_addr, reg_addr, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
 			res != HAL_OK)
 		{
 			print("ERROR: HAL_I2C_Mem_Read returned ", res, "\n");
-		} else {
-			print("Read 0x", Hex{data[0]}, "\n");
+			// } else {
+			// print("Read 0x", Hex{data[0]}, "\n");
 		}
 		return data[0];
 	}
@@ -116,7 +116,7 @@ struct CodecI2C {
 	{
 		data[0] = value;
 
-		print("Writing 0x", Hex{data[0]}, " to device 0x", Hex{dev_addr}, " register 0x", Hex{reg_addr}, "\n");
+		// print("Writing 0x", Hex{data[0]}, " to device 0x", Hex{dev_addr}, " register 0x", Hex{reg_addr}, "\n");
 
 		if (auto res = HAL_I2C_Mem_Write(&hi2c, dev_addr, reg_addr, I2C_MEMADD_SIZE_8BIT, data, 1, 0x10000);
 			res != HAL_OK)

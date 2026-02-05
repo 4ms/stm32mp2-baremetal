@@ -121,7 +121,7 @@ int main()
 	dma_node_config_tx.DataSize = BufferBytes;
 
 	DmaHelper::setup_circular(hdma_tx, dma_tx_queue, dma_tx_node1, dma_node_config_tx);
-	dump_dma_info(dma_tx_node1, dma_node_config_tx);
+	// dump_dma_info(dma_tx_node1, dma_node_config_tx);
 
 	print("Link DMA TX and SAI TX\n");
 	__HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
@@ -140,7 +140,7 @@ int main()
 	dma_node_config_rx.DataSize = BufferBytes;
 
 	DmaHelper::setup_circular(hdma_rx, dma_rx_queue, dma_rx_node1, dma_node_config_rx);
-	dump_dma_info(dma_rx_node1, dma_node_config_rx);
+	// dump_dma_info(dma_rx_node1, dma_node_config_rx);
 
 	print("Link DMA RX and SAI RX\n");
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
@@ -162,8 +162,8 @@ int main()
 
 		for (auto i = tx_start; i < tx_end; i += 2) {
 			// Add two sines for output L
-			tx_buffer[i] = sines.L.sample(10000) / 2;
-			tx_buffer[i] += sines.R.sample(100) / 2;
+			tx_buffer[i] = sines.L.sample(2000) / 2;
+			tx_buffer[i] += sines.R.sample(200) / 2;
 
 			// Passthrough input R to output R
 			tx_buffer[i + 1] = rx_buffer[i + 1 - tx_start + rx_start];
@@ -193,7 +193,6 @@ int main()
 		clean_dcache_address((uintptr_t)(&rx_buffer[i]));
 	}
 
-	// Shifted address, PCM3168 datasheet section 9.3.14
 	CodecI2C i2c{};
 	if (!i2c.init_codec())
 		print("Failed to init codec via I2C\n");
