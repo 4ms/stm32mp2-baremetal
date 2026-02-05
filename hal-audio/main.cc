@@ -28,6 +28,8 @@ alignas(64) static std::array<int32_t, BufferWords> tx_buffer;
 alignas(64) static std::array<int32_t, BufferWords> rx_buffer;
 constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
+alignas(64) static std::array<float, 48000 * 100> output_buffer;
+
 struct Params {
 	unsigned hit_ctr = 0;
 	unsigned hit_rate = 12'000;
@@ -187,9 +189,23 @@ int main()
 		i++;
 	}
 
-	Pin debug{GPIO::F, PinNum::_15, PinMode::Output};
-	auto process_audio = [&djs, &debug, &params](bool first) {
-		debug.on();
+	Pin debug1{GPIO::B, PinNum::_9, PinMode::Output};
+	// Make 100 seconds of audio with a djembe
+	// Takes about 1.415s = 1.415% load
+	unsigned hit_time = 12000;
+	debug1.on();
+	for (auto i = 0u; auto &out : output_buffer) {
+		djs[0].set_input(4, (i % hit_time) == 0 ? 1 : 0);
+		djs[0].update();
+		out = djs[0].get_output(0);
+		i++;
+	}
+	debug1.off();
+
+	Pin debug0{GPIO::F, PinNum::_15, PinMode::Output};
+
+	auto process_audio = [&djs, &debug0, &params](bool first) {
+		debug0.on();
 
 		auto start = first ? 0 : BufferWords / 2;
 		auto end = start + BufferWords / 2;
@@ -221,7 +237,7 @@ int main()
 			clean_dcache_address((uintptr_t)(&tx_buffer[i]));
 		}
 
-		debug.off();
+		debug0.off();
 	};
 
 	// DMA IRQ setup

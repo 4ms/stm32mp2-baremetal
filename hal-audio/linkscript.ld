@@ -6,7 +6,7 @@ ENTRY(_Reset)
 MEMORY
 {
     ROM (rx) :   ORIGIN = 0x88000040, LENGTH = 16M
-    RAM (rwx):   ORIGIN = 0x90000000, LENGTH = 16M
+    RAM (rwx):   ORIGIN = 0x90000000, LENGTH = 32M
     NCRAM (rwx):   ORIGIN = 0xC0000000, LENGTH = 16M
 
 	/* Secure Boot Aliases */
