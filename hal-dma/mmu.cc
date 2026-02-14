@@ -36,10 +36,10 @@
 //  AttrIdx2: NonCache      = 0x44
 #define MAIR_ATTR_DEVICE_nGnRnE 0x00ULL
 #define MAIR_ATTR_NORMAL_WBWA 0xFFULL
-#define MAIR_ATTR_NC 0x44ULL
+#define MAIR_ATTR_NORMAL_NC 0x44ULL
 
 constexpr uint64_t mair =
-	(MAIR_ATTR_DEVICE_nGnRnE << (8 * 0)) | (MAIR_ATTR_NORMAL_WBWA << (8 * 1)) | (MAIR_ATTR_NC << (8 * 2));
+	(MAIR_ATTR_DEVICE_nGnRnE << (8 * 0)) | (MAIR_ATTR_NORMAL_WBWA << (8 * 1)) | (MAIR_ATTR_NORMAL_NC << (8 * 2));
 
 // MAIR idx 0: Device-nGnRnE
 constexpr uint64_t attr_device = DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(0) | PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
@@ -52,26 +52,20 @@ constexpr uint64_t attr_normal =
 constexpr uint64_t attr_noncache =
 	DESC_VALID | DESC_BLOCK | PTE_ATTRINDX(2) | PTE_SH_INNER | PTE_AF | PTE_AP_RW_EL1 | PTE_NS;
 
-// ==========================
-// TCR_EL1 (4KB granule, 48-bit VA, 40-bit PA)
-// ==========================
+// TCR_EL1 (4KB granule, 32-bit VA, 32-bit PA)
 #define TCR_TG0_4K (0ULL << 14)		// TG0: 4 kB granules
 #define TCR_SH0_INNER (3ULL << 12)	// SH0: translation table walks are inner shareable
 #define TCR_ORGN0_WBWA (1ULL << 10) // ORGN0: translation table walks are outer WB/WA
 #define TCR_IRGN0_WBWA (1ULL << 8)	// IRGN0: translation table walks are inner WB/WA
-
 // TODO: Don't we want walks enabled?
 #define TCR_EPD1_DISABLE_EL1 (1ULL << 23) // disable TTBR1 walks
-
 // #define TCR_T0SZ_48BIT (16ULL << 0)	  // 48-bit VA => T0SZ=16
 #define TCR_T0SZ_32BIT (32ULL << 0)	   // 32-bit VA => T0SZ=32
 #define TCR_IPS_32BIT_EL1 (0ULL << 32) // 0b000 => 32-bit PA (EL1)
 #define TCR_PS_32BIT_EL3 (0ULL << 32)  // 0b000 => 32-bit PA (EL3)
 
-// ==========================
 // Page tables (4KB aligned)
 // L0 -> L1 -> (optional) L2 for VA[0..1GiB)
-// ==========================
 static uint64_t tt_l0[512] __attribute__((aligned(4096)));
 static uint64_t tt_l1[512] __attribute__((aligned(4096)));
 static uint64_t tt_l2_low[512] __attribute__((aligned(4096))); // backs L1[0] (VA 0..1GiB)
@@ -81,7 +75,7 @@ static uint64_t tt_l2_low[512] __attribute__((aligned(4096))); // backs L1[0] (V
 // --------------------------
 
 // Clean+invalidate all data cache to PoC
-static inline void dcache_civac_all_el1(void)
+static inline void dcache_civac_all(void)
 {
 	// Iterate by set/way using CCSIDR. This is the standard ARM pattern.
 	// Assumes data cache is at least present at EL1. Safe even if D-cache is off.
@@ -94,11 +88,11 @@ static inline void dcache_civac_all_el1(void)
 			continue; // no data/unified cache at this level
 
 		uint64_t csselr = (uint64_t)(level << 1); // select data/unified
-		__asm__ volatile("msr csselr_el1, %0" : : "r"(csselr));
+		asm volatile("msr csselr_el1, %0" : : "r"(csselr));
 		isb();
 
 		uint64_t ccsidr;
-		__asm__ volatile("mrs %0, ccsidr_el1" : "=r"(ccsidr));
+		asm volatile("mrs %0, ccsidr_el1" : "=r"(ccsidr));
 
 		unsigned line_len = ((ccsidr & 0x7) + 4); // log2(words) + 2 => log2(bytes)
 		unsigned ways = ((ccsidr >> 3) & 0x3FF) + 1;
@@ -115,7 +109,7 @@ static inline void dcache_civac_all_el1(void)
 		for (unsigned way = 0; way < ways; way++) {
 			for (unsigned set = 0; set < sets; set++) {
 				uint64_t sw = ((uint64_t)level << 1) | ((uint64_t)set << line_len) | ((uint64_t)way << way_shift);
-				__asm__ volatile("dc cisw, %0" : : "r"(sw));
+				asm volatile("dc cisw, %0" : : "r"(sw));
 			}
 		}
 	}
@@ -172,7 +166,7 @@ extern "C" void mmu_enable()
 {
 	// If caches/MMU are already enabled, clean+invalidate before changing attributes/tables.
 	// This avoids “stale” lines or aliasing surprises
-	dcache_civac_all_el1();
+	dcache_civac_all();
 	ic_iallu();
 	dsb_sy();
 	isb();
@@ -208,6 +202,7 @@ extern "C" void mmu_enable()
 
 extern "C" void mmu_enable_el3()
 {
+	dcache_civac_all();
 	ic_iallu();
 	dsb_sy();
 	isb();
