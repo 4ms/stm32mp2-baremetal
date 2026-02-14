@@ -4,8 +4,7 @@ SHAREDDIR = ../shared
 
 SOURCES := startup.s
 SOURCES += vector_table.s
-SOURCES += mmu.c
-SOURCES += system_init.cc
+SOURCES += mmu.cc
 SOURCES += main.cc
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
 SOURCES += $(SHAREDDIR)/drivers/irq_init.c

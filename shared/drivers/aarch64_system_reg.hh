@@ -1,6 +1,16 @@
 #pragma once
 #include <cstdint>
 
+inline void dsb_sy()
+{
+	asm volatile("dsb sy" ::: "memory");
+}
+
+inline void isb()
+{
+	asm volatile("isb" ::: "memory");
+}
+
 inline uint64_t get_core_id()
 {
 	uint64_t core_id;
@@ -13,15 +23,11 @@ inline uint64_t get_mpid()
 {
 	uint64_t core_id;
 	asm volatile("mrs %0, mpidr_el1\n\t" : "=r"(core_id) : : "memory");
-	// asm volatile("MRS      %0, MPIDR_EL1   \n"
-	// 			 "UBFX     %1, %0, #32, #8 \n" // Extract Aff3
-	// 			 "BFI      %0, %1, #24, #8 \n" // Insert Aff3 into bits [31:24], so that [31:0]
-	// 										   // is now Aff3.Aff2.Aff1.Aff0
-	// );
 	uint64_t aff3 = (core_id >> 8) & 0xFF00'0000;
 	return (core_id & 0x00FF'FFFF) | aff3;
 }
 
+// Return raw CurrentEL register (0b1100 - 0b0000)
 inline uint32_t read_current_el()
 {
 	uint64_t current_el;
@@ -29,7 +35,8 @@ inline uint32_t read_current_el()
 	return current_el;
 }
 
-inline uint32_t get_current_el(void)
+// Returns current EL level (0-3)
+inline uint32_t get_current_el()
 {
 	constexpr uint64_t CURRENT_EL_MASK = 0x3;
 	constexpr uint64_t CURRENT_EL_SHIFT = 2;
@@ -39,7 +46,7 @@ inline uint32_t get_current_el(void)
 }
 
 // HCR
-inline uint64_t read_hcr_el2(void)
+inline uint64_t read_hcr_el2()
 {
 	uint64_t reg;
 	asm volatile("mrs %0, HCR_EL2\n\t" : "=r"(reg) : : "memory");
@@ -154,6 +161,33 @@ inline void disable_fiq()
 	asm volatile("msr DAIFSet, %0\n\t" : : "i"(DAIF_FIQ_BIT) : "memory");
 }
 
+// SCTLR
+
+#define SCTLR_M (1ULL << 0)
+#define SCTLR_C (1ULL << 2)
+#define SCTLR_I (1ULL << 12)
+
+inline uint64_t read_sctlr_el1()
+{
+	uint64_t v;
+	asm volatile("mrs %0, sctlr_el1" : "=r"(v));
+	return v;
+}
+inline uint64_t read_sctlr_el3()
+{
+	uint64_t v;
+	asm volatile("mrs %0, sctlr_el3" : "=r"(v));
+	return v;
+}
+inline void write_sctlr_el1(uint64_t v)
+{
+	asm volatile("msr sctlr_el1, %0" ::"r"(v));
+}
+inline void write_sctlr_el3(uint64_t v)
+{
+	asm volatile("msr sctlr_el3, %0" ::"r"(v));
+}
+
 // Read counter freq
 inline uint64_t read_cntfreq()
 {
@@ -176,7 +210,7 @@ inline uint64_t read_cntpct()
 //  bit1 IMASK (1 masks interrupt)
 //  bit2 ISTATUS (read-only, 1 if interrupt condition met)
 
-inline uint32_t read_cntp_ctl(void)
+inline uint32_t read_cntp_ctl()
 {
 	uint64_t v;
 	asm volatile("mrs %0, cntp_ctl_el0" : "=r"(v));
@@ -214,7 +248,7 @@ inline void set_cntp_tval_ticks(uint32_t ticks)
 	asm volatile("msr cntp_tval_el0, %0" ::"r"((uint64_t)ticks));
 }
 
-inline bool cntp_irq_is_pending(void)
+inline bool cntp_irq_is_pending()
 {
 	return (read_cntp_ctl() & (1u << 2)) != 0;
 }
@@ -224,6 +258,8 @@ inline void set_cntp_cval(uint64_t cval)
 {
 	asm volatile("msr cntp_cval_el0, %0" ::"r"(cval));
 }
+
+// Caches
 
 inline void clean_dcache_address_u(uintptr_t addr)
 {
@@ -248,4 +284,53 @@ inline void clean_invalidate_dcache_address(uintptr_t addr)
 inline void zero_dcache_address(uintptr_t addr)
 {
 	asm volatile("dc zva, %0" ::"r"(addr));
+}
+
+inline void tlbi_vmalle1is()
+{
+	asm volatile("tlbi vmalle1is" ::: "memory");
+}
+
+inline void tlbi_all_e3()
+{
+	asm volatile("tlbi alle3" ::: "memory");
+}
+
+inline void ic_iallu()
+{
+	asm volatile("ic iallu" ::: "memory");
+}
+
+//
+// MMU
+//
+
+// MAIR
+inline void write_mair_el1(uint64_t v)
+{
+	asm volatile("msr mair_el1, %0" ::"r"(v) : "memory");
+}
+inline void write_mair_el3(uint64_t v)
+{
+	asm volatile("msr mair_el3, %0" ::"r"(v) : "memory");
+}
+
+// TCR
+inline void write_tcr_el1(uint64_t v)
+{
+	asm volatile("msr tcr_el1, %0" ::"r"(v) : "memory");
+}
+inline void write_tcr_el3(uint64_t v)
+{
+	asm volatile("msr tcr_el3, %0" ::"r"(v) : "memory");
+}
+
+// TTBR0
+inline void write_ttbr0_el1(uint64_t v)
+{
+	asm volatile("msr ttbr0_el1, %0" ::"r"(v) : "memory");
+}
+inline void write_ttbr0_el3(uint64_t v)
+{
+	asm volatile("msr ttbr0_el3, %0" ::"r"(v) : "memory");
 }
