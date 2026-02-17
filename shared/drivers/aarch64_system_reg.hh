@@ -3,12 +3,16 @@
 
 inline void dsb_sy()
 {
-	asm volatile("dsb sy" ::: "memory");
+	asm volatile("dsb sy");
+}
+inline void dmb_st()
+{
+	asm volatile("dmb st");
 }
 
 inline void isb()
 {
-	asm volatile("isb" ::: "memory");
+	asm volatile("isb");
 }
 
 inline uint64_t get_core_id()
@@ -110,13 +114,13 @@ constexpr uint64_t DAIF_FIQ_BIT = (1 << 0); // FIQ mask bit
 
 inline uint32_t read_daif()
 {
-	uint32_t daif;
+	uint64_t daif;
 
 	asm volatile("mrs %0, DAIF\n\t" : "=r"(daif) : : "memory");
 	return daif;
 }
 
-inline void write_daif(uint32_t daif)
+inline void write_daif(uint64_t daif)
 {
 	asm volatile("msr DAIF, %0\n\t" : : "r"(daif) : "memory");
 }
@@ -166,6 +170,7 @@ inline void disable_fiq()
 #define SCTLR_M (1ULL << 0)
 #define SCTLR_C (1ULL << 2)
 #define SCTLR_I (1ULL << 12)
+#define SCTLR_WXN (1ULL << 19)
 
 inline uint64_t read_sctlr_el1()
 {
@@ -183,9 +188,12 @@ inline void write_sctlr_el1(uint64_t v)
 {
 	asm volatile("msr sctlr_el1, %0" ::"r"(v));
 }
+
 inline void write_sctlr_el3(uint64_t v)
 {
-	asm volatile("msr sctlr_el3, %0" ::"r"(v));
+	// Combine msr and isb so that it's safe at -O0
+	asm volatile("msr sctlr_el3, %0\n"
+				 "isb\n" ::"r"(v));
 }
 
 // Read counter freq
@@ -286,19 +294,69 @@ inline void zero_dcache_address(uintptr_t addr)
 	asm volatile("dc zva, %0" ::"r"(addr));
 }
 
-inline void tlbi_vmalle1is()
+// Clean+invalidate all data cache to PoC
+inline void dcache_civac_all()
 {
-	asm volatile("tlbi vmalle1is" ::: "memory");
+	// Iterate by set/way using CCSIDR. This is the standard ARM pattern.
+	// Assumes data cache is at least present at EL1. Safe even if D-cache is off.
+	uint64_t clidr;
+	asm volatile("mrs %0, clidr_el1" : "=r"(clidr));
+
+	for (unsigned level = 0; level < 7; level++) {
+		unsigned ctype = (clidr >> (level * 3)) & 0x7U;
+		if (ctype < 2)
+			continue; // no data/unified cache at this level
+
+		uint64_t csselr = (uint64_t)(level << 1); // select data/unified
+		asm volatile("msr csselr_el1, %0" : : "r"(csselr));
+		isb();
+
+		uint64_t ccsidr;
+		asm volatile("mrs %0, ccsidr_el1" : "=r"(ccsidr));
+
+		unsigned line_len = ((ccsidr & 0x7) + 4); // log2(words) + 2 => log2(bytes)
+		unsigned ways = ((ccsidr >> 3) & 0x3FF) + 1;
+		unsigned sets = ((ccsidr >> 13) & 0x7FFF) + 1;
+
+		// way_shift = 32 - log2(ways)
+		unsigned way_shift = 32;
+		unsigned tmp = ways - 1;
+		while (tmp) {
+			way_shift--;
+			tmp >>= 1;
+		}
+
+		for (unsigned way = 0; way < ways; way++) {
+			for (unsigned set = 0; set < sets; set++) {
+				uint64_t sw = ((uint64_t)level << 1) | ((uint64_t)set << line_len) | ((uint64_t)way << way_shift);
+				asm volatile("dc cisw, %0" : : "r"(sw));
+			}
+		}
+	}
+
+	dsb_sy();
 }
 
+inline void tlbi_vmalle1is()
+{
+	asm volatile("tlbi vmalle1is");
+}
+
+// Invalidate all at EL3
 inline void tlbi_all_e3()
 {
-	asm volatile("tlbi alle3" ::: "memory");
+	asm volatile("tlbi alle3");
+}
+
+// Invalidate all at EL3, inner shareable
+inline void tlbi_allie_el3()
+{
+	asm volatile("tlbi alle3is");
 }
 
 inline void ic_iallu()
 {
-	asm volatile("ic iallu" ::: "memory");
+	asm volatile("ic iallu");
 }
 
 //
