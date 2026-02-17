@@ -13,7 +13,7 @@ System.attach
 
 Break
 
-Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/ctest/build/main.elf /CPP
+Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-dma/build/main.elf /CPP
 
 
 Trace.METHOD ONCHIP
