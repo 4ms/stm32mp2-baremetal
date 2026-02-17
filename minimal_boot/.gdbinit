@@ -1,2 +1,2 @@
-target extended-remote:3333
-thbreak *0x88000000
+target extended-remote localhost:3333
+#thbreak *0x88000000
