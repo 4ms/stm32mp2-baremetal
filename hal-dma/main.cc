@@ -1,4 +1,4 @@
-#include "interrupt.hh"
+#include "interrupt/interrupt.hh"
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
 #include "watchdog.hh"

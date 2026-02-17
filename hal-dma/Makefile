@@ -3,12 +3,12 @@ BUILDDIR = build
 SHAREDDIR = ../shared
 
 SOURCES := startup.s
-SOURCES += vector_table.s
-SOURCES += mmu.cc
 SOURCES += main.cc
+SOURCES += $(SHAREDDIR)/vector_table.s
+SOURCES += $(SHAREDDIR)/mmu/mmu.cc
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
-SOURCES += $(SHAREDDIR)/drivers/irq_init.c
-SOURCES += $(SHAREDDIR)/drivers/interrupt_handler.cc
+SOURCES += $(SHAREDDIR)/interrupt/irq_init.c
+SOURCES += $(SHAREDDIR)/interrupt/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
 SOURCES += $(SHAREDDIR)/system/libcpp_stub.cc
 SOURCES += $(SHAREDDIR)/uart_print.c
