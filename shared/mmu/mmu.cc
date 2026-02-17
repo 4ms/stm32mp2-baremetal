@@ -1,4 +1,4 @@
-#include "drivers/aarch64_system_reg.hh"
+#include "aarch64_system_reg.hh"
 #include "page_table.hh"
 #include <stddef.h>
 #include <stdint.h>

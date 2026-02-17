@@ -1,6 +1,6 @@
 #pragma once
 #include "callable.hh"
-#include "drivers/interrupt_control.hh"
+#include "interrupt_control.hh"
 #include <array>
 #include <cstdint>
 

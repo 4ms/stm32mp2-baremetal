@@ -1,4 +1,4 @@
-#include "smc.hh"
+#include "drivers/smc.hh"
 #include <cstdint>
 
 constexpr uint64_t SMC_WD_ID = 0xB200005A;

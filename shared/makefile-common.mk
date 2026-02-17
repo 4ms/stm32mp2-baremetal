@@ -124,21 +124,21 @@ debug: $(ELF)
 $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(info Building $< at $(OPTFLAG))
-	$(AS) $(AFLAGS) -c $< -o $@ 
+	@$(AS) $(AFLAGS) -c $< -o $@ 
 
 $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
 	@mkdir -p $(dir $@)
 	$(info Building $< at $(OPTFLAG))
-	$(CC) $(DEPFLAGS) $(OPTFLAG) $(CFLAGS) $< -o $@
+	@$(CC) $(DEPFLAGS) $(OPTFLAG) $(CFLAGS) $< -o $@
 
 $(OBJDIR)/%.o: %.c[cp]* $(OBJDIR)/%.d
 	@mkdir -p $(dir $@)
 	$(info Building $< at $(OPTFLAG))
-	$(CXX) $(DEPFLAGS) $(OPTFLAG) $(CXXFLAGS) $< -o $@
+	@$(CXX) $(DEPFLAGS) $(OPTFLAG) $(CXXFLAGS) $< -o $@
 
 $(ELF): $(OBJECTS) $(LINKSCR)
 	$(info Linking...)
-	$(LD) $(LFLAGS) -o $@ $(OBJECTS) 
+	@$(LD) $(LFLAGS) -o $@ $(OBJECTS) 
 
 $(BIN): $(ELF)
 	$(OBJCPY) -O binary $< $@
