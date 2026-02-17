@@ -26,8 +26,13 @@ typedef struct {
 #define GPIOD ((stm32_gpio_t *)STM32_GPIOD_BASE)
 #define GPIOJ ((stm32_gpio_t *)STM32_GPIOJ_BASE)
 
+#define RCC_BASE 0x44200000
+#define RCC_GPIODCFGR_BASE 0x44200538
+#define RCC_GPIOJCFGR_BASE 0x44200550
+
 void led1_init(void)
 {
+	*(uintptr_t *)(RCC_GPIOJCFGR_BASE) = 0b110; // enable, lp enable, no reset
 	GPIOJ->MODER = (GPIOJ->MODER & ~(0b11 << (7 * 2))) | (0b01 << (7 * 2));
 }
 
@@ -43,6 +48,7 @@ void led1_on(void)
 
 void led3_init(void)
 {
+	*(uintptr_t *)(RCC_GPIODCFGR_BASE) = 0b110; // enable, lp enable, no reset
 	GPIOD->MODER = (GPIOD->MODER & ~(0b11 << (8 * 2))) | (0b01 << (8 * 2));
 }
 

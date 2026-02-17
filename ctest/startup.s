@@ -1,5 +1,6 @@
 .cpu cortex-a35
 .equ STM32_USART2_TDR, 0x400E0028
+.equ STM32_USART6_TDR, 0x40220028
 
 // Drops to EL1 if started in EL2, sets SP, vectors, clears .bss, calls C.
     .section .text.boot, "ax"
@@ -9,11 +10,12 @@ _Reset:
     // Mask interrupts
     msr     daifset, #0xf
 
-	bl led1_init
-	bl led3_init
+    // Set up a SP 
+    ldr     x0, =_stack_start
+	bic		sp, x0, #0xf	// 16-byte alignment 
 
 	// Print "MP2"
-	ldr x4, =STM32_USART2_TDR 
+	ldr x4, =STM32_USART6_TDR 
 	mov x0, #77
 	str x0, [x4] 
 	mov x0, #80 
@@ -31,16 +33,39 @@ _Reset:
     and     x0, x0, #0x3
 
     cmp     x0, #2
-    b.eq    1f
+    b.eq    el2_entry
     cmp     x0, #1
     b.eq    el1_entry
 
-    // If EL3 or EL0, just hang (unexpected error)
-0:  wfe
-    b       0b
+// Hang if EL0
+	cmp 	x0, #0
+	b.eq    .
 
-// ---- If started in EL2, drop to EL1 ----
-1:
+// EL3 Entry:
+	mov x0, 'E'
+	bl putchar_s
+	mov x0, 'L'
+	bl putchar_s
+	mov x0, '3'
+	bl putchar_s
+	mov x0, '\n'
+	bl putchar_s
+
+    // Install vector table for EL3
+    ldr     x0, =vector_table
+    msr     vbar_el3, x0
+    isb
+	
+	// Enable FP/SIMD at EL3
+	mrs		x0, cptr_el3
+	bic 	x0, x0, #(1<<10)   // Do not trap FPU/SIMD
+	bic 	x0, x0, #(1<<8)    // Do not trap SVE
+	msr 	cptr_el3, x0
+
+    b       doneinit
+
+// ---- EL2 entry: drop to EL1 ----
+el2_entry:
 	mov x0, 'E'
 	bl putchar_s
 	mov x0, 'L'
@@ -50,9 +75,6 @@ _Reset:
 	mov x0, '\n'
 	bl putchar_s
 
-    // Set up a SP 
-    ldr     x1, =_stack_start
-    mov     sp, x1
 
     // Configure EL1 to run AArch64, with interrupts masked on entry
     // SPSR_EL2: M[3:0]=0101 (EL1h), DAIF=1111
@@ -72,16 +94,21 @@ _Reset:
     msr     hcr_el2, x4
     isb
 
-    eret
-
-// ---- EL1 common entry ----
-el1_entry:
 	mov x0, '>'
 	bl putchar_s
 
-    // Set up stack
-    ldr     x1, =_stack_start
-    mov     sp, x1
+    eret
+
+// ---- EL1 entry ----
+el1_entry:
+	mov x0, 'E'
+	bl putchar_s
+	mov x0, 'L'
+	bl putchar_s
+	mov x0, '2'
+	bl putchar_s
+	mov x0, '\n'
+	bl putchar_s
 
     // Install vector table for EL1
     ldr     x0, =vector_table
@@ -95,6 +122,9 @@ el1_entry:
 	msr	    cpacr_el1, x1
 	isb
 
+// Init finished:
+doneinit:
+
     // Clear .bss
     ldr     x0, =_bss_start
     ldr     x1, =_bss_end
@@ -106,17 +136,22 @@ bss_loop:
     b       bss_loop
 bss_done:
 
+	bl led1_init
+	bl led3_init
+
+
 	bl led1_on
 	bl delay_100
 	bl led1_off
 
-    bl mmu_enable
+	// TODO: el3 mmu
+    // bl mmu_enable
 
-	mrs x1, sctlr_el1
-	orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
-	orr x1, x1, #0x0001    /* M: bit 1  MMU enable for EL1 and EL0  */
-	orr x1, x1, #0x0004    /* C: bit 2  Cacheability control for data accesses at EL1 and EL0 */
-	msr	sctlr_el1, x1
+	// mrs x1, sctlr_el1
+	// orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
+	// orr x1, x1, #0x0001    /* M: bit 1  MMU enable for EL1 and EL0  */
+	// orr x1, x1, #0x0004    /* C: bit 2  Cacheability control for data accesses at EL1 and EL0 */
+	// msr	sctlr_el1, x1
 
 	bl led3_on
 	bl delay_100
@@ -132,7 +167,7 @@ hang:
     b       hang
 
 delay_100:
-	mov x8, #0x2000000 //about 50ms
+	mov x8, #0x8000000 //about 200ms
 3:  subs x8, x8, #1
 	b.ne 3b
 	ret

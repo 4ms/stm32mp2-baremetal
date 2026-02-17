@@ -9,7 +9,8 @@ char bss_char;
 
 int main()
 {
-	volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x400E0028);
+	// volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x400E0028);
+	volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x40220028);
 
 	if (bss_char == 0)
 		set_bss_char('Z');

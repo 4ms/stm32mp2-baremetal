@@ -5,7 +5,7 @@ ENTRY(_Reset)
 
 MEMORY
 {
-    ROM (rx) : ORIGIN = 0x88000040, LENGTH = 16M
+    ROM (rx) : ORIGIN = 0x88000000, LENGTH = 16M
     RAM (rwx): ORIGIN = 0x90000000, LENGTH = 16M
 }
 
@@ -86,9 +86,9 @@ SECTIONS
         *(.data*)
         . = ALIGN(8);
         _data_end = .;
-    } > RAM
+    } > ROM
 
-    .bss : {
+    .bss (NOLOAD) : {
         _bss_start = .;
         *(.bss)
         *(.bss*)   /* required for some malloc calls */
@@ -99,23 +99,24 @@ SECTIONS
 
 	.heap (NOLOAD):
 	{
-		. = ALIGN(8);
+		. = ALIGN(64);
 		_sheap = .;
 		. += __HEAP_SIZE;
+		. = ALIGN(64);
 		_eheap = .;
 	} > RAM
 
-    _fiq_stack_start = ADDR(.heap) + SIZEOF(.heap);
-    _fiq_stack_end = _fiq_stack_start + 0x1000; /* 64 KB */
+    /* _fiq_stack_start = ADDR(.heap) + SIZEOF(.heap); */
+    /* _fiq_stack_end = _fiq_stack_start + 0x1000; /1* 64 KB *1/ */
 
-    _irq_stack_start = _fiq_stack_end;
-    _irq_stack_end = _irq_stack_start + 0x1000; /* 64 KB */
+    /* _irq_stack_start = _fiq_stack_end; */
+    /* _irq_stack_end = _irq_stack_start + 0x1000; /1* 64 KB *1/ */
 
-    _stack_start = _irq_stack_end;
+    _stack_start = _eheap;
     _stack_end = _stack_start + 0x1000; /* 64 KB */
 
-    _irq_stack_size = _irq_stack_end - _irq_stack_start;
-    _fiq_stack_size = _fiq_stack_end - _fiq_stack_start;
+    /* _irq_stack_size = _irq_stack_end - _irq_stack_start; */
+    /* _fiq_stack_size = _fiq_stack_end - _fiq_stack_start; */
 
 	/*
 	.dma_buffer (NOLOAD) :
