@@ -1,0 +1,25 @@
+//RESet
+//SYStem.RESet
+
+SYStem.CPU STM32MP257F-CA35
+
+system.config DEBUGPORTTYPE SWD 
+SYStem.JtagClock 1MHz
+
+Trace.DISable
+SYStem.MemAccess DAP
+System.attach
+//SYStem.Up
+
+Break
+
+Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/ctest/build/main.elf /CPP
+
+
+Trace.METHOD ONCHIP
+ETM.Trace ON
+ETM.ON
+
+Trace.arm
+
+ENDDO
