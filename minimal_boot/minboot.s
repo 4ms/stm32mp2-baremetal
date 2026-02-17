@@ -30,6 +30,7 @@ delay:
     b.ne    delay
 
 loopforever:
-	b       printMP2
+	//b       printMP2
+	b       .
 	
 
