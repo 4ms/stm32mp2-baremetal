@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #define USART2_BASE 0x400E0000UL
+#define USART6_BASE 0x40220000UL
 
 typedef struct {
 	volatile uint32_t CR1;	// 0x00
@@ -17,14 +18,17 @@ typedef struct {
 } stm32_usart_t;
 
 #define USART2 ((stm32_usart_t *)USART2_BASE)
+#define USART6 ((stm32_usart_t *)USART6_BASE)
+
+#define USART USART6
 
 void putchar_s(char c)
 {
 	// Wait until transmit data register empty (TXE = bit 7)
-	while (!(USART2->ISR & (1U << 7)))
+	while (!(USART->ISR & (1U << 7)))
 		;
 
-	USART2->TDR = (uint32_t)c;
+	USART->TDR = (uint32_t)c;
 }
 
 void early_puts(const char *s)
