@@ -170,6 +170,8 @@ inline void disable_fiq()
 #define SCTLR_M (1ULL << 0)
 #define SCTLR_C (1ULL << 2)
 #define SCTLR_I (1ULL << 12)
+#define SCTLR_A (1ULL << 1)	 // strict alignment
+#define SCTLR_SA (1ULL << 3) // stack pointer 16B alignment
 #define SCTLR_WXN (1ULL << 19)
 
 inline uint64_t read_sctlr_el1()

@@ -137,6 +137,8 @@ extern "C" void mmu_enable_el3()
 	uint64_t sctlr = read_sctlr_el3();
 	sctlr |= SCTLR_M | SCTLR_C | SCTLR_I;
 	sctlr &= ~(SCTLR_WXN);
+	sctlr &= ~(SCTLR_A);
+	sctlr &= ~(SCTLR_SA);
 	write_sctlr_el3(sctlr);
 
 	tlbi_all_e3();
