@@ -15,6 +15,7 @@ Break
 
 Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-dma/build/main.elf /CPP
 
+break main
 
 Trace.METHOD ONCHIP
 ETM.Trace ON
