@@ -193,7 +193,10 @@ handle_irq:
 	cmp w0, #1020
 	bhi exit_irq_handler
 
-	stp x0,		x1,		[sp, #-0x10]! // Store Interrupt ID (and dummy to keep alignment)
+	// If SCTLR.SA is not set, then do this:
+	// stp x0,		x1,		[sp, #-0x10]! // Store Interrupt ID (and dummy to keep alignment)
+	// With no stack alignment checking, we can do this:
+	str x0, 	[sp, #-8]!
 
 	// enable interupts: 
 	msr DAIFClr, #(1<<1)
@@ -203,7 +206,10 @@ handle_irq:
 	// disable interupts: 
 	msr DAIFSet, #(1<<1)
 
-	ldp x0,		x1,		[sp], #0x10 // Pop Interrupt ID and dummy
+	// If SCTLR.SA is not set, then do this:
+	// ldp x0,		x1,		[sp], #0x10 // Pop Interrupt ID and dummy
+	// With no stack alignment checking, we can do this:
+	ldr x0, 	[sp], #8
 
 	// EOIR: End with a write to End of Interrrupt Register
 	mov x1, #0x4AC20000
