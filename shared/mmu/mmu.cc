@@ -1,4 +1,4 @@
-#include "aarch64_system_reg.hh"
+#include "../aarch64_system_reg.hh"
 #include "page_table.hh"
 #include <stddef.h>
 #include <stdint.h>
@@ -51,7 +51,10 @@ static void populate_tables()
 	L1_sram.block_entry(0x30000000, MMU::MemType::Normal, MMU::AccessRW | MMU::PrivExecuteNever);
 
 	// Peripherals
-	L1_periphs.fill_block_entries(0x40000000, 0x60000000, MMU::MemType::Device, MMU::AccessRW | MMU::PrivExecuteNever);
+	L1_periphs.fill_block_entries(0x40000000,
+								  0x60000000,
+								  MMU::MemType::Device,
+								  MMU::PrivExecuteNever | MMU::NonShareable | MMU::NonSecure | MMU::AccessRW);
 
 	// DDR:
 	L1_ddr1.fill_block_entries(0x80000000, 0xC0000000, MMU::MemType::Normal, MMU::AccessRW);
