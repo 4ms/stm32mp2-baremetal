@@ -18,22 +18,6 @@ int main()
 
 	RCC_Enable::HPDMA1_::set();
 
-	// RIFSC: Table 39: RIF-Aware Peripheral 137 is RISAF4 (DDR-SDRAM), with a note for rcc 104
-	// RISAF4 is for DDR RAM, base address is 0x8000'0000
-
-	// start at DDR RAM base
-	RISAF4->REG[0].STARTR = 0;
-
-	// end at 0xFFFFFFFF (2GByte RAM)
-	RISAF4->REG[0].ENDR = 0x3FFFFFFF;
-
-	// Enable CID0 (debug) and CID1 (CA35)
-	RISAF4->REG[0].CIDCFGR =
-		RISAF_REGCIDCFGR_WRENC0 | RISAF_REGCIDCFGR_WRENC1 | RISAF_REGCIDCFGR_RDENC0 | RISAF_REGCIDCFGR_RDENC1;
-
-	// enable base region secure access only
-	RISAF4->REG[0].CFGR = RISAF_REGCFGR_SEC | RISAF_REGCFGR_BREN;
-
 	HAL_Init();
 
 	print("Tick = ", HAL_GetTick(), "\n");
