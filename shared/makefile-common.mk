@@ -30,6 +30,7 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 			   $(EXTRA_ARCH_CFLAGS) \
 
 OPTFLAG ?= -O0
+EL_LEVEL ?= -DRUN_EL3
 
 FREESTANDING ?= -ffreestanding
 
@@ -41,6 +42,7 @@ AFLAGS =  \
 		-nostdlib \
 		$(MCU) \
 		${FREESTANDING} \
+		$(EL_LEVEL) \
 
 		#-mstrict-align \
 
@@ -54,6 +56,7 @@ CFLAGS ?= -g2 \
 		 -nostartfiles \
 		 ${FREESTANDING} \
 		 $(EXTRACFLAGS)\
+		 $(EL_LEVEL) \
 		 -c \
 
 CXXFLAGS ?= $(CFLAGS) \
@@ -123,8 +126,13 @@ debug: $(ELF)
 
 $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(info Building $< at $(OPTFLAG))
+	$(info Assembling $< at $(OPTFLAG))
 	@$(AS) $(AFLAGS) -c $< -o $@ 
+
+$(OBJDIR)/%.o: %.S
+	@mkdir -p $(dir $@)
+	$(info Assembling $< at $(OPTFLAG))
+	@$(CC) $(AFLAGS) -c $< -o $@ 
 
 $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
 	@mkdir -p $(dir $@)

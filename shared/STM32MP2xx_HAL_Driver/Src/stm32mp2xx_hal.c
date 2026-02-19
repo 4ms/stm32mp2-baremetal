@@ -236,7 +236,7 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 #if !defined(A35_NON_SECURE)
   /* - by starting its source clock aka Secure Timestamp Generator (STGEN)*/
   /*   clocked itself by cl_ker_stgen managed by RCC */
-  SystemA35_TZ_STGEN_Start(HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_STGEN));
+  //SystemA35_TZ_STGEN_Start(HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_STGEN));
   /* Note : when A35 is in non-secure state at EL1, */
   /*        EL3 monitor has already started Secure Timestamp Generator */
 #endif /* !defined(A35_NON_SECURE) */

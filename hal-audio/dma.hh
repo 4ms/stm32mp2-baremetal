@@ -1,7 +1,7 @@
 #pragma once
 
-#include "drivers/aarch64_system_reg.hh"
-#include "print.hh"
+#include "aarch64/system_reg.hh"
+#include "print/print.hh"
 #include "stm32mp2xx_hal.h"
 
 struct DmaHelper {

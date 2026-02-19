@@ -1,5 +1,5 @@
 #pragma once
-#include "aarch64_system_reg.hh"
+#include "../aarch64/system_reg.hh"
 #include "stm32mp2xx.h"
 #include <cstdint>
 

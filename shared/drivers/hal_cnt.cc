@@ -1,4 +1,4 @@
-#include "aarch64_system_reg.hh"
+#include "../aarch64/system_reg.hh"
 #include <cstdint>
 
 static uint32_t cntfreq_ms;

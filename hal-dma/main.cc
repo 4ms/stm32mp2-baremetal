@@ -1,8 +1,8 @@
 #include "drivers/rcc.hh"
+#include "drivers/watchdog.hh"
 #include "interrupt/interrupt.hh"
-#include "print.hh"
+#include "print/print.hh"
 #include "stm32mp2xx_hal.h"
-#include "watchdog.hh"
 
 constexpr inline uint32_t BufferWords = 8 * 1024;
 

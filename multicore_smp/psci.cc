@@ -1,5 +1,5 @@
-#include "drivers/aarch64_system_reg.hh"
-#include "smc.hh"
+#include "aarch64/system_reg.hh"
+#include "drivers/smc.hh"
 #include <cstdint>
 
 #define PSCI_CPU_ON_AARCH64 0xC4000003ULL

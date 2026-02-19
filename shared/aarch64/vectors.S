@@ -1,3 +1,5 @@
+#include "macros_el.S"
+
 // Tags used in dump to tell us what kind of exception happened
 .equ CUR_EL_SYNC_SP0, 1
 .equ CUR_EL_SERR_SP0, 2
@@ -9,8 +11,8 @@
 .equ LOWER_EL_A32_SERR, 8
 
 .macro handle_exception exc_type
-	mov	    x21, #(\exc_type)
-	mrs     x22, esr_el3
+	mov	x21, #(\exc_type)
+	get_esr_elx x22
 	mov x0, '\n'
 	bl putchar_s
 	mov x0, 'X'
@@ -124,8 +126,8 @@ vectors:
 	stp q28,	q29,	[sp, #-0x20]!
 	stp q30,	q31,	[sp, #-0x20]!
 /* Push exception LR for PC and spsr */
-	mrs x0, 	elr_el3
-	mrs x1, 	spsr_el3
+	get_elr_elx x0
+	get_spsr_elx x1
 	stp x0,		x1,	    [sp, #-0x10]!
 /* Push fpcr and fpsr */
 	mrs x0, fpsr
@@ -143,8 +145,8 @@ vectors:
 /* Pop pc and spsr */
 	ldp x0,		x1,	[sp], #0x10
 /* Restore exception LR for PC and spsr */
-	msr spsr_el3, x1
-	msr elr_el3, x0
+    set_spsr_elx x1
+	set_elr_elx x0
 /* Pop q0-q31 */
 	ldp q30,	q31,	[sp], #0x20
 	ldp q28,	q29,	[sp], #0x20
@@ -213,7 +215,7 @@ handle_irq:
 
 	// EOIR: End with a write to End of Interrrupt Register
 	mov x1, #0x4AC20000
-	str x0, [x1, #16] 
+	str w0, [x1, #16] 
 
 exit_irq_handler:
 

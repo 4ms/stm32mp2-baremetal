@@ -1,4 +1,4 @@
-#include "drivers/aarch64_system_reg.hh"
+#include "aarch64/system_reg.hh"
 
 extern "C" {
 uint32_t SystemCoreClock;
