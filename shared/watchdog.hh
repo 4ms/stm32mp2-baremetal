@@ -1,3 +1,4 @@
+#include "aarch64_system_reg.hh"
 #include "drivers/smc.hh"
 #include <cstdint>
 
@@ -13,6 +14,9 @@ enum smc_wd_call {
 
 inline int watchdog_pet()
 {
-	auto res = smc_call(SMC_WD_ID, SMCWD_PET, 0, 0, 0, 0, 0, 0);
-	return res.a0;
+	if (get_current_el() < 3) {
+		auto res = smc_call(SMC_WD_ID, SMCWD_PET, 0, 0, 0, 0, 0, 0);
+		return res.a0;
+	} else
+		return 0;
 }
