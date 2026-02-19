@@ -1,3 +1,4 @@
+#include "drivers/rcc.hh"
 #include "interrupt/interrupt.hh"
 #include "print.hh"
 #include "stm32mp2xx_hal.h"
@@ -9,9 +10,30 @@ alignas(64) std::array<uint32_t, BufferWords> src_buffer;
 alignas(64) std::array<uint32_t, BufferWords> dst_buffer;
 constexpr inline size_t BufferBytes = BufferWords * sizeof(src_buffer[0]);
 
+static int check_data();
+
 int main()
 {
-	print("HAL Example\n");
+	print("HAL DMA Example\n");
+
+	RCC_Enable::HPDMA1_::set();
+
+	// RIFSC: Table 39: RIF-Aware Peripheral 137 is RISAF4 (DDR-SDRAM), with a note for rcc 104
+	// RISAF4 is for DDR RAM, base address is 0x8000'0000
+
+	// start at DDR RAM base
+	RISAF4->REG[0].STARTR = 0;
+
+	// end at 0xFFFFFFFF (2GByte RAM)
+	RISAF4->REG[0].ENDR = 0x3FFFFFFF;
+
+	// Enable CID0 (debug) and CID1 (CA35)
+	RISAF4->REG[0].CIDCFGR =
+		RISAF_REGCIDCFGR_WRENC0 | RISAF_REGCIDCFGR_WRENC1 | RISAF_REGCIDCFGR_RDENC0 | RISAF_REGCIDCFGR_RDENC1;
+
+	// enable base region secure access only
+	RISAF4->REG[0].CFGR = RISAF_REGCFGR_SEC | RISAF_REGCFGR_BREN;
+
 	HAL_Init();
 
 	print("Tick = ", HAL_GetTick(), "\n");
@@ -39,12 +61,16 @@ int main()
 		print("ERROR: HAL_DMA_Init returned ", res, "\n");
 	}
 
-	if (auto res = HAL_DMA_ConfigChannelAttributes(&hdma, DMA_CHANNEL_NPRIV); res != HAL_OK) {
+	// TODO: if secure
+	if (auto res = HAL_DMA_ConfigChannelAttributes(
+			&hdma, DMA_CHANNEL_PRIV | DMA_CHANNEL_SEC | DMA_CHANNEL_DEST_SEC | DMA_CHANNEL_SRC_SEC);
+		res != HAL_OK)
+	{
 		print("ERROR: HAL_DMA_ConfigChannelAttributes returned ", res, "\n");
 	}
 
 	print("Preparing dst buffer: 0x", Hex((uintptr_t)(dst_buffer.data())), "\n");
-	for (auto i = 0u; i < BufferWords; i += 16) {
+	for (auto i = 0u; i < BufferWords; i++) {
 		dst_buffer[i] = 0x5500AAFF;
 	}
 
@@ -64,24 +90,14 @@ int main()
 		clean_dcache_address((uintptr_t)(&src_buffer[i]));
 	}
 
-	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 0, 0, []() {
+	bool transfer_done = false;
+
+	InterruptManager::register_and_start_isr(HPDMA1_Channel0_IRQn, 0, 0, [&transfer_done]() {
+		transfer_done = true;
 		print("Got DMA IRQ at tick ", HAL_GetTick(), "\n");
 
 		// Check if src was copied to dst, and report errors or success
-		int misses = 0;
-		for (auto i = 0u; i < BufferWords; i++) {
-
-			// Invalidate it so cache contents will be replaced by memory when we read
-			if (i % 16 == 0)
-				invalidate_dcache_address((uintptr_t)(&dst_buffer[i]));
-
-			if (dst_buffer[i] != src_buffer[i]) {
-				misses++;
-				print("[", i, "] ", Hex{dst_buffer[i]}, " != ", Hex{src_buffer[i]}, "\n");
-			}
-		}
-
-		if (misses == 0)
+		if (check_data() == 0)
 			print("DMA transfer success! dst_buffer matches src_buffer\n");
 	});
 
@@ -98,10 +114,39 @@ int main()
 		if ((x % 10'000'000) == 0) {
 			print("Tick = ", HAL_GetTick(), "\n");
 			watchdog_pet();
+
+			if (!transfer_done) {
+				invalidate_dcache_address((uintptr_t)(&dst_buffer[0]));
+				if (dst_buffer[0] == src_buffer[0]) {
+					transfer_done = true;
+					if (check_data() == 0) {
+						print("Data transfered OK, but ISR did not fire\n");
+					} else
+						print("Data seems to have partially transfered, but not fully, and ISR did not fire\n");
+				}
+			}
 		}
 
 		asm("nop");
 	}
+}
+
+int check_data()
+{
+	int misses = 0;
+	for (auto i = 0u; i < BufferWords; i++) {
+
+		// Invalidate it so cache contents will be replaced by memory when we read
+		if (i % 16 == 0)
+			invalidate_dcache_address((uintptr_t)(&dst_buffer[i]));
+
+		if (dst_buffer[i] != src_buffer[i]) {
+			misses++;
+			print("[", i, "] ", Hex{dst_buffer[i]}, " != ", Hex{src_buffer[i]}, "\n");
+		}
+	}
+
+	return misses;
 }
 
 extern "C" void assert_failed(uint8_t *file, uint32_t line)
