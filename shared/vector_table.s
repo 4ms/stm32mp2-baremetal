@@ -9,22 +9,8 @@
 .equ LOWER_EL_A32_SERR, 8
 
 .macro handle_exception exc_type
-	// TODO:
 	mov	x21, #(\exc_type)
-
-    mrs     x23, CurrentEL
-    lsr     x23, x23, #2
-    and     x23, x23, #0x3
-    cmp     x23, #3
-	b.ne    get_el1_\exc_type
-	mrs     x22, esr_el3
-	b       print_\exc_type
-
-	get_el1_\exc_type:
 	mrs     x22, esr_el1
-
-	print_\exc_type:
-	// stp	x21, x22, [sp, #-16]!
 	mov x0, '\n'
 	bl putchar_s
 	mov x0, 'X'
@@ -35,6 +21,10 @@
 	bl putchar_s
 	mov x0, x22
 	bl early_puthex64
+	mov x0, '\n'
+	bl putchar_s
+	mov x0, x22
+	bl print_esr_description
 
 	//////
 	b .
@@ -207,7 +197,8 @@ handle_irq:
 	cmp w0, #1020
 	bhi exit_irq_handler
 
-	str w0,	[sp, #-0x04]! // Store the Interrupt ID
+	// str w0,	[sp, #-0x04]! // Store the Interrupt ID <<< this fails sp alignment
+	stp x0,		x1,		[sp, #-0x10]!
 
 	// enable interupts: 
 	msr DAIFClr, #(1<<1)
@@ -217,7 +208,8 @@ handle_irq:
 	// disable interupts: 
 	msr DAIFSet, #(1<<1)
 
-	ldr w0, [sp], #0x04 	// Pop Interrupt ID
+	// ldr w0, [sp], #0x04 	// Pop Interrupt ID
+	ldp x0,		x1,		[sp], #0x10 
 
 	// EOIR: End with a write to End of Interrrupt Register
 	mov x1, #0x4AC20000
