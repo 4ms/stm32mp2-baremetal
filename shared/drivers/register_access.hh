@@ -1,8 +1,7 @@
 #pragma once
 #include <cstdint>
-#include <limits>
 
-using regsize_t = unsigned long; // 32bits on Cortex-M, 64-bits on x86_64 and ARM64
+using regsize_t = uint32_t;
 
 // Mask Helpers
 // from github.com/kensmith/cortex-from-scratch
