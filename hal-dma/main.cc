@@ -1,14 +1,14 @@
 #include "drivers/rcc.hh"
-#include "drivers/risab.hh"
 #include "drivers/watchdog.hh"
 #include "interrupt/interrupt.hh"
 #include "print/print.hh"
 #include "stm32mp2xx_hal.h"
 
-constexpr inline uint32_t BufferWords = 8 * 1024;
+constexpr inline uint32_t BufferWords = 8 * 1024; // 32kB per buffer
 
-alignas(64) __attribute__((section(".ddma"))) std::array<uint32_t, BufferWords> src_buffer;
-alignas(64) __attribute__((section(".ddma"))) std::array<uint32_t, BufferWords> dst_buffer;
+// Try changing the sections (see linkscript.ld for section names)
+alignas(64) __attribute__((section(".s_sram1"))) std::array<uint32_t, BufferWords> src_buffer;
+alignas(64) __attribute__((section(".s_sram1"))) std::array<uint32_t, BufferWords> dst_buffer;
 constexpr inline size_t BufferBytes = BufferWords * sizeof(src_buffer[0]);
 
 static int check_data();
@@ -18,11 +18,6 @@ int main()
 	print("HAL DMA Example\n");
 
 	RCC_Enable::HPDMA1_::set();
-
-	full_access_sysram();
-	full_access_sram1();
-	full_access_sram2();
-	full_access_retram();
 
 	HAL_Init();
 
@@ -51,11 +46,12 @@ int main()
 		print("ERROR: HAL_DMA_Init returned ", res, "\n");
 	}
 
-	// TODO: if secure
-	if (auto res = HAL_DMA_ConfigChannelAttributes(
-			&hdma, DMA_CHANNEL_PRIV | DMA_CHANNEL_SEC | DMA_CHANNEL_DEST_SEC | DMA_CHANNEL_SRC_SEC);
-		res != HAL_OK)
-	{
+	// DMA operates in secure mode if we're in EL3
+	auto attr = (get_current_el() == 3) ?
+					(DMA_CHANNEL_PRIV | DMA_CHANNEL_SEC | DMA_CHANNEL_DEST_SEC | DMA_CHANNEL_SRC_SEC) :
+					DMA_CHANNEL_NSEC;
+
+	if (auto res = HAL_DMA_ConfigChannelAttributes(&hdma, attr); res != HAL_OK) {
 		print("ERROR: HAL_DMA_ConfigChannelAttributes returned ", res, "\n");
 	}
 
