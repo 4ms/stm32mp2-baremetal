@@ -25,7 +25,9 @@ typedef struct {
 
 #define USART ((stm32_usart_t *)USART_BASE)
 
-#define USART USART6
+// TODO: init USART
+void init_uart()
+{}
 
 void putchar_s(char c)
 {
@@ -48,15 +50,21 @@ void early_puts(const char *s)
 void early_puthex64(uint64_t v)
 {
 	static const char hex[] = "0123456789abcdef";
-	for (int i = 60; i >= 0; i -= 4)
-		putchar_s(hex[(v >> i) & 0xF]);
+	int found_nonzero = 0;
+	for (int i = 60; i >= 0; i -= 4) {
+		char c = hex[(v >> i) & 0xF];
+		if (c > '0' || found_nonzero) {
+			putchar_s(c);
+			found_nonzero = 1;
+		}
+	}
 }
 
 void early_print_el(void)
 {
-	unsigned el;
-	__asm__ volatile("mrs %0, CurrentEL" : "=r"(el));
-	early_puts("CurrentEL=");
-	early_puthex64((el >> 2) & 3);
+	uint64_t el;
+	asm("mrs %0, CurrentEL" : "=r"(el));
+	early_puts("EL");
+	putchar_s(((el >> 2) & 3) + '0');
 	early_puts("\n");
 }
