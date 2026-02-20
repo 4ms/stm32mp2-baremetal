@@ -1,15 +1,5 @@
 #include <stdint.h>
 
-#define STM32_GPIOH_BASE 0x400B0000UL
-#define STM32_GPIOH_MODER 0x400B0000UL
-#define STM32_GPIOH_BSRR 0x400B0018UL
-
-// Green LD3 is PD8
-#define STM32_GPIOD_BASE 0x44270000
-
-// Blue LED1 is PJ7
-#define STM32_GPIOJ_BASE 0x442D0000
-
 typedef struct {
 	volatile uint32_t MODER;   /*!< GPIO mode register  Address offset: 0x000 */
 	volatile uint32_t OTYPER;  /*!< GPIO output type register Address offset: 0x004 */
@@ -23,41 +13,45 @@ typedef struct {
 	volatile uint32_t BRR;	   /*!< GPIO bit reset register Address offset: 0x028 */
 } stm32_gpio_t;
 
-#define GPIOD ((stm32_gpio_t *)STM32_GPIOD_BASE)
+#define STM32_GPIOJ_BASE 0x442D0000
 #define GPIOJ ((stm32_gpio_t *)STM32_GPIOJ_BASE)
 
-#define RCC_BASE 0x44200000
-#define RCC_GPIODCFGR_BASE 0x44200538
 #define RCC_GPIOJCFGR_BASE 0x44200550
 
 void led1_init(void)
 {
 	*(uintptr_t *)(RCC_GPIOJCFGR_BASE) = 0b110; // enable, lp enable, no reset
+	// Pin 7 MODE = 0b01: Output
 	GPIOJ->MODER = (GPIOJ->MODER & ~(0b11 << (7 * 2))) | (0b01 << (7 * 2));
 }
 
 void led1_off(void)
 {
+	// Pin 6 Reset
 	GPIOJ->BSRR = 1 << (7 + 16);
 }
 
 void led1_on(void)
 {
+	// Pin 6 Set
 	GPIOJ->BSRR = 1 << (7);
 }
 
 void led3_init(void)
 {
-	*(uintptr_t *)(RCC_GPIODCFGR_BASE) = 0b110; // enable, lp enable, no reset
-	GPIOD->MODER = (GPIOD->MODER & ~(0b11 << (8 * 2))) | (0b01 << (8 * 2));
+	*(uintptr_t *)(RCC_GPIOJCFGR_BASE) = 0b110; // enable, lp enable, no reset
+	// Pin 6 MODE = 0b01: Output
+	GPIOJ->MODER = (GPIOJ->MODER & ~(0b11 << (6 * 2))) | (0b01 << (6 * 2));
 }
 
 void led3_off(void)
 {
-	GPIOD->BSRR = 1 << (8 + 16);
+	// Pin 6 Reset
+	GPIOJ->BSRR = 1 << (6 + 16);
 }
 
 void led3_on(void)
 {
-	GPIOD->BSRR = 1 << (8);
+	// Pin 6 Set
+	GPIOJ->BSRR = 1 << (6);
 }
