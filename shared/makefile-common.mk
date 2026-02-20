@@ -30,9 +30,22 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 			   $(EXTRA_ARCH_CFLAGS) \
 
 OPTFLAG ?= -O0
+
+# Leave Blank for EL1 ns:
 EL_LEVEL ?= -DRUN_EL3
 
+# 2 is STLINK, 6 is GPIO Expander header
+UART_CHOICE ?= 2
+
 FREESTANDING ?= -ffreestanding
+
+OPTION_FLAGS ?=
+OPTION_FLAGS += \
+		$(MCU) \
+		${FREESTANDING} \
+		$(EL_LEVEL) \
+		-DUART=$(UART_CHOICE) \
+
 
 AFLAGS =  \
 		-fdata-sections -ffunction-sections \
@@ -40,24 +53,20 @@ AFLAGS =  \
 		-std=gnu99 \
 		-nostdinc \
 		-nostdlib \
-		$(MCU) \
-		${FREESTANDING} \
-		$(EL_LEVEL) \
+		$(OPTION_FLAGS) 
 
 		#-mstrict-align \
 
 CFLAGS ?= -g2 \
 		 -fno-common \
 		 $(ARCH_CFLAGS) \
-		 $(MCU) \
 		 $(FPU) \
 		 $(INCLUDES) \
 		 -fdata-sections -ffunction-sections \
 		 -nostartfiles \
-		 ${FREESTANDING} \
-		 $(EXTRACFLAGS)\
-		 $(EL_LEVEL) \
-		 -c \
+		 $(OPTION_FLAGS) \
+		 $(EXTRACFLAGS) \
+		 -c 
 
 CXXFLAGS ?= $(CFLAGS) \
 		-std=c++23 \

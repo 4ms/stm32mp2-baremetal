@@ -3,6 +3,12 @@
 #define USART2_BASE 0x400E0000UL
 #define USART6_BASE 0x40220000UL
 
+#if UART == 6
+#define USART_BASE USART6_BASE
+#else
+#define USART_BASE USART2_BASE
+#endif
+
 typedef struct {
 	volatile uint32_t CR1;	// 0x00
 	volatile uint32_t CR2;	// 0x04
@@ -17,8 +23,7 @@ typedef struct {
 	volatile uint32_t TDR;	// 0x28
 } stm32_usart_t;
 
-#define USART2 ((stm32_usart_t *)USART2_BASE)
-#define USART6 ((stm32_usart_t *)USART6_BASE)
+#define USART ((stm32_usart_t *)USART_BASE)
 
 #define USART USART6
 
