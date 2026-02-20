@@ -1,6 +1,6 @@
 #include "rcc.hh"
 
-inline void full_access_risab(RISAB_TypeDef *risab)
+static void full_access_risab(RISAB_TypeDef *risab)
 {
 	risab->CR = risab->CR & ~(RISAB_CR_SRWIAD);
 
@@ -16,33 +16,42 @@ inline void full_access_risab(RISAB_TypeDef *risab)
 	}
 }
 
-inline void full_access_sysram()
+void sysram_enable()
 {
 	RCC_Enable::SYSRAM_::set();
 	full_access_risab(RISAB1);
 	full_access_risab(RISAB2);
 }
 
-inline void full_access_sram1()
+void sram1_enable()
 {
 	RCC_Enable::SRAM1_::set();
 	full_access_risab(RISAB3);
 }
 
-inline void full_access_sram2()
+void sram3_enable()
 {
 	RCC_Enable::SRAM2_::set();
 	full_access_risab(RISAB4);
 }
 
-inline void full_access_retram()
+void retram_enable()
 {
 	RCC_Enable::RETRAM_::set();
 	full_access_risab(RISAB5);
 }
 
-inline void full_access_vderam()
+void vderam_enable()
 {
 	RCC_Enable::VDERAM_::set();
 	full_access_risab(RISAB6);
+}
+
+extern "C" void block_ram_enable_el3()
+{
+	sysram_enable();
+	sram1_enable();
+	sram3_enable();
+	retram_enable();
+	vderam_enable();
 }

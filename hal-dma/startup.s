@@ -80,11 +80,15 @@ el3_entry:
     isb
     msr     fpcr, xzr
     msr     fpsr, xzr
+
     bl      mmu_enable_el3
+	bl      block_ram_enable_el3
+
 	mrs     x1, scr_el3
 	orr     x1, x1, #(1 << 1)   	// IRQ at EL3
 	orr     x1, x1, #(2 << 1)   	// FIQ at EL3
 	msr     scr_el3, x1
+
     b       entry_done
 
 entry_done:
