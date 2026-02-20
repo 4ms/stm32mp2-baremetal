@@ -66,8 +66,8 @@ See [our tf-a-stm32mp25 fork](https://github.com/4ms/tf-a-stm32mp25). The
 state.
 
 
-| Project | EL3 (S) | EL1 (NS) | notes |
-| --- | --- | --- |
+| Project | EL3 (S) | EL1 (NS) | Notes |
+| --- | :---: | :---: | --- |
 | minimal_boot | √ | √ | |
 | ctest | √ | √ | Drops to EL1 in startup |
 | hal-dma | √ | ? | Not tested in EL1 |
