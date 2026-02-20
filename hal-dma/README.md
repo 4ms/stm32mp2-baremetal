@@ -24,3 +24,7 @@ Tick = 7745
 ```
 
 The tick values are in milliseconds, you can use a stopwatch to verify the values increment by 1000 every second.
+
+The example should work if you change the memory region to be in DDR, SYSRAM,
+SRAM1, etc. You can do that by changing the `__attribute__((section())))` name at
+the top of main.cc. The linkscript.ld has the section names.
