@@ -2,11 +2,14 @@
 
 static void full_access_risab(RISAB_TypeDef *risab)
 {
-	risab->CR = risab->CR & ~(RISAB_CR_SRWIAD);
+	risab->CR = risab->CR | RISAB_CR_SRWIAD;
 
 	for (auto i = 0; i < 32; i++) {
+		// Clear SEC flag for all CIDs
 		risab->PGSECCFGR[i] = 0UL;
+		// Clear PRIV flag for all CIDs
 		risab->PGPRIVCFGR[i] = 0UL;
+		// Clear CFEN, DCEN, DCID
 		risab->PGCIDCFGR[i] = 0UL;
 	}
 	for (auto cid = 0; cid < 7; cid++) {
