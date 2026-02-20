@@ -7,7 +7,9 @@ I have only had access to an STM32MP257F-EV1 board, so all these examples
 are designed to run on that board.
 
 The goal is to run full applications with access:
+  - √ EL3 Secure state
   - √ Nested interrupts (using the GIC)
+  - √ MMU configuration
   - √ DMA memory-to-memory transfers
   - √ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
   - √ SAI (audio)
@@ -62,9 +64,10 @@ wiki](https://wiki.st.com/stm32mpu/wiki/Getting_started/STM32MP2_boards/STM32MP2
 
 With the stock SD card, you can run only some of the projects:
 - minimal_boot
+- watchdog
+
 - interrupts
 - multicore_smp
-- watchdog
 
 In order to run the more advanced projects that use the peripherals, you need
 to have a custom build of OP-TEE which gives security permissions. Skip down to
