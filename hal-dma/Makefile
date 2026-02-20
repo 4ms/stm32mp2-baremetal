@@ -35,5 +35,7 @@ EL_LEVEL := -DRUN_EL3
 
 OPTFLAG := -O2
 
+UART_CHOICE := 6
+
 include $(SHAREDDIR)/makefile-common.mk
 

@@ -62,6 +62,7 @@ SECTIONS
 	.b_s_retram	 (NOLOAD): { *(.b_s_retram) }	> B_S_RETRAM
 	.b_ns_retram (NOLOAD): { *(.b_ns_retram) } 	> B_NS_RETRAM
 
+	/* Not working? */
 	.s_vderam 	 (NOLOAD): { *(.s_vderam) } 	> S_VDERAM
 	.ns_vderam 	 (NOLOAD): { *(.ns_vderam) } 	> NS_VDERAM
 	.b_s_vderam	 (NOLOAD): { *(.b_s_vderam) }	> B_S_VDERAM

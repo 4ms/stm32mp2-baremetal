@@ -7,8 +7,8 @@
 constexpr inline uint32_t BufferWords = 8 * 1024; // 32kB per buffer
 
 // Try changing the sections (see linkscript.ld for section names)
-alignas(64) __attribute__((section(".s_sram1"))) std::array<uint32_t, BufferWords> src_buffer;
-alignas(64) __attribute__((section(".s_sram1"))) std::array<uint32_t, BufferWords> dst_buffer;
+alignas(64) __attribute__((section(".s_retram"))) std::array<uint32_t, BufferWords> src_buffer;
+alignas(64) __attribute__((section(".s_retram"))) std::array<uint32_t, BufferWords> dst_buffer;
 constexpr inline size_t BufferBytes = BufferWords * sizeof(src_buffer[0]);
 
 static int check_data();
@@ -97,7 +97,7 @@ int main()
 
 	while (true) {
 		x = x + 1;
-		if ((x % 10'000'000) == 0) {
+		if ((x % 100'000'000) == 0) {
 			print("Tick = ", HAL_GetTick(), "\n");
 			watchdog_pet();
 
