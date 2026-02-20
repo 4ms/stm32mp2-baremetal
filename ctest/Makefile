@@ -2,13 +2,11 @@ BINARYNAME = main
 BUILDDIR = build
 SHAREDDIR = ../shared
 
-SOURCES := startup.s
-SOURCES += system_init.c
+SOURCES := start.S
 SOURCES += main.cc
 SOURCES += led.c
-SOURCES += $(SHAREDDIR)/system/syscall_stubs.c
-SOURCES += $(SHAREDDIR)/mmu/mmu.cc
-SOURCES += $(SHAREDDIR)/uart_print.c
+SOURCES += $(SHAREDDIR)/newlib/syscall_stubs.c
+SOURCES += $(SHAREDDIR)/print/uart_print.c
 
 INCLUDES := -I.
 

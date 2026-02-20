@@ -1,13 +1,14 @@
 .cpu cortex-a35
-.equ STM32_USART2_TDR, 0x400E0028
-.equ STM32_USART6_TDR, 0x40220028
+
 #if UART==6
+.equ STM32_USART6_TDR, 0x40220028
 .equ STM32_USART_TDR, STM32_USART6_TDR
 #else
+.equ STM32_USART2_TDR, 0x400E0028
 .equ STM32_USART_TDR, STM32_USART2_TDR
 #endif
 
-// Drops to EL1 if started in EL2, sets SP, vectors, clears .bss, calls C.
+// Drops to EL1 if started in EL2, sets SP, vectors, clears .bss
     .section .text.boot, "ax"
     .global _start
     .global _Reset
@@ -20,25 +21,34 @@ _Reset:
 	bic		sp, x0, #0xf	// 16-byte alignment 
 
 	// Print "MP2"
-	ldr x1, =UART
-
 	ldr x4, =STM32_USART_TDR 
-	mov x0, #77
+	mov x0, 'M'
 	str x0, [x4] 
-	mov x0, #80 
+	mov x0, 'P'
 	str x0, [x4] 
-	mov x0, #50 
+	mov x0, '2'
 	str x0, [x4] 
-	mov x0, #10 
+	mov x0, '\n'
 	str x0, [x4] 
 
-    bl early_print_el
+// Clear .bss
+    ldr     x0, =_bss_start
+    ldr     x1, =_bss_end
+    mov     x2, #0
+bss_loop:
+    cmp     x0, x1
+    b.hs    bss_done
+    str     x2, [x0], #8
+    b       bss_loop
+bss_done:
 
-    // Read CurrentEL
+// Jump to correct entry for our exception level
     mrs     x0, CurrentEL
     lsr     x0, x0, #2
     and     x0, x0, #0x3
 
+    cmp     x0, #3
+    b.eq    el3_entry
     cmp     x0, #2
     b.eq    el2_entry
     cmp     x0, #1
@@ -48,7 +58,8 @@ _Reset:
 	cmp 	x0, #0
 	b.eq    .
 
-// EL3 Entry:
+// ---- EL3 Entry ----
+el3_entry:
 	mov x0, 'E'
 	bl putchar_s
 	mov x0, 'L'
@@ -63,13 +74,36 @@ _Reset:
     msr     vbar_el3, x0
     isb
 	
-	// Enable FP/SIMD at EL3
-	mrs		x0, cptr_el3
-	bic 	x0, x0, #(1<<10)   // Do not trap FPU/SIMD
-	bic 	x0, x0, #(1<<8)    // Do not trap SVE
-	msr 	cptr_el3, x0
+    // Configure EL1 to run AArch64, with interrupts masked on entry
+    // SPSR_EL3: M[3:0]=0101 (EL1h), DAIF=1111
+    mov     x2, #(0b0101)              // EL1h
+    orr     x2, x2, #(0xF << 6)     // mask D,A,I,F
+    msr     spsr_el3, x2
 
-    b       doneinit
+    // Set ELR_EL3 to EL1 entry point and provide SP_EL1
+    adr     x3, el1_entry
+    msr     elr_el3, x3
+    ldr     x1, =_stack_start
+    msr     sp_el1, x1
+	isb
+
+    // Ensure EL1 is AArch64 (RW=1 in SCR_EL3)
+    mrs     x4, scr_el3
+    orr     x4, x4, #(1 << 10)
+    msr     scr_el3, x4
+    isb
+    mrs     x4, hcr_el2
+    orr     x4, x4, #(1 << 31)
+    msr     hcr_el2, x4
+	isb
+
+	mov x0, '>'
+	bl putchar_s
+	dsb nsh
+	isb
+
+    eret
+
 
 // ---- EL2 entry: drop to EL1 ----
 el2_entry:
@@ -82,7 +116,6 @@ el2_entry:
 	mov x0, '\n'
 	bl putchar_s
 
-
     // Configure EL1 to run AArch64, with interrupts masked on entry
     // SPSR_EL2: M[3:0]=0101 (EL1h), DAIF=1111
     mov     x2, #(0x5)              // EL1h
@@ -92,12 +125,12 @@ el2_entry:
     // Set ELR_EL2 to EL1 entry point and provide SP_EL1
     adr     x3, el1_entry
     msr     elr_el2, x3
+    ldr     x1, =_stack_start
     msr     sp_el1, x1
 
-    // Ensure EL1 is AArch64 (RW=1 in HCR_EL2). Most U-Boot setups already do this,
-    // but it doesn't hurt to force it.
+    // Ensure EL1 is AArch64 (RW=1 in HCR_EL2)
     mrs     x4, hcr_el2
-    orr     x4, x4, #(1 << 31)      // HCR_EL2.RW = 1 => EL1 is AArch64
+    orr     x4, x4, #(1 << 31)
     msr     hcr_el2, x4
     isb
 
@@ -122,50 +155,22 @@ el1_entry:
     msr     vbar_el1, x0
     isb
 
-    // Enable FP+SIMD at EL1
-	mrs     x1, cpacr_el1
-	orr	    x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
-	orr	    x1, x1, #3 << 22        /* Don't trap SIMD at EL1 or EL0*/
-	msr	    cpacr_el1, x1
-	isb
-
 // Init finished:
 doneinit:
 
-    // Clear .bss
-    ldr     x0, =_bss_start
-    ldr     x1, =_bss_end
-    mov     x2, #0
-bss_loop:
-    cmp     x0, x1
-    b.hs    bss_done
-    str     x2, [x0], #8
-    b       bss_loop
-bss_done:
-
 	bl led1_init
-	bl led3_init
-
-
 	bl led1_on
 	bl delay_100
 	bl led1_off
 
-    bl mmu_enable_el3
+	bl __libc_init_array
 
-	// mrs x1, sctlr_el1
-	// orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
-	// orr x1, x1, #0x0001    /* M: bit 1  MMU enable for EL1 and EL0  */
-	// orr x1, x1, #0x0004    /* C: bit 2  Cacheability control for data accesses at EL1 and EL0 */
-	// msr	sctlr_el1, x1
-
+	bl led3_init
 	bl led3_on
 	bl delay_100
 	bl led3_off
 
-	bl __libc_init_array
-
-    // Call main
+// Call main
     bl      main
 
 hang:
@@ -173,7 +178,7 @@ hang:
     b       hang
 
 delay_100:
-	mov x8, #0x8000000 //about 200ms
+	mov x8, #0x1000000 //about 100-200ms with caches disabled
 3:  subs x8, x8, #1
 	b.ne 3b
 	ret
