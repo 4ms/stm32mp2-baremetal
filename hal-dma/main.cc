@@ -1,4 +1,5 @@
 #include "drivers/rcc.hh"
+#include "drivers/risab.hh"
 #include "drivers/watchdog.hh"
 #include "interrupt/interrupt.hh"
 #include "print/print.hh"
@@ -17,6 +18,11 @@ int main()
 	print("HAL DMA Example\n");
 
 	RCC_Enable::HPDMA1_::set();
+
+	full_access_sysram();
+	full_access_sram1();
+	full_access_sram2();
+	full_access_retram();
 
 	HAL_Init();
 
