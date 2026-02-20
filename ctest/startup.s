@@ -1,6 +1,11 @@
 .cpu cortex-a35
 .equ STM32_USART2_TDR, 0x400E0028
 .equ STM32_USART6_TDR, 0x40220028
+#if UART==6
+.equ STM32_USART_TDR, STM32_USART6_TDR
+#else
+.equ STM32_USART_TDR, STM32_USART2_TDR
+#endif
 
 // Drops to EL1 if started in EL2, sets SP, vectors, clears .bss, calls C.
     .section .text.boot, "ax"
@@ -15,7 +20,9 @@ _Reset:
 	bic		sp, x0, #0xf	// 16-byte alignment 
 
 	// Print "MP2"
-	ldr x4, =STM32_USART6_TDR 
+	ldr x1, =UART
+
+	ldr x4, =STM32_USART_TDR 
 	mov x0, #77
 	str x0, [x4] 
 	mov x0, #80 
@@ -105,7 +112,7 @@ el1_entry:
 	bl putchar_s
 	mov x0, 'L'
 	bl putchar_s
-	mov x0, '2'
+	mov x0, '1'
 	bl putchar_s
 	mov x0, '\n'
 	bl putchar_s
@@ -144,8 +151,7 @@ bss_done:
 	bl delay_100
 	bl led1_off
 
-	// TODO: el3 mmu
-    // bl mmu_enable
+    bl mmu_enable_el3
 
 	// mrs x1, sctlr_el1
 	// orr x1, x1, #0x1000    /* I: bit 12 instruction cache */

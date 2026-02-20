@@ -3,8 +3,15 @@
 void delay(unsigned);
 void set_bss_char(char x);
 
+// Test globals:
+
+// Initialized constant:
 const char ro_char = 'X';
+
+// Initialized non-constant:
 char data_char = 'Y';
+
+// Uninitialized:
 char bss_char;
 
 int main()
