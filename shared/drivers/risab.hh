@@ -1,7 +1,6 @@
 #include "rcc.hh"
-#include "stm32mp2xx.h"
 
-void full_access_risab(RISAB_TypeDef *risab)
+inline void full_access_risab(RISAB_TypeDef *risab)
 {
 	risab->CR = risab->CR & ~(RISAB_CR_SRWIAD);
 
@@ -17,32 +16,32 @@ void full_access_risab(RISAB_TypeDef *risab)
 	}
 }
 
-void full_access_sysram()
+inline void full_access_sysram()
 {
 	RCC_Enable::SYSRAM_::set();
 	full_access_risab(RISAB1);
 	full_access_risab(RISAB2);
 }
 
-void full_access_sram1()
+inline void full_access_sram1()
 {
 	RCC_Enable::SRAM1_::set();
 	full_access_risab(RISAB3);
 }
 
-void full_access_sram2()
+inline void full_access_sram2()
 {
 	RCC_Enable::SRAM2_::set();
 	full_access_risab(RISAB4);
 }
 
-void full_access_retram()
+inline void full_access_retram()
 {
 	RCC_Enable::RETRAM_::set();
 	full_access_risab(RISAB5);
 }
 
-void full_access_vderam()
+inline void full_access_vderam()
 {
 	RCC_Enable::VDERAM_::set();
 	full_access_risab(RISAB6);
