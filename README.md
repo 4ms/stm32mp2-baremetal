@@ -51,6 +51,33 @@ mp2-dev/
 
 We'll add some more build dirs to the mp2-dev dir as we go along.
 
+# WIP!!!
+
+This branch (el3) is a work in progress to convert the examples to work in EL3 secure. In some cases, support for
+running in EL1 non-secure states will continue, though I do not intend to full test the examples for that situation.
+
+To run in EL3, a modified TF-A BL2 (FSBL) is used. This FSBL is greatly
+simplified (much easier to build), and essentially loads your application as a
+secure payload to DDR RAM. There is no OP-TEE, U-Boot, or BL31 Secure Monitor requirements anymore.
+You only need the TF-A BL2 FSBL and your application.
+
+See [our tf-a-stm32mp25 fork](https://github.com/4ms/tf-a-stm32mp25). The
+`BAREMETAL_IMAGE_LOADER` build flag tells TF-A to run our app in EL3 secure
+state.
+
+
+
+| Project | EL3 (S) | EL1 (NS) | notes |
+| minimal_boot | √ | √ | |
+| ctest | √ | √ | Drops to EL1 in startup |
+| hal-dma | √ | ? | Not tested in EL1 |
+| hal-audio | no  | √ | |
+| i2c | no  | √ | |
+| interrupts | no  | √ | |
+| multicore_smp | no  | √ | |
+| watchdog | no  | √ | TF-A has watchdog disabled, so project will not be converted |
+
+
 # Baremetal Application
 
 We will skip the topic of bootloaders for now so we can get started more quickly.
@@ -65,7 +92,6 @@ wiki](https://wiki.st.com/stm32mpu/wiki/Getting_started/STM32MP2_boards/STM32MP2
 With the stock SD card, you can run only some of the projects:
 - minimal_boot
 - watchdog
-
 - interrupts
 - multicore_smp
 
