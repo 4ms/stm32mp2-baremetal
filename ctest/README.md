@@ -1,24 +1,26 @@
 ## C Runtime Test
 
-This project clears the bss region, and has the link script setup so the static/global data section 
-is initialized. It also sets up the stack. All these things are required for C (or C++) functions to work.
+This project clears the bss region, and initializes the static/global data section,
+and sets up the stack. All these things are required for C (or C++) functions to work.
 
-It also sets up the MMU, though this is not being demonstrated.
+It does not setup the MMU, FPU, or caches. So performance is slow.
 
-The output should be:
+The output might be:
 
 ```
 MP2
 EL3
->XYZ
+>EL1
+XYZ
 ```
 
 
 The "MP2" is printed just for reference that the UART is working.
 
-The EL level tells us if we're in EL1, EL2, or EL3. EL1 or 2 means we came from U-Boot. EL3 means
-we're booting directly from TF-A as the secure payload. If we start in EL2, then the startup script
-drops us down to EL1, so you'll see "EL2 >EL1"
+The EL level tells us if we're in EL1, EL2, or EL3. 
+In the case of EL3 or EL2, we drop down to EL1, so you will see ">EL1".
+
+Then the main() function starts.
 
 The "X" is a read-only global, which demonstrates read-only .data section is correct.
 
