@@ -6,8 +6,8 @@
 
 constexpr inline uint32_t BufferWords = 8 * 1024;
 
-alignas(64) std::array<uint32_t, BufferWords> src_buffer;
-alignas(64) std::array<uint32_t, BufferWords> dst_buffer;
+alignas(64) __attribute__((section(".ddma"))) std::array<uint32_t, BufferWords> src_buffer;
+alignas(64) __attribute__((section(".ddma"))) std::array<uint32_t, BufferWords> dst_buffer;
 constexpr inline size_t BufferBytes = BufferWords * sizeof(src_buffer[0]);
 
 static int check_data();
