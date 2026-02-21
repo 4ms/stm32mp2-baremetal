@@ -7,7 +7,7 @@
 // Interrupt Manager class
 class Interrupt {
 public:
-	static constexpr uint32_t NumISRs = 416; // FROM CMSIS device file
+	static constexpr uint32_t NumISRs = MAX_IRQ_n; // FROM CMSIS device file
 
 	using ISRType = Callback;
 	using IRQType = IRQn_Type;
