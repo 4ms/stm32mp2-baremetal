@@ -65,8 +65,10 @@ el1_entry:
     mrs     x1, cpacr_el1
     orr     x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
     msr     cpacr_el1, x1
+
     isb
-    bl      mmu_enable
+
+    bl      mmu_enable  			/* enables MMU, Dcache, Icache in SCTLR */
     b       entry_done
 
 // EL3 entry:
@@ -81,7 +83,8 @@ el3_entry:
     msr     fpcr, xzr
     msr     fpsr, xzr
 
-    bl      mmu_enable_el3
+    bl      mmu_enable_el3			/* enables MMU, Dcache, Icache in SCTLR */
+
 	bl      block_ram_enable_el3
 
 	mrs     x1, scr_el3
@@ -94,7 +97,8 @@ el3_entry:
 entry_done:
     bl      __libc_init_array
     msr     daifclr, #0xf
-    bl      IRQ_Initialize
+	bl		IRQ_Dist_Initialize
+	bl 		IRQ_Initialize
     bl      main
 
 hang:
