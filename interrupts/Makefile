@@ -6,7 +6,6 @@ SOURCES := startup.s
 SOURCES += main.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/mmu/mmu.cc
-SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
 SOURCES += $(SHAREDDIR)/interrupt/irq_init.c
 SOURCES += $(SHAREDDIR)/interrupt/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/print/uart_print.c
