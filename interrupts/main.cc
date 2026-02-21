@@ -1,5 +1,14 @@
-#include "interrupt.hh"
-#include "print.hh"
+#include "drivers/button.hh"
+#include "interrupt/interrupt.hh"
+#include "print/print.hh"
+
+#if UART == 6
+#define USARTx USART6
+#define USARTx_IRQn USART6_IRQn
+#else
+#define USARTx USART2
+#define USARTx_IRQn USART6_IRQn
+#endif
 
 void delay(unsigned x)
 {
@@ -30,33 +39,65 @@ int main()
 		print("< SGI3 handler ended\n");
 	});
 
-	InterruptManager::register_and_start_isr(USART2_IRQn, 3, 1, []() {
-		print("> USART2 handler started\nReceived:\n   > ");
+	InterruptManager::register_and_start_isr(SGI4_IRQn, 3, 1, []() {
+		print("> User2 button pressed -> SGI4 started\n");
 
-		while (USART2->ISR & USART_ISR_RXFNE) {
+		print("\nSending SGI2: Expect SGI2 now:\n");
+		GIC_SendSGI(SGI2_IRQn, 0b01, 0b00);
+
+		print("Sending SGI3... (should happen after SGI4 exits)\n");
+		GIC_SendSGI(SGI3_IRQn, 0b01, 0b00);
+
+		print("< SGI4 handler ended: Expect SGI3 now:\n");
+	});
+
+	InterruptManager::register_and_start_isr(USARTx_IRQn, 3, 1, []() {
+		print("> USARTx handler started\nReceived:\n   > ");
+
+		while (USARTx->ISR & USART_ISR_RXFNE) {
 			char cc[2];
-			cc[0] = USART2->RDR;
+			cc[0] = USARTx->RDR;
 			cc[1] = 0;
 			print(cc);
 		}
 		print("\nNow sending SGI2: Expect SGI now:\n");
 		GIC_SendSGI(SGI2_IRQn, 0b01, 0b00);
 
-		print("Now sending SGI3... (should happen after USART2 exits)\n");
+		print("Now sending SGI3... (should happen after USARTx exits)\n");
 		GIC_SendSGI(SGI3_IRQn, 0b01, 0b00);
 
-		print("< USART2 handler ended: Expect SGI3 now:\n");
+		print("< USARTx handler ended: Expect SGI3 now:\n");
 	});
 
-	USART2->CR1 &= ~USART_CR1_UE;
-	USART2->CR1 |= USART_CR1_RE; // enable RX
-	USART2->CR3 |= USART_CR3_RXFTIE;
-	USART2->CR1 |= USART_CR1_UE;
-	USART2->CR1 |= USART_CR1_RXFNEIE;
+	USARTx->CR1 &= ~USART_CR1_UE;
+	USARTx->CR1 |= USART_CR1_RE; // enable RX
+	USARTx->CR3 |= USART_CR3_RXFTIE;
+	USARTx->CR1 |= USART_CR1_UE;
+	USARTx->CR1 |= USART_CR1_RXFNEIE;
 
-	print("\nPress a key to trigger USART2 RX IRQ\n");
+	print("\nPress a key to trigger USART", UART, " RX IRQ\n");
+	print("Or press button USER2\n");
+
+	button_user1_init();
+	button_user2_init();
+
+	bool fired = false;
 
 	while (true) {
+
+		// Poll for the button press (TODO: use EXTI to fire an interrupt)
+		if (button_user2_pressed()) {
+			if (!fired) {
+				fired = true;
+				GIC_SendSGI(SGI4_IRQn, 0b01, 0b00);
+			}
+		} else {
+			fired = false;
+		}
+
+		if (button_user1_pressed()) {
+			print("Wrong button\n");
+		}
 		asm("nop");
 	}
 }

@@ -1,5 +1,4 @@
 .cpu cortex-a35
-.equ STM32_USART2_TDR, 0x400E0028
 
 // Drops to EL1 if started in EL2, sets SP, vectors, clears .bss, calls C.
     .section .text.boot, "ax"
@@ -9,42 +8,9 @@ _Reset:
     // Mask interrupts
     msr     daifset, #0xf
 
-	bl led1_init
-	bl led3_init
-
-	// Assume we start in EL1
-    bl early_print_el
-
-el1_entry:
     // Set up stack
     ldr     x1, =_stack_start
-    mov     sp, x1
-
-// Route IRQ, FIQ, and SError to EL2
-//	mrs x0, hcr_el2
-//	orr x0, x0, #(1<<5)
-//	orr x0, x0, #(1<<4)
-//	orr x0, x0, #(1<<3)
-//	msr hcr_el2, x0
-
-    // Install vector table for EL1
-    ldr     x0, =vectors
-    msr     vbar_el1, x0
-    isb
-
-// Enable System Register access (ICC_*_EL1 system registers)
-	// mov x1, xzr
-	//orr x1, x1, #(1<<3)  // Enable EL0 to use ICC_SER_EL1
-	// orr x1, x1, #(1<<2)  // Disable IRQ bypass
-	// orr x1, x1, #(1<<1)  // Disable FIQ bypass
-	// orr x1, x1, #(1<<0)  // System Register Enable
-	// msr icc_sre_el1, x1
-
-    // Enable FP+SIMD at EL1
-	mrs     x1, cpacr_el1
-	orr	    x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
-	msr	    cpacr_el1, x1
-	isb
+    bic     sp, x1, 0xf
 
     // Clear .bss
     ldr     x0, =_bss_start
@@ -57,38 +23,85 @@ bss_loop:
     b       bss_loop
 bss_done:
 
-	bl led1_on
-	bl delay_100
-	bl led1_off
+    bl      early_print_el
+    mrs     x0, CurrentEL
+    lsr     x0, x0, #2
+    and     x0, x0, #0x3
+    cmp     x0, #3
+    b.eq    el3_entry
+    cmp     x0, #2
+    b.eq    el2_entry
+    cmp     x0, #1
+    b.eq    el1_entry
 
-    bl mmu_enable
-	bl IRQ_Dist_Initialize
-	bl IRQ_Initialize
+//EL0 entry: hang -- not supported
+el0_entry:
+    b       el0_entry 
 
-	mrs x1, sctlr_el1
-	orr x1, x1, #0x1000    /* I: bit 12 instruction cache */
-	orr x1, x1, #0x0001    /* M: bit 1  MMU enable for EL1 and EL0  */
-	orr x1, x1, #0x0004    /* C: bit 2  Cacheability control for data accesses at EL1 and EL0 */
-	msr	sctlr_el1, x1
+// EL2 entry: drop down to EL1
+el2_entry:
+    mov     x2, #(0x5)              // EL1h
+    orr     x2, x2, #(0xF << 6)     // mask D,A,I,F
+    msr     spsr_el2, x2
+    // Set ELR_EL2 to EL1 entry point and provide SP_EL1
+    adr     x3, el1_entry
+    msr     elr_el2, x3
+    msr     sp_el1, x1
+    // Ensure EL1 is AArch64 (RW=1 in HCR_EL2)
+    mrs     x1, hcr_el2
+    orr     x1, x1, #(1 << 31)      // HCR_EL2.RW = 1 => EL1 is AArch64
+    msr     hcr_el2, x1
+    isb
+    eret
 
-	bl led3_on
-	bl delay_100
-	bl led3_off
+// EL1 entry:
+el1_entry:
+    // Install vector table for EL1
+    ldr     x0, =vectors
+    msr     vbar_el1, x0
+    isb
 
-	bl __libc_init_array
+    // Enable FP+SIMD at EL1
+    mrs     x1, cpacr_el1
+    orr     x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
+    msr     cpacr_el1, x1
 
+    isb
+
+    bl      mmu_enable  			/* enables MMU, Dcache, Icache in SCTLR */
+    b       entry_done
+
+// EL3 entry:
+el3_entry:
+    ldr     x0, =vectors
+    msr     vbar_el3, x0
+    isb
+    mrs     x0, cptr_el3
+    bic     x0, x0, #(1 << 10)        // TFP = 0 do not trap fp/simd
+    msr     cptr_el3, x0
+    isb
+    msr     fpcr, xzr
+    msr     fpsr, xzr
+
+    bl      mmu_enable_el3			/* enables MMU, Dcache, Icache in SCTLR */
+
+	//bl      block_ram_enable_el3
+
+	mrs     x1, scr_el3
+	orr     x1, x1, #(1 << 1)   	// IRQ at EL3
+	orr     x1, x1, #(2 << 1)   	// FIQ at EL3
+	msr     scr_el3, x1
+
+    b       entry_done
+
+entry_done:
+    bl      __libc_init_array
     msr     daifclr, #0xf
-
-    // Call main
+	bl		IRQ_Dist_Initialize
+	bl 		IRQ_Initialize
     bl      main
 
 hang:
     wfe
     b       hang
-
-delay_100:
-	mov x8, #0x2000000 //about 50ms
-3:  subs x8, x8, #1
-	b.ne 3b
-	ret
 
