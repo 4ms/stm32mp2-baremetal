@@ -10,6 +10,13 @@
 .equ LOWER_EL_A32_SYNC, 7
 .equ LOWER_EL_A32_SERR, 8
 
+// Override this function by adding esr_decode.cc to the build
+.global print_esr_description
+.weak   print_esr_description
+.type   print_esr_description, @function
+print_esr_description:
+    ret
+
 .macro handle_exception exc_type
 	mov	x21, #(\exc_type)
 	get_esr_elx x22
