@@ -30,8 +30,16 @@ alignas(4096) MMU::PageTable<2 * 1024 * 1024, 0x40000000> L1_periphs;
 alignas(4096) MMU::PageTable<2 * 1024 * 1024, 0x80000000> L1_ddr1;
 alignas(4096) MMU::PageTable<2 * 1024 * 1024, 0xC0000000> L1_ddr2;
 
+static bool is_init = false;
+
 static void populate_tables()
 {
+	if (get_core_id() != 0)
+		return;
+
+	if (is_init)
+		return;
+
 	L0.clear();
 	L1_sram.clear();
 	L1_periphs.clear();
@@ -60,6 +68,7 @@ static void populate_tables()
 	L1_ddr1.fill_block_entries(0x80000000, 0xC0000000, MMU::MemType::Normal, MMU::AccessRW);
 	L1_ddr2.fill_block_entries(0xC0000000, 0x100000000, MMU::MemType::Normal, MMU::AccessRW);
 
+	is_init = true;
 	dsb_sy();
 }
 
