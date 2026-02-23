@@ -99,7 +99,7 @@ SECTIONS
 
 	.heap (NOLOAD):
 	{
-		. = ALIGN(8);
+		. = ALIGN(16);
 		_sheap = .;
 		. += __HEAP_SIZE;
 		_eheap = .;
