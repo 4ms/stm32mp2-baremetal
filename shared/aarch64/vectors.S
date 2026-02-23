@@ -189,34 +189,40 @@ vectors:
 	clrex
 .endm
 
-handle_fiq:
 handle_irq:
-
+handle_fiq:
 	push_interrupt_context
 
 	// IAR: Acknowledge it with a read to the Interrupt Acknowledge Register
 	mov x1, #0x4AC20000
-	ldr w0, [x1, #12]	
+	ldr w0, [x1, #12]
+
+	// For SGIs, GICC_IAR bits [12:10] contain the source CPU interface number.
+	// Keep the full IAR value (w0) is for EOIR later.
+	and w1, w0, #0x3FF
 
 	// Skip if spurious
-	cmp w0, #1020
+	cmp w1, #1020
 	bhi exit_irq_handler
 
 	// If SCTLR.SA is not set, then do this:
-	// stp x0,		x1,		[sp, #-0x10]! // Store Interrupt ID (and dummy to keep alignment)
-	// With no stack alignment checking, we can do this:
-	str x0, 	[sp, #-8]!
+	// stp x0,		x1,		[sp, #-0x10]! 	// Store Interrupt ID (and dummy to keep alignment)
 
-	// enable interupts: 
+	// With no stack alignment checking, we can do this:
+	str x0, 	[sp, #-8]!					// save full IAR (with source CPU bits) for EOIR
+
+	// enable interupts:
 	msr DAIFClr, #(1<<1)
 
+	mov w0, w1								// pass interrupt ID (without CPU source) to ISRHandler
 	bl ISRHandler
 
 	// disable interupts: 
 	msr DAIFSet, #(1<<1)
 
 	// If SCTLR.SA is not set, then do this:
-	// ldp x0,		x1,		[sp], #0x10 // Pop Interrupt ID and dummy
+	// ldp x0,		x1,		[sp], #0x10 	// Pop Interrupt ID and dummy
+
 	// With no stack alignment checking, we can do this:
 	ldr x0, 	[sp], #8
 
