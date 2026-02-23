@@ -73,9 +73,9 @@ state.
 | hal-dma | √ | ? | Not tested in EL1 |
 | hal-audio | no  | √ | |
 | i2c | no  | √ | |
-| interrupts | no  | √ | |
-| multicore_smp | no  | √ | |
-| watchdog | no  | √ | TF-A has watchdog disabled, so project will not be converted |
+| interrupts | √  | √ | |
+| multicore_smp |  √ | √ | Not tested in EL1 |
+| watchdog | -  | √ | Watchdog is disabled in EL3 |
 
 
 # Baremetal Application
