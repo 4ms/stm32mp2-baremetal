@@ -1,11 +1,11 @@
 #include "drivers/pin.hh"
+#include "drivers/rcc.hh"
 #include "drivers/rcc_xbar.hh"
-#include "interrupt.hh"
-#include "print.hh"
+#include "drivers/watchdog.hh"
+#include "interrupt/interrupt.hh"
+#include "print/print.hh"
 #include "stm32mp2xx_hal.h"
 #include "stm32mp2xx_hal_def.h"
-#include "watchdog.hh"
-#include <cmath>
 #include <cstring>
 
 static_assert(I2C2_BASE == 0x40130000);
@@ -22,6 +22,28 @@ int main()
 	print("I2C Example\n");
 	HAL_Init();
 
+	// #if (RUN_EL3)
+
+	// pll7_cfg_835_51172Mhz: pll7-cfg-835-51172Mhz {
+	// cfg = <167 4 1 2>;
+	// src = <MUX_CFG(MUX_MUXSEL3, MUXSEL_HSE)>;
+	// frac = < 0x1A3337 >;
+
+	RCC_Clocks::PLL7::Enable::clear();
+	while (RCC_Clocks::PLL7::Enable::read())
+		;
+
+	RCC_Clocks::MuxSelPLL7::write(RCC_Clocks::MuxSelSource::hse);
+	RCC_Clocks::PLL7::FBDIVMult::write(167);
+	RCC_Clocks::PLL7::FREFDiv::write(4);
+	RCC_Clocks::PLL7::PostDiv1::write(1);
+	RCC_Clocks::PLL7::PostDiv2::write(2);
+	RCC_Clocks::PLL7::PostDivEnable::set();
+	RCC_Clocks::PLL7::FracMult::write(0x1A3337);
+	RCC_Clocks::PLL7::Enable::set();
+	while (!RCC_Clocks::PLL7::Ready::read())
+		;
+	// #endif
 	print("Setting I2C1 and I2C2 XBAR\n");
 	FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_7, .findiv = 0x3F, .prediv = 0};
 	i2c_xbar.init(12);
@@ -68,10 +90,10 @@ int main()
 			  PinSpeed::Medium,
 			  PinOType::OpenDrain}; // header pin 27
 
-	print("Init I2C1 periph\n");
+	print("Init I2C2 periph\n");
 	I2C_HandleTypeDef hi2c;
 	memset(&hi2c, 0, sizeof hi2c);
-	hi2c.Instance = I2C1;
+	hi2c.Instance = I2C2;
 	hi2c.Init.Timing = 0x10702525; // about 100kHz
 	hi2c.Init.OwnAddress1 = 0x33;
 	hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -99,7 +121,7 @@ int main()
 
 	uint8_t data[4]{0, 0, 0, 0};
 
-	InterruptManager::register_and_start_isr(I2C1_IRQn, 1, 1, [&hi2c]() {
+	InterruptManager::register_and_start_isr(I2C2_IRQn, 1, 1, [&hi2c]() {
 		HAL_I2C_EV_IRQHandler(&hi2c);
 		HAL_I2C_ER_IRQHandler(&hi2c);
 		print("I2C IRQ\n");
