@@ -78,7 +78,6 @@ int main()
 	print("\nPress a key to trigger USART", UART, " RX IRQ\n");
 	print("Or press button USER2\n");
 
-	button_user1_init();
 	button_user2_init();
 
 	bool fired = false;
@@ -93,10 +92,6 @@ int main()
 			}
 		} else {
 			fired = false;
-		}
-
-		if (button_user1_pressed()) {
-			print("Wrong button\n");
 		}
 		asm("nop");
 	}
