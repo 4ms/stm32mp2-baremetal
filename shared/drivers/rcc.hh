@@ -442,11 +442,198 @@ using WWDG2_ = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, WWDG2CFG
 
 namespace RCC_Clocks
 {
-// clang-format off
-	
-// PLL1, etc
 
-//  clang-format on
+using MuxSelPLL1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL5>;
+using MuxSelPLL2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL6>;
+using MuxSelPLL3 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL7>;
+using MuxSelPLL4 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL0>;
+using MuxSelPLL5 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL1>;
+using MuxSelPLL6 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL2>;
+using MuxSelPLL7 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL3>;
+using MuxSelPLL8 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, MUXSELCFGR), RCC_MUXSELCFGR_MUXSEL4>;
+enum MuxSelSource { hsi = 0, hse = 1, msi = 2 };
+
+// VCO out = Ref-clock * (FBDIVMult + FracMult/2^24)/FREFDiv / (PostDiv1 * PostDiv2)
+namespace PLL2
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR1), RCC_PLL2CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR1), RCC_PLL2CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR1), RCC_PLL2CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR1), RCC_PLL2CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR2), RCC_PLL2CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR2), RCC_PLL2CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR3), RCC_PLL2CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR3), RCC_PLL2CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR3), RCC_PLL2CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR3), RCC_PLL2CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR4), RCC_PLL2CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR4), RCC_PLL2CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR4), RCC_PLL2CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR5), RCC_PLL2CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR5), RCC_PLL2CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR6), RCC_PLL2CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL2CFGR7), RCC_PLL2CFGR7_POSTDIV2>;
+} // namespace PLL2
+
+namespace PLL3
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR1), RCC_PLL3CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR1), RCC_PLL3CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR1), RCC_PLL3CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR1), RCC_PLL3CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR2), RCC_PLL3CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR2), RCC_PLL3CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR3), RCC_PLL3CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR3), RCC_PLL3CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR3), RCC_PLL3CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR3), RCC_PLL3CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR4), RCC_PLL3CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR4), RCC_PLL3CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR4), RCC_PLL3CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR5), RCC_PLL3CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR5), RCC_PLL3CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR6), RCC_PLL3CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL3CFGR7), RCC_PLL3CFGR7_POSTDIV2>;
+} // namespace PLL3
+
+namespace PLL4
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR1), RCC_PLL4CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR1), RCC_PLL4CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR1), RCC_PLL4CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR1), RCC_PLL4CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR2), RCC_PLL4CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR2), RCC_PLL4CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR3), RCC_PLL4CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR3), RCC_PLL4CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR3), RCC_PLL4CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR3), RCC_PLL4CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR4), RCC_PLL4CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR4), RCC_PLL4CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR4), RCC_PLL4CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR5), RCC_PLL4CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR5), RCC_PLL4CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR6), RCC_PLL4CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL4CFGR7), RCC_PLL4CFGR7_POSTDIV2>;
+} // namespace PLL4
+
+namespace PLL5
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR1), RCC_PLL5CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR1), RCC_PLL5CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR1), RCC_PLL5CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR1), RCC_PLL5CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR2), RCC_PLL5CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR2), RCC_PLL5CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR3), RCC_PLL5CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR3), RCC_PLL5CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR3), RCC_PLL5CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR3), RCC_PLL5CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR4), RCC_PLL5CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR4), RCC_PLL5CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR4), RCC_PLL5CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR5), RCC_PLL5CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR5), RCC_PLL5CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR6), RCC_PLL5CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL5CFGR7), RCC_PLL5CFGR7_POSTDIV2>;
+} // namespace PLL5
+
+namespace PLL6
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR1), RCC_PLL6CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR1), RCC_PLL6CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR1), RCC_PLL6CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR1), RCC_PLL6CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR2), RCC_PLL6CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR2), RCC_PLL6CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR3), RCC_PLL6CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR3), RCC_PLL6CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR3), RCC_PLL6CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR3), RCC_PLL6CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR4), RCC_PLL6CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR4), RCC_PLL6CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR4), RCC_PLL6CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR5), RCC_PLL6CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR5), RCC_PLL6CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR6), RCC_PLL6CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL6CFGR7), RCC_PLL6CFGR7_POSTDIV2>;
+} // namespace PLL6
+
+namespace PLL7
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR1), RCC_PLL7CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR1), RCC_PLL7CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR1), RCC_PLL7CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR1), RCC_PLL7CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR2), RCC_PLL7CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR2), RCC_PLL7CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR3), RCC_PLL7CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR3), RCC_PLL7CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR3), RCC_PLL7CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR3), RCC_PLL7CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR4), RCC_PLL7CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR4), RCC_PLL7CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR4), RCC_PLL7CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR5), RCC_PLL7CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR5), RCC_PLL7CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR6), RCC_PLL7CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL7CFGR7), RCC_PLL7CFGR7_POSTDIV2>;
+} // namespace PLL7
+
+namespace PLL8
+{
+using Enable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR1), RCC_PLL8CFGR1_PLLEN>;
+using Ready = RegisterBits<ReadOnly, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR1), RCC_PLL8CFGR1_PLLRDY>;
+using RefClkRunning = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR1), RCC_PLL8CFGR1_CKREFST>;
+using SSModReset = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR1), RCC_PLL8CFGR1_SSMODRST>;
+
+using FBDIVMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR2), RCC_PLL8CFGR2_FBDIV>;
+using FREFDiv = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR2), RCC_PLL8CFGR2_FREFDIV>;
+
+using FracMult = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR3), RCC_PLL8CFGR3_FRACIN>;
+using ModDownSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR3), RCC_PLL8CFGR3_DOWNSPREAD>;
+using FracNoiseCancDAC = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR3), RCC_PLL8CFGR3_DACEN>;
+using SSModDisable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR3), RCC_PLL8CFGR3_SSCGDIS>;
+
+using PostDivBypass = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR4), RCC_PLL8CFGR4_BYPASS>;
+using PostDivEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR4), RCC_PLL8CFGR4_FOUTPOSTDIVEN>;
+using DeltaSigmaModEnable = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR4), RCC_PLL8CFGR4_DSMEN>;
+
+using ModSpread = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR5), RCC_PLL8CFGR5_SPREAD>;
+using ModFreqAdj = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR5), RCC_PLL8CFGR5_DIVVAL>;
+
+using PostDiv1 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR6), RCC_PLL8CFGR6_POSTDIV1>;
+using PostDiv2 = RegisterBits<ReadWrite, RCC_BASE + offsetof(RCC_TypeDef, PLL8CFGR7), RCC_PLL8CFGR7_POSTDIV2>;
+} // namespace PLL8
 
 } // namespace RCC_Clocks
-
