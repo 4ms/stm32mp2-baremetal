@@ -37,7 +37,8 @@ void Pin::_init(PinMode mode, uint8_t af, PinPull pull, PinSpeed speed, PinOType
 {
 	if (port_ == GPIO::Unused)
 		return;
-	// RCC_Enable::GPIO::enable(GPIOPort(port_));
+	if (!RCC_Enable::GPIO::is_enabled(GPIOPort(port_)))
+		RCC_Enable::GPIO::enable(GPIOPort(port_));
 	set_mode(mode);
 	set_pull(pull);
 	set_speed(speed);

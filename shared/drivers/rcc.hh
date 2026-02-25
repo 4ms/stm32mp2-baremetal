@@ -272,10 +272,33 @@ struct GPIO {
 			RCC_Enable::GPIOZ_::clear();
 	}
 
-	// static bool is_enabled(GPIO_TypeDef *periph)
-	// {
-	// 	return (*_reg) & get_gpio_bit(reinterpret_cast<RegisterDataT>(periph));
-	// }
+	static bool is_enabled(GPIO_TypeDef *periph)
+	{
+		if (periph == GPIOA)
+			return RCC_Enable::GPIOA_::read();
+		else if (periph == GPIOB)
+			return RCC_Enable::GPIOB_::read();
+		else if (periph == GPIOC)
+			return RCC_Enable::GPIOC_::read();
+		else if (periph == GPIOD)
+			return RCC_Enable::GPIOD_::read();
+		else if (periph == GPIOE)
+			return RCC_Enable::GPIOE_::read();
+		else if (periph == GPIOF)
+			return RCC_Enable::GPIOF_::read();
+		else if (periph == GPIOG)
+			return RCC_Enable::GPIOG_::read();
+		else if (periph == GPIOH)
+			return RCC_Enable::GPIOH_::read();
+		else if (periph == GPIOI)
+			return RCC_Enable::GPIOI_::read();
+		else if (periph == GPIOJ)
+			return RCC_Enable::GPIOJ_::read();
+		else if (periph == GPIOZ)
+			return RCC_Enable::GPIOZ_::read();
+		else
+			return false;
+	}
 };
 
 } // namespace RCC_Enable
