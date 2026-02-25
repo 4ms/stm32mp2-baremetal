@@ -1,5 +1,4 @@
 #include "drivers/pin.hh"
-#include "drivers/rcc.hh"
 #include "drivers/rcc_xbar.hh"
 #include "drivers/watchdog.hh"
 #include "interrupt/interrupt.hh"
@@ -8,42 +7,19 @@
 #include "stm32mp2xx_hal_def.h"
 #include <cstring>
 
-static_assert(I2C2_BASE == 0x40130000);
-// RIF resource ID 42
-// APB1
-// ck_ker_i2c is flexgen channel 12 (max 200MHz)
-
 static void i2c_mem_tx_complete_cb(I2C_HandleTypeDef *hi2c);
 static void i2c_mem_rx_complete_cb(I2C_HandleTypeDef *hi2c);
 static void i2c_error_cb(I2C_HandleTypeDef *hi2c);
+void system_init();
 
 int main()
 {
 	print("I2C Example\n");
+
+	system_init();
+
 	HAL_Init();
 
-	// #if (RUN_EL3)
-
-	// pll7_cfg_835_51172Mhz: pll7-cfg-835-51172Mhz {
-	// cfg = <167 4 1 2>;
-	// src = <MUX_CFG(MUX_MUXSEL3, MUXSEL_HSE)>;
-	// frac = < 0x1A3337 >;
-
-	RCC_Clocks::PLL7::Enable::clear();
-	while (RCC_Clocks::PLL7::Enable::read())
-		;
-
-	RCC_Clocks::MuxSelPLL7::write(RCC_Clocks::MuxSelSource::hse);
-	RCC_Clocks::PLL7::FBDIVMult::write(167);
-	RCC_Clocks::PLL7::FREFDiv::write(4);
-	RCC_Clocks::PLL7::PostDiv1::write(1);
-	RCC_Clocks::PLL7::PostDiv2::write(2);
-	RCC_Clocks::PLL7::PostDivEnable::set();
-	RCC_Clocks::PLL7::FracMult::write(0x1A3337);
-	RCC_Clocks::PLL7::Enable::set();
-	while (!RCC_Clocks::PLL7::Ready::read())
-		;
-	// #endif
 	print("Setting I2C1 and I2C2 XBAR\n");
 	FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_7, .findiv = 0x3F, .prediv = 0};
 	i2c_xbar.init(12);
@@ -122,9 +98,9 @@ int main()
 	uint8_t data[4]{0, 0, 0, 0};
 
 	InterruptManager::register_and_start_isr(I2C2_IRQn, 1, 1, [&hi2c]() {
+		print("I2C IRQ\n");
 		HAL_I2C_EV_IRQHandler(&hi2c);
 		HAL_I2C_ER_IRQHandler(&hi2c);
-		print("I2C IRQ\n");
 	});
 	HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_MEM_TX_COMPLETE_CB_ID, i2c_mem_tx_complete_cb);
 	HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, i2c_mem_rx_complete_cb);
