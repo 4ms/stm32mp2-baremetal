@@ -2,12 +2,12 @@
 #include "dma.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
+#include "drivers/watchdog.hh"
 #include "i2c_codec.hh"
-#include "interrupt.hh"
-#include "print.hh"
+#include "interrupt/interrupt.hh"
+#include "print/print.hh"
 #include "stm32mp2xx_hal.h"
 #include "stm32mp2xx_hal_def.h"
-#include "watchdog.hh"
 #include <cmath>
 
 static void verify_apb2_works_via_tim15();

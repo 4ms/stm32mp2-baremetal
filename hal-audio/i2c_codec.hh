@@ -3,8 +3,8 @@
 #include "codec_PCM3168_registers.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
-#include "interrupt.hh"
-#include "print.hh"
+#include "interrupt/interrupt.hh"
+#include "print/print.hh"
 #include "stm32mp2xx_hal.h"
 #include <cstdint>
 #include <cstring>
