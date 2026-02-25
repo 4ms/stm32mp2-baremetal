@@ -78,21 +78,33 @@ int main()
 	print("\nPress a key to trigger USART", UART, " RX IRQ\n");
 	print("Or press button USER2\n");
 
+	button_user1_init();
 	button_user2_init();
 
-	bool fired = false;
+	bool fired1 = false;
+	bool fired2 = false;
 
 	while (true) {
 
 		// Poll for the button press (TODO: use EXTI to fire an interrupt)
 		if (button_user2_pressed()) {
-			if (!fired) {
-				fired = true;
+			if (!fired2) {
+				fired2 = true;
 				GIC_SendSGI(SGI4_IRQn, 0b01, 0b00);
 			}
 		} else {
-			fired = false;
+			fired2 = false;
 		}
+
+		if (button_user1_pressed()) {
+			if (!fired1) {
+				fired1 = true;
+				print("Wrong button\n");
+			}
+		} else {
+			fired1 = false;
+		}
+
 		asm("nop");
 	}
 }
