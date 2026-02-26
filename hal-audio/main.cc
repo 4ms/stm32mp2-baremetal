@@ -1,6 +1,7 @@
 #include "audio_generators.hh"
 #include "dma.hh"
 #include "drivers/pin.hh"
+#include "drivers/rcc.hh"
 #include "drivers/rcc_xbar.hh"
 #include "drivers/watchdog.hh"
 #include "i2c_codec.hh"
@@ -33,21 +34,22 @@ int main()
 	print("HAL Audio Example\n");
 	HAL_Init();
 
-	print("tx buffer: ", Hex{(uint32_t)(uintptr_t)tx_buffer.data()}, "\n");
+	print("TX buffer: ", Hex{(uint32_t)(uintptr_t)tx_buffer.data()}, "\n");
+	print("RX buffer: ", Hex{(uint32_t)(uintptr_t)rx_buffer.data()}, "\n");
 
 	print("Setting SAI2 XBAR to use PLL8\n");
-	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_8, .findiv = 24, .prediv = 0};
-	sai2_xbar.init(24);
+	FlexbarConf sai2_xbar{.PLL = FlexbarConf::PLLx::_8, .findiv = 67, .prediv = 0};
+	sai2_xbar.init(FlexbarConf::SAI2_);
 
 	print("PLL8 freq = ", HAL_RCCEx_GetPLL8ClockFreq(), "\n");
 	uint32_t freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SAI2);
 	print("SAI2 kernel clock freq = ", freq, "\n");
 
 	print("Enable SAI clock\n");
-	__HAL_RCC_SAI2_CLK_ENABLE();
-	__HAL_RCC_SAI2_FORCE_RESET();
-	__HAL_RCC_SAI2_RELEASE_RESET();
-	__HAL_RCC_HPDMA1_CLK_ENABLE();
+	RCC_Enable::SAI2_::set();
+	RCC_Reset::SAI2_::set();
+	RCC_Reset::SAI2_::clear();
+	RCC_Enable::HPDMA1_::set();
 
 	print("Init SAI pins\n");
 	Pin scka{GPIO::J, PinNum::_11, PinMode::Alt, AltFunc3, PinPull::Up}; // header pin 12
@@ -194,7 +196,9 @@ int main()
 	}
 
 	CodecI2C i2c{};
-	if (!i2c.init_codec())
+	if (i2c.init_codec())
+		print("Successfully init codec via I2C\n");
+	else
 		print("Failed to init codec via I2C\n");
 
 	print("Start transmitting/receiving\n");

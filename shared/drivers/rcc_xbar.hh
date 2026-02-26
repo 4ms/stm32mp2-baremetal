@@ -14,6 +14,10 @@ struct FlexbarConf {
 	uint8_t findiv = 0x3F;
 	unsigned prediv = 0;
 
+	enum FlexbarChan {
+		SAI2_ = 24,
+	};
+
 	void init(unsigned chan_num)
 	{
 		if (chan_num >= 64)
