@@ -17,6 +17,11 @@ static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_n
 static void dump_sai_registers();
 static void test_pins();
 
+constexpr uint32_t BufferWords = 64; // audio buffer size. Block size in frames is BufferWords/4
+alignas(64) __attribute__((section(".s_retram"))) std::array<uint32_t, BufferWords> tx_buffer;
+alignas(64) __attribute__((section(".s_retram"))) std::array<uint32_t, BufferWords> rx_buffer;
+constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
+
 int main()
 {
 
@@ -25,11 +30,6 @@ int main()
 		SineGen R{48000};
 	};
 	AudioGen sines{};
-
-	constexpr uint32_t BufferWords = 64; // audio buffer size. Block size in frames is BufferWords/4
-	alignas(64) static std::array<uint32_t, BufferWords> tx_buffer;
-	alignas(64) static std::array<uint32_t, BufferWords> rx_buffer;
-	constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
 	print("HAL Audio Example\n");
 	HAL_Init();
