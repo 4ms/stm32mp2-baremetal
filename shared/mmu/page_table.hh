@@ -54,8 +54,13 @@ struct PageTable {
 
 	void clear()
 	{
-		for (auto &d : data)
+		// Don't allow memset/memclr, since we don't have the MMU setup yet.
+		// memset/memclr may use `dc zva` instructions, which will give an
+		// alignment fault if the memory region is not setup as Normal yet.
+		for (auto &d : data) {
 			d = 0;
+			asm("nop");
+		}
 	}
 
 	void block_entry(uint64_t va, uint64_t pa, MemType type, uint64_t attribs)
