@@ -97,6 +97,8 @@ entry_done:
     msr     daifclr, #0xf
 	bl		IRQ_Dist_Initialize
 	bl 		IRQ_Initialize
+
+	bl 		system_init
     bl      main
 
 hang:
