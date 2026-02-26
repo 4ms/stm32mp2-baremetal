@@ -116,6 +116,12 @@ extern "C" void mmu_enable_el3()
 	dsb_sy();
 	isb();
 
+	uint64_t sctlr = read_sctlr_el3();
+	sctlr &= ~(SCTLR_WXN);
+	sctlr &= ~(SCTLR_A);
+	sctlr &= ~(SCTLR_SA);
+	write_sctlr_el3(sctlr);
+
 	populate_tables();
 	asm("dmb st");
 
@@ -143,11 +149,8 @@ extern "C" void mmu_enable_el3()
 	isb();
 
 	// Enable MMU + caches
-	uint64_t sctlr = read_sctlr_el3();
+	sctlr = read_sctlr_el3();
 	sctlr |= SCTLR_M | SCTLR_C | SCTLR_I;
-	sctlr &= ~(SCTLR_WXN);
-	sctlr &= ~(SCTLR_A);
-	sctlr &= ~(SCTLR_SA);
 	write_sctlr_el3(sctlr);
 
 	tlbi_all_e3();
