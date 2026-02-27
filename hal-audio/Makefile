@@ -40,7 +40,7 @@ INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 # EL_LEVEL := 
 
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
-EXTRA_ARCH_CFLAGS += -DCORTEX_IN_SECURE_STATE 
+EXTRA_ARCH_CFLAGS += -DCORTEX_IN_SECURE_STATE
 EL_LEVEL := -DRUN_EL3
 
 OPTFLAG := -O2
@@ -52,8 +52,9 @@ FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precisi
 
 FREESTANDING := 
 
-$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_sai.o: EXTRA_ARCH_CFLAGS = -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast
-$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.o: EXTRA_ARCH_CFLAGS = -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast 
+$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast
+$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_sai.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast
+$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast 
 
 include $(SHAREDDIR)/makefile-common.mk
 
