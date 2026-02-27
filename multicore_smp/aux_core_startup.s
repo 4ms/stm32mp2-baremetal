@@ -2,13 +2,13 @@
 .global aux_core_startup
 aux_core_startup:
     // Mask interrupts
-    msr daifset, #0xf
+    msr     daifset, #0xf
 
     // Set up stack
-    ldr  x1, =_cpu1_stack_start
-    mov  sp, x1
+    ldr     x1, =_cpu1_stack_start
+    mov     sp, x1
 
-	// Branch to entry for our level
+    // Branch to entry for our level
     mrs     x0, CurrentEL
     lsr     x0, x0, #2
     and     x0, x0, #0x3
@@ -18,7 +18,7 @@ aux_core_startup:
     b.eq    el2_entry_aux
     cmp     x0, #1
     b.eq    el1_entry_aux
-    b       .  			//EL0 hangs -- not supported
+    b       .               // EL0 hangs -- not supported
 
 
 // EL2 entry: drop down to EL1
@@ -46,11 +46,11 @@ el1_entry_aux:
 
     // Enable FP+SIMD at EL1
     mrs     x1, cpacr_el1
-    orr     x1, x1, #3 << 20        /* FPEN bits: don't trap FPU at EL1 or EL0 */
+    orr     x1, x1, #3 << 20        // FPEN bits: don't trap FPU at EL1 or EL0
     msr     cpacr_el1, x1
     isb
 
-    bl      mmu_enable  			/* enables MMU, Dcache, Icache in SCTLR */
+    bl      mmu_enable              // enables MMU, Dcache, Icache in SCTLR
     b       entry_done_aux
 
 // EL3 entry:
@@ -59,25 +59,25 @@ el3_entry_aux:
     msr     vbar_el3, x0
     isb
     mrs     x0, cptr_el3
-    bic     x0, x0, #(1 << 10)        // TFP = 0 do not trap fp/simd
+    bic     x0, x0, #(1 << 10)      // TFP = 0 do not trap fp/simd
     msr     cptr_el3, x0
     isb
     msr     fpcr, xzr
     msr     fpsr, xzr
 
-    bl      mmu_enable_el3			/* enables MMU, Dcache, Icache in SCTLR */
+    bl      mmu_enable_el3          // enables MMU, Dcache, Icache in SCTLR
 
-	mrs     x1, scr_el3
-	orr     x1, x1, #(1 << 1)   	// IRQ at EL3
-	orr     x1, x1, #(2 << 1)   	// FIQ at EL3
-	msr     scr_el3, x1
+    mrs     x1, scr_el3
+    orr     x1, x1, #(1 << 1)       // IRQ at EL3
+    orr     x1, x1, #(2 << 1)       // FIQ at EL3
+    msr     scr_el3, x1
 
     b       entry_done_aux
 
 entry_done_aux:
     bl      __libc_init_array
     msr     daifclr, #0xf
-	bl 		IRQ_Initialize
+    bl      IRQ_Initialize
     bl      aux_main
 
 aux_hang:
