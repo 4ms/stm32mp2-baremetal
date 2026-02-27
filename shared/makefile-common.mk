@@ -120,7 +120,7 @@ ELF 	= $(BUILDDIR)/$(BINARYNAME).elf
 HEX 	= $(BUILDDIR)/$(BINARYNAME).hex
 BIN 	= $(BUILDDIR)/$(BINARYNAME).bin
 
-all: Makefile $(ELF) $(BIN) $(UIMAGENAME)
+all: Makefile $(ELF) $(BIN)
 
 elf: $(ELF)
 
@@ -133,12 +133,6 @@ openocd:
 
 debug: $(ELF)
 	$(ARCH)-gdb $(ELF)
-
-# install-mp1-boot:
-# 	@if [ "$${SD_DISK_DEVPART}" = "" ]; then echo "Please specify the disk and partition like this: make install-mp1-boot SD_DISK_DEVPART=/dev/diskXs3"; \
-# 	else \
-# 	echo "sudo dd if=${UIMAGENAME} of=$${SD_DISK_DEVPART}" && \
-# 	sudo dd if=${UIMAGENAME} of=$${SD_DISK_DEVPART};  fi
 
 $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
