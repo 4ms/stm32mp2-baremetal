@@ -1,4 +1,2 @@
-target extended-remote:3333
-#thbreak *0x88000040
+target extended-remote localhost:3333
 load
-thbreak main
