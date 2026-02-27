@@ -13,15 +13,13 @@ void system_init()
 
 	constexpr RCC_Clocks::PLLSettings pll7{
 		.src = RCC_Clocks::MuxSelSource::hse,
-		.mult = 167,
-		.refdiv = 4,
+		.mult = 2,
+		.refdiv = 1,
 		.postdiv1 = 1,
-		.postdiv2 = 2,
-		.frac = 0x1DE69B,
+		.postdiv2 = 1,
+		.frac = 0,
 	};
-	// suitable for 48kHz audio: 48kHz * 256 * 68 = 835'584'000
-	static_assert(pll7.calc_freq(40'000'000) >= 835'584'000);
-	static_assert(pll7.calc_freq(40'000'000) <= 835'584'100);
+	static_assert(pll7.calc_freq(40'000'000) == 80'000'000);
 
 	RCC_Clocks::set_pll<RCC_Clocks::PLL7>(pll7);
 
