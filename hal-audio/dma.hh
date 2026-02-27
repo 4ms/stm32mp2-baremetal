@@ -73,6 +73,8 @@ struct DmaHelper {
 		node_conf.TriggerConfig.TriggerPolarity = DMA_TRIG_POLARITY_MASKED;
 		node_conf.DataHandlingConfig.DataExchange = DMA_EXCHANGE_NONE;
 		node_conf.DataHandlingConfig.DataAlignment = DMA_DATA_RIGHTALIGN_ZEROPADDED;
+		node_conf.SrcSecure = DMA_CHANNEL_SRC_SEC;
+		node_conf.DestSecure = DMA_CHANNEL_DEST_SEC;
 
 		if (HAL_DMAEx_List_BuildNode(&node_conf, &node1) != HAL_OK)
 			print("Error: HAL_DMAEx_List_BuildNode\n");
@@ -95,7 +97,10 @@ struct DmaHelper {
 		clean_dcache_address((uintptr_t)(&node1));
 		clean_dcache_address((uintptr_t)(&queue));
 
-		if (auto res = HAL_DMA_ConfigChannelAttributes(&hdma, DMA_CHANNEL_NPRIV); res != HAL_OK) {
+		auto attr = (get_current_el() == 3)
+						? (DMA_CHANNEL_PRIV | DMA_CHANNEL_SEC | DMA_CHANNEL_SRC_SEC | DMA_CHANNEL_DEST_SEC)
+						: DMA_CHANNEL_NPRIV;
+		if (auto res = HAL_DMA_ConfigChannelAttributes(&hdma, attr); res != HAL_OK) {
 			print("ERROR: HAL_DMA_ConfigChannelAttributes returned ", res, "\n");
 		}
 	}
