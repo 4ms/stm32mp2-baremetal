@@ -12,7 +12,8 @@ INCLUDES := -I.
 
 OPTFLAG := -O0
 
-UART_CHOICE := 6
+# Uncomment this to use USART6 via the GPIO Expander header
+# UART_CHOICE := 6
 
 include $(SHAREDDIR)/makefile-common.mk
 

@@ -23,6 +23,16 @@ FPU ?=
 
 EXTRA_ARCH_CFLAGS ?= 
 
+# If you are hacking these projects to run in non-secure state,
+# then you probably will want to change this to:
+# EXTRA_ARCH_CFLAGS += -DA35_NON_SECURE
+EXTRA_ARCH_CFLAGS += -DCORTEX_IN_SECURE_STATE 
+
+# If you are hacking these projects to run at EL1, then you probably will want
+# to comment this out:
+EL_LEVEL ?= -DRUN_EL3
+
+
 ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 			   -DSTM32MP257Cxx \
 			   -DSTM32MP2 \
@@ -30,9 +40,6 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 			   $(EXTRA_ARCH_CFLAGS) \
 
 OPTFLAG ?= -O0
-
-# Leave Blank for EL1 ns:
-EL_LEVEL ?= -DRUN_EL3
 
 # 2 is STLINK, 6 is GPIO Expander header
 UART_CHOICE ?= 2

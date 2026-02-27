@@ -19,11 +19,8 @@ INCLUDES += -I$(SHAREDDIR)/cmsis/Include
 INCLUDES += -I$(SHAREDDIR)/cmsis/Core_A/Include
 INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
 
-EXTRA_ARCH_CFLAGS := -DCORTEX_IN_SECURE_STATE 
-
-EL_LEVEL := -DRUN_EL3
-
-UART_CHOICE := 6
+# Uncomment this to use USART6 via the GPIO Expander header
+# UART_CHOICE := 6
 
 OPTFLAG := -O0
 

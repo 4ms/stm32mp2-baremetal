@@ -34,18 +34,12 @@ INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
 
 INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 
-
-# EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
-# EXTRA_ARCH_CFLAGS := -DA35_NON_SECURE
-# EL_LEVEL := 
-
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
-EXTRA_ARCH_CFLAGS += -DCORTEX_IN_SECURE_STATE
-EL_LEVEL := -DRUN_EL3
 
 OPTFLAG := -O2
 
-UART_CHOICE := 6
+# Uncomment this to use USART6 via the GPIO Expander header
+# UART_CHOICE := 6
 
 OPTFLAG := -Ofast 
 FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
