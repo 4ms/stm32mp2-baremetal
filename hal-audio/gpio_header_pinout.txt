@@ -23,4 +23,4 @@ SAI2_FS_A(af3)   PJ3    GPIO19  (35) | (36) GPIO16   PF15      debug0
   Codec Reset    PB12   GPIO26  (37) | (38) GPIO20   PJ12      SAI2_SD_A (af3)
                         GND     (39) | (40) GPIO21   PJ2       SAI2_SD_B (af3)
 
-Resistor R34: PJ13 SAI2_MCLK_A
+U23 pin 8 (or resistor R34): PJ13 SAI2_MCLK_A

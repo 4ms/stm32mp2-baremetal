@@ -11,20 +11,21 @@
 #include "stm32mp2xx_hal_def.h"
 #include <cmath>
 
+// Debug/helper functions:
 static void verify_apb2_works_via_tim15();
 static void print_security_settings();
 static void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_node_config);
 static void dump_sai_registers();
 static void test_pins();
 
+// The audio DMA buffer:
 constexpr uint32_t BufferWords = 64; // audio buffer size. Block size in frames is BufferWords/4
-alignas(64) __attribute__((section(".s_retram"))) std::array<uint32_t, BufferWords> tx_buffer;
-alignas(64) __attribute__((section(".s_retram"))) std::array<uint32_t, BufferWords> rx_buffer;
+alignas(64) __attribute__((section(".ddr"))) std::array<uint32_t, BufferWords> tx_buffer;
+alignas(64) __attribute__((section(".ddr"))) std::array<uint32_t, BufferWords> rx_buffer;
 constexpr size_t BufferBytes = BufferWords * sizeof(tx_buffer[0]);
 
 int main()
 {
-
 	struct AudioGen {
 		SineGen L{48000};
 		SineGen R{48000};
@@ -55,7 +56,7 @@ int main()
 	Pin scka{GPIO::J, PinNum::_11, PinMode::Alt, AltFunc3, PinPull::Up}; // header pin 12
 	Pin sda{GPIO::J, PinNum::_12, PinMode::Alt, AltFunc3, PinPull::Up};	 // header pin 38
 	Pin sdb{GPIO::J, PinNum::_2, PinMode::Alt, AltFunc4, PinPull::Up};	 // header pin 40
-	Pin mclk{GPIO::J, PinNum::_13, PinMode::Alt, AltFunc3, PinPull::Up}; // R34
+	Pin mclk{GPIO::J, PinNum::_13, PinMode::Alt, AltFunc3, PinPull::Up}; // R34 or U23 pin 8
 	Pin fsa{GPIO::J, PinNum::_3, PinMode::Alt, AltFunc3, PinPull::Up};	 // header pin 35
 
 	print("Init SAI TX periph\n");
@@ -123,7 +124,7 @@ int main()
 	dma_node_config_tx.DataSize = BufferBytes;
 
 	DmaHelper::setup_circular(hdma_tx, dma_tx_queue, dma_tx_node1, dma_node_config_tx);
-	// dump_dma_info(dma_tx_node1, dma_node_config_tx);
+	dump_dma_info(dma_tx_node1, dma_node_config_tx);
 
 	print("Link DMA TX and SAI TX\n");
 	__HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
@@ -142,7 +143,7 @@ int main()
 	dma_node_config_rx.DataSize = BufferBytes;
 
 	DmaHelper::setup_circular(hdma_rx, dma_rx_queue, dma_rx_node1, dma_node_config_rx);
-	// dump_dma_info(dma_rx_node1, dma_node_config_rx);
+	dump_dma_info(dma_rx_node1, dma_node_config_rx);
 
 	print("Link DMA RX and SAI RX\n");
 	__HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
@@ -215,7 +216,6 @@ int main()
 
 	while (true) {
 		auto now = 1000 * read_cntpct() / read_cntfreq();
-		// auto now = HAL_GetTick();
 		if (now - last_pet >= 3000) {
 			last_pet = now;
 			print("Tick = ", now, "\n");
@@ -264,29 +264,30 @@ void verify_apb2_works_via_tim15()
 
 void print_security_settings()
 {
+	// These registers are only important if running in EL1 non-secure.
+	// When using the TF-A BL2 to run our app in EL3 secure mode, these should be all 0.
+
 	print("RCC_SECCFGR0 = ", Hex{RCC->SECCFGR[0]}, "\n");
 	print("RCC_PRIVCFGR0 = ", Hex{RCC->PRIVCFGR[0]}, "\n");
-
 	// RM Table 38:
 	// SAI2 RISC index is 50. *CFGR[0] spans 0-31, *CFGR[1] spans 32-63. So we check [1] for bit 50-32=18
 	print("RISC->SECCFGR[1] = ", Hex{RISC->SECCFGR[1]}, " (bit 18 = SAI2)\n");
 	print("RISC->PRIVCFGR[1] = ", Hex{RISC->PRIVCFGR[1]}, " (bit 18 = SAI2)\n");
 	print("RISC->PER50_CIDCFGR = ", Hex{RISC->PER[50].CIDCFGR}, "\n");
-
 	print("GPIOJ->SECCFGR = ", Hex{GPIOJ->SECCFGR}, "\n");
 }
 
-void dump_dma_info(DMA_NodeTypeDef &dma_node1, DMA_NodeConfTypeDef &dma_node_config)
+void dump_dma_info(DMA_NodeTypeDef &dma_node, DMA_NodeConfTypeDef &dma_node_config)
 {
 	print("Node 1 contents:\n");
-	print("  LinkRegisters[0] (CTR1) = ", Hex{dma_node1.LinkRegisters[0]}, "\n");
-	print("  LinkRegisters[1] (CTR2) = ", Hex{dma_node1.LinkRegisters[1]}, "\n");
-	print("  LinkRegisters[2] (CBR1) = ", Hex{dma_node1.LinkRegisters[2]}, "\n");
-	print("  LinkRegisters[3] (CSAR) = ", Hex{dma_node1.LinkRegisters[3]}, "\n");
-	print("  LinkRegisters[4] (CDAR) = ", Hex{dma_node1.LinkRegisters[4]}, "\n");
-	print("  LinkRegisters[5] (CLLR) = ", Hex{dma_node1.LinkRegisters[5]}, "\n");
+	print("  LinkRegisters[0] (CTR1) = ", Hex{dma_node.LinkRegisters[0]}, "\n");
+	print("  LinkRegisters[1] (CTR2) = ", Hex{dma_node.LinkRegisters[1]}, "\n");
+	print("  LinkRegisters[2] (CBR1) = ", Hex{dma_node.LinkRegisters[2]}, "\n");
+	print("  LinkRegisters[3] (CSAR) = ", Hex{dma_node.LinkRegisters[3]}, "\n");
+	print("  LinkRegisters[4] (CDAR) = ", Hex{dma_node.LinkRegisters[4]}, "\n");
+	print("  LinkRegisters[5] (CLLR) = ", Hex{dma_node.LinkRegisters[5]}, "\n");
 
-	print("  dma_node1 addr = ", Hex{(uint32_t)(uintptr_t)&dma_node1}, "\n");
+	print("  dma_node addr = ", Hex{(uint32_t)(uintptr_t)&dma_node}, "\n");
 	print("  DMA src: ", Hex{dma_node_config.SrcAddress}, "\n");
 	print("  DMA dst: ", Hex{dma_node_config.DstAddress}, "\n");
 

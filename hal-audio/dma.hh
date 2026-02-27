@@ -16,7 +16,7 @@ struct DmaHelper {
 	// Request and Direction must be set BEFORE calling setup_circular
 	static void setup_circular(DMA_HandleTypeDef &hdma,
 							   DMA_QListTypeDef &queue,
-							   DMA_NodeTypeDef &node1,
+							   DMA_NodeTypeDef &node,
 							   DMA_NodeConfTypeDef &node_conf)
 	{
 		hdma.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
@@ -76,10 +76,10 @@ struct DmaHelper {
 		node_conf.SrcSecure = DMA_CHANNEL_SRC_SEC;
 		node_conf.DestSecure = DMA_CHANNEL_DEST_SEC;
 
-		if (HAL_DMAEx_List_BuildNode(&node_conf, &node1) != HAL_OK)
+		if (HAL_DMAEx_List_BuildNode(&node_conf, &node) != HAL_OK)
 			print("Error: HAL_DMAEx_List_BuildNode\n");
 
-		if (HAL_DMAEx_List_InsertNode_Tail(&queue, &node1) != HAL_OK)
+		if (HAL_DMAEx_List_InsertNode_Tail(&queue, &node) != HAL_OK)
 			print("Error: HAL_DMAEx_List_InsertNode\n");
 
 		if (HAL_DMAEx_List_SetCircularMode(&queue) != HAL_OK)
@@ -94,7 +94,7 @@ struct DmaHelper {
 		if (HAL_DMAEx_List_LinkQ(&hdma, &queue) != HAL_OK)
 			print("Error: HAL_DMAEx_List_LinkQ\n");
 
-		clean_dcache_address((uintptr_t)(&node1));
+		clean_dcache_address((uintptr_t)(&node));
 		clean_dcache_address((uintptr_t)(&queue));
 
 		auto attr = (get_current_el() == 3)
