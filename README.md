@@ -70,19 +70,23 @@ aarch64-none-elf-gcc --version
 
 All examples run in EL3 secure state. For this to happen, the bootloader needs
 to load the app in EL3 secure. You must use our fork of TF-A BL2 (FSBL) as
-the sole bootloader. This FSBL is greatly simplified (much easier to build)
-from the stock TF-A + OP-TEE + U-Boot bootloader chain. 
-
-Our TF-A fork initializes DDR RAM and then loads your application as a secure
-payload. There is no OP-TEE, U-Boot, or BL31 Secure Monitor running
-anymore. You only need the TF-A BL2 FSBL and your application.
+the sole bootloader. This FSBL -A initializes DDR RAM and then loads your
+application as a secure payload. There is no OP-TEE, U-Boot, or BL31 Secure
+Monitor running. You only need the TF-A BL2 FSBL and your application.
 
 Obviously, running an application this way is inherently less secure. If you
 plan to use this in a production device, you should carefully consider the
 security requirements before running your main application in EL3 Secure state.
 For hobbyist projects, or some embedded projects with no connectivity (e.g. an
 audio FX unit without USB/Wi-Fi/etc), or for designing your own Secure Monitor,
-running in EL3 Secure is more convenient.
+running in EL3 Secure is more convenient. 
+
+If you want to see examples running EL1 non-secure, then see the [el1-ns branch](https://github.com/4ms/stm32mp2-baremetal/tree/el1-ns).
+This requires OP-TEE to be modified to allow for non-secure access to the peripherals
+and memory regions that the examples use.
+
+Most of these examples should be agnostic to the EL level, and where it matters
+I've added `#ifdef RUN_EL3` to the code.
 
 
 # Prepare your SD Card
