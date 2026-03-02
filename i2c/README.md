@@ -18,7 +18,7 @@ which again confirms that I2C is working.
 If you have another board with an I2C chip on it, you can change the device
 address to match your chip, and use the I2C2 peripheral on the GPIO header
 (header pins 27 and 28, port pins PB4 and PB5). The pin setup for these is
-already being done. Don't forget to change all occurances of I2C1 to I2C2.
+already being done. Don't forget to change all occurrences of I2C1 to I2C2.
 The Flexbar clock init is shared between I2C1 and I2C2, so no changes there are
 needed.
 

@@ -1,7 +1,7 @@
 ## Interrupt demonstration
 
 This project defines five IRQ handlers, with different priorities and
-demonstrates that nested interrupts works.
+demonstrates that nested interrupts work.
 
 Compile and load the program. When prompted, press a key into the console to
 trigger the UART IRQ. Or, press button USER2 on the EV1 board.
@@ -16,7 +16,7 @@ The SGI2 handler triggers an SGI1 interrupt, which has an even lower priority
 (0.0) and should run immediately, interrupting the SGI2 handler.
 
 After the SGI1 handler exits, it returns to the SGI2 handler. Then the SGI2
-handler exits and reutrns to either the UART handler or the SGI4 handler.
+handler exits and returns to either the UART handler or the SGI4 handler.
 
 This handler then triggers an SGI3 interrupt, which has the same priority as
 the UART IRQ and SGI4 handlers but with a lower sub-priority (3.0). Recall from

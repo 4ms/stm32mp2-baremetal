@@ -1,4 +1,4 @@
-## HAL
+## HAL DMA example
 
 This example demonstrates using the HAL DMA driver to copy memory contents.
 
@@ -39,7 +39,7 @@ UART_CHOICE := 6
 
 
 The example should work if you change the memory region to be in DDR, SYSRAM,
-SRAM1, etc. You can do that by changing the `__attribute__((section())))` name at
+SRAM1, etc. You can do that by changing the `__attribute__((section(...)))` name at
 the top of main.cc. The linkscript.ld has the section names. For example:
 
 For SYSRAM (0x0E000000 alias):

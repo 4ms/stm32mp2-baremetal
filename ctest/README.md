@@ -3,7 +3,7 @@
 This project clears the bss region, and initializes the static/global data section,
 and sets up the stack. All these things are required for C (or C++) functions to work.
 
-It does not setup the MMU, FPU, or caches. So performance is slow.
+It does not set up the MMU, FPU, or caches. So performance is slow.
 
 The output might be:
 
@@ -26,14 +26,14 @@ The "X" is a read-only global, which demonstrates read-only .data section is cor
 
 The "Y" is a read/write global, which demonstrates the .data section is correct.
 
-The "Z" is a written if the zero-initialized global is actually 0. If it is non-zero,
+The "Z" is written if the zero-initialized global is actually 0. If it is non-zero,
 then the program writes "*". This verifies bss is initialized.
 
 
 ### Configuring for your board
 
 If you're using the ST-LINK connection and the USART via that USB device, then 
-make sure the Makefile has the UART set to 2 (because the STLINK uses USART2):
+make sure the Makefile has the UART set to 2 (because the ST-LINK uses USART2):
 
 ```
 UART_CHOICE := 2

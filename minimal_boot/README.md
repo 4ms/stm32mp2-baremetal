@@ -14,5 +14,5 @@ startup messages scroll by in a terminal. Then... wait for it...
 MP2
 ```
 
-ITS ALIVE!!!!
+IT'S ALIVE!!!!
 

@@ -1,12 +1,12 @@
 # stm32mp2-baremetal
 
-This contains works-in-progress exploring using the STM32MP2xx chips in a
+This contains works-in-progress exploring the use of the STM32MP2xx chips in a
 bare-metal context on all cores.
 
 All projects are designed for the STM32MP257F-EV1 board, but changing to your
 own board should be trivial.
 
-The goal is to run full applications with access:
+The goal is to run full applications with access to:
   - √ EL3 Secure state
   - √ Nested interrupts (using the GIC)
   - √ MMU configuration
@@ -32,7 +32,7 @@ The goal is to run full applications with access:
 # Project setup
 
 This repo depends on our modified TF-A bootloader, so you need to clone that repo as well.
-Keep these organized with a parent dir.
+Keep them organized under a parent directory.
 
 ```bash
 # Create the project parent dir
@@ -59,7 +59,7 @@ mp2-dev/
 To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3, 13.1, and 14.2 have been tested but
 probably any later version will also work (please open an issue if you find a version that doesn't).
 
-This should be on your PATH, so you can run them like this:
+It should be on your PATH, so you can run it like this:
 
 ```bash
 aarch64-none-elf-gcc --version
@@ -69,11 +69,11 @@ aarch64-none-elf-gcc --version
 # Exception Level 3 (EL3) and Secure state
 
 All examples run in EL3 secure state. For this to happen, the bootloader needs
-to load the app in EL3 secure. You must use a our fork of TF-A BL2 (FSBL) as
+to load the app in EL3 secure. You must use our fork of TF-A BL2 (FSBL) as
 the sole bootloader. This FSBL is greatly simplified (much easier to build)
 from the stock TF-A + OP-TEE + U-Boot bootloader chain. 
 
-Our TF-A fork initiliazes DDR RAM and then loads your application as a secure
+Our TF-A fork initializes DDR RAM and then loads your application as a secure
 payload. There is no OP-TEE, U-Boot, or BL31 Secure Monitor running
 anymore. You only need the TF-A BL2 FSBL and your application.
 
@@ -247,7 +247,7 @@ minicom -D /dev/cu.usbmodem1102
 
 Now, press Reset on the EV1. You should see messages from TF-A and then your app!
 
-If you don't see anything, verify you built TF-A and you app with the right UART 
+If you don't see anything, verify you built TF-A and your app with the right UART
 selected (USART2 for ST-LINK, USART6 for GPIO Expander header + dongle).
 
 
@@ -364,7 +364,7 @@ If you re-compile and need to load the new binary, unfortunately the best way
 I've found is to press the hard reset button on the EV1 board. Usually openocd
 will re-connect, but if it doesn't then you have to unplug/plug the USB cable
 so it can re-enumerate the ST-LINK USB device. After doing this, you need to
-quit gdb and re-start it. This process is could use improvement (especially
+quit gdb and re-start it. This process could use improvement (especially
 losing the gdb history), so if anyone has a better way, please let me know
 (open an issue, PR, or comment). I've tried various commands like `monitor
 halt` and `monitor reset` but they inevitably make it harder to connect.
@@ -404,7 +404,7 @@ with the datasheet of the DCDC converter that this voltage is OK).
 With a J-Link, you can use JLink's GDB server, and then connect via gdb. Follow
 the instructions on SEGGER's wiki to set that up (it's fairly easy to do if you
 use their GDB Server GUI app). Or, you can use Ozone, which is also easy to use.
-I ran into issue when resetting my device, but I didn't try too hard to figure out
+I ran into an issue when resetting my device, but I didn't try too hard to figure out
 the problem. I was able to launch the gdb server and connect via gdb. Sometimes 
 I had to do `load` twice in a row for some reason. Also, if I immediately ran 
 the program after loading, it would work, but if I stepped through the startup

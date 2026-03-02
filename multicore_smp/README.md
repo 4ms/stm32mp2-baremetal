@@ -9,7 +9,7 @@ The reference manual calls it "Processor 1", and calls the main core "Processor 
 BL31 Secure Monitor calls it "Secondary CPU 1", and sometimes in code I call it the "aux" core.
 Both of these cores/processors are part of "CPU1".
 
-When run from EL1 non-secure, the main core uses the PCSI protocol (via SMCC) to send a message
+When run from EL1 non-secure, the main core uses the PSCI protocol (via SMCCC) to send a message
 to the Secure Monitor BL31 to launch the secondary core.
 The message is sent by putting a command number (0xC4000003) into register x0, the core to wakeup
 into register x1, and the execution address into register x2. Then an `smc` assembly instruction
@@ -22,7 +22,7 @@ reset the core manually. This is done by writing the address to execute into a
 register in the CA35SYSCFG registers, and the setting the C1P1
 (CPU1:Processor1) reset bit in the RCC registers.
 
-Once booted, each core prints `T1ck` or `T0ck` and sends a SGI interrupt to the other core.
+Once booted, each core prints `T1ck` or `T0ck` and sends an SGI interrupt to the other core.
 
 In EL1, with SMC:
 ```

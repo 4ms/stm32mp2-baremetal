@@ -10,7 +10,7 @@ DMA peripheral, which cannot see the cache. Therefore you must clean the linked
 lists from the cache after configuring them, but before using them.
 
 The SAI DMA writes and reads from a buffer you provide. This must also be made
-cache-consistant, so invalidating the rx_buffer before reading it, and cleaning
+cache-consistent, so invalidating the rx_buffer before reading it, and cleaning
 the tx_buffer after writing it will ensure the DMA and our app "see" the same
 data.
 
