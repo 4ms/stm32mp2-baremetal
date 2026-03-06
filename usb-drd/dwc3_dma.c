@@ -18,7 +18,8 @@
  * 16 KB pool gives comfortable headroom.
  */
 
-#include "dwc3_baremetal.h"
+#include <stdint.h>
+#include <dm/device_compat.h>
 #include <string.h>
 
 #define DWC3_DMA_POOL_SIZE (16u * 1024u)
