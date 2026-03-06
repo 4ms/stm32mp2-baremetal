@@ -4,8 +4,8 @@
 static uint32_t cntfreq_ms;
 extern "C" uint32_t SystemA35_SYSTICK_Config(uint32_t timer_priority)
 {
-	auto cntfreq = read_cntfreq();
-	cntfreq_ms = cntfreq / 1000;
+	auto cntfreq = read_cntfreq(); // ticks per second
+	cntfreq_ms = cntfreq / 1000;   // ticks per ms
 	// print("CNT Freq = ", hz, "\n");
 
 	cntp_enable(false);
@@ -16,6 +16,20 @@ extern "C" uint32_t SystemA35_SYSTICK_Config(uint32_t timer_priority)
 
 	cntp_enable(true);
 	return 0;
+}
+
+extern "C" void udelay(unsigned int us)
+{
+	auto now = read_cntpct();
+	while (read_cntpct() - now < (us * cntfreq_ms * 1000))
+		;
+}
+
+extern "C" void mdelay(unsigned int ms)
+{
+	auto now = read_cntpct();
+	while (read_cntpct() - now < (ms * cntfreq_ms))
+		;
 }
 
 extern "C" uint32_t HAL_GetTick(void)
