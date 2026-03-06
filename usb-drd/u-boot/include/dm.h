@@ -12,7 +12,8 @@ struct device {
 };
 
 /* U-Boot uses struct udevice; alias it */
-typedef struct device udevice;
+//typedef struct device udevice;
+#define udevice device
 
 #define dev_set_drvdata(dev, data)	((dev)->driver_data = (data))
 #define dev_get_drvdata(dev)		((dev)->driver_data)
