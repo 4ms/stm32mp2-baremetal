@@ -175,4 +175,35 @@ static inline void usb_gadget_set_state(struct usb_gadget *gadget,
 	gadget->state = state;
 }
 
+/* UDC framework shims — in U-Boot these live in udc-core.c.
+ * For bare-metal they're trivial wrappers. */
+
+static inline void usb_gadget_giveback_request(struct usb_ep *ep,
+					       struct usb_request *req)
+{
+	if (req->complete)
+		req->complete(ep, req);
+}
+
+static inline void usb_gadget_udc_reset(struct usb_gadget *gadget,
+					 struct usb_gadget_driver *driver)
+{
+	gadget->speed = USB_SPEED_UNKNOWN;
+	if (driver && driver->disconnect)
+		driver->disconnect(gadget);
+}
+
+static inline int usb_add_gadget_udc(struct device *parent,
+				     struct usb_gadget *gadget)
+{
+	(void)parent;
+	(void)gadget;
+	return 0;
+}
+
+static inline void usb_del_gadget_udc(struct usb_gadget *gadget)
+{
+	(void)gadget;
+}
+
 #endif /* _LINUX_USB_GADGET_H */
