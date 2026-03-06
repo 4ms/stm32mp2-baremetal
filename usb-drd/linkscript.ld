@@ -178,7 +178,7 @@ SECTIONS
     _irq_stack_size = _irq_stack_end - _irq_stack_start;
     _fiq_stack_size = _fiq_stack_end - _fiq_stack_start;
 
-	/* DMA-coherent pool — used by dwc3_dma.c */
+	/* DMA-coherent pool */
 	.dma_coherent (NOLOAD) :
 	{
 		. = ALIGN(64);

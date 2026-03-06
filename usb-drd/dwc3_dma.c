@@ -4,18 +4,6 @@
  * happen at init time and live for the lifetime of the controller.
  * A bump pointer over a static Non-Cacheable buffer is all we need.
  *
- * Memory placement
- * ----------------
- * The pool buffer lives in the .dma_coherent linker section.
- * You must:
- *   1. Place .dma_coherent at a 2MB-aligned DDR address in your
- *      linker script (e.g. 0x8A000000).
- *   2. Map that 2MB block as Non-Cacheable in your MMU tables:
- *        L1_ddr1.block_entry(0x8A000000,
- *                            MMU::MemType::Noncache,
- *                            MMU::AccessRW);
- *      (after the fill_block_entries call that sets DDR to Normal)
- *
  * Pool budget
  * -----------
  * DWC3 gadget-mode allocations at init:
@@ -40,8 +28,7 @@
  * typical cache-line size (harmless on NC memory, keeps hardware happy). */
 #define DWC3_DMA_ALIGN 64
 
-static uint8_t __attribute__((section(".dma_coherent"), aligned(DWC3_DMA_ALIGN)))
-	dma_pool[DWC3_DMA_POOL_SIZE];
+static uint8_t __attribute__((section(".dma_coherent"), aligned(DWC3_DMA_ALIGN))) dma_pool[DWC3_DMA_POOL_SIZE];
 
 static size_t dma_pool_offset;
 
@@ -50,12 +37,10 @@ static size_t dma_pool_offset;
 void *dma_alloc_coherent(size_t size, unsigned long *dma_handle)
 {
 	/* Align offset up */
-	dma_pool_offset = (dma_pool_offset + (DWC3_DMA_ALIGN - 1))
-			  & ~((size_t)DWC3_DMA_ALIGN - 1);
+	dma_pool_offset = (dma_pool_offset + (DWC3_DMA_ALIGN - 1)) & ~((size_t)DWC3_DMA_ALIGN - 1);
 
 	if (dma_pool_offset + size > DWC3_DMA_POOL_SIZE) {
-		dev_err(NULL, "DMA pool exhausted (need %zu, have %zu)\n",
-			size, DWC3_DMA_POOL_SIZE - dma_pool_offset);
+		dev_err(NULL, "DMA pool exhausted (need %zu, have %zu)\n", size, DWC3_DMA_POOL_SIZE - dma_pool_offset);
 		return NULL;
 	}
 
@@ -64,7 +49,6 @@ void *dma_alloc_coherent(size_t size, unsigned long *dma_handle)
 
 	memset(ptr, 0, size);
 
-	/* Identity-mapped: physical == virtual */
 	if (dma_handle)
 		*dma_handle = (unsigned long)ptr;
 
