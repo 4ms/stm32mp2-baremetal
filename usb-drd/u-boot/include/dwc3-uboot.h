@@ -45,5 +45,6 @@ struct dwc3;
 int dwc3_uboot_init(struct dwc3_device *dwc3_dev);
 void dwc3_uboot_exit(int index);
 void dwc3_uboot_handle_interrupt(int index);
+struct dwc3 *dwc3_uboot_get(int index);
 
 #endif /* _DWC3_UBOOT_H */

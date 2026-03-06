@@ -923,6 +923,23 @@ void dwc3_uboot_handle_interrupt(int index)
 	}
 }
 
+/**
+ * dwc3_uboot_get - retrieve dwc3 pointer by index
+ * @index: index of this controller (matches dwc3_device.index)
+ *
+ * Returns the struct dwc3 pointer, or NULL if not found.
+ */
+struct dwc3 *dwc3_uboot_get(int index)
+{
+	struct dwc3 *dwc;
+
+	list_for_each_entry(dwc, &dwc3_list, list) {
+		if (dwc->index == index)
+			return dwc;
+	}
+	return NULL;
+}
+
 MODULE_ALIAS("platform:dwc3");
 MODULE_AUTHOR("Felipe Balbi <balbi@ti.com>");
 MODULE_LICENSE("GPL v2");
@@ -1162,4 +1179,5 @@ void dwc3_remove(struct dwc3 *dwc)
 	dwc3_core_exit(dwc);
 	kfree(dwc->mem);
 }
+
 #endif
