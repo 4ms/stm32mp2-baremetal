@@ -12,8 +12,8 @@ typedef uint32_t irqflags_t;
 #define spin_lock_init(l)		do { } while (0)
 #define spin_lock(l)			do { } while (0)
 #define spin_unlock(l)			do { } while (0)
-#define spin_lock_irqsave(l, flags)	do { (void)(l); (flags) = 0; } while (0)
-#define spin_unlock_irqrestore(l, f)	do { (void)(l); (void)(f); } while (0)
+#define spin_lock_irqsave(l, flags)	do { } while (0)
+#define spin_unlock_irqrestore(l, f)	do { } while (0)
 
 #define mutex_init(m)			do { } while (0)
 #define mutex_lock(m)			do { } while (0)

@@ -46,12 +46,40 @@
 #define USB_INTRF_FUNC_SUSPEND		0
 #define USB_ENDPOINT_HALT		0
 
-/* Test mode selectors */
-#define USB_TEST_J		1
-#define USB_TEST_K		2
-#define USB_TEST_SE0_NAK	3
-#define USB_TEST_PACKET		4
-#define USB_TEST_FORCE_ENABLE	5
+/*
+ * Test Mode Selectors
+ * See USB 2.0 spec Table 9-7
+ */
+#define TEST_J		1
+#define TEST_K		2
+#define TEST_SE0_NAK	3
+#define TEST_PACKET		4
+#define TEST_FORCE_EN	5
+
+
+/*
+ * New Feature Selectors as added by USB 3.0
+ * See USB 3.0 spec Table 9-6
+ */
+#define USB_DEVICE_U1_ENABLE	48	/* dev may initiate U1 transition */
+#define USB_DEVICE_U2_ENABLE	49	/* dev may initiate U2 transition */
+#define USB_DEVICE_LTM_ENABLE	50	/* dev may send LTM */
+#define USB_INTRF_FUNC_SUSPEND	0	/* function suspend */
+
+#define USB_INTR_FUNC_SUSPEND_OPT_MASK	0xFF00
+/*
+ * Suspend Options, Table 9-7 USB 3.0 spec
+ */
+#define USB_INTRF_FUNC_SUSPEND_LP	(1 << (8 + 0))
+#define USB_INTRF_FUNC_SUSPEND_RW	(1 << (8 + 1))
+
+#define USB_ENDPOINT_HALT		0	/* IN/OUT will STALL */
+
+/* Bit array elements as returned by the USB_REQ_GET_STATUS request. */
+#define USB_DEV_STAT_U1_ENABLED		2	/* transition into U1 state */
+#define USB_DEV_STAT_U2_ENABLED		3	/* transition into U2 state */
+#define USB_DEV_STAT_LTM_ENABLED	4	/* Latency tolerance messages */
+
 
 /* Descriptor types */
 #define USB_DT_DEVICE			0x01

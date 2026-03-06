@@ -39,6 +39,11 @@
 	unlikely(__ret_warn_once);              \
 })
 
+#define BUG() do { \
+	printk("BUG at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
+	while(1); \
+} while (0)
+
 #define BUG_ON(cond) \
 	do { \
 		if (cond) { \
