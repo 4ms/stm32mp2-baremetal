@@ -61,20 +61,3 @@ void dma_free_coherent(void *ptr)
 	 * All DMA memory lives for the lifetime of the controller. */
 	(void)ptr;
 }
-
-/* ── Streaming DMA mapping (identity) ─────────────────────────── */
-
-uintptr_t dma_map_single(void *ptr, size_t size, int direction)
-{
-	/* NC memory + identity map: nothing to flush, address is 1:1 */
-	(void)size;
-	(void)direction;
-	return (uintptr_t)ptr;
-}
-
-void dma_unmap_single(uintptr_t dma, size_t size, int direction)
-{
-	(void)dma;
-	(void)size;
-	(void)direction;
-}

@@ -13,14 +13,14 @@
 #ifndef DWC3_BAREMETAL_H
 #define DWC3_BAREMETAL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ============================================================
  * SECTION 1: Platform descriptor
@@ -64,6 +64,7 @@ typedef struct {
 
 } dwc3_platform_t;
 
+#include "u-boot/include/linux/dma-mapping.h"
 /* ============================================================
  * SECTION 2: DMA / memory allocation shim
  *
@@ -91,13 +92,6 @@ void *dma_alloc_coherent(size_t size, unsigned long *dma_handle);
 /* Free DMA-coherent memory (no-op in monotonic allocator). */
 void dma_free_coherent(void *ptr);
 
-/* Map a normal buffer for DMA — identity on NC memory. */
-uintptr_t dma_map_single(void *ptr, size_t size, int direction);
-void dma_unmap_single(uintptr_t dma, size_t size, int direction);
-
-/* dma_mapping_error — always succeeds with identity mapping */
-#define dma_mapping_error(dev, addr) (0)
-
 /* DMA direction constants (match Linux values used in gadget.c) */
 #define DMA_TO_DEVICE 1
 #define DMA_FROM_DEVICE 2
@@ -108,8 +102,16 @@ void dma_unmap_single(uintptr_t dma, size_t size, int direction);
  * the driver's io.h does not need its U-Boot includes. */
 #define CONFIG_SYS_CACHELINE_SIZE 64
 #define CACHELINE_SIZE CONFIG_SYS_CACHELINE_SIZE
-static inline void flush_dcache_range(uintptr_t start, uintptr_t end) { (void)start; (void)end; }
-static inline void invalidate_dcache_range(uintptr_t start, uintptr_t end) { (void)start; (void)end; }
+static inline void flush_dcache_range(uintptr_t start, uintptr_t end)
+{
+	(void)start;
+	(void)end;
+}
+static inline void invalidate_dcache_range(uintptr_t start, uintptr_t end)
+{
+	(void)start;
+	(void)end;
+}
 #define ROUND(a, b) (((a) + (b) - 1) & ~((b) - 1))
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
@@ -264,8 +266,10 @@ static inline void run_pending_work(work_struct_t *w)
  * Route to your UART debug output or discard entirely.
  * ============================================================ */
 
-/* Provide your own uart_printf or replace with no-ops */
-extern int uart_printf(const char *fmt, ...);
+#include <stdio.h>
+
+// extern int uart_printf(const char *fmt, ...);
+#define uart_printf printf
 
 #define dev_dbg(dev, fmt, ...) uart_printf("[DWC3 DBG] " fmt, ##__VA_ARGS__)
 #define dev_info(dev, fmt, ...) uart_printf("[DWC3 INF] " fmt, ##__VA_ARGS__)
