@@ -264,4 +264,22 @@ static inline int usb_endpoint_xfer_control(const struct usb_endpoint_descriptor
 	return usb_endpoint_type(epd) == USB_ENDPOINT_XFER_CONTROL;
 }
 
+static inline u16 usb_endpoint_maxp(const struct usb_endpoint_descriptor *epd)
+{
+	return le16_to_cpu(epd->wMaxPacketSize) & 0x07ff;
+}
+
+static inline int
+usb_ss_max_streams(const struct usb_ss_ep_comp_descriptor *comp)
+{
+	int max_streams;
+
+	if (!comp)
+		return 0;
+	max_streams = comp->bmAttributes & 0x1f;
+	if (!max_streams)
+		return 0;
+	return 1 << max_streams;
+}
+
 #endif /* _LINUX_USB_CH9_H */

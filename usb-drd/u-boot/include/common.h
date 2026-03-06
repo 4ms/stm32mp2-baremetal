@@ -15,6 +15,7 @@
 #include <linux/bug.h>
 #include <linux/spinlock.h>
 #include <linux/slab.h>
+#include <linux/interrupt.h>
 #include <log.h>
 
 /* errno values used by the driver */

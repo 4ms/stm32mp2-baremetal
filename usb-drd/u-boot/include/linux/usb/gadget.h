@@ -10,6 +10,7 @@ typedef int gfp_t;
 struct usb_ep;
 struct usb_request;
 struct usb_gadget;
+struct usb_gadget_driver;
 
 /* Completion callback for async I/O */
 typedef void (*usb_request_complete_t)(struct usb_ep *ep,
@@ -68,6 +69,7 @@ struct usb_ep {
 	unsigned		maxpacket_limit:16;
 	unsigned		max_streams:16;
 	unsigned		mult:2;
+	unsigned		maxburst:5;
 	u8			address;
 	const struct usb_endpoint_descriptor	*desc;
 	const struct usb_ss_ep_comp_descriptor	*comp_desc;

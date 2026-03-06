@@ -52,4 +52,8 @@
 		} \
 	} while (0)
 
+#define BUILD_BUG_ON_NOT_POWER_OF_2(n)
+#define BUILD_BUG_ON_ZERO(e)	(0)
+#define BUILD_BUG_ON(condition)
+
 #endif /* _LINUX_BUG_H */
