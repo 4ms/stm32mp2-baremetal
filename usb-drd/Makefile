@@ -6,13 +6,14 @@ SOURCES := startup.s
 SOURCES += system_init.cc
 SOURCES += main.cc
 SOURCES += mmu.cc
-SOURCES += dwc3_dma.c
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
 SOURCES += $(SHAREDDIR)/drivers/pin.cc
 SOURCES += $(SHAREDDIR)/interrupt/irq_init.c
 SOURCES += $(SHAREDDIR)/interrupt/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/newlib/syscall_stubs.c
+SOURCES += $(SHAREDDIR)/newlib/syscall_stdio.c
+SOURCES += $(SHAREDDIR)/newlib/sbrk.cc
 SOURCES += $(SHAREDDIR)/newlib/libcpp_stub.cc
 SOURCES += $(SHAREDDIR)/print/uart_print.c
 SOURCES += $(SHAREDDIR)/print/print.cc
@@ -22,6 +23,10 @@ SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_cortex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_rcc_ex.c
+
+SOURCES += dwc3_dma.c
+SOURCES += dwc3_baremetal.c
+SOURCES += cdc_acm.c
 
 SOURCES_DWC := 
 SOURCES_DWC += dwc3/core.c
@@ -51,10 +56,9 @@ OPTFLAG := -O2
 LINK_STDLIB := 
 
 # Uncomment this to use USART6 via the GPIO Expander header
-# UART_CHOICE := 6
+UART_CHOICE := 6
 
-OPTFLAG := -Ofast 
-FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
+# FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
 
 FREESTANDING := 
 
