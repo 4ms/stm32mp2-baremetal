@@ -6,6 +6,7 @@ SOURCES := startup.s
 SOURCES += system_init.cc
 SOURCES += main.cc
 SOURCES += mmu.cc
+SOURCES += dwc3_dma.c
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
 SOURCES += $(SHAREDDIR)/drivers/pin.cc
@@ -33,6 +34,9 @@ INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
 
 OPTFLAG := -O2
+
+# Link stdlib for printf, malloc...
+LINK_STDLIB := 
 
 # Uncomment this to use USART6 via the GPIO Expander header
 # UART_CHOICE := 6
