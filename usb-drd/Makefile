@@ -25,9 +25,8 @@ SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_rcc_ex.c
 
 SOURCES_DWC := 
 SOURCES_DWC += dwc3/core.c
-# SOURCES_DWC += dwc3/dwc3-generic.c
-# SOURCES_DWC += dwc3/ep0.c
-# SOURCES_DWC += dwc3/gadget.c
+SOURCES_DWC += dwc3/ep0.c
+SOURCES_DWC += dwc3/gadget.c
 
 SOURCES += $(SOURCES_DWC)
 
