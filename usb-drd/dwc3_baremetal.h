@@ -13,6 +13,10 @@
 #ifndef DWC3_BAREMETAL_H
 #define DWC3_BAREMETAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -435,4 +439,7 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform);
  */
 void dwc3_baremetal_shutdown(struct dwc3 *dwc);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* DWC3_BAREMETAL_H */
