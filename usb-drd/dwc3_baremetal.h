@@ -70,33 +70,59 @@ typedef struct {
  * DWC3 needs DMA-coherent memory for:
  *   - TRB rings   (struct dwc3_trb[])
  *   - Event buffers (struct dwc3_event_buffer)
- *   - Scratchpad (xHCI host mode only)
+ *   - Scratchpad (only if hibernation — not used in bare-metal)
  *
- * On AArch64 bare-metal with these regions mapped as
- * Normal Non-Cacheable (MAIR index with 0x44), coherency
+ * On AArch64 bare-metal with DMA buffers mapped as
+ * Normal Non-Cacheable (MAIR index 0x44), coherency
  * is automatic — no flush/invalidate needed.
  *
- * You must provide these four functions backed by a
- * Non-Cacheable memory pool (e.g. a static linker section
- * or a simple bump allocator over an NC-mapped region).
+ * Implementation: dwc3_dma.c provides a monotonic bump allocator
+ * over a static pool in the .dma_coherent linker section.
+ *
+ * Signatures below match the U-Boot calling convention used
+ * throughout core.c / gadget.c / ep0.c.
  * ============================================================ */
 
 /* Allocate zeroed DMA-coherent memory.
- * align: minimum alignment in bytes (TRBs need 16-byte alignment). */
-void *dma_alloc_coherent(size_t size, uintptr_t *dma_handle, size_t align);
+ * Returns virtual pointer; *dma_handle receives the bus address.
+ * On identity-mapped bare-metal these are the same value. */
+void *dma_alloc_coherent(size_t size, unsigned long *dma_handle);
 
-/* Free DMA-coherent memory. */
-void dma_free_coherent(void *ptr, uintptr_t dma_handle, size_t size);
+/* Free DMA-coherent memory (no-op in monotonic allocator). */
+void dma_free_coherent(void *ptr);
 
-/* Map a normal (cached) buffer for DMA — if your data buffers
- * are also NC-mapped you can make these no-ops. */
+/* Map a normal buffer for DMA — identity on NC memory. */
 uintptr_t dma_map_single(void *ptr, size_t size, int direction);
 void dma_unmap_single(uintptr_t dma, size_t size, int direction);
+
+/* dma_mapping_error — always succeeds with identity mapping */
+#define dma_mapping_error(dev, addr) (0)
 
 /* DMA direction constants (match Linux values used in gadget.c) */
 #define DMA_TO_DEVICE 1
 #define DMA_FROM_DEVICE 2
 #define DMA_BIDIRECTIONAL 0
+
+/* Cache maintenance — no-op when DMA buffers are Non-Cacheable.
+ * dwc3_flush_cache() is called from io.h; we override it here so
+ * the driver's io.h does not need its U-Boot includes. */
+#define CONFIG_SYS_CACHELINE_SIZE 64
+#define CACHELINE_SIZE CONFIG_SYS_CACHELINE_SIZE
+static inline void flush_dcache_range(uintptr_t start, uintptr_t end) { (void)start; (void)end; }
+static inline void invalidate_dcache_range(uintptr_t start, uintptr_t end) { (void)start; (void)end; }
+#define ROUND(a, b) (((a) + (b) - 1) & ~((b) - 1))
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+
+/* memalign — used by core.c for ev_buffs array and by gadget.c
+ * for setup_buf.  These are regular (non-DMA) allocations.
+ * Newlib provides memalign(); declare it here so the driver
+ * doesn't need U-Boot's <malloc.h>.  The returned pointer is
+ * free()-compatible. */
+void *memalign(size_t alignment, size_t size);
+
+/* kmalloc_array — only used for scratch buffers (hibernation),
+ * which we never enable.  Provide it for link completeness. */
+#define kmalloc_array(n, size, flags) calloc((n), (size))
 
 /* ============================================================
  * SECTION 3: MMIO access shim

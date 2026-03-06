@@ -8,6 +8,13 @@ MEMORY
     ROM (rx) :   ORIGIN = 0x88000040, LENGTH = 16M
     RAM (rwx):   ORIGIN = 0x90000000, LENGTH = 16M
 
+    /* DMA-coherent pool for DWC3 USB driver.
+     * This 2MB-aligned region must be mapped as Non-Cacheable in the MMU:
+     *   L1_ddr1.block_entry(0x8A000000, MMU::MemType::Noncache, MMU::AccessRW);
+     * (add after the fill_block_entries that maps DDR as Normal)
+     * Only ~16 KB is used; the rest of the 2MB block is unused. */
+    DMA_NC (rw): ORIGIN = 0x8A000000, LENGTH = 2M
+
 	/* Non-Secure Boot Aliases */
 	B_S_SYSRAM (rw): ORIGIN = 0x0A000000, LENGTH = 256K
 	B_S_SRAM1 (rw):  ORIGIN = 0x0A040000, LENGTH = 128K
@@ -171,15 +178,14 @@ SECTIONS
     _irq_stack_size = _irq_stack_end - _irq_stack_start;
     _fiq_stack_size = _fiq_stack_end - _fiq_stack_start;
 
-	/*
-	.dma_buffer (NOLOAD) :
+	/* DMA-coherent pool — used by dwc3_dma.c */
+	.dma_coherent (NOLOAD) :
 	{
-		. = ALIGN(8);
-		*(.dma_buffer)
-		*(.dma_buffer*)
-		. = ALIGN(8);
-	} > SRAM3
-	*/
+		. = ALIGN(64);
+		*(.dma_coherent)
+		*(.dma_coherent*)
+		. = ALIGN(64);
+	} > DMA_NC
 	
 
   /* Remove information from the compiler libraries */
