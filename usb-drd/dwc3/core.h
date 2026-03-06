@@ -24,6 +24,12 @@
 #include <linux/usb/otg.h>
 #include <linux/usb/phy.h>
 
+#include <common.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DWC3_MSG_MAX	500
 
 /* Global constants */
@@ -1079,6 +1085,10 @@ static inline int dwc3_send_gadget_ep_cmd(struct dwc3 *dwc, unsigned ep,
 static inline int dwc3_send_gadget_generic_command(struct dwc3 *dwc,
 		int cmd, u32 param)
 { return 0; }
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __DRIVERS_USB_DWC3_CORE_H */

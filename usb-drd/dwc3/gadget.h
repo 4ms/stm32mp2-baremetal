@@ -22,6 +22,10 @@
 #include <linux/usb/gadget.h>
 #include "io.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct dwc3;
 #define to_dwc3_ep(ep)		(container_of(ep, struct dwc3_ep, endpoint))
 #define gadget_to_dwc(g)	(container_of(g, struct dwc3, gadget))
@@ -103,5 +107,9 @@ static inline u32 dwc3_gadget_ep_get_transfer_index(struct dwc3 *dwc, u8 number)
 
 	return DWC3_DEPCMD_GET_RSC_IDX(res_id);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DRIVERS_USB_DWC3_GADGET_H */
