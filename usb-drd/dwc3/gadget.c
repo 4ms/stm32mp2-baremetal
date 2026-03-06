@@ -24,6 +24,7 @@
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/list.h>
+#include <linux/errno.h>
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>

@@ -138,17 +138,17 @@ static struct dwc3_event_buffer *dwc3_alloc_one_event_buffer(struct dwc3 *dwc,
 {
 	struct dwc3_event_buffer	*evt;
 
-	evt = devm_kzalloc((struct udevice *)dwc->dev, sizeof(*evt),
+	evt = (struct dwc3_event_buffer *)devm_kzalloc((struct udevice *)dwc->dev, sizeof(*evt),
 			   GFP_KERNEL);
 	if (!evt)
-		return ERR_PTR(-ENOMEM);
+		return (struct dwc3_event_buffer *)ERR_PTR(-ENOMEM);
 
 	evt->dwc	= dwc;
 	evt->length	= length;
 	evt->buf	= dma_alloc_coherent(length,
 					     (unsigned long *)&evt->dma);
 	if (!evt->buf)
-		return ERR_PTR(-ENOMEM);
+		return (struct dwc3_event_buffer *)ERR_PTR(-ENOMEM);
 
 	dwc3_flush_cache((uintptr_t)evt->buf, evt->length);
 
@@ -187,7 +187,7 @@ static int dwc3_alloc_event_buffers(struct dwc3 *dwc, unsigned length)
 	num = DWC3_NUM_INT(dwc->hwparams.hwparams1);
 	dwc->num_event_buffers = num;
 
-	dwc->ev_buffs = memalign(CONFIG_SYS_CACHELINE_SIZE,
+	dwc->ev_buffs = (struct dwc3_event_buffer **)memalign(CONFIG_SYS_CACHELINE_SIZE,
 				 sizeof(*dwc->ev_buffs) * num);
 	if (!dwc->ev_buffs)
 		return -ENOMEM;
