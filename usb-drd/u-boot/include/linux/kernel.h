@@ -23,4 +23,24 @@
 #define upper_32_bits(n)	((u32)(((n) >> 16) >> 16))
 #define lower_32_bits(n)	((u32)(n))
 
+/* Pointer alignment */
+#define PTR_ALIGN(p, a)		((typeof(p))ALIGN((unsigned long)(p), (a)))
+
+/* IS_ENABLED — evaluates Kconfig-style symbols.
+ * For bare-metal, define the symbols we want enabled. */
+#define __ARG_PLACEHOLDER_1	0,
+#define __take_second_arg(__ignored, val, ...)	val
+#define __is_defined(x)		___is_defined(x)
+#define ___is_defined(val)	____is_defined(__ARG_PLACEHOLDER_##val)
+#define ____is_defined(arg1_or_junk)	__take_second_arg(arg1_or_junk 1, 0, 0)
+#define IS_ENABLED(option)	__is_defined(option)
+
+/* Define which features we want active for bare-metal gadget mode */
+#define CONFIG_USB_DWC3_GADGET	1
+/* CONFIG_USB_HOST deliberately not defined — we want gadget mode */
+
+/* printk — used by WARN_ON etc. */
+#include <stdio.h>
+#define printk	printf
+
 #endif /* _LINUX_KERNEL_H */

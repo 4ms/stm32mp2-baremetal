@@ -3,8 +3,41 @@
 
 #include <stdio.h>
 
-#define WARN_ON(cond)		((void)(cond))
-#define WARN_ON_ONCE(cond)	((void)(cond))
+#define WARN_ON(condition) ({						\
+	int __ret_warn_on = !!(condition);				\
+	if (unlikely(__ret_warn_on))					\
+		printk("WARNING at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
+	unlikely(__ret_warn_on);					\
+})
+
+#define WARN(condition, format...) ({                   \
+	int __ret_warn_on = !!(condition);              \
+	if (unlikely(__ret_warn_on))                    \
+		printf(format);                  \
+	unlikely(__ret_warn_on);                    \
+})
+
+#define WARN_ON_ONCE(condition)	({				\
+	static bool __warned;					\
+	int __ret_warn_once = !!(condition);			\
+								\
+	if (unlikely(__ret_warn_once && !__warned)) {		\
+		__warned = true;				\
+		WARN_ON(1);					\
+	}							\
+	unlikely(__ret_warn_once);				\
+})
+
+#define WARN_ONCE(condition, format...) ({          \
+	static bool __warned;     \
+	int __ret_warn_once = !!(condition);            \
+								\
+	if (unlikely(__ret_warn_once && !__warned)) {       \
+		__warned = true;                \
+		WARN(1, format);                \
+	}                           \
+	unlikely(__ret_warn_once);              \
+})
 
 #define BUG_ON(cond) \
 	do { \
