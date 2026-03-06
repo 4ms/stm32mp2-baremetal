@@ -1,6 +1,10 @@
+#pragma once
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <asm/dma-mapping.h>
 
 #ifdef __cplusplus
 extern "C" {

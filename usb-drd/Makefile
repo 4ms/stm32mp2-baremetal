@@ -31,6 +31,11 @@ INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
 
 INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 
+INCLUDES += -isystem u-boot/include
+INCLUDES += -isystem u-boot/arch/arm/include
+INCLUDES += -Iu-boot/include
+INCLUDES += -Iu-boot/arch/arm/include
+
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
 
 OPTFLAG := -O2

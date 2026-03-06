@@ -64,7 +64,6 @@ typedef struct {
 
 } dwc3_platform_t;
 
-#include "u-boot/include/linux/dma-mapping.h"
 /* ============================================================
  * SECTION 2: DMA / memory allocation shim
  *
@@ -83,19 +82,7 @@ typedef struct {
  * Signatures below match the U-Boot calling convention used
  * throughout core.c / gadget.c / ep0.c.
  * ============================================================ */
-
-/* Allocate zeroed DMA-coherent memory.
- * Returns virtual pointer; *dma_handle receives the bus address.
- * On identity-mapped bare-metal these are the same value. */
-void *dma_alloc_coherent(size_t size, unsigned long *dma_handle);
-
-/* Free DMA-coherent memory (no-op in monotonic allocator). */
-void dma_free_coherent(void *ptr);
-
-/* DMA direction constants (match Linux values used in gadget.c) */
-#define DMA_TO_DEVICE 1
-#define DMA_FROM_DEVICE 2
-#define DMA_BIDIRECTIONAL 0
+#include <linux/dma-mapping.h>
 
 /* Cache maintenance — no-op when DMA buffers are Non-Cacheable.
  * dwc3_flush_cache() is called from io.h; we override it here so
