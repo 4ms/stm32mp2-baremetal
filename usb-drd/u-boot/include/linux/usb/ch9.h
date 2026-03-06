@@ -184,6 +184,40 @@ struct usb_config_descriptor {
 } __packed;
 
 #define USB_DT_CONFIG_SIZE	9
+#define USB_DT_ENDPOINT_SIZE	7
+#define USB_DT_DEVICE_SIZE	18
+#define USB_DT_INTERFACE_SIZE	9
+
+/* Device descriptor */
+struct usb_device_descriptor {
+	__u8  bLength;
+	__u8  bDescriptorType;
+	__le16 bcdUSB;
+	__u8  bDeviceClass;
+	__u8  bDeviceSubClass;
+	__u8  bDeviceProtocol;
+	__u8  bMaxPacketSize0;
+	__le16 idVendor;
+	__le16 idProduct;
+	__le16 bcdDevice;
+	__u8  iManufacturer;
+	__u8  iProduct;
+	__u8  iSerialNumber;
+	__u8  bNumConfigurations;
+} __packed;
+
+/* Interface descriptor */
+struct usb_interface_descriptor {
+	__u8  bLength;
+	__u8  bDescriptorType;
+	__u8  bInterfaceNumber;
+	__u8  bAlternateSetting;
+	__u8  bNumEndpoints;
+	__u8  bInterfaceClass;
+	__u8  bInterfaceSubClass;
+	__u8  bInterfaceProtocol;
+	__u8  iInterface;
+} __packed;
 
 /* Status type (for GET_STATUS) */
 #define USB_STATUS_SELFPOWERED	0x0001
