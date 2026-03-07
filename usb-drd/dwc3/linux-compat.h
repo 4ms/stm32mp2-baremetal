@@ -11,6 +11,6 @@
 #ifndef __DWC3_LINUX_COMPAT__
 #define __DWC3_LINUX_COMPAT__
 
-#define dev_WARN(dev, format, arg...)	debug(format, ##arg)
+#define dev_WARN(dev, format, arg...) debug(format, ##arg)
 
 #endif

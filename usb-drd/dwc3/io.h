@@ -17,10 +17,10 @@
 #ifndef __DRIVERS_USB_DWC3_IO_H
 #define __DRIVERS_USB_DWC3_IO_H
 
-#include <cpu_func.h>
 #include <asm/io.h>
+#include <cpu_func.h>
 
-#define	CACHELINE_SIZE		CONFIG_SYS_CACHELINE_SIZE
+#define CACHELINE_SIZE CONFIG_SYS_CACHELINE_SIZE
 static inline u32 dwc3_readl(void __iomem *base, u32 offset)
 {
 	unsigned long offs = offset - DWC3_GLOBALS_REGS_START;
