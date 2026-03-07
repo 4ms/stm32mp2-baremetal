@@ -11,18 +11,24 @@
 #include <linux/usb/ch9.h>
 
 /* STM32MP257 USB3DRD is on AHB5 at offset 0x100000 */
-#define USB3DRD_BASE_ADDR	0x48300000UL
+#define USB3DRD_BASE_ADDR 0x48300000UL
 
 /* RCC register offsets for OTG and USB2PHY2 */
-#define RCC_BASE_ADDR		0x44200000UL
-#define RCC_OTGCFGR		(*(volatile uint32_t *)(RCC_BASE_ADDR + 0x0808UL))
-#define RCC_USB2PHY2CFGR	(*(volatile uint32_t *)(RCC_BASE_ADDR + 0x080CUL))
+#define RCC_BASE_ADDR 0x44200000UL
+#define RCC_OTGCFGR (*(volatile uint32_t *)(RCC_BASE_ADDR + 0x0808UL))
+#define RCC_USB2PHY2CFGR (*(volatile uint32_t *)(RCC_BASE_ADDR + 0x080CUL))
 
 /* Bit definitions */
-#define RCC_OTGCFGR_OTGRST	(1U << 0)
-#define RCC_OTGCFGR_OTGEN	(1U << 1)
-#define RCC_USB2PHY2CFGR_RST	(1U << 0)
-#define RCC_USB2PHY2CFGR_EN	(1U << 1)
+#define RCC_OTGCFGR_OTGRST (1U << 0)
+#define RCC_OTGCFGR_OTGEN (1U << 1)
+#define RCC_USB2PHY2CFGR_RST (1U << 0)
+#define RCC_USB2PHY2CFGR_EN (1U << 1)
+
+/* SYSCFG USB3DRCR — USB3DR controller wrapper configuration */
+#define SYSCFG_BASE_ADDR 0x44230000UL
+#define SYSCFG_USB3DRCR (*(volatile uint32_t *)(SYSCFG_BASE_ADDR + 0x4800UL))
+#define USB3DRCR_USB2ONLYH (1U << 3) /* USB2-only host mode */
+#define USB3DRCR_USB2ONLYD (1U << 4) /* USB2-only device mode */
 
 struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 {
@@ -36,7 +42,13 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	RCC_OTGCFGR &= ~RCC_OTGCFGR_OTGRST;
 	udelay(100);
 
-	/* 3. Populate dwc3_device for the U-Boot driver */
+	/* 3. Configure USB3DR wrapper for USB2-only device mode.
+	 * Without this, the DWC3 core tries to use the USB3 COMBOPHY
+	 * which we haven't initialized, causing endpoint commands to hang. */
+	SYSCFG_USB3DRCR |= USB3DRCR_USB2ONLYD;
+	udelay(100);
+
+	/* 4. Populate dwc3_device for the U-Boot driver */
 	struct dwc3_device dwc3_dev;
 	memset(&dwc3_dev, 0, sizeof(dwc3_dev));
 
@@ -50,14 +62,14 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 		dwc3_dev.dis_enblslpm_quirk = platform->dis_enblslpm_quirk;
 	}
 
-	/* 4. Call into U-Boot DWC3 core init */
+	/* 5. Call into U-Boot DWC3 core init */
 	int ret = dwc3_uboot_init(&dwc3_dev);
 	if (ret) {
 		printf("dwc3_uboot_init failed: %d\n", ret);
 		return NULL;
 	}
 
-	/* 5. Retrieve the dwc3 pointer */
+	/* 6. Retrieve the dwc3 pointer */
 	struct dwc3 *dwc = dwc3_uboot_get(dwc3_dev.index);
 	if (!dwc) {
 		printf("dwc3_uboot_get failed\n");
