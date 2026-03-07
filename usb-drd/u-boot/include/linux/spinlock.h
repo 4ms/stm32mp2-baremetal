@@ -5,8 +5,8 @@
 
 /* Single-core bare-metal: all lock operations are no-ops. */
 
-typedef struct { } spinlock_t;
-typedef struct { } mutex_t;
+typedef struct { void * x; } spinlock_t;
+typedef struct { void * x; } mutex_t;
 typedef uint32_t irqflags_t;
 
 #define spin_lock_init(l)		do { } while (0)
