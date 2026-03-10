@@ -25,6 +25,17 @@
 
 struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 {
+	// Open RISAF4 region for DWC3 DMA access to DDR at 0x8A000000.
+	// Without this, the USB3DRD bus master's DMA writes are silently blocked.
+	if (!(RISAF4->CR & RISAF_CR_GLOCK)) {
+		auto &reg = RISAF4->REG[14];
+		reg.CFGR &= ~RISAF_REGCFGR_BREN;
+		reg.STARTR = 0x0A000000;
+		reg.ENDR = 0x0A1FFFFF;
+		reg.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
+		reg.CFGR = RISAF_REGCFGR_BREN;
+	}
+
 	// Enable clocks before reset??
 
 	// Enable USB2 PHY2 clock
