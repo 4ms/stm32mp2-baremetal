@@ -51,4 +51,37 @@ inline void set_pll(PLLSettings v)
 		;
 }
 
+template<typename PLLT>
+inline PLLSettings get_pll_settings()
+{
+	PLLSettings v;
+	auto mux = MuxSel<PLLT>::Mux::read();
+	v.src = mux == 0 ? MuxSelSource::hsi :
+			mux == 1 ? MuxSelSource::hse :
+			mux == 2 ? MuxSelSource::msi :
+					   MuxSelSource::hsi; // default to hsi on invalid value
+	v.mult = PLLT::FBDIVMult::read();
+	v.refdiv = PLLT::FREFDiv::read();
+	v.postdiv1 = PLLT::PostDiv1::read();
+	v.postdiv2 = PLLT::PostDiv2::read();
+	v.frac = PLLT::FracMult::read();
+	return v;
+}
+
+template<typename PLLT>
+inline PLLSettings print_pll_settings(auto printf_)
+{
+	PLLSettings pll = get_pll_settings<PLLT>();
+	printf_("PLL: %s /%d x%d /%d /%d frac:%u\n",
+			pll.src == RCC_Clocks::MuxSelSource::hsi ? "hsi" :
+			pll.src == RCC_Clocks::MuxSelSource::hse ? "hse" :
+			pll.src == RCC_Clocks::MuxSelSource::msi ? "msi" :
+													   "???",
+			pll.refdiv,
+			pll.mult,
+			pll.postdiv1,
+			pll.postdiv2,
+			pll.frac);
+}
+
 } // namespace RCC_Clocks
