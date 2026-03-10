@@ -1,5 +1,6 @@
 #include "cdc_acm.h"
 #include "drivers/pin.hh"
+#include "drivers/pwr_vdd.hh"
 #include "drivers/rcc.hh"
 #include "drivers/rcc_xbar.hh"
 #include "dwc3/core.h"
@@ -15,6 +16,7 @@ int main()
 {
 	print("USB DRD Example\n");
 	HAL_Init();
+	PowerControl::enable_usb33(PowerControl::Present::If);
 
 	struct dwc3 *dwc = dwc3_baremetal_init(nullptr);
 	if (!dwc) {
@@ -22,17 +24,38 @@ int main()
 		return -1;
 	}
 
-	cdc_acm_init(&dwc->gadget);
+	int r = cdc_acm_init(&dwc->gadget);
+	print("cdc_acm_init: ", r, "\n");
+
+	// Pin not right?
+	// Pin vbus_det(GPIO::F, 10, PinMode::Input);
+
+	// For now, pretend like VBUS is always present
+	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
+
+	// bool conn_detected = false;
 
 	while (true) {
+		// if (vbus_det.is_on()) {
+		// 	if (!conn_detected) {
+		// 		conn_detected = true;
+		// 		SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
+		// 		printf("Connected\n");
+		// 	}
+		// } else {
+		// 	if (conn_detected) {
+		// 		conn_detected = false;
+		// 		SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_VBUSVLDEXT;
+		// 		printf("Disconnected\n");
+		// 	}
+		// }
+
 		dwc3_gadget_uboot_handle_interrupt(dwc);
 
 		char buf[64];
 		int n = cdc_acm_read(buf, sizeof(buf));
 		if (n > 0)
 			cdc_acm_write(buf, n); // echo back
-
-		asm("nop");
 	}
 }
 
