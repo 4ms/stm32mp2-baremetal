@@ -99,10 +99,11 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 
 	////////////////////
 
-	// Enable VBUS valid comparator
-	// Doesn't work (no hard-wired VBUS Detect pin)
-	// SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_OTGDISABLE0;
-	// Use external comparator in device mode (init to no vbus)
+	// Use external VBUS comparator in device mode.
+	// Match U-Boot femtoPHY: select external comparator (VBUSVLDEXTSEL=1)
+	// but do NOT assert VBUS yet (VBUSVLDEXT=0).  VBUS is asserted later,
+	// after dwc3 core+gadget init, just before gadget_start — same timing
+	// as U-Boot's phy_set_mode_ext call.
 	SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_VBUSVLDEXT;
 	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL;
 
@@ -199,6 +200,18 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	if (!dwc) {
 		printf("dwc3_uboot_get failed\n");
 		return NULL;
+	}
+
+	/* GUCTL1 configuration — present in U-Boot's dwc3_init() (DM path)
+	 * but missing from dwc3_uboot_init() (non-DM path).
+	 * Rev 3.30b >= 2.90a, so set DEV_L1_EXIT_BY_HW. */
+	if (dwc->revision >= DWC3_REVISION_250A) {
+		u32 reg = dwc3_readl(dwc->regs, DWC3_GUCTL1);
+		if (dwc->revision >= DWC3_REVISION_290A)
+			reg |= DWC3_GUCTL1_DEV_L1_EXIT_BY_HW;
+		if (dwc->dis_tx_ipgap_linecheck_quirk)
+			reg |= DWC3_GUCTL1_TX_IPGAP_LINECHECK_DIS;
+		dwc3_writel(dwc->regs, DWC3_GUCTL1, reg);
 	}
 
 	return dwc;
