@@ -34,8 +34,10 @@
 #define __LINUX_USB_CH9_H
 
 #include <linux/types.h>	/* __u8 etc */
-#include <asm/byteorder.h>	/* le16_to_cpu */
-#include <asm/unaligned.h>	/* get_unaligned() */
+#include <linux/compiler.h>
+#define __le16_to_cpu(x) le16_to_cpu(x)
+//#include <asm/byteorder.h>	/* le16_to_cpu */
+//#include <asm/unaligned.h>	/* get_unaligned() */
 
 /*-------------------------------------------------------------------------*/
 
@@ -628,7 +630,8 @@ static inline int usb_endpoint_is_isoc_out(
  */
 static inline int usb_endpoint_maxp(const struct usb_endpoint_descriptor *epd)
 {
-	return __le16_to_cpu(get_unaligned(&epd->wMaxPacketSize));
+	// return __le16_to_cpu(get_unaligned(&epd->wMaxPacketSize));
+	return __le16_to_cpu(epd->wMaxPacketSize) & 0x07ff;
 }
 
 /**
