@@ -160,6 +160,9 @@ static inline int usb_ep_queue(struct usb_ep *ep, struct usb_request *req,
 static inline int usb_gadget_map_request(struct usb_gadget *gadget,
 					 struct usb_request *req, int is_in)
 {
+	if (req->length == 0)
+		return 0;
+
 	/* Identity-mapped bare-metal: DMA address == virtual address */
 	req->dma = (dma_addr_t)(uintptr_t)req->buf;
 	return 0;
