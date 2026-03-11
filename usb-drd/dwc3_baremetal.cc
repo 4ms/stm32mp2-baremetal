@@ -134,6 +134,13 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 		return NULL;
 	}
 
+	/* Configure AHB burst mode: INCR4 only (matches stm32mp257f-ev1-revB DTS).
+	 * Leaves undefined-length INCR disabled to avoid RISAF/AHB5 bus issues. */
+	{
+		volatile uint32_t *gsbuscfg0 = (volatile uint32_t *)(USB3DRD_BASE_ADDR + 0xc100);
+		*gsbuscfg0 = (*gsbuscfg0 & ~0xffu) | (1u << 1); /* INCR4BRSTENA only */
+	}
+
 	/* Retrieve the dwc3 pointer */
 	struct dwc3 *dwc = dwc3_uboot_get(dwc3_dev.index);
 	if (!dwc) {
