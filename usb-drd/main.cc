@@ -30,6 +30,13 @@ int main()
 	int r = cdc_acm_init(&dwc->gadget);
 	print("cdc_acm_init: ", r, "\n");
 
+	// Post-gadget-start register check (compare with U-Boot during ums operation)
+	// U-Boot: DCFG=0x00480830 DCTL=0x8c000a00 DEVTEN=0x0000121f DSTS=0x00823a30
+	printf("Post-init DCFG:  0x%08x\n", *(volatile uint32_t *)(0x4830C700));
+	printf("Post-init DCTL:  0x%08x\n", *(volatile uint32_t *)(0x4830C704));
+	printf("Post-init DEVTEN:0x%08x\n", *(volatile uint32_t *)(0x4830C708));
+	printf("Post-init DSTS:  0x%08x\n", *(volatile uint32_t *)(0x4830C70C));
+
 	// bool conn_detected = false;
 
 	while (true) {
