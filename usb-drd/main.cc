@@ -24,14 +24,11 @@ int main()
 		return -1;
 	}
 
+	// Assert VBUS before gadget start so DWC3 sees VBUS during device-mode init.
+	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
+
 	int r = cdc_acm_init(&dwc->gadget);
 	print("cdc_acm_init: ", r, "\n");
-
-	// Pin not right?
-	// Pin vbus_det(GPIO::F, 10, PinMode::Input);
-
-	// For now, pretend like VBUS is always present
-	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
 
 	// bool conn_detected = false;
 
