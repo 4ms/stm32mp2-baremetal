@@ -1050,11 +1050,13 @@ void dwc3_ep0_interrupt(struct dwc3 *dwc, const struct dwc3_event_depevt *event)
 	u8 epnum = event->endpoint_number;
 
 	dev_dbg(dwc->dev,
-			"%s while ep%d%s in state '%s'\n",
+			"%s while ep%d%s in state '%s' (raw=0x%08x ep_evt=%u)\n",
 			dwc3_ep_event_string(event->endpoint_event),
 			epnum >> 1,
 			(epnum & 1) ? "in" : "out",
-			dwc3_ep0_state_string(dwc->ep0state));
+			dwc3_ep0_state_string(dwc->ep0state),
+			*(const u32 *)event,
+			event->endpoint_event);
 
 	switch (event->endpoint_event) {
 		case DWC3_DEPEVT_XFERCOMPLETE:

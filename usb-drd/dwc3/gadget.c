@@ -2000,6 +2000,7 @@ static void dwc3_gadget_disconnect_interrupt(struct dwc3 *dwc)
 
 static void dwc3_gadget_reset_interrupt(struct dwc3 *dwc)
 {
+	dev_dbg(dwc->dev, "USB Reset\n");
 	u32 reg;
 
 	/*
@@ -2086,6 +2087,7 @@ static void dwc3_gadget_conndone_interrupt(struct dwc3 *dwc)
 	speed = reg & DWC3_DSTS_CONNECTSPD;
 	dwc->speed = speed;
 
+	dev_dbg(dwc->dev, "Connect Done: DSTS=0x%08x speed=%u\n", reg, speed);
 	dwc3_update_ram_clk_sel(dwc, speed);
 
 	switch (speed) {
@@ -2311,6 +2313,7 @@ static void dwc3_gadget_hibernation_interrupt(struct dwc3 *dwc, unsigned int evt
 
 static void dwc3_gadget_interrupt(struct dwc3 *dwc, const struct dwc3_event_devt *event)
 {
+	dev_dbg(dwc->dev, "dev event: type=%u info=0x%x\n", event->type, event->event_info);
 	switch (event->type) {
 		case DWC3_DEVICE_EVENT_DISCONNECT:
 			dwc3_gadget_disconnect_interrupt(dwc);
