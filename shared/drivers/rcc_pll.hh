@@ -69,7 +69,7 @@ inline PLLSettings get_pll_settings()
 }
 
 template<typename PLLT>
-inline PLLSettings print_pll_settings(auto printf_)
+inline void print_pll_settings(auto printf_)
 {
 	PLLSettings pll = get_pll_settings<PLLT>();
 	printf_("PLL: %s /%d x%d /%d /%d frac:%u\n",
