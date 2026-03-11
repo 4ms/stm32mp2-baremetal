@@ -122,10 +122,9 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 		dwc3_dev.dis_enblslpm_quirk = platform->dis_enblslpm_quirk;
 	}
 
-	/* Without a PHY driver managing suspend/resume, SUSPHY must be
-	 * cleared or the USB2 PHY clock stops and endpoint commands hang. */
-	dwc3_dev.dis_u2_susphy_quirk = 1;
-	dwc3_dev.dis_u3_susphy_quirk = 1;
+	/* Do NOT set dis_u2/u3_susphy_quirk: U-Boot leaves SUSPHY=1 in both
+	 * GUSB2PHYCFG and GUSB3PIPECTL.  The PHY clock is kept alive by
+	 * USB2PHY2CMN=0 (cleared above), so PHY suspension is harmless. */
 
 	/* Call into U-Boot DWC3 core init */
 	int ret = dwc3_uboot_init(&dwc3_dev);
