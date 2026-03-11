@@ -48,9 +48,10 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 
 	RCC->USB3PCIEPHYCFGR |= RCC_USB3PCIEPHYCFGR_USB3PCIEPHYEN;
 
-	// ??? PHY clocks are kept active during Suspend and Sleep (except for PHYCLK). PLL is on.
-	// SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_USB2PHY2CMN;
-	// udelay(100);
+	// Keep PHY analog blocks powered during Suspend/Sleep (match U-Boot femtophy device mode).
+	// When USB2PHY2CMN=1, the PHY powers down its PLL/analog blocks on suspend, stopping the
+	// UTMI clock to the DWC3 and preventing endpoint event generation.
+	SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_USB2PHY2CMN;
 
 	////////////////////
 	// From RM0457: Sec 83.3.2:
