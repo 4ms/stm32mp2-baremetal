@@ -24,7 +24,9 @@ int main()
 		return -1;
 	}
 
-	// Assert VBUS before gadget start so DWC3 sees VBUS during device-mode init.
+	// Assert VBUS after core+gadget init but before gadget_start.
+	// Matches U-Boot femtoPHY timing: phy_set_mode_ext sets VBUSVLDEXT=1
+	// when device role is activated, which happens between dwc3_init and gadget_start.
 	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
 
 	int r = cdc_acm_init(&dwc->gadget);
