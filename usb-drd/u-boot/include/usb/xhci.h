@@ -1282,6 +1282,11 @@ int xhci_register(struct udevice *dev, struct xhci_hccr *hccr,
 
 extern struct dm_usb_ops xhci_usb_ops;
 
+/* Bare-metal (non-DM) register/deregister */
+int xhci_register_bare(struct xhci_ctrl *ctrl, struct xhci_hccr *hccr,
+		       struct xhci_hcor *hcor);
+void xhci_deregister_bare(struct xhci_ctrl *ctrl);
+
 struct xhci_ctrl *xhci_get_ctrl(struct usb_device *udev);
 
 static inline dma_addr_t xhci_virt_to_bus(struct xhci_ctrl *ctrl, void *addr)

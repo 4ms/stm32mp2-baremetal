@@ -41,6 +41,7 @@ SOURCES_XHCI += xhci/xhci-ring.c
 SOURCES_XHCI += xhci/xhci-mem.c
 
 SOURCES += $(SOURCES_XHCI)
+SOURCES += xhci_baremetal.c
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
