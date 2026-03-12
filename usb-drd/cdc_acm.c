@@ -566,7 +566,8 @@ static void cdc_unbind(struct usb_gadget *gadget)
 
 static void cdc_disconnect(struct usb_gadget *gadget)
 {
-	acm.configured = false;
+	if (acm.configured)
+		disable_data_eps();
 	acm.tx_busy = false;
 	acm.rx_head = acm.rx_tail = 0;
 }
