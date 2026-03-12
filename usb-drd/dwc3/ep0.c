@@ -102,11 +102,6 @@ static int dwc3_ep0_start_trans(struct dwc3 *dwc, u8 epnum, dma_addr_t buf_dma, 
 
 	dwc->ep0_next_event = DWC3_EP0_COMPLETE;
 
-	dev_dbg(dwc->dev, "ep0 DEPSTRTXFER ep%d: trb@%p(dma 0x%08llx) bpl=0x%08x bph=0x%08x sz=0x%x ctrl=0x%08x buf_dma=0x%08llx res_idx=%u\n",
-		epnum, trb, (unsigned long long)dwc->ep0_trb_addr,
-		trb->bpl, trb->bph, trb->size, trb->ctrl,
-		(unsigned long long)buf_dma, dep->resource_index);
-
 	return 0;
 }
 

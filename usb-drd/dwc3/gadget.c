@@ -2197,11 +2197,6 @@ static void dwc3_gadget_conndone_interrupt(struct dwc3 *dwc)
 	dwc->ep0state = EP0_SETUP_PHASE;
 	dwc3_ep0_out_start(dwc);
 
-	/* Diagnostic: verify ep0 is enabled and TRB is armed */
-	dev_dbg(dwc->dev, "DALEPENA=0x%08x ep0_trb[0].ctrl=0x%08x\n",
-		dwc3_readl(dwc->regs, DWC3_DALEPENA),
-		dwc->ep0_trb[0].ctrl);
-
 	/*
 	 * Configure PHY via GUSB3PIPECTLn if required.
 	 *
@@ -2340,7 +2335,6 @@ static void dwc3_gadget_hibernation_interrupt(struct dwc3 *dwc, unsigned int evt
 
 static void dwc3_gadget_interrupt(struct dwc3 *dwc, const struct dwc3_event_devt *event)
 {
-	dev_dbg(dwc->dev, "dev event: type=%u info=0x%x\n", event->type, event->event_info);
 	switch (event->type) {
 		case DWC3_DEVICE_EVENT_DISCONNECT:
 			dwc3_gadget_disconnect_interrupt(dwc);
@@ -2419,9 +2413,6 @@ static irqreturn_t dwc3_process_event_buf(struct dwc3 *dwc, u32 buf)
 		union dwc3_event event;
 
 		event.raw = *(u32 *)(evt->buf + evt->lpos);
-
-		dev_vdbg(dwc->dev, "evt[%u] raw=0x%08x is_devspec=%u\n",
-			 buf, event.raw, event.type.is_devspec);
 
 		dwc3_process_event_entry(dwc, &event);
 
@@ -2552,13 +2543,6 @@ int dwc3_gadget_init(struct dwc3 *dwc)
 	}
 
 	dwc->gadget.ops = &dwc3_gadget_ops;
-	printf("In dwc3_gadget_init:\n");
-	printf("dwc: %p\n", dwc);
-	printf("dwc->gadget: %p\n", &dwc->gadget);
-	printf("dwc->lock: %p\n", &dwc->lock);
-	printf("dwc->dev: %p\n", &dwc->dev);
-	printf("dwc->xhci: %p\n", &dwc->xhci);
-
 	dwc->gadget.max_speed = USB_SPEED_SUPER;
 	dwc->gadget.speed = USB_SPEED_UNKNOWN;
 	dwc->gadget.name = "dwc3-gadget";

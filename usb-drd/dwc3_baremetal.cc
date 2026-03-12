@@ -137,60 +137,6 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 		return NULL;
 	}
 
-	// GSNPSID (DWC3 revision: must be >= 0x5533220a for HS-capable DCFG.DEVSPD)
-	printf("GSNPSID:    0x%08x\n", *(uint32_t *)(USB3DRD_BASE_ADDR + 0xc120));
-
-	// GSBUSCFG0, GSBUSCFG1
-	printf("0x4830C100: 0x%08x\n", *(uint32_t *)(0x4830C100));
-	printf("0x4830C104: 0x%08x\n", *(uint32_t *)(0x4830C104));
-	// U-boot: 0x4830c100:	0x00000009	0x00000300
-
-	// GCTL
-	printf("0x4830C110: 0x%08x\n", *(uint32_t *)(0x4830C110));
-	// U-boot: 0x4830c110:	0x30c12004
-
-	// GUSB2PHYCFG(0)
-	printf("0x4830C200: 0x%08x\n", *(uint32_t *)(0x4830C200));
-	// U-boot: 0x4830c200:	0x40002440
-
-	// GUSB3PIPECTL(0)
-	printf("0x4830C2C0: 0x%08x\n", *(uint32_t *)(0x4830C2C0));
-	// U-boot: 0x4830c2c0:	0x000e0002
-
-	// GTXFIFOSIZ 0-3
-	printf("0x4830C300: 0x%08x\n", *(uint32_t *)(0x4830C300));
-	printf("0x4830C304: 0x%08x\n", *(uint32_t *)(0x4830C304));
-	printf("0x4830C308: 0x%08x\n", *(uint32_t *)(0x4830C308));
-	printf("0x4830C30C: 0x%08x\n", *(uint32_t *)(0x4830C30C));
-	// U-boot: 0x4830c300:	0x00000042	0x00420184	0x01c60184	0x034a0184
-
-	// GRXFIFOSIZ 0-3
-	printf("0x4830C380: 0x%08x\n", *(uint32_t *)(0x4830C380));
-	printf("0x4830C384: 0x%08x\n", *(uint32_t *)(0x4830C384));
-	printf("0x4830C388: 0x%08x\n", *(uint32_t *)(0x4830C388));
-	printf("0x4830C38C: 0x%08x\n", *(uint32_t *)(0x4830C38C));
-	// U-boot: 0x4830c380:	0x00000185	0x01850000	0x01850000	0x00000000
-
-	// GEVNTADRLO/HI, GEVNTSIZ, GEVNTCOUNT
-	printf("0x4830C400: 0x%08x\n", *(uint32_t *)(0x4830C400));
-	printf("0x4830C404: 0x%08x\n", *(uint32_t *)(0x4830C404));
-	printf("0x4830C408: 0x%08x\n", *(uint32_t *)(0x4830C408));
-	printf("0x4830C40C: 0x%08x\n", *(uint32_t *)(0x4830C40C));
-	// U-boot: 0x4830c400:	0xf80e1340	0x00000000	0x00000100	0x00000000
-
-	// DCFG, DCTL, DEVTEN, DSTS, CMD, DALEPENA range
-	printf("0x4830C700: 0x%08x\n", *(uint32_t *)(0x4830C700));
-	printf("0x4830C704: 0x%08x\n", *(uint32_t *)(0x4830C704));
-	printf("0x4830C708: 0x%08x\n", *(uint32_t *)(0x4830C708));
-	printf("0x4830C70C: 0x%08x\n", *(uint32_t *)(0x4830C70C));
-	printf("0x4830C710: 0x%08x\n", *(uint32_t *)(0x4830C710));
-	printf("0x4830C714: 0x%08x\n", *(uint32_t *)(0x4830C714));
-	printf("0x4830C718: 0x%08x\n", *(uint32_t *)(0x4830C718));
-	printf("0x4830C71C: 0x%08x\n", *(uint32_t *)(0x4830C71C));
-	// U-boot: 0x4830c700:	0x00480830	0x8c000a00	0x0000121f	0x00823a30
-	// U-boot: 0x4830c710:	0x00000000	0x00000000	0x00000000	0x00000000
-	// Bareml: 0x4830C700:  0x00080804  0x00000000  0x00000000  0x00d206fc
-
 	/* Configure AHB burst mode: INCR4 only (matches stm32mp257f-ev1-revB DTS).
 	 * Leaves undefined-length INCR disabled to avoid RISAF/AHB5 bus issues. */
 	{

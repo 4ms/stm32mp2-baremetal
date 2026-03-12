@@ -484,8 +484,6 @@ static int handle_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest 
 				return ep0_reply(&status, 2, wLength);
 			}
 		}
-		printf("STALL: std req=0x%02x type=0x%02x wVal=0x%04x wIdx=0x%04x\n",
-			   req, type, wValue, le16_to_cpu(ctrl->wIndex));
 		return -1;
 	}
 
