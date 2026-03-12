@@ -41,13 +41,13 @@
  * ---------------------------------------------------------------- */
 
 /* CDC class/subclass */
-#define USB_CLASS_COMM 0x02
-#define USB_CLASS_CDC_DATA 0x0A
+// #define USB_CLASS_COMM 0x02
+// #define USB_CLASS_CDC_DATA 0x0A
 #define CDC_SUBCLASS_ACM 0x02
 #define CDC_PROTOCOL_AT 0x01
 
 /* CDC descriptor types */
-#define USB_DT_CS_INTERFACE 0x24
+// #define USB_DT_CS_INTERFACE 0x24
 
 /* CDC descriptor subtypes */
 #define CDC_HEADER_TYPE 0x00
@@ -98,20 +98,43 @@ struct usb_cdc_call_mgmt_desc {
 	u8 bDataInterface;
 } __packed;
 
+/* Interface Association Descriptor */
+struct usb_iad_descriptor {
+	u8 bLength;
+	u8 bDescriptorType;
+	u8 bFirstInterface;
+	u8 bInterfaceCount;
+	u8 bFunctionClass;
+	u8 bFunctionSubClass;
+	u8 bFunctionProtocol;
+	u8 iFunction;
+} __packed;
+
+/* 7-byte endpoint descriptor for wire format (ch9.h struct is 9 bytes due to audio fields) */
+struct usb_ep_desc_7 {
+	u8 bLength;
+	u8 bDescriptorType;
+	u8 bEndpointAddress;
+	u8 bmAttributes;
+	u16 wMaxPacketSize;
+	u8 bInterval;
+} __packed;
+
 /* Full configuration descriptor (packed contiguously) */
 struct cdc_config_desc {
 	struct usb_config_descriptor config;
+	struct usb_iad_descriptor iad;
 	/* Interface 0: CDC Communication */
 	struct usb_interface_descriptor comm_intf;
 	struct usb_cdc_header_desc cdc_header;
 	struct usb_cdc_call_mgmt_desc cdc_call_mgmt;
 	struct usb_cdc_acm_desc cdc_acm;
 	struct usb_cdc_union_desc cdc_union;
-	struct usb_endpoint_descriptor notify_ep;
+	struct usb_ep_desc_7 notify_ep;
 	/* Interface 1: CDC Data */
 	struct usb_interface_descriptor data_intf;
-	struct usb_endpoint_descriptor out_ep;
-	struct usb_endpoint_descriptor in_ep;
+	struct usb_ep_desc_7 out_ep;
+	struct usb_ep_desc_7 in_ep;
 } __packed;
 
 /* ----------------------------------------------------------------
@@ -122,9 +145,9 @@ static const struct usb_device_descriptor device_desc = {
 	.bLength = USB_DT_DEVICE_SIZE,
 	.bDescriptorType = USB_DT_DEVICE,
 	.bcdUSB = cpu_to_le16(0x0200),
-	.bDeviceClass = USB_CLASS_COMM,
-	.bDeviceSubClass = 0,
-	.bDeviceProtocol = 0,
+	.bDeviceClass = 0xEF,        /* Misc — required for IAD */
+	.bDeviceSubClass = 0x02,     /* Common Class */
+	.bDeviceProtocol = 0x01,     /* IAD */
 	.bMaxPacketSize0 = 64,
 	.idVendor = cpu_to_le16(CDC_ACM_VENDOR_ID),
 	.idProduct = cpu_to_le16(CDC_ACM_PRODUCT_ID),
@@ -146,6 +169,17 @@ static const struct cdc_config_desc config_desc = {
 			.iConfiguration = 0,
 			.bmAttributes = 0x80,
 			.bMaxPower = 250, /* 500 mA */
+		},
+	.iad =
+		{
+			.bLength = sizeof(struct usb_iad_descriptor),
+			.bDescriptorType = 0x0B, /* INTERFACE_ASSOCIATION */
+			.bFirstInterface = 0,
+			.bInterfaceCount = 2,
+			.bFunctionClass = USB_CLASS_COMM,
+			.bFunctionSubClass = CDC_SUBCLASS_ACM,
+			.bFunctionProtocol = CDC_PROTOCOL_AT,
+			.iFunction = 0,
 		},
 	.comm_intf =
 		{
@@ -194,7 +228,7 @@ static const struct cdc_config_desc config_desc = {
 			.bEndpointAddress = EP_ADDR_NOTIFY_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_INT,
 			.wMaxPacketSize = cpu_to_le16(NOTIFY_MAX_PACKET),
-			.bInterval = 32,
+			.bInterval = 9, /* 2^(9-1) = 256 frames = 32ms at HS */
 		},
 	.data_intf =
 		{
@@ -353,9 +387,9 @@ static void ep0_complete(struct usb_ep *ep, struct usb_request *req)
 
 static void enable_data_eps(void)
 {
-	acm.ep_out->ops->enable(acm.ep_out, &config_desc.out_ep);
-	acm.ep_in->ops->enable(acm.ep_in, &config_desc.in_ep);
-	acm.ep_notify->ops->enable(acm.ep_notify, &config_desc.notify_ep);
+	acm.ep_out->ops->enable(acm.ep_out, (const struct usb_endpoint_descriptor *)&config_desc.out_ep);
+	acm.ep_in->ops->enable(acm.ep_in, (const struct usb_endpoint_descriptor *)&config_desc.in_ep);
+	acm.ep_notify->ops->enable(acm.ep_notify, (const struct usb_endpoint_descriptor *)&config_desc.notify_ep);
 	acm.configured = true;
 	acm.tx_busy = false;
 	rx_submit();
@@ -437,7 +471,21 @@ static int handle_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest 
 				u8 config = acm.configured ? 1 : 0;
 				return ep0_reply(&config, 1, wLength);
 			}
+
+			case USB_REQ_SET_INTERFACE:
+				/* ACK alt-setting 0 for both interfaces */
+				if (wValue == 0)
+					return 0;
+				return -1;
+
+			case USB_REQ_GET_STATUS: {
+				/* Return 0x0000 for device/interface/endpoint status */
+				u16 status = 0;
+				return ep0_reply(&status, 2, wLength);
+			}
 		}
+		printf("STALL: std req=0x%02x type=0x%02x wVal=0x%04x wIdx=0x%04x\n",
+			   req, type, wValue, le16_to_cpu(ctrl->wIndex));
 		return -1;
 	}
 
@@ -551,18 +599,24 @@ int cdc_acm_init(struct usb_gadget *gadget)
 
 	/* Register our gadget driver */
 	ret = gadget->ops->udc_start(gadget, &cdc_driver);
-	if (ret)
+	if (ret) {
+		printf("Start failed\n");
 		return ret;
+	}
 
 	/* Bind: allocate endpoints and requests */
 	ret = cdc_driver.bind(gadget, &cdc_driver);
-	if (ret)
+	if (ret){
+		printf("bind failed\n");
 		return ret;
+	}
 
 	/* Connect to the bus */
 	ret = gadget->ops->pullup(gadget, 1);
-	if (ret)
+	if (ret){
+		printf("Start failed\n");
 		return ret;
+	}
 
 	return 0;
 }
