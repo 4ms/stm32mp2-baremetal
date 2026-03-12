@@ -20,15 +20,25 @@
 
 struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *platform)
 {
-	// Open RISAF4 region for DWC3 DMA access to DDR at 0x8A000000.
+	// Open RISAF4 regions for DWC3 DMA access to DDR.
 	// Without this, the USB3DRD bus master's DMA writes are silently blocked.
 	if (!(RISAF4->CR & RISAF_CR_GLOCK)) {
-		auto &reg = RISAF4->REG[14];
-		reg.CFGR &= ~RISAF_REGCFGR_BREN;
-		reg.STARTR = 0x0A000000;
-		reg.ENDR = 0x0A1FFFFF;
-		reg.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
-		reg.CFGR = RISAF_REGCFGR_BREN;
+		// Region 14: DMA pool at 0x8A000000 (RISAF addr 0x0A000000)
+		auto &reg14 = RISAF4->REG[14];
+		reg14.CFGR &= ~RISAF_REGCFGR_BREN;
+		reg14.STARTR = 0x0A000000;
+		reg14.ENDR = 0x0A1FFFFF;
+		reg14.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
+		reg14.CFGR = RISAF_REGCFGR_BREN;
+
+		// Region 13: Heap/RAM at 0x90000000 (RISAF addr 0x10000000)
+		// Needed for xHCI host mode which uses memalign() from the heap.
+		auto &reg13 = RISAF4->REG[13];
+		reg13.CFGR &= ~RISAF_REGCFGR_BREN;
+		reg13.STARTR = 0x10000000;
+		reg13.ENDR = 0x10FFFFFF;
+		reg13.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
+		reg13.CFGR = RISAF_REGCFGR_BREN;
 	}
 
 	// Enable clocks before reset??

@@ -5,13 +5,14 @@
 #include "dwc3_baremetal.h"
 #include "print/print.hh"
 #include "stm32mp2xx_hal.h"
+#include "xhci_baremetal.h"
 
-int main()
+/* Set to 1 for host mode, 0 for device (CDC-ACM) mode */
+#define USB_HOST_MODE 1
+
+/* ---- Device mode (CDC-ACM echo) ---- */
+static void run_device_mode()
 {
-	print("USB DRD Example\n");
-	HAL_Init();
-	PowerControl::enable_usb33(PowerControl::Present::If);
-
 	struct dwc3 *dwc = dwc3_baremetal_init(DWC3_DR_MODE_PERIPHERAL, nullptr);
 	if (!dwc) {
 		print("DWC3 init failed\n");
@@ -20,8 +21,6 @@ int main()
 	}
 
 	// Assert VBUS after core+gadget init but before gadget_start.
-	// Matches U-Boot femtoPHY timing: phy_set_mode_ext sets VBUSVLDEXT=1
-	// when device role is activated, which happens between dwc3_init and gadget_start.
 	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
 
 	int r = cdc_acm_init(&dwc->gadget);
@@ -39,6 +38,43 @@ int main()
 		if (n > 0)
 			cdc_acm_write(buf, n); // echo back
 	}
+}
+
+/* ---- Host mode ---- */
+static void run_host_mode()
+{
+	struct dwc3 *dwc = dwc3_baremetal_init(DWC3_DR_MODE_HOST, nullptr);
+	if (!dwc) {
+		print("DWC3 host init failed\n");
+		while (true)
+			;
+	}
+
+	int ret = xhci_host_init(USB3DRD_BASE);
+	if (ret) {
+		printf("xHCI init failed: %d\n", ret);
+		while (true)
+			;
+	}
+
+	print("USB Host ready. Plug in a device.\n");
+
+	while (true) {
+		__asm__ volatile("wfe");
+	}
+}
+
+int main()
+{
+	print("USB DRD Example\n");
+	HAL_Init();
+	PowerControl::enable_usb33(PowerControl::Present::If);
+
+#if USB_HOST_MODE
+	run_host_mode();
+#else
+	run_device_mode();
+#endif
 }
 
 extern "C" void assert_failed(uint8_t *file, uint32_t line)
