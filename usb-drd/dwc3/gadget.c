@@ -2393,6 +2393,9 @@ static irqreturn_t dwc3_process_event_buf(struct dwc3 *dwc, u32 buf)
 
 		event.raw = *(u32 *)(evt->buf + evt->lpos);
 
+		dev_vdbg(dwc->dev, "evt[%u] raw=0x%08x is_devspec=%u\n",
+			 buf, event.raw, event.type.is_devspec);
+
 		dwc3_process_event_entry(dwc, &event);
 
 		/*
