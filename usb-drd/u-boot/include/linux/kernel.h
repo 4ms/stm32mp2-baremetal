@@ -35,9 +35,9 @@
 #define ____is_defined(arg1_or_junk)	__take_second_arg(arg1_or_junk 1, 0, 0)
 #define IS_ENABLED(option)	__is_defined(option)
 
-/* Define which features we want active for bare-metal gadget mode */
+/* Define which features we want active for bare-metal DRD */
 #define CONFIG_USB_DWC3_GADGET	1
-/* CONFIG_USB_HOST deliberately not defined — we want gadget mode */
+#define CONFIG_USB_HOST		1
 
 /* printk — used by WARN_ON etc. */
 #include <stdio.h>

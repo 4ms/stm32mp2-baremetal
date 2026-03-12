@@ -76,17 +76,14 @@ struct dwc3; /* forward declaration — defined in core.h */
  * dwc3_baremetal_init - Initialize DWC3 controller
  *
  * Allocates struct dwc3, runs core init sequence, and starts
- * the controller in the mode specified by platform->dr_mode.
+ * the controller in the specified mode.
+ *
+ * mode: DWC3_DR_MODE_PERIPHERAL for gadget, DWC3_DR_MODE_HOST for host.
+ * platform: optional hardware overrides, or NULL for defaults.
  *
  * Returns pointer to initialized dwc3 struct, or NULL on failure.
- *
- * Caller is responsible for:
- *   1. Enabling clocks before calling
- *   2. Powering up PHY before calling
- *   3. Calling dwc3_gadget_poll() in main loop (polling mode)
- *      OR wiring dwc3_interrupt() to IRQ vector (interrupt mode)
  */
-struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform);
+struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *platform);
 
 /*
  * dwc3_baremetal_shutdown - Stop and de-initialize controller

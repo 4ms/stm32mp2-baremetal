@@ -12,7 +12,7 @@ int main()
 	HAL_Init();
 	PowerControl::enable_usb33(PowerControl::Present::If);
 
-	struct dwc3 *dwc = dwc3_baremetal_init(nullptr);
+	struct dwc3 *dwc = dwc3_baremetal_init(DWC3_DR_MODE_PERIPHERAL, nullptr);
 	if (!dwc) {
 		print("DWC3 init failed\n");
 		while (true)

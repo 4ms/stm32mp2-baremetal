@@ -18,12 +18,7 @@
 /* STM32MP257 USB3DRD is on AHB5 at offset 0x100000 */
 #define USB3DRD_BASE_ADDR 0x48300000UL
 
-/* SYSCFG USB3DRCR — USB3DR controller wrapper configuration */
-#define SYSCFG_BASE_ADDR 0x44230000UL
-#define SYSCFG_USB3DRCR (*(volatile uint32_t *)(SYSCFG_BASE_ADDR + 0x4800UL))
-#define USB3DRCR_USB2ONLYD (1U << 4) /* USB2-only device mode */
-
-struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
+struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *platform)
 {
 	// Open RISAF4 region for DWC3 DMA access to DDR at 0x8A000000.
 	// Without this, the USB3DRD bus master's DMA writes are silently blocked.
@@ -79,8 +74,14 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	// 5. Select USB3 or PCIe mode.
 	// 0 = COMBOPHY used for PCI , 1 = COMBOPHY used for USB3
 	SYSCFG->COMBOPHYCR2 &= ~SYSCFG_COMBOPHYCR2_COMBOPHY_MODESEL;
-	// Configure USB3DR for USB2-only device mode.
-	SYSCFG->USB3DRCR |= SYSCFG_USB3DRCR_USB3DR_USB2ONLYD;
+	// Configure USB3DR for USB2-only mode (host or device).
+	if (mode == DWC3_DR_MODE_HOST) {
+		SYSCFG->USB3DRCR |= SYSCFG_USB3DRCR_USB3DR_USB2ONLYH;
+		SYSCFG->USB3DRCR &= ~SYSCFG_USB3DRCR_USB3DR_USB2ONLYD;
+	} else {
+		SYSCFG->USB3DRCR |= SYSCFG_USB3DRCR_USB3DR_USB2ONLYD;
+		SYSCFG->USB3DRCR &= ~SYSCFG_USB3DRCR_USB3DR_USB2ONLYH;
+	}
 
 	// 6. Select the reference clock path and frequency, and program the PLL for COMBOPHY.
 	// 7. Enable the reference clock buffer in the COMBOPHY.
@@ -102,13 +103,18 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 
 	////////////////////
 
-	// Use external VBUS comparator in device mode.
-	// Match U-Boot femtoPHY: select external comparator (VBUSVLDEXTSEL=1)
-	// but do NOT assert VBUS yet (VBUSVLDEXT=0).  VBUS is asserted later,
-	// after dwc3 core+gadget init, just before gadget_start — same timing
-	// as U-Boot's phy_set_mode_ext call.
-	SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_VBUSVLDEXT;
-	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL;
+	// Configure VBUS sensing based on mode.
+	if (mode == DWC3_DR_MODE_HOST) {
+		// Host mode: assert VBUSVALID, clear device-mode VBUS bits.
+		// Matches U-Boot femtoPHY host-mode configuration.
+		SYSCFG->USB2PHY2CR &= ~(SYSCFG_USB2PHY2CR_VBUSVLDEXT | SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL);
+		SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVALID;
+	} else {
+		// Device mode: use external VBUS comparator (VBUSVLDEXTSEL=1)
+		// but do NOT assert VBUS yet (VBUSVLDEXT=0). Asserted later by caller.
+		SYSCFG->USB2PHY2CR &= ~(SYSCFG_USB2PHY2CR_VBUSVLDEXT | SYSCFG_USB2PHY2CR_VBUSVALID);
+		SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL;
+	}
 
 	// Select PHYIF? 0: 8 bits 60MHZ, 1: 16 bits 30MHz
 	// USB3->GBLREGS.GUSB2PHYCFG |= USB3_GUSB2PHYCFG_PHYIF;
@@ -118,7 +124,7 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	memset(&dwc3_dev, 0, sizeof(dwc3_dev));
 
 	dwc3_dev.base = platform ? platform->regs_base : USB3DRD_BASE_ADDR;
-	dwc3_dev.dr_mode = USB_DR_MODE_PERIPHERAL;
+	dwc3_dev.dr_mode = (mode == DWC3_DR_MODE_HOST) ? USB_DR_MODE_HOST : USB_DR_MODE_PERIPHERAL;
 	dwc3_dev.maximum_speed = USB_SPEED_HIGH;
 	dwc3_dev.index = 0;
 
