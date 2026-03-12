@@ -2175,6 +2175,11 @@ static void dwc3_gadget_conndone_interrupt(struct dwc3 *dwc)
 		return;
 	}
 
+	/* Diagnostic: verify ep0 is enabled and TRB is armed */
+	dev_dbg(dwc->dev, "DALEPENA=0x%08x ep0_trb[0].ctrl=0x%08x\n",
+		dwc3_readl(dwc->regs, DWC3_DALEPENA),
+		dwc->ep0_trb[0].ctrl);
+
 	/*
 	 * Configure PHY via GUSB3PIPECTLn if required.
 	 *
