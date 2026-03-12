@@ -60,7 +60,7 @@ static void run_host_mode()
 	print("USB Host ready. Plug in a device.\n");
 
 	while (true) {
-		__asm__ volatile("wfe");
+		xhci_host_poll();
 	}
 }
 
