@@ -42,6 +42,7 @@ SOURCES_XHCI += xhci/xhci-mem.c
 
 SOURCES += $(SOURCES_XHCI)
 SOURCES += xhci_baremetal.c
+SOURCES += usb_midi.c
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)

@@ -748,7 +748,6 @@ int xhci_bulk_tx(struct usb_device *udev, unsigned long pipe,
 again:
 	event = xhci_wait_for_event(ctrl, TRB_TRANSFER);
 	if (!event) {
-		debug("XHCI bulk transfer timed out, aborting...\n");
 		abort_td(udev, ep_index);
 		udev->status = USB_ST_NAK_REC;  /* closest thing to a timeout */
 		udev->act_len = 0;

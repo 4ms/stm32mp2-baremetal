@@ -322,27 +322,68 @@ static int xhci_enumerate_device(int port, u32 portsc)
 		/* Non-fatal, continue with what we got */
 	}
 
-	/* Parse interface descriptors for display */
+	/* Parse config descriptor into udev->config for xhci_set_configuration */
+	memset(&dev->config, 0, sizeof(dev->config));
+	memcpy(&dev->config.desc, &cfg_hdr, sizeof(cfg_hdr));
+	dev->config.no_of_if = cfg_hdr.bNumInterfaces;
+
+	int cur_if = -1;
+	int cur_ep_idx = 0;
 	int pos = cfg_hdr.bLength;
 	while (pos + 2 <= total_len) {
 		u8 dlen = cfg_buf[pos];
 		u8 dtype = cfg_buf[pos + 1];
 		if (dlen < 2)
 			break;
+
 		if (dtype == USB_DT_INTERFACE && dlen >= 9) {
 			struct usb_interface_descriptor *intf =
 				(struct usb_interface_descriptor *)&cfg_buf[pos];
-			printf("    Interface %d: class %02x/%02x/%02x, %d endpoints\n",
+			cur_if = intf->bInterfaceNumber;
+			if (cur_if < USB_MAXINTERFACES) {
+				memcpy(&dev->config.if_desc[cur_if].desc,
+				       intf, sizeof(*intf));
+				dev->config.if_desc[cur_if].no_of_ep =
+					intf->bNumEndpoints;
+				cur_ep_idx = 0;
+			}
+			printf("    Interface %d: class %02x/%02x/%02x, %d EP(s)\n",
 			       intf->bInterfaceNumber,
 			       intf->bInterfaceClass,
 			       intf->bInterfaceSubClass,
 			       intf->bInterfaceProtocol,
 			       intf->bNumEndpoints);
+		} else if (dtype == USB_DT_ENDPOINT && dlen >= 7 &&
+			   cur_if >= 0 && cur_if < USB_MAXINTERFACES) {
+			/* Standard endpoint descriptor is 7 bytes on the wire */
+			struct usb_endpoint_descriptor *ep =
+				&dev->config.if_desc[cur_if].ep_desc[cur_ep_idx];
+			memcpy(ep, &cfg_buf[pos], dlen < sizeof(*ep) ? dlen : sizeof(*ep));
+
+			u8 epaddr = ep->bEndpointAddress;
+			u8 epnum = epaddr & 0x0f;
+			u16 maxpkt = le16_to_cpu(ep->wMaxPacketSize);
+
+			if (epaddr & USB_DIR_IN)
+				dev->epmaxpacketin[epnum] = maxpkt;
+			else
+				dev->epmaxpacketout[epnum] = maxpkt;
+
+			printf("      EP 0x%02x: %s %s, maxpkt %d\n",
+			       epaddr,
+			       (epaddr & USB_DIR_IN) ? "IN " : "OUT",
+			       (ep->bmAttributes & 3) == USB_ENDPOINT_XFER_BULK ? "bulk" :
+			       (ep->bmAttributes & 3) == USB_ENDPOINT_XFER_INT  ? "int " :
+			       (ep->bmAttributes & 3) == USB_ENDPOINT_XFER_ISOC ? "isoc" :
+			       "ctrl",
+			       maxpkt);
+
+			cur_ep_idx++;
 		}
 		pos += dlen;
 	}
 
-	/* Set Configuration */
+	/* Set Configuration — xhci_set_configuration reads udev->config */
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			      USB_REQ_SET_CONFIGURATION, 0,
 			      cfg_hdr.bConfigurationValue, 0,

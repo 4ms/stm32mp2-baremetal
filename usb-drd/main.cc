@@ -5,6 +5,7 @@
 #include "dwc3_baremetal.h"
 #include "print/print.hh"
 #include "stm32mp2xx_hal.h"
+#include "usb_midi.h"
 #include "xhci_baremetal.h"
 
 /* Set to 1 for host mode, 0 for device (CDC-ACM) mode */
@@ -40,6 +41,22 @@ static void run_device_mode()
 	}
 }
 
+/* MIDI status byte to human-readable name */
+static const char *midi_status_name(uint8_t status)
+{
+	switch (status & 0xF0) {
+	case 0x80: return "NoteOff";
+	case 0x90: return "NoteOn ";
+	case 0xA0: return "AfterT ";
+	case 0xB0: return "CC     ";
+	case 0xC0: return "PrgChg ";
+	case 0xD0: return "ChanPr ";
+	case 0xE0: return "PBend  ";
+	case 0xF0: return "System ";
+	default:   return "???    ";
+	}
+}
+
 /* ---- Host mode ---- */
 static void run_host_mode()
 {
@@ -57,10 +74,46 @@ static void run_host_mode()
 			;
 	}
 
-	print("USB Host ready. Plug in a device.\n");
+	print("USB Host ready. Plug in a MIDI device.\n");
 
 	while (true) {
-		xhci_host_poll();
+		struct usb_device *dev = xhci_host_poll();
+		if (dev) {
+			/* New device — try to bind as MIDI */
+			ret = usb_midi_init(dev);
+			if (ret) {
+				printf("Not a MIDI device (or init failed: %d)\n", ret);
+				continue;
+			}
+
+			printf("\nListening for MIDI...\n\n");
+
+			/* Read MIDI events */
+			while (usb_midi_is_connected()) {
+				struct usb_midi_event events[16];
+				int n = usb_midi_read(events, 16);
+				if (n < 0) {
+					printf("MIDI read error: %d\n", n);
+					break;
+				}
+				if (n == 0)
+					continue;
+				for (int i = 0; i < n; i++) {
+					/* Skip empty/padding packets */
+					if (events[i].header == 0)
+						continue;
+					uint8_t cin = events[i].header & 0x0F;
+					uint8_t cable = events[i].header >> 4;
+					printf("MIDI [%d] %s ch%-2d  %02x %02x  (CIN=%x)\n",
+					       cable,
+					       midi_status_name(events[i].midi[0]),
+					       (events[i].midi[0] & 0x0F) + 1,
+					       events[i].midi[1],
+					       events[i].midi[2],
+					       cin);
+				}
+			}
+		}
 	}
 }
 
