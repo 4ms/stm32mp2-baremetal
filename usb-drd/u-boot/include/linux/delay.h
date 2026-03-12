@@ -11,6 +11,9 @@ void udelay(unsigned int us);
 /* Busy-wait milliseconds */
 void mdelay(unsigned int ms);
 
+/* U-Boot-style timer: returns milliseconds since base */
+unsigned long get_timer(unsigned long base);
+
 #ifdef __cplusplus
 }
 #endif

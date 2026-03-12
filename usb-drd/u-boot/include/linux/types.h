@@ -28,4 +28,12 @@ typedef unsigned long phys_addr_t;
 typedef unsigned long dma_addr_t;
 typedef unsigned long resource_size_t;
 
+typedef unsigned int gfp_t;
+typedef long long loff_t;
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+
+#define __force
+#define __iomem
+
 #endif /* _LINUX_TYPES_H */

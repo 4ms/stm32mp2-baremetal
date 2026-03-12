@@ -35,6 +35,13 @@ SOURCES_DWC += dwc3/gadget.c
 
 SOURCES += $(SOURCES_DWC)
 
+SOURCES_XHCI :=
+SOURCES_XHCI += xhci/xhci.c
+SOURCES_XHCI += xhci/xhci-ring.c
+SOURCES_XHCI += xhci/xhci-mem.c
+
+SOURCES += $(SOURCES_XHCI)
+
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
 INCLUDES += -I$(SHAREDDIR)/cmsis/Include

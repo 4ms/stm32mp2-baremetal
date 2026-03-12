@@ -13,9 +13,17 @@
 #define DIV_ROUND_UP(n, d)	(((n) + (d) - 1) / (d))
 #define ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
 
+#define min(a, b)		((a) < (b) ? (a) : (b))
+#define max(a, b)		((a) > (b) ? (a) : (b))
 #define min_t(type, a, b)	((type)(a) < (type)(b) ? (type)(a) : (type)(b))
 #define max_t(type, a, b)	((type)(a) > (type)(b) ? (type)(a) : (type)(b))
 #define clamp(val, lo, hi)	min_t(__typeof__(val), max_t(__typeof__(val), val, lo), hi)
+#define clamp_val(val, lo, hi)	clamp(val, lo, hi)
+
+#define U32_MAX		0xFFFFFFFFU
+
+/* fls is provided by newlib's <strings.h> */
+#include <strings.h>
 
 #define container_of(ptr, type, member) \
 	((type *)((char *)(ptr) - offsetof(type, member)))

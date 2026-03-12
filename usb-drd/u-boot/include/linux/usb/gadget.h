@@ -5,7 +5,7 @@
 #include <linux/list.h>
 #include <linux/usb/ch9.h>
 
-typedef int gfp_t;
+/* gfp_t is defined in linux/types.h */
 
 struct usb_ep;
 struct usb_request;
