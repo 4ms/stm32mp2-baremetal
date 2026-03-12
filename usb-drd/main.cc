@@ -41,22 +41,23 @@ int main()
 
 	// bool conn_detected = false;
 
-	while (true) {
-		// if (vbus_det.is_on()) {
-		// 	if (!conn_detected) {
-		// 		conn_detected = true;
-		// 		SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
-		// 		printf("Connected\n");
-		// 	}
-		// } else {
-		// 	if (conn_detected) {
-		// 		conn_detected = false;
-		// 		SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_VBUSVLDEXT;
-		// 		printf("Disconnected\n");
-		// 	}
-		// }
+	uint32_t loop_count = 0;
+	uint32_t last_trb_ctrl = 0;
 
+	while (true) {
 		dwc3_gadget_uboot_handle_interrupt(dwc);
+
+		/* Periodic TRB + ctrl_req check: detect if DWC3 ever consumes the TRB */
+		if ((loop_count++ & 0xFFFFF) == 0) {
+			uint32_t trb_ctrl = dwc->ep0_trb[0].ctrl;
+			uint8_t *setup = (uint8_t *)dwc->ctrl_req;
+			if (trb_ctrl != last_trb_ctrl) {
+				printf("ep0_trb[0].ctrl=0x%08x setup=%02x%02x%02x%02x %02x%02x%02x%02x\n",
+					   trb_ctrl, setup[0], setup[1], setup[2], setup[3],
+					   setup[4], setup[5], setup[6], setup[7]);
+				last_trb_ctrl = trb_ctrl;
+			}
+		}
 
 		char buf[64];
 		int n = cdc_acm_read(buf, sizeof(buf));
