@@ -61,8 +61,11 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	RCC->USB3PCIEPHYCFGR |= RCC_USB3PCIEPHYCFGR_USB3PCIEPHYRST;
 
 	// 2. Select the frequency of USB2PHY2 reference clock.
-	FlexbarConf{.PLL = FlexbarConf::PLLx::_4, .findiv = 30, .prediv = 2}.init(58);
-	RCC->USB2PHY2CFGR &= ~RCC_USB2PHY2CFGR_USB2PHY2CKREFSEL; // 1: HSE, 0: flexgen ch. 58
+	// Flexgen ch.58 from PLL4 (1200MHz). STM32MP2 dividers use (N+1):
+	//   findiv=29, prediv=1 → (30)*(2) = 60 → 1200/60 = 20MHz
+	// Previous config (findiv=30, prediv=2) gave (31*3)=93 → 12.9MHz — WRONG!
+	FlexbarConf{.PLL = FlexbarConf::PLLx::_4, .findiv = 29, .prediv = 1}.init(58);
+	RCC->USB2PHY2CFGR &= ~RCC_USB2PHY2CFGR_USB2PHY2CKREFSEL; // 0: flexgen ch. 58
 	// 0b001: 20MHz, 0b000: 19.2MHZ, 0b010: 24MHz
 	SYSCFG->USB2PHY2CR =
 		(SYSCFG->USB2PHY2CR & ~SYSCFG_USB2PHY2CR_USB2PHY2SEL_Msk) | (0b001 << SYSCFG_USB2PHY2CR_USB2PHY2SEL_Pos);
