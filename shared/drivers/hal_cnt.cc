@@ -45,6 +45,11 @@ extern "C" uint32_t HAL_GetTick(void)
 	return read_cntpct() / cntfreq_kHz;
 }
 
+extern "C" unsigned long get_timer(unsigned long base)
+{
+	return (read_cntpct() / cntfreq_kHz) - base;
+}
+
 extern "C" uint32_t SystemA35_TZ_STGEN_Start(uint32_t ck_ker_clk_freq)
 {
 	return 0;
