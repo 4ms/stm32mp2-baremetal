@@ -2049,6 +2049,9 @@ static void dwc3_gadget_reset_interrupt(struct dwc3 *dwc)
 	reg = dwc3_readl(dwc->regs, DWC3_DCFG);
 	reg &= ~(DWC3_DCFG_DEVADDR_MASK);
 	dwc3_writel(dwc->regs, DWC3_DCFG, reg);
+
+	/* Return to Default state so SET_ADDRESS is accepted (matches Linux kernel) */
+	usb_gadget_set_state(&dwc->gadget, USB_STATE_DEFAULT);
 }
 
 static void dwc3_update_ram_clk_sel(struct dwc3 *dwc, u32 speed)
