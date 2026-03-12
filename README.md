@@ -24,7 +24,8 @@ The goal is to run full applications with access to:
   - AMP multi-core (CM33)
   - AMP multi-core (CM0+)
   - USB dual-role host/device, leveraging the STM32 USB library
-     - Device via USB3DR
+     √ Device via USB3DR
+     - Host via USB3DR
      - Host via EHCI USBH (WIP partially working)
   - RGB or MIPI/DSI video
   - ADC running with DMA
