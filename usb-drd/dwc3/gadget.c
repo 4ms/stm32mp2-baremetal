@@ -2175,6 +2175,25 @@ static void dwc3_gadget_conndone_interrupt(struct dwc3 *dwc)
 		return;
 	}
 
+	/*
+	 * Re-arm ep0 for SETUP reception (matches Linux kernel behavior).
+	 *
+	 * USB Reset terminates the active ep0 DEPSTRTXFER without generating
+	 * an XferComplete event.  SETEPCONFIG(MODIFY) above reconfigures the
+	 * endpoint but does not re-issue DEPSTRTXFER.  Without it, the DWC3
+	 * has no TRB to DMA incoming SETUP packets into and generates zero
+	 * endpoint events.
+	 *
+	 * Reset flags to just DWC3_EP_ENABLED (clearing DWC3_EP_BUSY and any
+	 * other stale state), then issue a fresh DEPSTRTXFER.
+	 */
+	dep = dwc->eps[0];
+	dep->flags = DWC3_EP_ENABLED;
+	dep->resource_index = 0;
+	dep->free_slot = 0;
+	dwc->ep0state = EP0_SETUP_PHASE;
+	dwc3_ep0_out_start(dwc);
+
 	/* Diagnostic: verify ep0 is enabled and TRB is armed */
 	dev_dbg(dwc->dev, "DALEPENA=0x%08x ep0_trb[0].ctrl=0x%08x\n",
 		dwc3_readl(dwc->regs, DWC3_DALEPENA),
