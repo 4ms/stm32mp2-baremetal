@@ -43,6 +43,11 @@ struct usb_device *xhci_host_poll(void);
 bool xhci_device_connected(void);
 
 /*
+ * xhci_device_is_hub - Check if a device is a USB hub
+ */
+bool xhci_device_is_hub(struct usb_device *dev);
+
+/*
  * xhci_host_get_ctrl - Get the xHCI controller instance
  */
 struct xhci_ctrl *xhci_host_get_ctrl(void);

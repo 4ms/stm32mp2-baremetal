@@ -769,6 +769,21 @@ void xhci_setup_addressable_virt_dev(struct xhci_ctrl *ctrl,
 	}
 
 	debug("route string %x\n", route);
+#else
+	/* Non-DM: walk parent chain to compute route string */
+	{
+		struct usb_device *hop = udev;
+		int depth = 0;
+		while (hop->parent && hop->parent->parent) {
+			port_num = hop->portnr;
+			if (port_num > 15)
+				port_num = 15;
+			route |= port_num << (depth * 4);
+			depth++;
+			hop = hop->parent;
+		}
+		debug("route string %x\n", route);
+	}
 #endif
 	slot_ctx->dev_info |= cpu_to_le32(route);
 
@@ -810,6 +825,23 @@ void xhci_setup_addressable_virt_dev(struct xhci_ctrl *ctrl,
 				slot_ctx->dev_info |= cpu_to_le32(DEV_MTT);
 			slot_ctx->tt_info |= cpu_to_le32(TT_PORT(port_num));
 			slot_ctx->tt_info |= cpu_to_le32(TT_SLOT(dev->slot_id));
+		}
+	}
+#else
+	/* Non-DM: Set up TT for FS/LS devices behind a HS hub */
+	if (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) {
+		struct usb_device *hop = udev;
+		port_num = hop->portnr;
+		while (hop->parent && hop->parent->parent) {
+			if (hop->parent->speed == USB_SPEED_HIGH) {
+				slot_ctx->tt_info |=
+					cpu_to_le32(TT_PORT(port_num));
+				slot_ctx->tt_info |=
+					cpu_to_le32(TT_SLOT(hop->parent->slot_id));
+				break;
+			}
+			port_num = hop->parent->portnr;
+			hop = hop->parent;
 		}
 	}
 #endif

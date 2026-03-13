@@ -85,6 +85,10 @@ static void run_host_mode()
 	while (true) {
 		struct usb_device *dev = xhci_host_poll();
 		if (dev) {
+			/* Skip hubs — their downstream devices come later */
+			if (xhci_device_is_hub(dev))
+				continue;
+
 			/* New device — try to bind as MIDI */
 			ret = usb_midi_init(dev);
 			if (ret) {

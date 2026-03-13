@@ -431,7 +431,7 @@ static u32 xhci_get_max_esit_payload(struct usb_device *udev,
  * @param ctx_change	flag to indicate the Context has changed or NOT
  * Return: 0 on success, -1 on failure
  */
-static int xhci_configure_endpoints(struct usb_device *udev, bool ctx_change)
+int xhci_configure_endpoints(struct usb_device *udev, bool ctx_change)
 {
 	struct xhci_container_ctx *in_ctx;
 	struct xhci_virt_device *virt_dev;
