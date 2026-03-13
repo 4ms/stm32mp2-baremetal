@@ -6,6 +6,7 @@
 #define XHCI_BAREMETAL_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,11 @@ int xhci_host_init(uintptr_t dwc3_base);
  * Returns pointer to newly enumerated usb_device, or NULL if no change.
  */
 struct usb_device *xhci_host_poll(void);
+
+/*
+ * xhci_device_connected - Check if a device is currently attached
+ */
+bool xhci_device_connected(void);
 
 /*
  * xhci_host_get_ctrl - Get the xHCI controller instance

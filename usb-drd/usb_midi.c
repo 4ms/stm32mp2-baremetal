@@ -63,6 +63,15 @@ int usb_midi_init(struct usb_device *dev)
 	return -ENODEV;
 }
 
+void usb_midi_disconnect(void)
+{
+	midi_dev = NULL;
+	ep_in = 0;
+	ep_out = 0;
+	ep_in_maxpkt = 0;
+	ep_out_maxpkt = 0;
+}
+
 bool usb_midi_is_connected(void)
 {
 	return midi_dev != NULL;

@@ -60,6 +60,11 @@ int usb_midi_read(struct usb_midi_event *events, int max_events);
 int usb_midi_write(const struct usb_midi_event *events, int num_events);
 
 /*
+ * usb_midi_disconnect - Clear MIDI driver state on device removal
+ */
+void usb_midi_disconnect(void);
+
+/*
  * usb_midi_is_connected - Check if a MIDI device is bound
  */
 bool usb_midi_is_connected(void);

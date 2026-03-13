@@ -88,8 +88,13 @@ static void run_host_mode()
 
 			printf("\nListening for MIDI...\n\n");
 
-			/* Read MIDI events */
-			while (usb_midi_is_connected()) {
+			/* Read MIDI events until device disconnects */
+			while (xhci_device_connected()) {
+				/* Poll xHCI for port changes (disconnect) */
+				xhci_host_poll();
+				if (!xhci_device_connected())
+					break;
+
 				struct usb_midi_event events[16];
 				int n = usb_midi_read(events, 16);
 				if (n < 0) {
@@ -113,6 +118,9 @@ static void run_host_mode()
 					       cin);
 				}
 			}
+
+			usb_midi_disconnect();
+			printf("MIDI device removed, waiting for new device...\n");
 		}
 	}
 }

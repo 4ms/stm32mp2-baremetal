@@ -400,6 +400,68 @@ static int xhci_enumerate_device(int port, u32 portsc)
 }
 
 /*
+ * Free a single virtual device's resources (rings, contexts).
+ * Mirrors xhci_free_virt_devices() but for one slot only.
+ */
+static void xhci_free_virt_device(struct xhci_ctrl *ctrl, int slot_id)
+{
+	struct xhci_virt_device *virt_dev = ctrl->devs[slot_id];
+	if (!virt_dev)
+		return;
+
+	ctrl->dcbaa->dev_context_ptrs[slot_id] = 0;
+
+	for (int i = 0; i < 31; i++)
+		if (virt_dev->eps[i].ring)
+			xhci_ring_free(virt_dev->eps[i].ring);
+
+	if (virt_dev->in_ctx)
+		xhci_free_container_ctx(virt_dev->in_ctx);
+	if (virt_dev->out_ctx)
+		xhci_free_container_ctx(virt_dev->out_ctx);
+
+	free(virt_dev);
+	ctrl->devs[slot_id] = NULL;
+}
+
+/*
+ * Clean up after a device disconnect:
+ *   1. Disable the xHCI slot
+ *   2. Free the virtual device
+ *   3. Reset device table (keep root hub at index 0)
+ */
+static void xhci_disconnect_device(struct xhci_ctrl *ctrl)
+{
+	device_connected = false;
+
+	/* Walk all non-root-hub devices and disable their slots */
+	for (int i = 1; i < usb_dev_count; i++) {
+		struct usb_device *dev = &usb_dev_table[i];
+		if (dev->slot_id == 0)
+			continue;
+
+		/* Issue Disable Slot command */
+		xhci_queue_command(ctrl, NULL, dev->slot_id, 0,
+				   TRB_DISABLE_SLOT);
+		union xhci_trb *event = xhci_wait_for_event(ctrl,
+							     TRB_COMPLETION);
+		if (event) {
+			u32 comp = GET_COMP_CODE(
+				le32_to_cpu(event->event_cmd.status));
+			if (comp != COMP_SUCCESS)
+				printf("Disable Slot %d: comp code %d\n",
+				       dev->slot_id, comp);
+			xhci_acknowledge_event(ctrl);
+		}
+
+		xhci_free_virt_device(ctrl, dev->slot_id);
+	}
+
+	/* Reset device table — keep only root hub (index 0) */
+	usb_dev_count = 1;
+}
+
+/*
  * xhci_host_poll — check port status and handle connect/disconnect.
  *
  * Call this periodically from your main loop.
@@ -480,8 +542,7 @@ struct usb_device *xhci_host_poll(void)
 
 		} else {
 			printf("Device disconnected\n");
-			device_connected = false;
-			/* TODO: disable slot, cleanup */
+			xhci_disconnect_device(ctrl);
 		}
 	}
 
@@ -545,6 +606,11 @@ int xhci_host_init(uintptr_t dwc3_base)
 	}
 
 	return 0;
+}
+
+bool xhci_device_connected(void)
+{
+	return device_connected;
 }
 
 struct xhci_ctrl *xhci_host_get_ctrl(void)

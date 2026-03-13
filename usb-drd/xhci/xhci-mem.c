@@ -78,7 +78,7 @@ static void xhci_segment_free(struct xhci_segment *seg)
  * @param ptr	pointer to "ring" to be freed
  * Return: none
  */
-static void xhci_ring_free(struct xhci_ring *ring)
+void xhci_ring_free(struct xhci_ring *ring)
 {
 	struct xhci_segment *seg;
 	struct xhci_segment *first_seg;
@@ -122,7 +122,7 @@ static void xhci_scratchpad_free(struct xhci_ctrl *ctrl)
  * @param ptr	pointer to "xhci_container_ctx" to be freed
  * Return: none
  */
-static void xhci_free_container_ctx(struct xhci_container_ctx *ctx)
+void xhci_free_container_ctx(struct xhci_container_ctx *ctx)
 {
 	free(ctx->bytes);
 	free(ctx);
