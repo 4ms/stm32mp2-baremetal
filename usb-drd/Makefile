@@ -23,6 +23,8 @@ SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_cortex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_rcc_ex.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c_ex.c
 
 SOURCES += dwc3_dma.c
 SOURCES += dwc3_baremetal.c
@@ -43,6 +45,7 @@ SOURCES_XHCI += xhci/xhci-mem.c
 SOURCES += $(SOURCES_XHCI)
 SOURCES += xhci_baremetal.c
 SOURCES += usb_midi.c
+SOURCES += tcpp03.cc
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
@@ -72,6 +75,7 @@ UART_CHOICE := 6
 FREESTANDING := 
 
 $(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast 
+$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast
 
 include $(SHAREDDIR)/makefile-common.mk
 

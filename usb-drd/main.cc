@@ -6,6 +6,7 @@
 #include "print/print.hh"
 #include "stm32mp2xx_hal.h"
 #include "usb_midi.h"
+#include "tcpp03.hh"
 #include "xhci_baremetal.h"
 
 /* Set to 1 for host mode, 0 for device (CDC-ACM) mode */
@@ -60,6 +61,9 @@ static const char *midi_status_name(uint8_t status)
 /* ---- Host mode ---- */
 static void run_host_mode()
 {
+	Tcpp03Controller tcpp03;
+	tcpp03.init();
+
 	struct dwc3 *dwc = dwc3_baremetal_init(DWC3_DR_MODE_HOST, nullptr);
 	if (!dwc) {
 		print("DWC3 host init failed\n");
@@ -73,6 +77,8 @@ static void run_host_mode()
 		while (true)
 			;
 	}
+
+	tcpp03.enable_vbus();
 
 	print("USB Host ready. Plug in a MIDI device.\n");
 
