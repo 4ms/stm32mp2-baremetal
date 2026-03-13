@@ -9,6 +9,7 @@
 #include "drivers/rcc_xbar.hh"
 #include <cstdio>
 #include <cstring>
+#include <log.h>
 #include <optional>
 
 int Tcpp03Controller::init()
@@ -42,6 +43,11 @@ int Tcpp03Controller::enable_vbus()
 	write_reg(register0, data);
 	HAL_Delay(2);
 
+	// Read back to acknowledge
+	data = read_reg(register1).value_or(0xFF);
+	if (data != 0x1C)
+		pr_err("TCPP03: Error, ACK register should be 0x1c, but is 0x%02x\n", data);
+
 	return 0;
 }
 
@@ -49,12 +55,19 @@ int Tcpp03Controller::disable_vbus()
 {
 	printf("TCPP03: disable VBUS\n");
 
-	uint8_t data = (0b01 << 4);
 	// Power Mode: Normal operation (not hibernating or low-power)
 	// Gate Driver Provider switch open => no 5V routed to USB jack VBUS
-	// Gate Driver consumer switch closed
+	// Gate Driver consumer closed
+	uint8_t data = (0b01 << 4);
 
-	return write_reg(register0, data);
+	write_reg(register0, data);
+	data = read_reg(register1).value_or(0xFF);
+	if (data != 0x10) {
+		pr_err("TCPP03: Error, ACK register should be 0x10, but is 0x%02x\n", data);
+		return -1;
+	}
+
+	return 0;
 }
 
 int Tcpp03Controller::i2c_init()
