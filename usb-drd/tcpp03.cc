@@ -7,14 +7,9 @@
 #include "tcpp03.hh"
 #include "drivers/pin.hh"
 #include "drivers/rcc_xbar.hh"
-// #include "interrupt//interrupt.hh"
 #include <cstdio>
 #include <cstring>
 #include <optional>
-
-// static void i2c_mem_tx_complete_cb(I2C_HandleTypeDef *hi2c);
-// static void i2c_mem_rx_complete_cb(I2C_HandleTypeDef *hi2c);
-// static void i2c_error_cb(I2C_HandleTypeDef *hi2c);
 
 int Tcpp03Controller::init()
 {
@@ -127,16 +122,6 @@ int Tcpp03Controller::i2c_init()
 		printf("ERROR: HAL_I2CEx_ConfigDigitalFilter returned: %d\n", res);
 		return res;
 	}
-
-	// InterruptManager::register_and_start_isr(I2C1_IRQn, 1, 1, [this]() {
-	// 	printf("I2C IRQ\n");
-	// 	HAL_I2C_EV_IRQHandler(&hi2c);
-	// 	HAL_I2C_ER_IRQHandler(&hi2c);
-	// });
-	// HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_MEM_TX_COMPLETE_CB_ID, i2c_mem_tx_complete_cb);
-	// HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, i2c_mem_rx_complete_cb);
-	// HAL_I2C_RegisterCallback(&hi2c, HAL_I2C_ERROR_CB_ID, i2c_error_cb);
-
 	return 0;
 }
 int Tcpp03Controller::write_reg(uint8_t reg, uint8_t data)
@@ -161,18 +146,3 @@ std::optional<uint8_t> Tcpp03Controller::read_reg(uint8_t reg)
 		return data;
 	}
 }
-
-// void i2c_mem_tx_complete_cb(I2C_HandleTypeDef *hi2c)
-// {
-// 	printf("I2C mem tx callback\n");
-// }
-
-// void i2c_mem_rx_complete_cb(I2C_HandleTypeDef *hi2c)
-// {
-// 	printf("I2C mem rx callback\n");
-// }
-
-// void i2c_error_cb(I2C_HandleTypeDef *hi2c)
-// {
-// 	printf("I2C error callback\n");
-// }
