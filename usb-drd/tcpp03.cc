@@ -32,22 +32,15 @@ int Tcpp03Controller::enable_vbus()
 	HAL_Delay(10);
 	uint8_t data = 0;
 
-	data = read_reg(register1).value_or(0xFF);
-	data = read_reg(register2).value_or(0xFF);
-
-	data = (0 << 2);	 // Gate Driver Provider switch off
-	data |= (0b01 << 4); // Power Mode: Normal operation
+	data = (0b01 << 4); // Power Mode: Normal
 	write_reg(register0, data);
 	HAL_Delay(2);
-	data = read_reg(register1).value_or(0xFF);
-	data = read_reg(register2).value_or(0xFF);
 
-	data = (1 << 2);	 // Gate Driver Provider switch on
-	data |= (0b01 << 4); // Power Mode: Normal
+	data = (0b01 << 4); // Power Mode: Normal
+	data |= (1 << 3);	// Open GD Consumer
+	data |= (1 << 2);	// Close GD Producer
 	write_reg(register0, data);
 	HAL_Delay(2);
-	data = read_reg(register1).value_or(0xFF);
-	data = read_reg(register2).value_or(0xFF);
 
 	return 0;
 }
@@ -56,9 +49,10 @@ int Tcpp03Controller::disable_vbus()
 {
 	printf("TCPP03: disable VBUS\n");
 
-	uint8_t data = 0;
-	data &= ~(1 << 2);	 // Gate Driver Provider switch open => no 5V routed to USB jack VBUS
-	data |= (0b01 << 4); // Power Mode: Normal operation (not hibernating or low-power)
+	uint8_t data = (0b01 << 4);
+	// Power Mode: Normal operation (not hibernating or low-power)
+	// Gate Driver Provider switch open => no 5V routed to USB jack VBUS
+	// Gate Driver consumer switch closed
 
 	return write_reg(register0, data);
 }
