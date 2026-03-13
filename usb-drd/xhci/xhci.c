@@ -500,20 +500,21 @@ static int xhci_set_configuration(struct usb_device *udev)
 	out_ctx = virt_dev->out_ctx;
 	in_ctx = virt_dev->in_ctx;
 
-	num_of_ep = udev->config.if_desc[0].no_of_ep;
-	ifdesc = &udev->config.if_desc[0];
-
 	ctrl_ctx = xhci_get_input_control_ctx(in_ctx);
 	/* Initialize the input context control */
 	ctrl_ctx->add_flags = cpu_to_le32(SLOT_FLAG);
 	ctrl_ctx->drop_flags = 0;
 
-	/* EP_FLAG gives values 1 & 4 for EP1OUT and EP2IN */
-	for (cur_ep = 0; cur_ep < num_of_ep; cur_ep++) {
-		ep_flag = xhci_get_ep_index(&ifdesc->ep_desc[cur_ep]);
-		ctrl_ctx->add_flags |= cpu_to_le32(1 << (ep_flag + 1));
-		if (max_ep_flag < ep_flag)
-			max_ep_flag = ep_flag;
+	/* Iterate over ALL interfaces to gather endpoint flags */
+	for (int ifnum = 0; ifnum < udev->config.no_of_if; ifnum++) {
+		ifdesc = &udev->config.if_desc[ifnum];
+		num_of_ep = ifdesc->no_of_ep;
+		for (cur_ep = 0; cur_ep < num_of_ep; cur_ep++) {
+			ep_flag = xhci_get_ep_index(&ifdesc->ep_desc[cur_ep]);
+			ctrl_ctx->add_flags |= cpu_to_le32(1 << (ep_flag + 1));
+			if (max_ep_flag < ep_flag)
+				max_ep_flag = ep_flag;
+		}
 	}
 
 	xhci_inval_cache((uintptr_t)out_ctx->bytes, out_ctx->size);
@@ -526,7 +527,10 @@ static int xhci_set_configuration(struct usb_device *udev)
 
 	xhci_endpoint_copy(ctrl, in_ctx, out_ctx, 0);
 
-	/* filling up ep contexts */
+	/* Fill endpoint contexts for ALL interfaces */
+	for (int ifnum = 0; ifnum < udev->config.no_of_if; ifnum++) {
+	ifdesc = &udev->config.if_desc[ifnum];
+	num_of_ep = ifdesc->no_of_ep;
 	for (cur_ep = 0; cur_ep < num_of_ep; cur_ep++) {
 		struct usb_endpoint_descriptor *endpt_desc = NULL;
 		struct usb_ss_ep_comp_descriptor *ss_ep_comp_desc = NULL;
@@ -602,7 +606,8 @@ static int xhci_set_configuration(struct usb_device *udev)
 			ep_ctx[ep_index]->reserved[0] =
 				cpu_to_le32(EP_BPKTS(1) | EP_BBM(1));
 		}
-	}
+	} /* cur_ep */
+	} /* ifnum */
 
 	return xhci_configure_endpoints(udev, false);
 }
