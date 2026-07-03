@@ -1,9 +1,12 @@
 #include <stdint.h>
 
+#define USART1_BASE 0x40330000UL
 #define USART2_BASE 0x400E0000UL
 #define USART6_BASE 0x40220000UL
 
-#if UART == 6
+#if UART == 1
+#define USART_BASE USART1_BASE
+#elif UART == 6
 #define USART_BASE USART6_BASE
 #else
 #define USART_BASE USART2_BASE

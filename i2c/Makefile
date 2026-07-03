@@ -30,7 +30,8 @@ INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
 
-# Uncomment this to use USART6 via the GPIO Expander header
+# Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK (default), 6 = GPIO Expander
+# header. See shared/makefile-common.mk. Uncomment to override, e.g.:
 # UART_CHOICE := 6
 
 OPTFLAG := -O0

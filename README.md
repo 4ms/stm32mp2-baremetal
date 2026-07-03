@@ -139,7 +139,7 @@ the device path to your SD card partitions 1 and 2:
 
 ```bash
 cd tf-a-stm32mp25
-# [Configure your TF-A build for USART2 or USART6 here]
+# [Configure your TF-A build for USART1, USART2, or USART6 here]
 ./build.sh
 sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX1
 sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX2
@@ -197,6 +197,30 @@ or you can specify it at build time:
 make UART_CHOICE=6
 ```
 
+### Console via USART1 (GPIO header)
+
+A third option is USART1, routed to the GPIO header pins:
+- PB8: TX (mp2->computer), alternate function AF6
+- PB10: RX (mp2<-computer), alternate function AF6
+
+Attach a USB-UART dongle to these pins (and to a GND pin on the header).
+
+To use USART1, put this in your Makefile:
+```
+UART_CHOICE := 1
+```
+
+or specify it at build time:
+
+```bash
+make UART_CHOICE=1
+```
+
+Note: as with the other choices, the bootloader (TF-A) sets up the console UART's
+clock, pin mux, and baud rate before your app runs, so you must also configure
+your TF-A build to use USART1 (PB8/PB10, AF6). The app itself only writes to the
+already-initialized UART.
+
 ## Building a project
 
 Build a project by running `make` in its directory.
@@ -253,7 +277,8 @@ minicom -D /dev/cu.usbmodem1102
 Now, press Reset on the EV1. You should see messages from TF-A and then your app!
 
 If you don't see anything, verify you built TF-A and your app with the right UART
-selected (USART2 for ST-LINK, USART6 for GPIO Expander header + dongle).
+selected (USART2 for ST-LINK, USART6 for GPIO Expander header + dongle, or
+USART1 on GPIO header pins PB8/PB10 + dongle).
 
 
 # Debugging

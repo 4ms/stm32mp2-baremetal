@@ -41,7 +41,10 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 
 OPTFLAG ?= -O0
 
-# 2 is STLINK, 6 is GPIO Expander header
+# Console UART selection:
+#   1 = USART1 on PB8 (TX, AF6) / PB10 (RX, AF6), on the GPIO header
+#   2 = USART2, connected to the ST-LINK adaptor via the USB-C jack (default)
+#   6 = USART6 on the GPIO Expander header
 UART_CHOICE ?= 2
 
 FREESTANDING ?= -ffreestanding
