@@ -1,8 +1,11 @@
 /* dwc3_dma.c - Monotonic bump allocator for DWC3 DMA-coherent memory
  *
  * This allocator is deliberately trivial: all DWC3 DMA allocations
- * happen at init time and live for the lifetime of the controller.
- * A bump pointer over a static Non-Cacheable buffer is all we need.
+ * happen at init time and live for the lifetime of the controller
+ * *instance*. A bump pointer over a static Non-Cacheable buffer is all
+ * we need — dwc3_baremetal_init() resets the pool each time it brings
+ * the (single) controller up, which reclaims everything the previous
+ * host- or device-mode instance allocated.
  *
  * Pool budget
  * -----------
@@ -59,6 +62,13 @@ void *dma_alloc_coherent(size_t size, unsigned long *dma_handle)
 void dma_free_coherent(void *ptr)
 {
 	/* Monotonic allocator: no-op.
-	 * All DMA memory lives for the lifetime of the controller. */
+	 * All DMA memory lives until the controller is re-initialized. */
 	(void)ptr;
+}
+
+/* Reclaim the whole pool. Only valid while the controller is in reset:
+ * every pointer previously handed out becomes invalid. */
+void dwc3_dma_pool_reset(void)
+{
+	dma_pool_offset = 0;
 }

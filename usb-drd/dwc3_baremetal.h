@@ -90,6 +90,14 @@ struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *pla
  */
 void dwc3_baremetal_shutdown(struct dwc3 *dwc);
 
+/*
+ * dwc3_dma_pool_reset - Reclaim the DMA-coherent pool (dwc3_dma.c)
+ *
+ * Called by dwc3_baremetal_init() while the controller is held in reset;
+ * invalidates everything the previous controller instance allocated.
+ */
+void dwc3_dma_pool_reset(void);
+
 /* ============================================================
  * Timeout helper used in dwc3_core_soft_reset() polling loops
  * ============================================================ */

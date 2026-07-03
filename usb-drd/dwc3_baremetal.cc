@@ -65,6 +65,10 @@ struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *pla
 	RCC->USB3DRDCFGR |= RCC_USB3DRDCFGR_USB3DRDRST;
 	RCC->USB3PCIEPHYCFGR |= RCC_USB3PCIEPHYCFGR_USB3PCIEPHYRST;
 
+	// Controller is in reset: reclaim all DMA allocations of the previous
+	// instance, so repeated host/device mode switches don't exhaust the pool.
+	dwc3_dma_pool_reset();
+
 	// 2. Select the frequency of USB2PHY2 reference clock.
 	// Flexgen ch.58 from PLL4 (1200MHz). STM32MP2 dividers use (N+1):
 	//   findiv=29, prediv=1 → (30)*(2) = 60 → 1200/60 = 20MHz
