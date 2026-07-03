@@ -41,8 +41,36 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 
 OPTFLAG ?= -O0
 
-# 2 is STLINK, 6 is GPIO Expander header
+# Console UART selection:
+#   1 = USART1 on PB8 (TX, AF6) / PB10 (RX, AF6), on the GPIO header
+#   2 = USART2, connected to the ST-LINK adaptor via the USB-C jack (default)
+#   6 = USART6 on the GPIO Expander header
+# Note whether a choice was supplied before applying the default (the `?=`
+# itself would otherwise change the variable's origin away from "undefined").
+ifeq ($(origin UART_CHOICE),undefined)
+UART_IS_DEFAULT := 1
+endif
 UART_CHOICE ?= 2
+
+# Human-readable description per valid choice. An unknown choice yields an empty
+# string, which we turn into a hard error below.
+UART_1_DESC := USART1 (PB8 TX / PB10 RX, AF6) on the GPIO header
+UART_2_DESC := USART2 (ST-LINK adaptor via the USB-C jack)
+UART_6_DESC := USART6 (GPIO Expander header)
+UART_DESC := $(UART_$(UART_CHOICE)_DESC)
+
+ifeq ($(UART_DESC),)
+$(error Invalid UART_CHOICE '$(UART_CHOICE)' - must be 1, 2, or 6)
+endif
+
+# Print the selection so a wrong override (e.g. the typo `make USART_CHOICE=1`,
+# which leaves UART_CHOICE at its default) is visible instead of silent, and so
+# an omitted selection shows which default is in effect.
+ifeq ($(UART_IS_DEFAULT),1)
+$(info Console UART: $(UART_DESC) [default; override with UART_CHOICE=1|2|6])
+else
+$(info Console UART: $(UART_DESC) [UART_CHOICE=$(UART_CHOICE)])
+endif
 
 FREESTANDING ?= -ffreestanding
 

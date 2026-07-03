@@ -7,24 +7,24 @@ All projects are designed for the STM32MP257F-EV1 board, but changing to your
 own board should be trivial.
 
 The goal is to run full applications with access to:
-  - √ EL3 Secure state
-  - √ Nested interrupts (using the GIC)
-  - √ MMU configuration
-  - √ DMA memory-to-memory transfers
-  - √ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
-  - √ SAI (audio)
-     - √ Using DMA
-     - √ SAI TX (DAC audio out)
-     - √ SAI RX (ADC audio in)
-  - √ I2C
+  - ✓ EL3 Secure state
+  - ✓ Nested interrupts (using the GIC)
+  - ✓ MMU configuration
+  - ✓ DMA memory-to-memory transfers
+  - ✓ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
+  - ✓ SAI (audio)
+     - ✓ Using DMA
+     - ✓ SAI TX (DAC audio out)
+     - ✓ SAI RX (ADC audio in)
+  - ✓ I2C
   - SMP Multi-core (dual CA35):
-     - √ Startup code for each core
-     - √ core-specific interrupts (SGI)
+     - ✓ Startup code for each core
+     - ✓ core-specific interrupts (SGI)
      - IPCC and HSEM for sharing data 
   - AMP multi-core (CM33)
   - AMP multi-core (CM0+)
   - USB dual-role host/device, leveraging the STM32 USB library
-     √ Device via USB3DR
+     ✓ Device via USB3DR
      - Host via USB3DR
      - Host via EHCI USBH (WIP partially working)
   - RGB or MIPI/DSI video
@@ -139,7 +139,7 @@ the device path to your SD card partitions 1 and 2:
 
 ```bash
 cd tf-a-stm32mp25
-# [Configure your TF-A build for USART2 or USART6 here]
+# [Configure your TF-A build for USART1, USART2, or USART6 here]
 ./build.sh
 sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX1
 sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX2
@@ -164,6 +164,16 @@ You will need the fiptool later after building your application.
 
 The only thing to configure currently is the choice of UART.
 
+Set `UART_CHOICE` to `1`, `2`, or `6` (in the project's Makefile or on the
+`make` command line). The app configures its console UART itself at startup
+(clock, pin mux, and 115200 8N1 baud rate — see `init_uart()` in
+`shared/print/uart_print.c`), so you can switch the
+console per-project.
+
+Note that TF-A also inits and prints to its UART, which can be configured separately 
+(see TF-A project for details). Also note that TF-A's console is not de-initialized
+before the app runs. 
+
 ### Console via ST-LINK
 
 By default all console logging (print/printf) goes to USART2, which is
@@ -182,8 +192,8 @@ way to have a UART console if you are using an external debugger
 
 You will need to attach a USB-UART dongle to the GPIO Expander:
 - Pin 6: GND
-- Pin 8: TX (mp2->computer)
-- Pin 10: RX (mp2<-computer)
+- Pin 8: TX (mp2->computer) — PF13, AF3
+- Pin 10: RX (mp2<-computer) — PF14, AF3
 
 
 To use these pins, put this in your Makefile:
@@ -196,6 +206,30 @@ or you can specify it at build time:
 ```bash
 make UART_CHOICE=6
 ```
+
+The app brings USART6 up itself, so this works even if TF-A was built for 
+a different console.
+
+### Console via USART1 (custom board)
+
+A third option is USART1, which is used on a custom board. 
+- PB8: TX (mp2->computer), alternate function AF6
+- PB10: RX (mp2<-computer), alternate function AF6
+
+Attach a USB-UART dongle to these pins (and to a GND pin on the header).
+
+To use USART1, put this in your Makefile:
+```
+UART_CHOICE := 1
+```
+
+or specify it at build time:
+
+```bash
+make UART_CHOICE=1
+```
+
+This assumes TF-A grants the secure world access to USART1 and GPIOB.
 
 ## Building a project
 
@@ -252,8 +286,11 @@ minicom -D /dev/cu.usbmodem1102
 
 Now, press Reset on the EV1. You should see messages from TF-A and then your app!
 
-If you don't see anything, verify you built TF-A and your app with the right UART
-selected (USART2 for ST-LINK, USART6 for GPIO Expander header + dongle).
+If you don't see anything, verify your app was built with the right `UART_CHOICE`
+(USART2 for ST-LINK, USART6 for the GPIO Expander header + dongle, or USART1 on
+custom board header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
+messages to *its* console, which is independent of the UART
+your app selects; only the app's `print()` output follows `UART_CHOICE`.
 
 
 # Debugging

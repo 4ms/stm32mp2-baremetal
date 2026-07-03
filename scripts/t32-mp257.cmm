@@ -3,7 +3,7 @@
 
 SYStem.CPU STM32MP257F-CA35
 
-system.config DEBUGPORTTYPE SWD 
+system.config DEBUGPORTTYPE JTAG 
 SYStem.JtagClock 1MHz
 
 Trace.DISable

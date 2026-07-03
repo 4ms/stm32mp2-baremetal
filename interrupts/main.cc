@@ -2,12 +2,15 @@
 #include "interrupt/interrupt.hh"
 #include "print/print.hh"
 
-#if UART == 6
+#if UART == 1
+#define USARTx USART1
+#define USARTx_IRQn USART1_IRQn
+#elif UART == 6
 #define USARTx USART6
 #define USARTx_IRQn USART6_IRQn
 #else
 #define USARTx USART2
-#define USARTx_IRQn USART6_IRQn
+#define USARTx_IRQn USART2_IRQn
 #endif
 
 void delay(unsigned x)

@@ -37,6 +37,11 @@ For ST-LINK:
 UART_CHOICE := 2
 ```
 
+For USART1 on GPIO header pins PB8 (TX, AF6) / PB10 (RX, AF6):
+```
+UART_CHOICE := 1
+```
+
 
 Expected output: (notes in `[brackets]` are actions taken by you)
 

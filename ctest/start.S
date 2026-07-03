@@ -1,6 +1,9 @@
 .cpu cortex-a35
 
-#if UART==6
+#if UART==1
+.equ STM32_USART1_TDR, 0x40330028
+.equ STM32_USART_TDR, STM32_USART1_TDR
+#elif UART==6
 .equ STM32_USART6_TDR, 0x40220028
 .equ STM32_USART_TDR, STM32_USART6_TDR
 #else
@@ -19,6 +22,9 @@ _Reset:
     // Set up a SP
     ldr     x0, =_stack_start
     bic     sp, x0, #0xf            // 16-byte alignment
+
+    // Bring up the selected console UART (no-op for USART2/TF-A console)
+    bl      init_uart
 
     // Print "MP2"
     ldr     x4, =STM32_USART_TDR
