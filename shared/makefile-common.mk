@@ -80,6 +80,7 @@ OPTION_FLAGS += \
 		${FREESTANDING} \
 		$(EL_LEVEL) \
 		-DUART=$(UART_CHOICE) \
+		$(BOARD_DEF)
 
 
 AFLAGS =  \

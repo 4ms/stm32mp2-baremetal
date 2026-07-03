@@ -17,13 +17,24 @@ inline bool button_user1_pressed()
 
 inline void button_user2_init()
 {
+#ifdef DEVBOARD_0_1
+	// Enable RCC for GPIOA
+	RCC->GPIOACFGR |= RCC_GPIOACFGR_GPIOxEN;
+	// PA5 mode = input (0b00)
+	GPIOA->MODER = (GPIOA->MODER & ~(0b11 << (5 * 2))) | (0b00 << (5 * 2));
+#else
 	// Enable RCC for GPIOG
 	RCC->GPIOGCFGR |= RCC_GPIOGCFGR_GPIOxEN;
 	// PG8 mode = input (0b00)
 	GPIOG->MODER = (GPIOG->MODER & ~(0b11 << (8 * 2))) | (0b00 << (8 * 2));
+#endif
 }
 
 inline bool button_user2_pressed()
 {
+#ifdef DEVBOARD_0_1
+	return (GPIOA->IDR & (1 << 5));
+#else
 	return (GPIOG->IDR & (1 << 8));
+#endif
 }
