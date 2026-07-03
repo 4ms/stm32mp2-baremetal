@@ -9,6 +9,7 @@ struct FlexbarConf {
 		_6 = RCC_XBAR_CLKSRC_PLL6,
 		_7 = RCC_XBAR_CLKSRC_PLL7,
 		_8 = RCC_XBAR_CLKSRC_PLL8,
+		HSI = RCC_XBAR_CLKSRC_HSI,
 	};
 	PLLx PLL = PLLx::_4;
 	uint8_t findiv = 0x3F;

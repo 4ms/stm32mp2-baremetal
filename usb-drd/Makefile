@@ -45,7 +45,22 @@ SOURCES_XHCI += xhci/xhci-mem.c
 SOURCES += $(SOURCES_XHCI)
 SOURCES += xhci_baremetal.c
 SOURCES += usb_midi.c
+
+# Board selection (run `make clean` when switching):
+#   ev1      = STM32MP257 EV1 kit: TCPP03-M20 on I2C1 gates VBUS
+#   devboard = custom board v0.1: CC pins direct to UCPD1, VBUS switch on
+#              PB4 (adaptor board), VBUS sense on PH3
+BOARD ?= ev1
+ifeq ($(BOARD),ev1)
 SOURCES += tcpp03.cc
+SOURCES += typec_ev1.cc
+else ifeq ($(BOARD),devboard)
+SOURCES += typec_devboard.cc
+BOARD_DEF := -DDEVBOARD_0_1
+else
+$(error Invalid BOARD '$(BOARD)' - must be ev1 or devboard)
+endif
+$(info Board: $(BOARD))
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)

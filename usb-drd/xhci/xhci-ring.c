@@ -432,6 +432,50 @@ static int event_ready(struct xhci_ctrl *ctrl)
 	return 1;
 }
 
+/*
+ * Recover from a command that the xHC never completed (e.g. a device that
+ * wedged mid-Address-Device): abort the command ring per xHCI spec 4.6.1.2,
+ * drain stale completion events so they aren't mistaken for a later command's
+ * result, then point the ring at our enqueue pointer so the dead command is
+ * skipped and subsequent commands run again.
+ */
+static void xhci_abort_cmd_ring(struct xhci_ctrl *ctrl)
+{
+	int timeout = 500;
+
+	printf("Aborting stuck xHCI command ring\n");
+	xhci_writeq(&ctrl->hcor->or_crcr,
+		    xhci_readq(&ctrl->hcor->or_crcr) | CMD_RING_ABORT);
+
+	while ((xhci_readq(&ctrl->hcor->or_crcr) & CMD_RING_RUNNING) &&
+	       --timeout > 0)
+		mdelay(1);
+
+	if (timeout <= 0) {
+		printf("Command ring abort failed; controller is wedged\n");
+		return;
+	}
+
+	/* Drain stale command completions (incl. Command Ring Stopped) */
+	while (event_ready(ctrl)) {
+		union xhci_trb *event = ctrl->event_ring->dequeue;
+		trb_type type =
+			TRB_FIELD_TO_TYPE(le32_to_cpu(event->event_cmd.flags));
+
+		if (type != TRB_COMPLETION && type != TRB_PORT_STATUS)
+			break;
+		if (type == TRB_COMPLETION)
+			printf("  discarding stale command completion (code %d)\n",
+			       GET_COMP_CODE(le32_to_cpu(event->event_cmd.status)));
+		xhci_acknowledge_event(ctrl);
+	}
+
+	/* Restart the ring at the next free TRB */
+	xhci_writeq(&ctrl->hcor->or_crcr,
+		    xhci_virt_to_bus(ctrl, ctrl->cmd_ring->enqueue) |
+		    ctrl->cmd_ring->cycle_state);
+}
+
 /**
  * Waits for a specific type of event and returns it. Discards unexpected
  * events. Caller *must* call xhci_acknowledge_event() after it is finished
@@ -439,7 +483,7 @@ static int event_ready(struct xhci_ctrl *ctrl)
  *
  * @param ctrl		Host controller data structure
  * @param expected	TRB type expected from Event TRB
- * Return: pointer to event trb
+ * Return: pointer to event trb, or NULL on timeout
  */
 union xhci_trb *xhci_wait_for_event(struct xhci_ctrl *ctrl, trb_type expected)
 {
@@ -456,16 +500,19 @@ union xhci_trb *xhci_wait_for_event(struct xhci_ctrl *ctrl, trb_type expected)
 		if (type == expected)
 			return event;
 
-		if (type == TRB_PORT_STATUS)
-		/* TODO: remove this once enumeration has been reworked */
+		if (type == TRB_PORT_STATUS) {
 			/*
-			 * Port status change events always have a
-			 * successful completion code
+			 * The port changed state mid-transaction (device
+			 * bounced?). The poll loop reads PORTSC directly, so
+			 * just log it and move on.
 			 */
+			printf("Port %d status change event while waiting for event type %d\n",
+			       (int)(le32_to_cpu(event->generic.field[0]) >> 24),
+			       expected);
 			BUG_ON(GET_COMP_CODE(
 				le32_to_cpu(event->generic.field[2])) !=
 								COMP_SUCCESS);
-		else
+		} else
 			printf("Unexpected XHCI event TRB, skipping... "
 				"(%08x %08x %08x %08x)\n",
 				le32_to_cpu(event->generic.field[0]),
@@ -479,8 +526,10 @@ union xhci_trb *xhci_wait_for_event(struct xhci_ctrl *ctrl, trb_type expected)
 	if (expected == TRB_TRANSFER)
 		return NULL;
 
-	printf("XHCI timeout on event type %d... cannot recover.\n", expected);
-	BUG();
+	printf("XHCI timeout on event type %d\n", expected);
+	if (expected == TRB_COMPLETION)
+		xhci_abort_cmd_ring(ctrl);
+	return NULL;
 }
 
 /*
@@ -497,6 +546,8 @@ static void reset_ep(struct usb_device *udev, int ep_index)
 	printf("Resetting EP %d...\n", ep_index);
 	xhci_queue_command(ctrl, NULL, udev->slot_id, ep_index, TRB_RESET_EP);
 	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
+	if (!event)
+		return;
 	field = le32_to_cpu(event->trans_event.flags);
 	BUG_ON(TRB_TO_SLOT_ID(field) != udev->slot_id);
 	xhci_acknowledge_event(ctrl);
@@ -504,6 +555,8 @@ static void reset_ep(struct usb_device *udev, int ep_index)
 	xhci_queue_command(ctrl, (void *)((uintptr_t)ring->enqueue |
 		ring->cycle_state), udev->slot_id, ep_index, TRB_SET_DEQ);
 	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
+	if (!event)
+		return;
 	BUG_ON(TRB_TO_SLOT_ID(le32_to_cpu(event->event_cmd.flags))
 		!= udev->slot_id || GET_COMP_CODE(le32_to_cpu(
 		event->event_cmd.status)) != COMP_SUCCESS);
@@ -528,14 +581,21 @@ static void abort_td(struct usb_device *udev, int ep_index)
 	xhci_queue_command(ctrl, NULL, udev->slot_id, ep_index, TRB_STOP_RING);
 
 	event = xhci_wait_for_event(ctrl, TRB_TRANSFER);
-	field = le32_to_cpu(event->trans_event.flags);
-	BUG_ON(TRB_TO_SLOT_ID(field) != udev->slot_id);
-	BUG_ON(TRB_TO_EP_INDEX(field) != ep_index);
-	BUG_ON(GET_COMP_CODE(le32_to_cpu(event->trans_event.transfer_len
-		!= COMP_STOP)));
-	xhci_acknowledge_event(ctrl);
+	if (event) {
+		field = le32_to_cpu(event->trans_event.flags);
+		BUG_ON(TRB_TO_SLOT_ID(field) != udev->slot_id);
+		BUG_ON(TRB_TO_EP_INDEX(field) != ep_index);
+		BUG_ON(GET_COMP_CODE(le32_to_cpu(event->trans_event.transfer_len
+			!= COMP_STOP)));
+		xhci_acknowledge_event(ctrl);
+	} else {
+		printf("abort_td: no transfer event for stopped EP %d\n",
+		       ep_index);
+	}
 
 	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
+	if (!event)
+		return;
 	BUG_ON(TRB_TO_SLOT_ID(le32_to_cpu(event->event_cmd.flags))
 		!= udev->slot_id || GET_COMP_CODE(le32_to_cpu(
 		event->event_cmd.status)) != COMP_SUCCESS);
@@ -544,6 +604,8 @@ static void abort_td(struct usb_device *udev, int ep_index)
 	xhci_queue_command(ctrl, (void *)((uintptr_t)ring->enqueue |
 		ring->cycle_state), udev->slot_id, ep_index, TRB_SET_DEQ);
 	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
+	if (!event)
+		return;
 	BUG_ON(TRB_TO_SLOT_ID(le32_to_cpu(event->event_cmd.flags))
 		!= udev->slot_id || GET_COMP_CODE(le32_to_cpu(
 		event->event_cmd.status)) != COMP_SUCCESS);

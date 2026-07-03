@@ -201,8 +201,28 @@ static int usb_get_string(struct usb_device *dev, int index,
 	return slen;
 }
 
-/* Forward declaration */
+/* Forward declarations */
 static int hub_configure(struct usb_device *dev);
+static void xhci_free_virt_device(struct xhci_ctrl *ctrl, int slot_id);
+
+/*
+ * Undo a partially-enumerated device (slot allocated but enumeration failed)
+ * so a misbehaving device can't leak xHC slots or device-table entries
+ * across repeated connect attempts.
+ */
+static void enum_failed_cleanup(struct xhci_ctrl *ctrl, struct usb_device *dev)
+{
+	if (dev->slot_id) {
+		xhci_queue_command(ctrl, NULL, dev->slot_id, 0,
+				   TRB_DISABLE_SLOT);
+		union xhci_trb *event = xhci_wait_for_event(ctrl,
+							    TRB_COMPLETION);
+		if (event)
+			xhci_acknowledge_event(ctrl);
+		xhci_free_virt_device(ctrl, dev->slot_id);
+	}
+	usb_free_device(ctrl);
+}
 
 /*
  * Enumerate a newly connected device:
@@ -250,6 +270,7 @@ static int xhci_enumerate_device(struct usb_device *parent, int port,
 			      dev->devnum, 0, NULL, 0, USB_CNTL_TIMEOUT);
 	if (ret < 0) {
 		printf("  Set Address failed: %d\n", ret);
+		enum_failed_cleanup(ctrl, dev);
 		return ret;
 	}
 	printf("  Address set\n");
@@ -262,6 +283,7 @@ static int xhci_enumerate_device(struct usb_device *parent, int port,
 			      desc, 8, USB_CNTL_TIMEOUT);
 	if (ret < 8) {
 		printf("  Get Descriptor (8) failed: %d\n", ret);
+		enum_failed_cleanup(ctrl, dev);
 		return ret;
 	}
 
@@ -276,6 +298,7 @@ static int xhci_enumerate_device(struct usb_device *parent, int port,
 			      desc, sizeof(*desc), USB_CNTL_TIMEOUT);
 	if (ret < (int)sizeof(*desc)) {
 		printf("  Get Descriptor (full) failed: %d\n", ret);
+		enum_failed_cleanup(ctrl, dev);
 		return ret;
 	}
 
@@ -297,6 +320,7 @@ static int xhci_enumerate_device(struct usb_device *parent, int port,
 
 	if (desc->bNumConfigurations == 0) {
 		printf("  No configurations!\n");
+		enum_failed_cleanup(ctrl, dev);
 		return -ENODEV;
 	}
 
@@ -308,6 +332,7 @@ static int xhci_enumerate_device(struct usb_device *parent, int port,
 			      &cfg_hdr, sizeof(cfg_hdr), USB_CNTL_TIMEOUT);
 	if (ret < (int)sizeof(cfg_hdr)) {
 		printf("  Get Config Descriptor failed: %d\n", ret);
+		enum_failed_cleanup(ctrl, dev);
 		return ret;
 	}
 
@@ -396,6 +421,7 @@ static int xhci_enumerate_device(struct usb_device *parent, int port,
 			      NULL, 0, USB_CNTL_TIMEOUT);
 	if (ret < 0) {
 		printf("  Set Configuration failed: %d\n", ret);
+		enum_failed_cleanup(ctrl, dev);
 		return ret;
 	}
 	printf("  Configured (config %d)\n", cfg_hdr.bConfigurationValue);
@@ -681,6 +707,76 @@ static void xhci_disconnect_device(struct xhci_ctrl *ctrl)
 }
 
 /*
+ * Wait for a root port to stop changing state, clearing change bits as they
+ * appear. Self-powered/dual-role devices can bounce the bus for a second or
+ * two after attach — e.g. USB-PD sinks issue hard resets when we never send
+ * Source Capabilities, then settle down as plain 5V devices. Enumerating
+ * during the bouncing wedges commands mid-transaction.
+ * Returns the final PORTSC value.
+ */
+static u32 wait_port_stable(volatile uint32_t *portsc_reg, int settle_ms,
+			    int max_ms)
+{
+	u32 portsc = xhci_readl(portsc_reg);
+	int stable = 0;
+
+	while (stable < settle_ms && max_ms > 0) {
+		mdelay(10);
+		stable += 10;
+		max_ms -= 10;
+		portsc = xhci_readl(portsc_reg);
+		u32 changes = portsc & (PORT_CSC | PORT_PEC | PORT_RC |
+					PORT_PLC | PORT_WRC | PORT_OCC |
+					PORT_CEC);
+		if (changes) {
+			u32 val = portsc & (XHCI_PORT_RO | XHCI_PORT_RWS);
+			xhci_writel(portsc_reg, val | changes);
+			stable = 0;
+		}
+	}
+	return portsc;
+}
+
+/*
+ * Reset a root port and wait for it to come back enabled.
+ * Returns true if the port is enabled after the reset.
+ */
+static bool reset_root_port(volatile uint32_t *portsc_reg, int portnum)
+{
+	u32 val = xhci_readl(portsc_reg);
+	val &= XHCI_PORT_RO | XHCI_PORT_RWS;
+	val |= PORT_RESET;
+	xhci_writel(portsc_reg, val);
+
+	/* Wait for reset to complete */
+	u32 portsc = 0;
+	int timeout = 500;
+	while (timeout-- > 0) {
+		mdelay(1);
+		portsc = xhci_readl(portsc_reg);
+		if (portsc & PORT_RC)
+			break;
+	}
+	if (!(portsc & PORT_RC)) {
+		printf("Port %d reset timeout!\n", portnum);
+		return false;
+	}
+
+	/* Clear RC bit */
+	val = portsc & (XHCI_PORT_RO | XHCI_PORT_RWS);
+	xhci_writel(portsc_reg, val | PORT_RC);
+
+	portsc = xhci_readl(portsc_reg);
+	printf("Post-reset PORTSC=0x%08x\n", portsc);
+
+	if (!(portsc & PORT_PE)) {
+		printf("Port %d not enabled after reset\n", portnum);
+		return false;
+	}
+	return true;
+}
+
+/*
  * xhci_host_poll — check port status and handle connect/disconnect.
  *
  * Call this periodically from your main loop.
@@ -726,50 +822,38 @@ struct usb_device *xhci_host_poll(void)
 				printf("Device connected on port %d\n",
 				       port_idx + 1);
 
-				/* Issue port reset */
-				u32 val = xhci_readl(portsc_reg);
-				val &= XHCI_PORT_RO | XHCI_PORT_RWS;
-				val |= PORT_RESET;
-				xhci_writel(portsc_reg, val);
+				/* Let the device settle before resetting it
+				 * (PD-capable devices bounce the bus first) */
+				portsc = wait_port_stable(portsc_reg, 200, 2500);
+				if (!(portsc & PORT_CONNECT)) {
+					printf("Device left before enumeration\n");
+					continue;
+				}
 
-				/* Wait for reset to complete */
-				int timeout = 500;
-				while (timeout-- > 0) {
-					mdelay(1);
-					portsc = xhci_readl(portsc_reg);
-					if (portsc & PORT_RC)
+				for (int attempt = 1; attempt <= 3; attempt++) {
+					if (!reset_root_port(portsc_reg,
+							     port_idx + 1))
 						break;
+
+					/* Enumerate — port number is 1-based */
+					portsc = xhci_readl(portsc_reg);
+					int ret = xhci_enumerate_device(
+						root_hub, port_idx + 1,
+						portsc_to_speed(portsc));
+					if (!ret)
+						return usb_get_dev_index(
+							usb_dev_count - 1);
+
+					printf("Enumeration attempt %d failed: %d\n",
+					       attempt, ret);
+
+					portsc = wait_port_stable(portsc_reg,
+								  200, 2500);
+					if (!(portsc & PORT_CONNECT)) {
+						printf("Device left, giving up\n");
+						break;
+					}
 				}
-				if (!(portsc & PORT_RC)) {
-					printf("Port %d reset timeout!\n",
-					       port_idx + 1);
-					continue;
-				}
-
-				/* Clear RC bit */
-				val = portsc;
-				val &= XHCI_PORT_RO | XHCI_PORT_RWS;
-				val |= PORT_RC;
-				xhci_writel(portsc_reg, val);
-
-				portsc = xhci_readl(portsc_reg);
-				printf("Post-reset PORTSC=0x%08x\n", portsc);
-
-				if (!(portsc & PORT_PE)) {
-					printf("Port %d not enabled after reset\n",
-					       port_idx + 1);
-					continue;
-				}
-
-				/* Enumerate — port number is 1-based */
-				int ret = xhci_enumerate_device(
-					root_hub, port_idx + 1,
-					portsc_to_speed(portsc));
-				if (ret)
-					printf("Enumeration failed: %d\n", ret);
-				else
-					return usb_get_dev_index(
-						usb_dev_count - 1);
 
 			} else {
 				printf("Device disconnected on port %d\n",

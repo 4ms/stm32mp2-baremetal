@@ -7,13 +7,12 @@
 #include "midi_status.hh"
 #include "print/print.hh"
 #include "stm32mp2xx_hal.h"
-#include "tcpp03.hh"
+#include "typec.hh"
 #include "usb_midi.h"
 #include "xhci_baremetal.h"
 
 enum class UsbMode { Host, Device };
 
-static Tcpp03Controller tcpp03;
 static struct dwc3 *dwc;
 
 /*
@@ -36,8 +35,6 @@ static bool button_pressed()
 
 static bool host_init()
 {
-	tcpp03.init();
-
 	dwc = dwc3_baremetal_init(DWC3_DR_MODE_HOST, nullptr);
 	if (!dwc) {
 		print("DWC3 host init failed\n");
@@ -50,7 +47,7 @@ static bool host_init()
 		return false;
 	}
 
-	tcpp03.enable_vbus();
+	TypeC::enter_host_mode();
 
 	print("USB Host ready. Plug in a device.\n");
 	return true;
@@ -60,7 +57,7 @@ static void host_shutdown()
 {
 	usb_midi_disconnect();
 	xhci_host_shutdown();
-	tcpp03.disable_vbus();
+	TypeC::exit_host_mode();
 	dwc3_baremetal_shutdown(dwc);
 	dwc = nullptr;
 	print("Host mode stopped.\n");
@@ -142,6 +139,8 @@ static bool host_run()
 
 static bool device_init()
 {
+	TypeC::enter_device_mode();
+
 	dwc = dwc3_baremetal_init(DWC3_DR_MODE_PERIPHERAL, nullptr);
 	if (!dwc) {
 		print("DWC3 device init failed\n");
@@ -165,6 +164,7 @@ static void device_shutdown()
 {
 	dwc3_baremetal_shutdown(dwc);
 	dwc = nullptr;
+	TypeC::exit_device_mode();
 	print("Device mode stopped.\n");
 }
 
@@ -188,7 +188,7 @@ static bool device_run()
 		}
 
 		/* Detect host connection via VBUS or USB state */
-		bool vbus_now = (SYSCFG->USB2PHY2CR & SYSCFG_USB2PHY2CR_VBUSVLDEXT) != 0;
+		bool vbus_now = TypeC::vbus_present();
 		if (vbus_now != host_connected) {
 			host_connected = vbus_now;
 		}
@@ -208,8 +208,9 @@ int main()
 	HAL_Init();
 	PowerControl::enable_usb33(PowerControl::Present::If);
 	button_user2_init();
+	TypeC::init();
 
-	UsbMode mode = UsbMode::Host;
+	UsbMode mode = UsbMode::Device;
 
 	while (true) {
 		if (mode == UsbMode::Host) {
