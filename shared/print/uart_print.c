@@ -5,15 +5,8 @@
 #define USART2_BASE 0x400E0000UL
 #define USART6_BASE 0x40220000UL
 
-// Per-UART bring-up parameters. USART2 is the ST-LINK boot console, which the
-// bootloader (TF-A) always configures, so we leave it alone. USART1 and USART6
-// are brought up from scratch by init_uart() below, so a project can select
-// them via UART_CHOICE without rebuilding/reflashing TF-A.
-//
-// Register addresses come from the CMSIS headers for STM32MP257Cxx. Note that
-// on this chip RCC and GPIO live in the 0x44xx_xxxx range while the USARTs are
-// in the 0x40xx_xxxx range. Pin muxing matches the board device tree in the
-// tf-a-stm32mp25 repo (fdts/stm32mp257f-ev1.dts).
+// Register addresses come from the CMSIS headers for STM32MP257Cxx
+// Pin muxing matches the board device tree in the tf-a-stm32mp25 repo (fdts/stm32mp257f-ev1.dts).
 #if UART == 1
 #define USART_BASE USART1_BASE
 #define UART_NEEDS_INIT 1
@@ -122,8 +115,8 @@ static void gpio_config_af(uint64_t gpio_base, unsigned pin, unsigned af)
 	unsigned s2 = pin * 2u;
 	unsigned s4 = (pin & 7u) * 4u;
 
-	*moder = (*moder & ~(3u << s2)) | (2u << s2); // alternate-function mode
-	*otyper &= ~(1u << pin);					  // push-pull
+	*moder = (*moder & ~(3u << s2)) | (2u << s2);	  // alternate-function mode
+	*otyper &= ~(1u << pin);						  // push-pull
 	*ospeedr = (*ospeedr & ~(3u << s2)) | (2u << s2); // high speed
 	*pupdr &= ~(3u << s2);							  // no pull
 	afr[pin >> 3] = (afr[pin >> 3] & ~(0xFu << s4)) | ((af & 0xFu) << s4);
