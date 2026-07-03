@@ -7,24 +7,24 @@ All projects are designed for the STM32MP257F-EV1 board, but changing to your
 own board should be trivial.
 
 The goal is to run full applications with access to:
-  - √ EL3 Secure state
-  - √ Nested interrupts (using the GIC)
-  - √ MMU configuration
-  - √ DMA memory-to-memory transfers
-  - √ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
-  - √ SAI (audio)
-     - √ Using DMA
-     - √ SAI TX (DAC audio out)
-     - √ SAI RX (ADC audio in)
-  - √ I2C
+  - ✓ EL3 Secure state
+  - ✓ Nested interrupts (using the GIC)
+  - ✓ MMU configuration
+  - ✓ DMA memory-to-memory transfers
+  - ✓ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
+  - ✓ SAI (audio)
+     - ✓ Using DMA
+     - ✓ SAI TX (DAC audio out)
+     - ✓ SAI RX (ADC audio in)
+  - ✓ I2C
   - SMP Multi-core (dual CA35):
-     - √ Startup code for each core
-     - √ core-specific interrupts (SGI)
+     - ✓ Startup code for each core
+     - ✓ core-specific interrupts (SGI)
      - IPCC and HSEM for sharing data 
   - AMP multi-core (CM33)
   - AMP multi-core (CM0+)
   - USB dual-role host/device, leveraging the STM32 USB library
-     √ Device via USB3DR
+     ✓ Device via USB3DR
      - Host via USB3DR
      - Host via EHCI USBH (WIP partially working)
   - RGB or MIPI/DSI video
@@ -167,9 +167,12 @@ The only thing to configure currently is the choice of UART.
 Set `UART_CHOICE` to `1`, `2`, or `6` (in the project's Makefile or on the
 `make` command line). The app configures its console UART itself at startup
 (clock, pin mux, and 115200 8N1 baud rate — see `init_uart()` in
-`shared/print/uart_print.c`), so for USART1 and USART6 you can switch the
-console per-project **without rebuilding or reflashing TF-A**. USART2 is the
-ST-LINK boot console and is always set up by TF-A, so the app leaves it alone.
+`shared/print/uart_print.c`), so you can switch the
+console per-project.
+
+Note that TF-A also inits and prints to its UART, which can be configured separately 
+(see TF-A project for details). Also note that TF-A's console is not de-initialized
+before the app runs. 
 
 ### Console via ST-LINK
 
@@ -204,12 +207,12 @@ or you can specify it at build time:
 make UART_CHOICE=6
 ```
 
-The app brings USART6 up itself, so this works even if TF-A was built for the
-default USART2 console.
+The app brings USART6 up itself, so this works even if TF-A was built for 
+a different console.
 
-### Console via USART1 (GPIO header)
+### Console via USART1 (custom board)
 
-A third option is USART1, routed to the GPIO header pins:
+A third option is USART1, which is used on a custom board. 
 - PB8: TX (mp2->computer), alternate function AF6
 - PB10: RX (mp2<-computer), alternate function AF6
 
@@ -226,10 +229,7 @@ or specify it at build time:
 make UART_CHOICE=1
 ```
 
-The app brings USART1 up itself (kernel clock from HSI via the RCC flexgen, pin
-mux, and 115200 baud), so you do **not** need to rebuild TF-A to use it — the
-default TF-A build (USART2 console) is fine. This assumes TF-A grants the secure
-world access to USART1 and GPIOB, which it does by default for these examples.
+This assumes TF-A grants the secure world access to USART1 and GPIOB.
 
 ## Building a project
 
@@ -288,8 +288,8 @@ Now, press Reset on the EV1. You should see messages from TF-A and then your app
 
 If you don't see anything, verify your app was built with the right `UART_CHOICE`
 (USART2 for ST-LINK, USART6 for the GPIO Expander header + dongle, or USART1 on
-GPIO header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
-messages to *its* console (USART2 by default), which is independent of the UART
+custom board header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
+messages to *its* console, which is independent of the UART
 your app selects; only the app's `print()` output follows `UART_CHOICE`.
 
 
