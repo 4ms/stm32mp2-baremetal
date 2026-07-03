@@ -17,13 +17,16 @@ static struct dwc3 *dwc;
 
 /*
  * Check if User2 button was pressed (with simple debounce).
- * Returns true on rising edge only.
+ * Returns true on rising edge only, at most once per 300ms.
  */
 static bool button_pressed()
 {
 	static bool was_pressed = false;
+	static uint32_t last_edge_ms = 0;
+
 	bool pressed = button_user2_pressed();
-	if (pressed && !was_pressed) {
+	if (pressed && !was_pressed && (HAL_GetTick() - last_edge_ms) > 300) {
+		last_edge_ms = HAL_GetTick();
 		was_pressed = true;
 		return true;
 	}
