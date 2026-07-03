@@ -96,9 +96,13 @@ OPTFLAG := -O2
 # Link stdlib for printf, malloc...
 LINK_STDLIB :=
 
-# Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK (default), 6 = GPIO Expander
-# header. See shared/makefile-common.mk.
+# Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK, 6 = GPIO Expander
+# header. See shared/makefile-common.mk. A command-line UART_CHOICE=n wins.
+ifeq ($(BOARD),devboard)
+UART_CHOICE := 1
+else
 UART_CHOICE := 6
+endif
 
 # FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
 
