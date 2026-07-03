@@ -164,6 +164,13 @@ You will need the fiptool later after building your application.
 
 The only thing to configure currently is the choice of UART.
 
+Set `UART_CHOICE` to `1`, `2`, or `6` (in the project's Makefile or on the
+`make` command line). The app configures its console UART itself at startup
+(clock, pin mux, and 115200 8N1 baud rate — see `init_uart()` in
+`shared/print/uart_print.c`), so for USART1 and USART6 you can switch the
+console per-project **without rebuilding or reflashing TF-A**. USART2 is the
+ST-LINK boot console and is always set up by TF-A, so the app leaves it alone.
+
 ### Console via ST-LINK
 
 By default all console logging (print/printf) goes to USART2, which is
@@ -182,8 +189,8 @@ way to have a UART console if you are using an external debugger
 
 You will need to attach a USB-UART dongle to the GPIO Expander:
 - Pin 6: GND
-- Pin 8: TX (mp2->computer)
-- Pin 10: RX (mp2<-computer)
+- Pin 8: TX (mp2->computer) — PF13, AF3
+- Pin 10: RX (mp2<-computer) — PF14, AF3
 
 
 To use these pins, put this in your Makefile:
@@ -196,6 +203,9 @@ or you can specify it at build time:
 ```bash
 make UART_CHOICE=6
 ```
+
+The app brings USART6 up itself, so this works even if TF-A was built for the
+default USART2 console.
 
 ### Console via USART1 (GPIO header)
 
@@ -216,10 +226,10 @@ or specify it at build time:
 make UART_CHOICE=1
 ```
 
-Note: as with the other choices, the bootloader (TF-A) sets up the console UART's
-clock, pin mux, and baud rate before your app runs, so you must also configure
-your TF-A build to use USART1 (PB8/PB10, AF6). The app itself only writes to the
-already-initialized UART.
+The app brings USART1 up itself (kernel clock from HSI via the RCC flexgen, pin
+mux, and 115200 baud), so you do **not** need to rebuild TF-A to use it — the
+default TF-A build (USART2 console) is fine. This assumes TF-A grants the secure
+world access to USART1 and GPIOB, which it does by default for these examples.
 
 ## Building a project
 
@@ -276,9 +286,11 @@ minicom -D /dev/cu.usbmodem1102
 
 Now, press Reset on the EV1. You should see messages from TF-A and then your app!
 
-If you don't see anything, verify you built TF-A and your app with the right UART
-selected (USART2 for ST-LINK, USART6 for GPIO Expander header + dongle, or
-USART1 on GPIO header pins PB8/PB10 + dongle).
+If you don't see anything, verify your app was built with the right `UART_CHOICE`
+(USART2 for ST-LINK, USART6 for the GPIO Expander header + dongle, or USART1 on
+GPIO header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
+messages to *its* console (USART2 by default), which is independent of the UART
+your app selects; only the app's `print()` output follows `UART_CHOICE`.
 
 
 # Debugging

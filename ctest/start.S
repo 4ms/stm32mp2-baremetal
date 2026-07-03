@@ -23,6 +23,9 @@ _Reset:
     ldr     x0, =_stack_start
     bic     sp, x0, #0xf            // 16-byte alignment
 
+    // Bring up the selected console UART (no-op for USART2/TF-A console)
+    bl      init_uart
+
     // Print "MP2"
     ldr     x4, =STM32_USART_TDR
     mov     x0, 'M'
