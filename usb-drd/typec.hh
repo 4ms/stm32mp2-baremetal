@@ -32,4 +32,8 @@ int exit_device_mode();
 // True if 5V is present on the jack's VBUS pin (best effort per board).
 bool vbus_present();
 
+// Print a line whenever the CC/VBUS state changes (no-op if the board
+// can't observe it). Call from the main loop; cheap when nothing changed.
+void log_status_changes();
+
 } // namespace TypeC

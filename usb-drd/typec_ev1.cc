@@ -43,3 +43,8 @@ bool TypeC::vbus_present()
 	// device mode behaves as if a host is always attached (as before).
 	return (SYSCFG->USB2PHY2CR & SYSCFG_USB2PHY2CR_VBUSVLDEXT) != 0;
 }
+
+void TypeC::log_status_changes()
+{
+	// CC is behind the TCPP03 and there is no VBUS sense: nothing to report
+}

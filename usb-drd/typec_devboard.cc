@@ -131,3 +131,17 @@ bool TypeC::vbus_present()
 {
 	return vbus_sense.read_raw();
 }
+
+void TypeC::log_status_changes()
+{
+	static uint32_t last = 0xFFFFFFFF;
+
+	uint32_t now = UCPD1->SR & (UCPD_SR_TYPEC_VSTATE_CC1_Msk |
+								UCPD_SR_TYPEC_VSTATE_CC2_Msk);
+	now |= vbus_present() ? 1 : 0;
+
+	if (now != last) {
+		last = now;
+		print_cc_state("status change");
+	}
+}

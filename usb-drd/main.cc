@@ -172,12 +172,37 @@ static void device_shutdown()
  * Run device mode until a mode switch is requested.
  * Returns true if the user requested a mode toggle.
  */
+static const char *usb_speed_name(int speed)
+{
+	switch (speed) {
+	case USB_SPEED_LOW:	return "Low";
+	case USB_SPEED_FULL:	return "Full";
+	case USB_SPEED_HIGH:	return "High";
+	case USB_SPEED_SUPER:	return "Super";
+	default:		return "no link";
+	}
+}
+
 static bool device_run()
 {
 	bool host_connected = false;
+	int last_speed = USB_SPEED_UNKNOWN;
+	bool was_configured = false;
 
 	while (true) {
 		dwc3_gadget_uboot_handle_interrupt(dwc);
+
+		/* Report state changes: CC/VBUS, link, configuration */
+		TypeC::log_status_changes();
+		if ((int)dwc->gadget.speed != last_speed) {
+			last_speed = dwc->gadget.speed;
+			printf("USB: link: %s\n", usb_speed_name(last_speed));
+		}
+		if (cdc_acm_is_configured() != was_configured) {
+			was_configured = !was_configured;
+			printf("USB: %s by host\n",
+				   was_configured ? "configured" : "unconfigured");
+		}
 
 		if (button_pressed()) {
 			if (host_connected) {
