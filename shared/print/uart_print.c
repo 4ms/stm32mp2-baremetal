@@ -9,7 +9,6 @@
 // Pin muxing matches the board device tree in the tf-a-stm32mp25 repo (fdts/stm32mp257f-ev1.dts).
 #if UART == 1
 #define USART_BASE USART1_BASE
-#define UART_NEEDS_INIT 1
 #define UART_RCC_USARTxCFGR 0x4420077CUL // RCC->USART1CFGR
 #define UART_FLEXGEN_CHAN 19u			 // ck_ker_usart1
 #define UART_GPIO_BASE 0x44250000UL		 // GPIOB
@@ -20,7 +19,6 @@
 #define UART_RX_AF 6u
 #elif UART == 6
 #define USART_BASE USART6_BASE
-#define UART_NEEDS_INIT 1
 #define UART_RCC_USARTxCFGR 0x44200790UL // RCC->USART6CFGR
 #define UART_FLEXGEN_CHAN 20u			 // ck_ker_usart6
 #define UART_GPIO_BASE 0x44290000UL		 // GPIOF
@@ -31,7 +29,14 @@
 #define UART_RX_AF 3u
 #else
 #define USART_BASE USART2_BASE
-#define UART_NEEDS_INIT 0 // USART2 = ST-LINK console, configured by TF-A
+#define UART_RCC_USARTxCFGR 0x44200780UL // RCC->USART2CFGR
+#define UART_FLEXGEN_CHAN 8u			 // ck_ker_usart2
+#define UART_GPIO_BASE 0x44240000UL		 // GPIOA
+#define UART_RCC_GPIOxCFGR 0x4420052CUL	 // RCC->GPIOACFGR
+#define UART_TX_PIN 4u					 // PA4, USART2_TX
+#define UART_TX_AF 6u
+#define UART_RX_PIN 8u // PA8, USART2_RX
+#define UART_RX_AF 8u
 #endif
 
 typedef struct {
@@ -55,8 +60,6 @@ typedef struct {
 #define USART_CR1_RE (1u << 2)	// Receiver enable
 #define USART_CR1_TE (1u << 3)	// Transmitter enable
 #define USART_ISR_TXE (1u << 7) // Transmit data register empty
-
-#if UART_NEEDS_INIT
 
 // The USART kernel clock is driven from HSI (64 MHz) via its RCC flexgen
 // channel, so the resulting baud rate does not depend on any PLL that TF-A may
@@ -122,14 +125,13 @@ static void gpio_config_af(uint64_t gpio_base, unsigned pin, unsigned af)
 	afr[pin >> 3] = (afr[pin >> 3] & ~(0xFu << s4)) | ((af & 0xFu) << s4);
 }
 
-#endif // UART_NEEDS_INIT
-
 // Bring up the selected console UART: kernel clock, pin mux, peripheral clock,
-// baud rate, TX/RX enable. For USART2 (the ST-LINK console) this is a no-op
-// because TF-A has already configured it. Safe to call more than once.
+// baud rate, TX/RX enable. This is done unconditionally for whichever UART was
+// selected (USART2 is the ST-LINK console default) so the console works
+// regardless of which UART, if any, TF-A was built to initialize. Safe to call
+// more than once.
 void init_uart(void)
 {
-#if UART_NEEDS_INIT
 	// 1. Kernel (baud) clock from HSI.
 	flexgen_to_hsi(UART_FLEXGEN_CHAN);
 
@@ -148,7 +150,6 @@ void init_uart(void)
 	USART->PRESC = 0;
 	USART->BRR = UART_BRR;
 	USART->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-#endif
 }
 
 void putchar_s(char c)
