@@ -57,10 +57,19 @@ SOURCES += typec_ev1.cc
 else ifeq ($(BOARD),devboard)
 SOURCES += typec_devboard.cc
 BOARD_DEF := -DDEVBOARD_0_1
+# devboard v0.1 defaults device mode to Full speed: the reworked D+/D- and
+# the stub to the adaptor jack train a High-speed link but fail EP0 data.
+# Override with USB_DEVICE_SPEED=high to re-test HS after a board fix.
+USB_DEVICE_SPEED ?= full
 else
 $(error Invalid BOARD '$(BOARD)' - must be ev1 or devboard)
 endif
-$(info Board: $(BOARD))
+
+USB_DEVICE_SPEED ?= high
+ifneq ($(filter-out full high,$(USB_DEVICE_SPEED)),)
+$(error Invalid USB_DEVICE_SPEED '$(USB_DEVICE_SPEED)' - must be full or high)
+endif
+$(info Board: $(BOARD) (device mode max speed: $(USB_DEVICE_SPEED)))
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
@@ -77,10 +86,15 @@ INCLUDES += -Iu-boot/arch/arm/include
 
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
 
+# (Must come after the := assignment above, which would overwrite a +=)
+ifeq ($(USB_DEVICE_SPEED),full)
+EXTRA_ARCH_CFLAGS += -DUSB_DEVICE_FULL_SPEED_ONLY
+endif
+
 OPTFLAG := -O2
 
 # Link stdlib for printf, malloc...
-LINK_STDLIB := 
+LINK_STDLIB :=
 
 # Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK (default), 6 = GPIO Expander
 # header. See shared/makefile-common.mk.

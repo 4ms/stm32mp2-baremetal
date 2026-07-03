@@ -136,6 +136,15 @@ struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *pla
 	dwc3_dev.base = platform ? platform->regs_base : USB3DRD_BASE_ADDR;
 	dwc3_dev.dr_mode = (mode == DWC3_DR_MODE_HOST) ? USB_DR_MODE_HOST : USB_DR_MODE_PERIPHERAL;
 	dwc3_dev.maximum_speed = USB_SPEED_HIGH;
+#ifdef USB_DEVICE_FULL_SPEED_ONLY
+	/* Cap device mode at Full speed (12 Mbps): boards with marginal D+/D-
+	 * routing (rework bodges, stub traces) can train a 480 Mbps link but
+	 * then fail EP0 data, causing endless host reset/retry loops. */
+	if (mode != DWC3_DR_MODE_HOST) {
+		dwc3_dev.maximum_speed = USB_SPEED_FULL;
+		printf("DWC3: device mode capped at Full speed\n");
+	}
+#endif
 	dwc3_dev.index = 0;
 
 	if (platform) {
