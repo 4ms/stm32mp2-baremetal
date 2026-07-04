@@ -185,6 +185,7 @@ void early_puthex64(uint64_t v)
 	}
 }
 
+#if defined(__aarch64__)
 void early_print_el(void)
 {
 	// early_print_el() is the first thing every startup.s calls, so use it to
@@ -197,3 +198,4 @@ void early_print_el(void)
 	putchar_s(((el >> 2) & 3) + '0');
 	early_puts("\n");
 }
+#endif // __aarch64__
