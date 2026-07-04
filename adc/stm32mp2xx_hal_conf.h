@@ -54,7 +54,7 @@ extern "C" {
 // #define HAL_ETH_MODULE_ENABLED
 // #define HAL_EXTI_MODULE_ENABLED
 // #define HAL_FDCAN_MODULE_ENABLED
-// #define HAL_GPIO_MODULE_ENABLED
+#define HAL_GPIO_MODULE_ENABLED
 // #define HAL_HASH_MODULE_ENABLED
 // #define HAL_HSEM_MODULE_ENABLED
 // #define HAL_I2C_MODULE_ENABLED
@@ -281,7 +281,7 @@ extern "C" {
 #endif /* HAL_FDCAN_MODULE_ENABLED */
 
 #ifdef HAL_GPIO_MODULE_ENABLED
-#include "stm32mp2xx_hal_gpio.h"
+#include "stm32mp2xx_ll_gpio.h"
 #endif /* HAL_GPIO_MODULE_ENABLED */
 
 #ifdef HAL_HASH_MODULE_ENABLED
