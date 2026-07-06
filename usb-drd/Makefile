@@ -45,6 +45,7 @@ SOURCES_XHCI += xhci/xhci-mem.c
 SOURCES += $(SOURCES_XHCI)
 SOURCES += xhci_baremetal.c
 SOURCES += usb_midi.c
+SOURCES += usb_msc.c
 
 # Board selection (run `make clean` when switching):
 #   ev1      = STM32MP257 EV1 kit: TCPP03-M20 on I2C1 gates VBUS

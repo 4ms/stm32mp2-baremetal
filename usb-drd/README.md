@@ -6,9 +6,10 @@ at runtime by pressing the **User2** button.
 
 - **Device mode** implements a CDC-ACM serial port that echoes back whatever you
   type (this is what the example does at startup).
-- **Host mode** brings up an xHCI host controller, and enumerates whatever you plug
-  in. If it's a USB-MIDI device it prints the incoming MIDI events to the
-  console.
+- **Host mode** brings up an xHCI host controller and enumerates whatever you
+  plug in. It recognizes two device classes: a **USB-MIDI** device (it prints the
+  incoming MIDI events) and a **USB Mass Storage** device / flash drive (it reads
+  and prints the drive's identity, capacity, and first block — read-only).
 
 The STM32MP257 has two USB ports: the USB3DR port and the USBH port. This
 example only uses the USB3DR port. That port is USB 3.0 capable (SuperSpeed plus
@@ -72,8 +73,10 @@ console prints:
 USB Host ready. Plug in a device.
 ```
 
-Now plug a USB device into the USB3DR port. The host enumerates it; if it's a
-USB-MIDI device, the example starts printing MIDI events as you play:
+Now plug a USB device into the USB3DR port. The host enumerates it and then
+tries to bind it as one of the supported classes.
+
+**USB-MIDI device** — the example prints MIDI events as you play:
 
 ```
 Listening for MIDI...
@@ -82,10 +85,32 @@ MIDI [0] Note On   ch1   3c 64  (CIN=9)
 MIDI [0] Note Off  ch1   3c 00  (CIN=8)
 ```
 
-Hubs are skipped (their downstream devices enumerate on their own); a non-MIDI
-device is enumerated but reported as "Not a MIDI device". Unplug the device and
-the host goes back to waiting; press User2 (with nothing attached) to return to
-device mode.
+**USB Mass Storage device (flash drive)** — the example identifies the drive and
+dumps its first block (read-only; nothing is ever written):
+
+```
+Mass Storage device attached:
+USB MSC: bound to interface 0
+  EP IN  0x81  EP OUT 0x02  max LUN 0
+  Vendor: 'SanDisk '  Product: 'Cruzer Blade    '  (SCSI type 0)
+  Capacity: 30031872 blocks x 512 bytes (14664 MiB)
+  First block (LBA 0), first 64 bytes:
+    0000  33 c0 8e d0 bc 00 7c 8e c0 8e d8 be 00 7c bf 00  3.....|......|..
+    0010  06 b9 00 02 fc f3 a4 50 68 1c 06 cb fb b9 04 00  .......Ph.......
+    ...
+  MBR boot signature present (0x55AA)
+Storage ready. Unplug to remove.
+```
+
+It uses USB Mass Storage Bulk-Only Transport with a small read-only subset of
+SCSI (INQUIRY, TEST UNIT READY, READ CAPACITY(10), READ(10), and REQUEST SENSE
+to clear the power-on "unit attention" that most drives report first). Only
+LUN 0 is accessed.
+
+Hubs are skipped (their downstream devices enumerate on their own); anything
+that is neither MIDI nor Mass Storage is enumerated but reported as
+"Unsupported device". Unplug the device and the host goes back to waiting; press
+User2 (with nothing attached) to return to device mode.
 
 For host mode the port must source 5V on VBUS. On the EV1 the TCPP03-M20 gates
 VBUS (see below); the custom devboard needs its adaptor board attached to supply
