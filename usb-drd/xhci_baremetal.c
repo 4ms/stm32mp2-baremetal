@@ -739,9 +739,14 @@ static u32 wait_port_stable(volatile uint32_t *portsc_reg, int settle_ms,
 
 /*
  * Reset a root port and wait for it to come back enabled.
- * Returns true if the port is enabled after the reset.
+ * Returns true if the port is enabled after the reset. On success *out_portsc
+ * receives the validated post-reset PORTSC value, whose Port Speed field is
+ * valid; callers should decode the device speed from this rather than issuing a
+ * fresh read, which can race with the port's follow-on link-state change and
+ * momentarily report an undefined speed.
  */
-static bool reset_root_port(volatile uint32_t *portsc_reg, int portnum)
+static bool reset_root_port(volatile uint32_t *portsc_reg, int portnum,
+			    u32 *out_portsc)
 {
 	u32 val = xhci_readl(portsc_reg);
 	val &= XHCI_PORT_RO | XHCI_PORT_RWS;
@@ -773,6 +778,8 @@ static bool reset_root_port(volatile uint32_t *portsc_reg, int portnum)
 		printf("Port %d not enabled after reset\n", portnum);
 		return false;
 	}
+	if (out_portsc)
+		*out_portsc = portsc;
 	return true;
 }
 
@@ -831,15 +838,39 @@ struct usb_device *xhci_host_poll(void)
 				}
 
 				for (int attempt = 1; attempt <= 3; attempt++) {
+					u32 rst_portsc = 0;
 					if (!reset_root_port(portsc_reg,
-							     port_idx + 1))
+							     port_idx + 1,
+							     &rst_portsc))
 						break;
 
+					/* Decode speed from the value the reset
+					 * validated. A fresh read here can race
+					 * with the port's link-state change and
+					 * report an undefined speed, which would
+					 * later BUG() in the xHC device setup. */
+					enum usb_device_speed speed =
+						portsc_to_speed(rst_portsc);
+					if (speed == USB_SPEED_UNKNOWN) {
+						/* Speed field not latched yet:
+						 * retry, then assume High so a
+						 * transient can't crash enum. */
+						for (int i = 0; i < 10 &&
+						     speed == USB_SPEED_UNKNOWN;
+						     i++) {
+							mdelay(1);
+							speed = portsc_to_speed(
+								xhci_readl(portsc_reg));
+						}
+						if (speed == USB_SPEED_UNKNOWN) {
+							printf("  Speed field unreadable; assuming High\n");
+							speed = USB_SPEED_HIGH;
+						}
+					}
+
 					/* Enumerate — port number is 1-based */
-					portsc = xhci_readl(portsc_reg);
 					int ret = xhci_enumerate_device(
-						root_hub, port_idx + 1,
-						portsc_to_speed(portsc));
+						root_hub, port_idx + 1, speed);
 					if (!ret)
 						return usb_get_dev_index(
 							usb_dev_count - 1);
