@@ -59,7 +59,7 @@ extern "C" {
 #define HAL_GPIO_MODULE_ENABLED
 // #define HAL_HASH_MODULE_ENABLED
 // #define HAL_HSEM_MODULE_ENABLED
-// #define HAL_I2C_MODULE_ENABLED
+#define HAL_I2C_MODULE_ENABLED
 // #define HAL_I2S_MODULE_ENABLED
 /* #define HAL_I3C_MODULE_ENABLED */ /* Disabled because I3C HAL not available yet */
 // #define HAL_ICACHE_MODULE_ENABLED

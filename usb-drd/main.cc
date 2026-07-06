@@ -1,43 +1,267 @@
 #include "cdc_acm.h"
+#include "drivers/button.hh"
 #include "drivers/pwr_vdd.hh"
 #include "dwc3/core.h"
 #include "dwc3/gadget.h"
 #include "dwc3_baremetal.h"
+#include "midi_status.hh"
 #include "print/print.hh"
 #include "stm32mp2xx_hal.h"
+#include "typec.hh"
+#include "usb_midi.h"
+#include "xhci_baremetal.h"
+
+enum class UsbMode { Host, Device };
+
+static struct dwc3 *dwc;
+
+/*
+ * Check if User2 button was pressed (with simple debounce).
+ * Returns true on rising edge only, at most once per 300ms.
+ */
+static bool button_pressed()
+{
+	static bool was_pressed = false;
+	static uint32_t last_edge_ms = 0;
+
+	bool pressed = button_user2_pressed();
+	if (pressed && !was_pressed && (HAL_GetTick() - last_edge_ms) > 300) {
+		last_edge_ms = HAL_GetTick();
+		was_pressed = true;
+		return true;
+	}
+	was_pressed = pressed;
+	return false;
+}
+
+/* ---- Host mode ---- */
+
+static bool host_init()
+{
+	dwc = dwc3_baremetal_init(DWC3_DR_MODE_HOST, nullptr);
+	if (!dwc) {
+		print("DWC3 host init failed\n");
+		return false;
+	}
+
+	int ret = xhci_host_init(USB3DRD_BASE);
+	if (ret) {
+		printf("xHCI init failed: %d\n", ret);
+		return false;
+	}
+
+	TypeC::enter_host_mode();
+
+	print("USB Host ready. Plug in a device.\n");
+	return true;
+}
+
+static void host_shutdown()
+{
+	usb_midi_disconnect();
+	xhci_host_shutdown();
+	TypeC::exit_host_mode();
+	dwc3_baremetal_shutdown(dwc);
+	dwc = nullptr;
+	print("Host mode stopped.\n");
+}
+
+/*
+ * Run host mode until a mode switch is requested.
+ * Returns true if the user requested a mode toggle.
+ */
+static bool host_run()
+{
+	while (true) {
+		if (button_pressed()) {
+			if (xhci_device_connected()) {
+				printf("Cannot switch mode: device attached\n");
+			} else {
+				return true;
+			}
+		}
+
+		struct usb_device *dev = xhci_host_poll();
+		if (!dev)
+			continue;
+
+		/* Skip hubs — their downstream devices come later */
+		if (xhci_device_is_hub(dev))
+			continue;
+
+		/* New device — try to bind as MIDI */
+		int ret = usb_midi_init(dev);
+		if (ret) {
+			printf("Not a MIDI device (or init failed: %d)\n", ret);
+			continue;
+		}
+
+		printf("\nListening for MIDI...\n\n");
+
+		/* Read MIDI events until device disconnects */
+		while (xhci_device_connected()) {
+			if (button_pressed()) {
+				printf("Cannot switch mode: device attached\n");
+			}
+
+			/* Poll xHCI for port changes (disconnect) */
+			xhci_host_poll();
+			if (!xhci_device_connected())
+				break;
+
+			struct usb_midi_event events[16];
+			int n = usb_midi_read(events, 16);
+			if (n < 0) {
+				printf("MIDI read error: %d\n", n);
+				break;
+			}
+			if (n == 0)
+				continue;
+			for (int i = 0; i < n; i++) {
+				/* Skip empty/padding packets */
+				if (events[i].header == 0)
+					continue;
+				uint8_t cin = events[i].header & 0x0F;
+				uint8_t cable = events[i].header >> 4;
+				printf("MIDI [%d] %s ch%-2d  %02x %02x  (CIN=%x)\n",
+					   cable,
+					   midi_status_name(events[i].midi[0]),
+					   (events[i].midi[0] & 0x0F) + 1,
+					   events[i].midi[1],
+					   events[i].midi[2],
+					   cin);
+			}
+		}
+
+		usb_midi_disconnect();
+		printf("MIDI device removed, waiting for new device...\n");
+	}
+}
+
+/* ---- Device mode (CDC-ACM echo) ---- */
+
+static bool device_init()
+{
+	TypeC::enter_device_mode();
+
+	dwc = dwc3_baremetal_init(DWC3_DR_MODE_PERIPHERAL, nullptr);
+	if (!dwc) {
+		print("DWC3 device init failed\n");
+		return false;
+	}
+
+	/* Assert VBUS after core+gadget init but before gadget_start */
+	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
+
+	int r = cdc_acm_init(&dwc->gadget);
+	if (r) {
+		printf("cdc_acm_init failed: %d\n", r);
+		return false;
+	}
+
+	print("USB Device ready (CDC-ACM echo).\n");
+	return true;
+}
+
+static void device_shutdown()
+{
+	dwc3_baremetal_shutdown(dwc);
+	dwc = nullptr;
+	TypeC::exit_device_mode();
+	print("Device mode stopped.\n");
+}
+
+/*
+ * Run device mode until a mode switch is requested.
+ * Returns true if the user requested a mode toggle.
+ */
+static const char *usb_speed_name(int speed)
+{
+	switch (speed) {
+	case USB_SPEED_LOW:	return "Low";
+	case USB_SPEED_FULL:	return "Full";
+	case USB_SPEED_HIGH:	return "High";
+	case USB_SPEED_SUPER:	return "Super";
+	default:		return "no link";
+	}
+}
+
+static bool device_run()
+{
+	bool host_connected = false;
+	int last_speed = USB_SPEED_UNKNOWN;
+	bool was_configured = false;
+
+	while (true) {
+		dwc3_gadget_uboot_handle_interrupt(dwc);
+
+		/* Report state changes: CC/VBUS, link, configuration */
+		TypeC::log_status_changes();
+		if ((int)dwc->gadget.speed != last_speed) {
+			last_speed = dwc->gadget.speed;
+			printf("USB: link: %s\n", usb_speed_name(last_speed));
+		}
+		if (cdc_acm_is_configured() != was_configured) {
+			was_configured = !was_configured;
+			printf("USB: %s by host\n",
+				   was_configured ? "configured" : "unconfigured");
+		}
+
+		if (button_pressed()) {
+			if (host_connected) {
+				printf("Cannot switch mode: host attached\n");
+			} else {
+				return true;
+			}
+		}
+
+		/* Detect host connection via VBUS or USB state */
+		bool vbus_now = TypeC::vbus_present();
+		if (vbus_now != host_connected) {
+			host_connected = vbus_now;
+		}
+
+		char buf[64];
+		int n = cdc_acm_read(buf, sizeof(buf));
+		if (n > 0)
+			cdc_acm_write(buf, n); /* echo back */
+	}
+}
+
+/* ---- Main ---- */
 
 int main()
 {
 	print("USB DRD Example\n");
 	HAL_Init();
 	PowerControl::enable_usb33(PowerControl::Present::If);
+	button_user2_init();
+	TypeC::init();
 
-	struct dwc3 *dwc = dwc3_baremetal_init(nullptr);
-	if (!dwc) {
-		print("DWC3 init failed\n");
-		while (true)
-			;
-	}
-
-	// Assert VBUS after core+gadget init but before gadget_start.
-	// Matches U-Boot femtoPHY timing: phy_set_mode_ext sets VBUSVLDEXT=1
-	// when device role is activated, which happens between dwc3_init and gadget_start.
-	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXT;
-
-	int r = cdc_acm_init(&dwc->gadget);
-	if (r) {
-		printf("cdc_acm_init failed: %d\n", r);
-		while (true)
-			;
-	}
+	UsbMode mode = UsbMode::Device;
 
 	while (true) {
-		dwc3_gadget_uboot_handle_interrupt(dwc);
-
-		char buf[64];
-		int n = cdc_acm_read(buf, sizeof(buf));
-		if (n > 0)
-			cdc_acm_write(buf, n); // echo back
+		if (mode == UsbMode::Host) {
+			printf("--- Entering HOST mode (press User2 to switch) ---\n");
+			if (!host_init()) {
+				printf("Host init failed, retrying in device mode\n");
+				mode = UsbMode::Device;
+				continue;
+			}
+			if (host_run())
+				host_shutdown();
+			mode = UsbMode::Device;
+		} else {
+			printf("--- Entering DEVICE mode (press User2 to switch) ---\n");
+			if (!device_init()) {
+				printf("Device init failed, retrying in host mode\n");
+				mode = UsbMode::Host;
+				continue;
+			}
+			if (device_run())
+				device_shutdown();
+			mode = UsbMode::Host;
+		}
 	}
 }
 

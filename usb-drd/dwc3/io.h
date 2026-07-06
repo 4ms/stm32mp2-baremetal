@@ -19,8 +19,13 @@
 
 #include <asm/io.h>
 #include <cpu_func.h>
+#include <dwc3/core.h>
 
 #define CACHELINE_SIZE CONFIG_SYS_CACHELINE_SIZE
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+
 static inline u32 dwc3_readl(void __iomem *base, u32 offset)
 {
 	unsigned long offs = offset - DWC3_GLOBALS_REGS_START;
@@ -47,6 +52,8 @@ static inline void dwc3_writel(void __iomem *base, u32 offset, u32 value)
 	 */
 	writel(value, base + offs);
 }
+
+#pragma GCC diagnostic pop
 
 static inline void dwc3_flush_cache(uintptr_t addr, int length)
 {

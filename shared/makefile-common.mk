@@ -80,6 +80,7 @@ OPTION_FLAGS += \
 		${FREESTANDING} \
 		$(EL_LEVEL) \
 		-DUART=$(UART_CHOICE) \
+		$(BOARD_DEF)
 
 
 AFLAGS =  \
@@ -113,7 +114,7 @@ CXXFLAGS ?= $(CFLAGS) \
 		-Wdouble-promotion \
 		-Wno-register \
 		-Wno-volatile \
-		 $(EXTRACXXFLAGS) \
+		$(EXTRACXXFLAGS) \
 
 LINK_STDLIB ?= -nostdlib
 
@@ -123,6 +124,7 @@ LFLAGS ?= -Wl,--gc-sections \
 		 $(LINK_STDLIB) \
 		 $(MCU) \
 		 -nostartfiles \
+		 -Wl,--no-warn-rwx-segments \
 		 $(EXTRALDFLAGS) \
 		 ${FREESTANDING}
 		 

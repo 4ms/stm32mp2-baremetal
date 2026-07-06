@@ -23,6 +23,8 @@ SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_cortex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.c
 SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_rcc_ex.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.c
+SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c_ex.c
 
 SOURCES += dwc3_dma.c
 SOURCES += dwc3_baremetal.c
@@ -34,6 +36,40 @@ SOURCES_DWC += dwc3/ep0.c
 SOURCES_DWC += dwc3/gadget.c
 
 SOURCES += $(SOURCES_DWC)
+
+SOURCES_XHCI :=
+SOURCES_XHCI += xhci/xhci.c
+SOURCES_XHCI += xhci/xhci-ring.c
+SOURCES_XHCI += xhci/xhci-mem.c
+
+SOURCES += $(SOURCES_XHCI)
+SOURCES += xhci_baremetal.c
+SOURCES += usb_midi.c
+
+# Board selection (run `make clean` when switching):
+#   ev1      = STM32MP257 EV1 kit: TCPP03-M20 on I2C1 gates VBUS
+#   devboard = custom board v0.1: CC pins direct to UCPD1, VBUS switch on
+#              PB4 (adaptor board), VBUS sense on PH3
+BOARD ?= ev1
+ifeq ($(BOARD),ev1)
+SOURCES += tcpp03.cc
+SOURCES += typec_ev1.cc
+else ifeq ($(BOARD),devboard)
+SOURCES += typec_devboard.cc
+BOARD_DEF := -DDEVBOARD_0_1
+# devboard v0.1 defaults device mode to Full speed: the reworked D+/D- and
+# the stub to the adaptor jack train a High-speed link but fail EP0 data.
+# Override with USB_DEVICE_SPEED=high to re-test HS after a board fix.
+USB_DEVICE_SPEED ?= full
+else
+$(error Invalid BOARD '$(BOARD)' - must be ev1 or devboard)
+endif
+
+USB_DEVICE_SPEED ?= high
+ifneq ($(filter-out full high,$(USB_DEVICE_SPEED)),)
+$(error Invalid USB_DEVICE_SPEED '$(USB_DEVICE_SPEED)' - must be full or high)
+endif
+$(info Board: $(BOARD) (device mode max speed: $(USB_DEVICE_SPEED)))
 
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
@@ -50,20 +86,30 @@ INCLUDES += -Iu-boot/arch/arm/include
 
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
 
+# (Must come after the := assignment above, which would overwrite a +=)
+ifeq ($(USB_DEVICE_SPEED),full)
+EXTRA_ARCH_CFLAGS += -DUSB_DEVICE_FULL_SPEED_ONLY
+endif
+
 OPTFLAG := -O2
 
 # Link stdlib for printf, malloc...
-LINK_STDLIB := 
+LINK_STDLIB :=
 
-# Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK (default), 6 = GPIO Expander
-# header. See shared/makefile-common.mk.
+# Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK, 6 = GPIO Expander
+# header. See shared/makefile-common.mk. A command-line UART_CHOICE=n wins.
+ifeq ($(BOARD),devboard)
+UART_CHOICE := 1
+else
 UART_CHOICE := 6
+endif
 
 # FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
 
 FREESTANDING := 
 
 $(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma_ex.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast 
+$(BUILDDIR)/obj/obj/../shared/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.o: EXTRA_ARCH_CFLAGS += -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast
 
 include $(SHAREDDIR)/makefile-common.mk
 

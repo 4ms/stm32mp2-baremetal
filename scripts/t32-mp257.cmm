@@ -4,7 +4,7 @@
 SYStem.CPU STM32MP257F-CA35
 
 system.config DEBUGPORTTYPE JTAG 
-SYStem.JtagClock 1MHz
+SYStem.JtagClock 10MHz
 
 Trace.DISable
 SYStem.MemAccess DAP
@@ -21,9 +21,9 @@ Break
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-audio/build/main.elf /CPP
 Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
 
-break main
+//break main
 
-SYStem.JtagClock 10MHz
+SYStem.JtagClock 50MHz
 
 Trace.METHOD ONCHIP
 ETM.Trace ON

@@ -18,22 +18,27 @@
 /* STM32MP257 USB3DRD is on AHB5 at offset 0x100000 */
 #define USB3DRD_BASE_ADDR 0x48300000UL
 
-/* SYSCFG USB3DRCR — USB3DR controller wrapper configuration */
-#define SYSCFG_BASE_ADDR 0x44230000UL
-#define SYSCFG_USB3DRCR (*(volatile uint32_t *)(SYSCFG_BASE_ADDR + 0x4800UL))
-#define USB3DRCR_USB2ONLYD (1U << 4) /* USB2-only device mode */
-
-struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
+struct dwc3 *dwc3_baremetal_init(dwc3_dr_mode_t mode, const dwc3_platform_t *platform)
 {
-	// Open RISAF4 region for DWC3 DMA access to DDR at 0x8A000000.
+	// Open RISAF4 regions for DWC3 DMA access to DDR.
 	// Without this, the USB3DRD bus master's DMA writes are silently blocked.
 	if (!(RISAF4->CR & RISAF_CR_GLOCK)) {
-		auto &reg = RISAF4->REG[14];
-		reg.CFGR &= ~RISAF_REGCFGR_BREN;
-		reg.STARTR = 0x0A000000;
-		reg.ENDR = 0x0A1FFFFF;
-		reg.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
-		reg.CFGR = RISAF_REGCFGR_BREN;
+		// Region 14: DMA pool at 0x8A000000 (RISAF addr 0x0A000000)
+		auto &reg14 = RISAF4->REG[14];
+		reg14.CFGR &= ~RISAF_REGCFGR_BREN;
+		reg14.STARTR = 0x0A000000;
+		reg14.ENDR = 0x0A1FFFFF;
+		reg14.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
+		reg14.CFGR = RISAF_REGCFGR_BREN;
+
+		// Region 13: Heap/RAM at 0x90000000 (RISAF addr 0x10000000)
+		// Needed for xHCI host mode which uses memalign() from the heap.
+		auto &reg13 = RISAF4->REG[13];
+		reg13.CFGR &= ~RISAF_REGCFGR_BREN;
+		reg13.STARTR = 0x10000000;
+		reg13.ENDR = 0x10FFFFFF;
+		reg13.CIDCFGR = RISAF_REGCIDCFGR_RDEN | RISAF_REGCIDCFGR_WREN;
+		reg13.CFGR = RISAF_REGCFGR_BREN;
 	}
 
 	// Enable clocks before reset??
@@ -60,6 +65,10 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	RCC->USB3DRDCFGR |= RCC_USB3DRDCFGR_USB3DRDRST;
 	RCC->USB3PCIEPHYCFGR |= RCC_USB3PCIEPHYCFGR_USB3PCIEPHYRST;
 
+	// Controller is in reset: reclaim all DMA allocations of the previous
+	// instance, so repeated host/device mode switches don't exhaust the pool.
+	dwc3_dma_pool_reset();
+
 	// 2. Select the frequency of USB2PHY2 reference clock.
 	// Flexgen ch.58 from PLL4 (1200MHz). STM32MP2 dividers use (N+1):
 	//   findiv=29, prediv=1 → (30)*(2) = 60 → 1200/60 = 20MHz
@@ -79,8 +88,14 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	// 5. Select USB3 or PCIe mode.
 	// 0 = COMBOPHY used for PCI , 1 = COMBOPHY used for USB3
 	SYSCFG->COMBOPHYCR2 &= ~SYSCFG_COMBOPHYCR2_COMBOPHY_MODESEL;
-	// Configure USB3DR for USB2-only device mode.
-	SYSCFG->USB3DRCR |= SYSCFG_USB3DRCR_USB3DR_USB2ONLYD;
+	// Configure USB3DR for USB2-only mode (host or device).
+	if (mode == DWC3_DR_MODE_HOST) {
+		SYSCFG->USB3DRCR |= SYSCFG_USB3DRCR_USB3DR_USB2ONLYH;
+		SYSCFG->USB3DRCR &= ~SYSCFG_USB3DRCR_USB3DR_USB2ONLYD;
+	} else {
+		SYSCFG->USB3DRCR |= SYSCFG_USB3DRCR_USB3DR_USB2ONLYD;
+		SYSCFG->USB3DRCR &= ~SYSCFG_USB3DRCR_USB3DR_USB2ONLYH;
+	}
 
 	// 6. Select the reference clock path and frequency, and program the PLL for COMBOPHY.
 	// 7. Enable the reference clock buffer in the COMBOPHY.
@@ -102,13 +117,18 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 
 	////////////////////
 
-	// Use external VBUS comparator in device mode.
-	// Match U-Boot femtoPHY: select external comparator (VBUSVLDEXTSEL=1)
-	// but do NOT assert VBUS yet (VBUSVLDEXT=0).  VBUS is asserted later,
-	// after dwc3 core+gadget init, just before gadget_start — same timing
-	// as U-Boot's phy_set_mode_ext call.
-	SYSCFG->USB2PHY2CR &= ~SYSCFG_USB2PHY2CR_VBUSVLDEXT;
-	SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL;
+	// Configure VBUS sensing based on mode.
+	if (mode == DWC3_DR_MODE_HOST) {
+		// Host mode: assert VBUSVALID, clear device-mode VBUS bits.
+		// Matches U-Boot femtoPHY host-mode configuration.
+		SYSCFG->USB2PHY2CR &= ~(SYSCFG_USB2PHY2CR_VBUSVLDEXT | SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL);
+		SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVALID;
+	} else {
+		// Device mode: use external VBUS comparator (VBUSVLDEXTSEL=1)
+		// but do NOT assert VBUS yet (VBUSVLDEXT=0). Asserted later by caller.
+		SYSCFG->USB2PHY2CR &= ~(SYSCFG_USB2PHY2CR_VBUSVLDEXT | SYSCFG_USB2PHY2CR_VBUSVALID);
+		SYSCFG->USB2PHY2CR |= SYSCFG_USB2PHY2CR_VBUSVLDEXTSEL;
+	}
 
 	// Select PHYIF? 0: 8 bits 60MHZ, 1: 16 bits 30MHz
 	// USB3->GBLREGS.GUSB2PHYCFG |= USB3_GUSB2PHYCFG_PHYIF;
@@ -118,8 +138,17 @@ struct dwc3 *dwc3_baremetal_init(const dwc3_platform_t *platform)
 	memset(&dwc3_dev, 0, sizeof(dwc3_dev));
 
 	dwc3_dev.base = platform ? platform->regs_base : USB3DRD_BASE_ADDR;
-	dwc3_dev.dr_mode = USB_DR_MODE_PERIPHERAL;
+	dwc3_dev.dr_mode = (mode == DWC3_DR_MODE_HOST) ? USB_DR_MODE_HOST : USB_DR_MODE_PERIPHERAL;
 	dwc3_dev.maximum_speed = USB_SPEED_HIGH;
+#ifdef USB_DEVICE_FULL_SPEED_ONLY
+	/* Cap device mode at Full speed (12 Mbps): boards with marginal D+/D-
+	 * routing (rework bodges, stub traces) can train a 480 Mbps link but
+	 * then fail EP0 data, causing endless host reset/retry loops. */
+	if (mode != DWC3_DR_MODE_HOST) {
+		dwc3_dev.maximum_speed = USB_SPEED_FULL;
+		printf("DWC3: device mode capped at Full speed\n");
+	}
+#endif
 	dwc3_dev.index = 0;
 
 	if (platform) {
