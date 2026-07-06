@@ -8,8 +8,10 @@ TODO: check EV1 schematic before merging this into main!
 The example runs through four phases:
 
 1) Enables the VDDA18ADC supply (confirmed with the PWR voltage monitor) and the
-   VREFBUF. Verify with a scope that the VREF+ pin is high (1.5V or 1.1V), and
-   adjust `VrefMillivolts` in main.cc to match what you measure.
+   VREFBUF. The MP25 VREFBUF supports two output voltages selected by the VRS
+   bit: ~1.212V (VRS=0, the raw bandgap) or 1.5V (VRS=1). Select with
+   `UseVrefScale` in main.cc (default 1.5V) and verify the VREF+ pin with a
+   scope.
 
 2) Takes single software-triggered conversions, polling for completion:
    - VREFINT (the internal ~1.21V bandgap): a sanity check that needs no
@@ -36,3 +38,8 @@ Notes:
   memory after setup (see dma.hh).
 - The ADC1 global interrupt is enabled only to report overrun errors; the
   buffer-complete callback comes from the HPDMA channel interrupt.
+- MP2 HAL quirk: HAL_ADC_Init() and HAL_ADC_ConfigChannel() return HAL_ERROR
+  if the ADC is enabled at all (stricter than other STM32 HALs), and both
+  calibration and HAL_ADC_Start() leave it enabled. So the ADC must be stopped
+  (HAL_ADC_Stop() disables it) before any init or channel config -- see
+  adc_config_channel() in main.cc.
