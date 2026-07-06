@@ -17,8 +17,8 @@
 // VREF+ is driven by the internal VREFBUF, so the VREF+ pin must not be
 // driven externally (see README).
 //
-// The internal reference VREFINT (~1.21V bandgap) is also converted, as a
-// sanity check that works with no external wiring at all.
+// The internal reference VREFINT (0.8V on MP2, per datasheet) is also
+// converted, as a sanity check that works with no external wiring at all.
 
 // The MP25 VREFBUF supports two output voltages, selected by the VRS bit:
 // VRS = 0: ~1212 mV (the raw bandgap voltage, measured on an EV1)
@@ -41,11 +41,12 @@ static DMA_NodeConfTypeDef dma_node_conf;
 static volatile uint32_t buffers_done = 0;
 
 static void enable_vrefbuf();
-static void adc_init();
+static void adc_init(ADC_TypeDef *instance);
 static void adc_config_channel(uint32_t channel, uint32_t rank, uint32_t sampling_time);
-static void polled_readings();
 static void dma_init();
+static void poll_channel(const char *label, uint32_t channel, uint32_t sampling_time, unsigned count);
 static void print_sample_stats(unsigned num_chans);
+static uint32_t poll_one_reading();
 
 static constexpr uint32_t raw_to_mv(uint32_t raw)
 {
@@ -62,8 +63,11 @@ int main()
 	enable_vrefbuf();
 
 	print("\n2) Single software-triggered conversions\n");
-	adc_init();
-	polled_readings();
+	adc_init(ADC1);
+	print("Calibration factor: ", HAL_ADCEx_Calibration_GetValue(&hadc, ADC_SINGLE_ENDED), "\n");
+
+	// Poll internal reference
+	poll_channel("VREFINT: expect ~800 mV", ADC_CHANNEL_VREFINT, ADC_SAMPLETIME_1501CYCLES_5, 4);
 
 	print("\n3) Continuous conversions of CH4 with circular DMA\n");
 	dma_init();
@@ -140,17 +144,22 @@ void enable_vrefbuf()
 		}
 	}
 
-	print("VREFBUF enabled and ready. Verify VREF+ pin reads ", VrefMillivolts, " mV\n");
+	print("VREFBUF enabled and ready. Please use a meter to verify VREF+ pin reads ", VrefMillivolts, " mV\n");
 }
 
-void adc_init()
+void adc_init(ADC_TypeDef *instance)
 {
-	RCC_Enable::ADC12_::set();
+	if (instance == ADC3)
+		RCC_Enable::ADC3_::set();
+	else
+		RCC_Enable::ADC12_::set();
 
-	// PG4 => ADC1_INP4
 	Pin adc_pin{GPIO::G, 4, PinMode::Analog};
+	// Pin must have secure state disabled or else ADC (which is non-secure) cannot reach the pad (which is by default
+	// secure)
+	LL_GPIO_DisablePinSecure(GPIOG, (1 << 4));
 
-	hadc.Instance = ADC1;
+	hadc.Instance = instance;
 	// Clock the ADC from the ck_icn_ls_mcu bus clock, so no kernel clock (flexgen) setup is needed
 	hadc.Init.ClockPrescaler = ADC_CLOCK_CK_ICN_LS_MCU_DIV4;
 	hadc.Init.Resolution = ADC_RESOLUTION_12B;
@@ -174,8 +183,6 @@ void adc_init()
 
 	if (auto res = HAL_ADCEx_Calibration_Start(&hadc, ADC_SINGLE_ENDED); res != HAL_OK)
 		print("ERROR: HAL_ADCEx_Calibration_Start returned ", res, "\n");
-
-	print("Calibration factor: ", HAL_ADCEx_Calibration_GetValue(&hadc, ADC_SINGLE_ENDED), "\n");
 }
 
 void adc_config_channel(uint32_t channel, uint32_t rank, uint32_t sampling_time)
@@ -202,32 +209,24 @@ void adc_config_channel(uint32_t channel, uint32_t rank, uint32_t sampling_time)
 		print("ERROR: HAL_ADC_ConfigChannel returned ", res, "\n");
 }
 
-void polled_readings()
+uint32_t poll_one_reading()
 {
-	print("Reading VREFINT (internal bandgap, expect ~1210 mV):\n");
-	adc_config_channel(ADC_CHANNEL_VREFINT, ADC_REGULAR_RANK_1, ADC_SAMPLETIME_1501CYCLES_5);
-	HAL_Delay(1); // VREFINT buffer startup time
-	for (unsigned i = 0; i < 4; i++) {
-		HAL_ADC_Start(&hadc);
-		if (HAL_ADC_PollForConversion(&hadc, 100) != HAL_OK) {
-			print("ERROR: poll for conversion timed out\n");
-			break;
-		}
-		auto raw = HAL_ADC_GetValue(&hadc);
-		print("  VREFINT raw: ", raw, " = ", raw_to_mv(raw), " mV\n");
+	HAL_ADC_Start(&hadc);
+	if (HAL_ADC_PollForConversion(&hadc, 100) != HAL_OK) {
+		print("ERROR: poll for conversion timed out\n");
+		return 0;
 	}
+	return HAL_ADC_GetValue(&hadc);
+}
 
-	print("Reading CH4 (PG4, adaptor board pin B34):\n");
-	adc_config_channel(ADC_CHANNEL_4, ADC_REGULAR_RANK_1, ADC_SAMPLETIME_247CYCLES_5);
-	for (unsigned i = 0; i < 8; i++) {
-		HAL_ADC_Start(&hadc);
-		if (HAL_ADC_PollForConversion(&hadc, 100) != HAL_OK) {
-			print("ERROR: poll for conversion timed out\n");
-			break;
-		}
-		auto raw = HAL_ADC_GetValue(&hadc);
-		print("  CH4 raw: ", raw, " = ", raw_to_mv(raw), " mV\n");
-		HAL_Delay(250);
+void poll_channel(const char *label, uint32_t channel, uint32_t sampling_time, unsigned count)
+{
+	print(label, ":\n");
+	adc_config_channel(channel, ADC_REGULAR_RANK_1, sampling_time);
+	HAL_Delay(1); // startup time for internal channel buffers
+	for (unsigned i = 0; i < count; i++) {
+		auto raw = poll_one_reading();
+		print("  raw: ", raw, " = ", raw_to_mv(raw), " mV\n");
 		watchdog_pet();
 	}
 }

@@ -14,8 +14,12 @@ The example runs through four phases:
    scope.
 
 2) Takes single software-triggered conversions, polling for completion:
-   - VREFINT (the internal ~1.21V bandgap): a sanity check that needs no
-     wiring at all. Expect readings around 1210 mV.
+   - VREFINT: the internal reference. On MP2 this is 0.8V typical (0.792V to
+     0.808V per the datasheet) -- NOT the 1.21V bandgap of older STM32
+     families. Expect readings around 800 mV. A sanity check needing no wiring.
+   - A CH4 (PG4) self-test: the pin is driven low, then pulled up, by its own
+     GPIO cell while the ADC samples it, verifying the pad-to-ADC path without
+     any external wiring.
    - ADC1 Channel 4 (PG4), which is on adaptor board pin B34. Connect it to a
      voltage divider between VREF+ and VREF- and the readings should track the
      divider voltage.
