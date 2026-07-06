@@ -113,7 +113,7 @@ that is neither MIDI nor Mass Storage is enumerated but reported as
 User2 (with nothing attached) to return to device mode.
 
 For host mode the port must source 5V on VBUS. On the EV1 the TCPP03-M20 gates
-VBUS (see below); the custom devboard needs its adaptor board attached to supply
+VBUS (see below); the custom devboard needs the breakout board attached to supply
 VBUS.
 
 ## Board selection
