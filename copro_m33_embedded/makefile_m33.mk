@@ -19,10 +19,17 @@ OPTFLAG = -O0
 
 MCU = -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mthumb -mfloat-abi=hard -mlittle-endian
 
-# The M33 demo talks to the console UART via absolute (non-secure) addresses in
-# shared/print/uart_print.c, so it needs almost nothing from CMSIS. UART=2 is
-# the ST-LINK console (matches the A35 default).
-DEFS = -DUART=2
+UART_CHOICE ?= 2
+DEFS = -DUART=$(UART_CHOICE)
+
+# Objects don't otherwise depend on UART_CHOICE, so changing it would leave a
+# stale uart_print.o (compiled for the old UART) unless we force a rebuild.
+# Record the current choice in a stamp file all objects depend on.
+UART_STAMP = $(BUILDDIR)/uart_choice_is_$(UART_CHOICE)
+$(UART_STAMP):
+	@mkdir -p $(BUILDDIR)
+	@rm -f $(BUILDDIR)/uart_choice_is_*
+	@touch $@
 
 INCLUDES = -I. -I$(SHAREDDIR)
 
@@ -42,6 +49,8 @@ LFLAGS = -Wl,--gc-sections -Wl,-Map,$(BUILDDIR)/$(BINARYNAME).map,--cref \
 
 OBJDIR  = $(BUILDDIR)/obj
 OBJECTS = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
+
+$(OBJECTS): $(UART_STAMP)
 
 ELF = $(BUILDDIR)/$(BINARYNAME).elf
 BIN = $(BUILDDIR)/firmware.bin
