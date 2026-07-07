@@ -23,18 +23,6 @@ bss_loop:
     b       bss_loop
 bss_done:
 
-    // Copy .data from its load address in ROM to its runtime address in RAM.
-    ldr     x0, =_data_start
-    ldr     x1, =_data_end
-    ldr     x3, =_data_load
-data_loop:
-    cmp     x0, x1
-    b.hs    data_done
-    ldr     x2, [x3], #8
-    str     x2, [x0], #8
-    b       data_loop
-data_done:
-
     bl      early_print_el
     mrs     x0, CurrentEL
     lsr     x0, x0, #2

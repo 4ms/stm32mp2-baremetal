@@ -5,8 +5,7 @@ ENTRY(_Reset)
 
 MEMORY
 {
-    ROM (rx) : ORIGIN = 0x88000040, LENGTH = 16M
-    RAM (rwx): ORIGIN = 0x90000000, LENGTH = 16M
+    DDRRAM (rx) : ORIGIN = 0x88000040, LENGTH = 16M
 }
 
 __HEAP_SIZE = 0x40000;
@@ -26,7 +25,7 @@ SECTIONS
 		KEEP (*(.fini)) /* libc dtors */
 
         . = ALIGN(8);
-     } > ROM
+     } > DDRRAM
 
 	/* .rodata sections (constants, strings, etc.) */
 	.rodata :
@@ -35,15 +34,11 @@ SECTIONS
 		*(.rodata)         
 		*(.rodata*) 
 		. = ALIGN(8);
-	} > ROM
+	} > DDRRAM
 
 	/* used for unwinding (probably not used, but is ignored if your app doens't use exceptions */
-	.ARM.extab	 : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >ROM
-	.ARM : {
-		__exidx_start = .;
-		*(.ARM.exidx*)
-		__exidx_end = .;
-	} >ROM
+	.ARM.extab	 : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >DDRRAM
+	.ARM : { __exidx_start = .; *(.ARM.exidx*) __exidx_end = .; } >DDRRAM
 
 	.preinit_array :
 	{
@@ -52,7 +47,7 @@ SECTIONS
 		KEEP (*(.preinit_array*))
 		PROVIDE_HIDDEN (__preinit_array_end = .);
 		. = ALIGN(8);
-	} > ROM
+	} > DDRRAM
 
 	.init_array :
 	{
@@ -62,7 +57,7 @@ SECTIONS
 		KEEP (*(.init_array*))
 		PROVIDE_HIDDEN (__init_array_end = .);
 		. = ALIGN(8);
-	} > ROM
+	} > DDRRAM
 
 	.fini_array :
 	{
@@ -72,25 +67,18 @@ SECTIONS
 		KEEP (*(.fini_array*))
 		PROVIDE_HIDDEN (__fini_array_end = .);
 		. = ALIGN(8);
-	} > ROM
+	} > DDRRAM
 
-
-    _text_end = .;
-
-    /* .data lives in RAM at runtime but is loaded from ROM (AT), so the flat
-     * binary stays contiguous. startup_a35.s copies it from _data_load to
-     * _data_start at boot. (Without AT, a non-empty .data at 0x90000000 with no
-     * ROM load address makes objcopy pad the binary across the ROM->RAM gap.) */
-    .data : AT(_text_end)
+    .data : 
     {
         . = ALIGN(8);
-        _data_start = .;
+	 	*(.got)
+	 	*(.got.plt)
         *(.data)
         *(.data*)
         . = ALIGN(8);
         _data_end = .;
-    } > RAM
-    _data_load = LOADADDR(.data);
+    } > DDRRAM
 
     .bss : {
         _bss_start = .;
@@ -99,7 +87,7 @@ SECTIONS
 		*(COMMON)  /* required for libc, such as __lock___atexit_recursive_mutex */
         . = ALIGN(8);
         _bss_end = .;
-    } > RAM
+    } > DDRRAM
 
 	.heap (NOLOAD):
 	{
@@ -107,7 +95,7 @@ SECTIONS
 		_sheap = .;
 		. += __HEAP_SIZE;
 		_eheap = .;
-	} > RAM
+	} > DDRRAM
 
     _fiq_stack_start = ADDR(.heap) + SIZEOF(.heap);
     _fiq_stack_end = _fiq_stack_start + 0x1000; /* 64 KB */
