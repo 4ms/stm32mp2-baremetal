@@ -29,6 +29,15 @@
 Reset_Handler:
 	ldr   sp, =_estack
 
+	/* Boot breadcrumb for the A35: prove the M33 executed its first
+	 * instructions by writing a magic word into an unused vector slot
+	 * (slot 8, offset 0x20). A second magic goes into slot 9 just before
+	 * main(). The A35 polls these after releasing hold-boot (main_a35.cc). */
+	ldr   r0, =g_pfnVectors
+	ldr   r1, =0xB007C0DE
+	str   r1, [r0, #0x20]
+	dsb
+
 	/* Enable CP10/CP11 (FPU) full access: SCB->CPACR |= (0xF << 20) */
 	ldr   r0, =0xE000ED88
 	ldr   r1, [r0]
@@ -66,6 +75,12 @@ LoopFillZerobss:
 	ldr   r3, =_ebss
 	cmp   r2, r3
 	bcc   FillZerobss
+
+	/* Second breadcrumb: startup completed, entering main() (slot 9). */
+	ldr   r0, =g_pfnVectors
+	ldr   r1, =0xB007C0DF
+	str   r1, [r0, #0x24]
+	dsb
 
 	bl    main
 
