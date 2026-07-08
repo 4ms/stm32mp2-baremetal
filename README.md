@@ -21,14 +21,15 @@ The goal is to run full applications with access to:
      - ✓ Startup code for each core
      - ✓ core-specific interrupts (SGI)
      - IPCC and HSEM for sharing data 
-  - AMP multi-core (CM33)
+  - ✓ AMP multi-core (CM33)
+     - IPCC and HSEM for sharing data 
   - AMP multi-core (CM0+)
-  - USB dual-role host/device, leveraging the STM32 USB library
+  - USB dual-role host/device
      ✓ Device via USB3DR
-     - Host via USB3DR
-     - Host via EHCI USBH (WIP partially working)
+     ✓ Host via USB3DR
+     ✓ USB Hub support
   - RGB or MIPI/DSI video
-  - ADC running with DMA
+  - ✓ ADC running with DMA
 
 # Project setup
 
