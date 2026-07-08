@@ -2,16 +2,24 @@
 
 This example demonstrates using the ADC to read analog voltages.
 
-It uses the internal Voltage Reference, so make sure the VREF+ pin is not connected on your board.
-TODO: check EV1 schematic before merging this into main!
+Select the board with `make BOARD=devboard` (default) or `make BOARD=ev1`
+(run `make clean` when switching):
+
+- `devboard`: VREF+ is unloaded, so the internal VREFBUF drives it at 1.5V.
+  The VREF+ pin must not be driven externally. Console defaults to USART1.
+- `ev1`: the EV1 kit wires VREF+ to its 1.8V rail, so the VREFBUF is left in
+  external-reference mode (enabling it would fight the rail). Console defaults
+  to the ST-LINK UART.
 
 The example runs through four phases:
 
-1) Enables the VDDA18ADC supply (confirmed with the PWR voltage monitor) and the
-   VREFBUF. The MP25 VREFBUF supports two output voltages selected by the VRS
-   bit: ~1.212V (VRS=0, the raw bandgap) or 1.5V (VRS=1). Select with
-   `UseVrefScale` in main.cc (default 1.5V) and verify the VREF+ pin with a
-   scope.
+1) Enables the VDDA18ADC supply (confirmed with the PWR voltage monitor).
+   - When built for the devboard, it enables VREFBUF. 
+     The MP25 VREFBUF supports two output voltages selected by the VRS
+     bit: ~1.212V (VRS=0, the raw bandgap) or 1.5V (VRS=1). Select with
+     `UseVrefScale` in main.cc (default 1.5V) and verify the VREF+ pin with a
+     scope.
+   - When built for the EV1, there is an external VREF applied, so that's used instead.
 
 2) Takes single software-triggered conversions, polling for completion:
    - VREFINT: the internal reference. On MP2 this is 0.8V typical (0.792V to

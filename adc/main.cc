@@ -14,11 +14,21 @@
 // (pin B34 on the EV1 adaptor board). Connect PG4 to a voltage divider
 // between VREF+ and VREF- to see readings.
 //
-// VREF+ is driven by the internal VREFBUF, so the VREF+ pin must not be
-// driven externally (see README).
+// The reference voltage depends on the board (BOARD= in the Makefile):
+// - devboard: VREF+ is unloaded, so the internal VREFBUF drives it and the
+//   VREF+ pin must not be driven externally (see README).
+// - ev1: VREF+ is wired to the 1.8V rail, so the VREFBUF is left in
+//   external-reference mode (enabling it would fight the rail).
 //
 // The internal reference VREFINT (0.8V on MP2, per datasheet) is also
 // converted, as a sanity check that works with no external wiring at all.
+
+#if defined(BOARD_EV1)
+
+// The EV1 wires VREF+ to its 1.8V analog rail.
+constexpr inline uint32_t VrefMillivolts = 1800;
+
+#else
 
 // The MP25 VREFBUF supports two output voltages, selected by the VRS bit:
 // VRS = 0: ~1212 mV (the raw bandgap voltage, measured on an EV1)
@@ -26,6 +36,8 @@
 enum class VrefScale : uint32_t { _1212mV = 0, _1500mV = VREFBUF_CSR_VRS };
 constexpr inline VrefScale UseVrefScale = VrefScale::_1500mV;
 constexpr inline uint32_t VrefMillivolts = (UseVrefScale == VrefScale::_1212mV) ? 1212 : 1500;
+
+#endif
 
 constexpr inline uint32_t NumSamples = 256;
 
@@ -40,7 +52,7 @@ static DMA_NodeConfTypeDef dma_node_conf;
 
 static volatile uint32_t buffers_done = 0;
 
-static void enable_vrefbuf();
+static void init_vref();
 static void adc_init(ADC_TypeDef *instance);
 static void adc_config_channel(uint32_t channel, uint32_t rank, uint32_t sampling_time);
 static void dma_init();
@@ -59,8 +71,8 @@ int main()
 
 	HAL_Init();
 
-	print("\n1) Enabling VREF+\n");
-	enable_vrefbuf();
+	print("\n1) Configuring VREF+\n");
+	init_vref();
 
 	print("\n2) Single software-triggered conversions\n");
 	adc_init(ADC1);
@@ -122,7 +134,7 @@ int main()
 	}
 }
 
-void enable_vrefbuf()
+void init_vref()
 {
 	// Remove the power isolation of the VDDA18ADC-supplied analog domain.
 	// Present::If uses the PWR voltage monitor to confirm the supply is present.
@@ -131,6 +143,13 @@ void enable_vrefbuf()
 
 	RCC_Enable::VREF_::set();
 
+#if defined(BOARD_EV1)
+	// External voltage reference mode (ENVR=0, HIZ=1, the reset state): the
+	// VREFBUF buffer stays off and VREF+ is an input, supplied by the EV1's
+	// 1.8V rail.
+	VREFBUF->CSR = (VREFBUF->CSR & ~VREFBUF_CSR_ENVR) | VREFBUF_CSR_HIZ;
+	print("Using external reference on VREF+ pin (", VrefMillivolts, " mV rail on the EV1)\n");
+#else
 	uint32_t csr = VREFBUF->CSR;
 	csr &= ~(VREFBUF_CSR_HIZ | VREFBUF_CSR_VRS_0 | VREFBUF_CSR_VRS_1 | VREFBUF_CSR_VRS_2);
 	csr |= std::to_underlying(UseVrefScale) | VREFBUF_CSR_ENVR;
@@ -145,6 +164,7 @@ void enable_vrefbuf()
 	}
 
 	print("VREFBUF enabled and ready. Please use a meter to verify VREF+ pin reads ", VrefMillivolts, " mV\n");
+#endif
 }
 
 void adc_init(ADC_TypeDef *instance)
