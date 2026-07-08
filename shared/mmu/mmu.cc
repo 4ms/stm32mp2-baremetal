@@ -52,21 +52,22 @@ static void populate_tables()
 	L0.table_entry(0x80000000, L1_ddr1);
 	L0.table_entry(0xC0000000, L1_ddr2);
 
-	// 2MB entries for SYSRAM: FIXME: NonSecure is ignored in block_entry()
+	// 2MB entries for SYSRAM:
 	L1_sram.block_entry(0x0A000000, MMU::MemType::Normal, MMU::AccessRW | MMU::NonSecure);
 	L1_sram.block_entry(0x0E000000, MMU::MemType::Normal, MMU::AccessRW);
 	L1_sram.block_entry(0x20000000, MMU::MemType::Normal, MMU::AccessRW | MMU::NonSecure | MMU::PrivExecuteNever);
 	L1_sram.block_entry(0x30000000, MMU::MemType::Normal, MMU::AccessRW | MMU::PrivExecuteNever);
 
-	// Peripherals
-	L1_periphs.fill_block_entries(0x40000000,
-								  0x60000000,
-								  MMU::MemType::Device,
-								  MMU::PrivExecuteNever | MMU::NonShareable | MMU::NonSecure | MMU::AccessRW);
+	// Peripherals: Secure transactions
+	L1_periphs.fill_block_entries(
+		0x40000000, 0x60000000, MMU::MemType::Device, MMU::PrivExecuteNever | MMU::NonShareable | MMU::AccessRW);
 
 	// DDR:
 	L1_ddr1.fill_block_entries(0x80000000, 0xC0000000, MMU::MemType::Normal, MMU::AccessRW);
 	L1_ddr2.fill_block_entries(0xC0000000, 0x100000000, MMU::MemType::Normal, MMU::AccessRW);
+
+	// DMA non-cacheable pool (used in usb-drd example)
+	L1_ddr1.block_entry(0x8A000000, MMU::MemType::Noncache, MMU::AccessRW);
 
 	is_init = true;
 	dsb_sy();

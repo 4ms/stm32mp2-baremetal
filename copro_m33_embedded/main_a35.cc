@@ -9,18 +9,11 @@
 #include "stm32mp2xx.h"
 #include <cstdint>
 
-#include "firmware_m33.h" // provides m33_firmware[] and m33_firmware_len
+#include "firmware_m33.h"
 
 namespace
 {
-// The A35 writes the M33 image into SRAM2 through this address (the A35's only
-// alias for SRAM2).
-constexpr uintptr_t M33_LOAD_ADDR = 0x0A060000UL;
-
-// The M33 runs secure and fetches its vector table through the SRAM2 *secure*
-// instruction-fetch alias. Same physical RAM as M33_LOAD_ADDR. Must match
-// linkscript_m33.ld.
-constexpr uintptr_t M33_SVTOR_ADDR = 0x0E060000UL;
+constexpr uintptr_t M33_LOAD_ADDR = 0x0E060000UL;
 
 // PH8, toggled by the A35:
 constexpr uintptr_t RCC_GPIOHCFGR = 0x44200548UL;
@@ -96,7 +89,7 @@ void start_m33()
 	// GPIO pins reset to secure (GPIOx_SECCFGR = 0xFFFF, RM0457 sec. 24.4.12),
 	// which the secure M33 can drive directly -- no per-pin handover needed.
 	CA35SYSCFG->M33_TZEN_CR |= CA35SYSCFG_M33_TZEN_CR_CFG_SECEXT;
-	CA35SYSCFG->M33_INITSVTOR_CR = (uint32_t)M33_SVTOR_ADDR & CA35SYSCFG_M33_INITSVTOR_CR_INITSVTOR_Msk;
+	CA35SYSCFG->M33_INITSVTOR_CR = (uint32_t)M33_LOAD_ADDR & CA35SYSCFG_M33_INITSVTOR_CR_INITSVTOR_Msk;
 	dsb_sy();
 	isb();
 

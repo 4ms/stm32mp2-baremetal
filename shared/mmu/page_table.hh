@@ -69,7 +69,10 @@ struct PageTable {
 		descriptor |= std::to_underlying(type) << MemTypeShift;
 		descriptor |= Attributes::Valid;
 		descriptor |= Attributes::AccessedFlag;
-		// TODO: Allow NonSecure flag
+
+		// FIXME: how to enable non secure flag?
+		if (attribs & Attributes::NonSecure)
+			descriptor |= Attributes::NonSecure;
 
 		if (type == MemType::Normal)
 			descriptor |= InnerShareable;
