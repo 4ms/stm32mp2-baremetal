@@ -6,7 +6,8 @@ bare-metal context on all cores.
 All projects are designed for the STM32MP257F-EV1 board, but changing to your
 own board should be trivial.
 
-The goal is to run full applications with access to:
+Currently working examples:
+
   - ✓ EL3 Secure state
   - ✓ Nested interrupts (using the GIC)
   - ✓ MMU configuration
@@ -17,19 +18,26 @@ The goal is to run full applications with access to:
      - ✓ SAI TX (DAC audio out)
      - ✓ SAI RX (ADC audio in)
   - ✓ I2C
-  - SMP Multi-core (dual CA35):
+  - ✓ SMP Multi-core (dual CA35):
      - ✓ Startup code for each core
      - ✓ core-specific interrupts (SGI)
-     - IPCC and HSEM for sharing data 
-  - ✓ AMP multi-core (CM33)
-     - IPCC and HSEM for sharing data 
-  - AMP multi-core (CM0+)
-  - USB dual-role host/device
+  - ✓ Loading and running firmware on the M33 core
+  - ✓ USB dual-role host/device
      ✓ Device via USB3DR
      ✓ Host via USB3DR
      ✓ USB Hub support
-  - RGB or MIPI/DSI video
   - ✓ ADC running with DMA
+
+TODO:
+  - LTDC display controller:
+    - RGB parallel interface
+    - MIPI DSI interface
+    - Basic 2D GPU usage
+  - IPCC and HSEM (A35<=>A35 and A35<=>M33)
+  - Loading and running firmware on the M0+ core 
+  - SDMMC read/write
+  - XSPI read/write (requires custom board with a flash chip)
+
 
 # Project setup
 
