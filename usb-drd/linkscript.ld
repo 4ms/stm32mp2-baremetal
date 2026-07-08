@@ -5,8 +5,7 @@ ENTRY(_Reset)
 
 MEMORY
 {
-    ROM (rx) :   ORIGIN = 0x88000040, LENGTH = 16M
-    RAM (rwx):   ORIGIN = 0x90000000, LENGTH = 16M
+    ROM (rx) :   ORIGIN = 0x88000000, LENGTH = 16M
 
     /* DMA-coherent pool for DWC3 USB driver.
      * This 2MB-aligned region must be mapped as Non-Cacheable in the MMU:
@@ -75,6 +74,7 @@ SECTIONS
 	.b_ns_vderam (NOLOAD): { *(.b_ns_vderam) } 	> B_NS_VDERAM
 
     .text : {
+        KEEP(*(.text.boot)) /* _Reset must be first: TF-A's baremetal loader jumps to the image start */
         *(.vector_table)
         *(.text)
         *(.text*)
@@ -143,11 +143,13 @@ SECTIONS
     {
         . = ALIGN(8);
         _data_start = .;
+        *(.got)
+        *(.got.plt)
         *(.data)
         *(.data*)
         . = ALIGN(8);
         _data_end = .;
-    } > RAM
+    } > ROM
 
     .bss : {
         _bss_start = .;
@@ -156,7 +158,7 @@ SECTIONS
 		*(COMMON)  /* required for libc, such as __lock___atexit_recursive_mutex */
         . = ALIGN(8);
         _bss_end = .;
-    } > RAM
+    } > ROM
 
 	.heap (NOLOAD):
 	{
@@ -164,7 +166,7 @@ SECTIONS
 		_sheap = .;
 		. += __HEAP_SIZE;
 		_eheap = .;
-	} > RAM
+	} > ROM
 
     _fiq_stack_start = ADDR(.heap) + SIZEOF(.heap);
     _fiq_stack_end = _fiq_stack_start + 0x1000; /* 64 KB */

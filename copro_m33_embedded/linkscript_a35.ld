@@ -5,7 +5,7 @@ ENTRY(_Reset)
 
 MEMORY
 {
-    DDRRAM (rx) : ORIGIN = 0x88000040, LENGTH = 16M
+    DDRRAM (rx) : ORIGIN = 0x88000000, LENGTH = 16M
 }
 
 __HEAP_SIZE = 0x40000;
@@ -13,6 +13,7 @@ __HEAP_SIZE = 0x40000;
 SECTIONS
 {
     .text : {
+        KEEP(*(.text.boot)) /* _Reset must be first: TF-A's baremetal loader jumps to the image start */
         *(.vector_table)
         *(.text)
         *(.text*)
