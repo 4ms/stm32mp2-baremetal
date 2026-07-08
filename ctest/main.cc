@@ -16,8 +16,14 @@ char bss_char;
 
 int main()
 {
-	// volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x400E0028);
+#if UART == 6
 	volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x40220028);
+#elif UART == 1
+	volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x40330028);
+#else
+	// USART2: (default)
+	volatile uint32_t *uart = reinterpret_cast<volatile uint32_t *>(0x400E0028);
+#endif
 
 	if (bss_char == 0)
 		set_bss_char('Z');
