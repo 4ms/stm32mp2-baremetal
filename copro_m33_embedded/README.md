@@ -24,14 +24,31 @@ Everything lives in one file (`build/corea35/main.elf/bin`).
 ### Memory layout
 
 The whole M33 image (vector table + code + rodata + data) is placed contiguously
-in **SRAM2**, at the M33 non-secure instruction-fetch alias **`0x0A060000`**
-(128 kB). The A35 sees the same physical SRAM2 at the same address (see the SRAM
-mappings in `shared/mmu/mmu.cc`), so it copies the blob straight there and writes
-`0x0A060000` into the M33's vector-table register.
+in **SRAM2** (128 kB). The M33 is linked at its *secure* instruction-fetch alias
+of SRAM2, **`0x0E060000`**, which is also what goes into the M33's secure
+vector-table register `M33_INITSVTOR_CR`. The A35 sees the same physical SRAM2
+at **`0x0A060000`** (see the SRAM mappings in `shared/mmu/mmu.cc`), so it copies
+the blob there — both addresses reach the same RAM.
 
-The M33 runs non-secure, matching how the A35 maps the peripheral space as
-non-secure. This lets the M33 reuse the exact same peripheral addresses the A35
-uses (`shared/print/uart_print.c`), so both cores share the console UART.
+### Security model
+
+The M33 runs **secure**:
+
+- The A35 sets `CA35SYSCFG->M33_TZEN_CR` `CFG_SECEXT` = 1 and writes the
+  *secure* vector register `M33_INITSVTOR_CR` = `0x0E060000` (the secure
+  instruction-fetch alias of SRAM2). The M33 image is linked at that address.
+- A secure instruction fetch to a non-secure RISAB page is an illegal access
+  (`SRWIAD` only forgives secure *data* accesses), and our EL3 startup
+  (`shared/drivers/risab.cc`) cleared all page security bits — so the A35 sets
+  SRAM2's RISAB4 pages back to secure before releasing the M33.
+- The M33 leaves its SAU disabled, so the entire address map is Secure and all
+  of its bus accesses are secure transactions. That lets it use the exact same
+  peripheral addresses the A35 uses (`0x4xxxxxxx`, no `0x5xxxxxxx` secure
+  aliases needed) — both cores share the console UART driver unchanged
+  (`shared/print/uart_print.c`).
+- GPIO pins reset to secure (`GPIOx_SECCFGR` = `0xFFFF`, RM0457 §24.4.12). A
+  *non-secure* M33's GPIO writes would be silently ignored; the secure M33 can
+  drive any pin directly, no per-pin handover needed.
 
 ## What it does
 
@@ -71,10 +88,15 @@ The console UART defaults to USART2 (ST-LINK / USB-C). Override the A35 and M33 
 with e.g. `make UART_CHOICE=1`. 
 
 
-## TODO
+## Running the M33 non-secure instead
 
-- Try running the M33 secure so it can drive secure GPIO pins
-   - enable `CA35SYSCFG->M33_TZEN_CR` CFG_SECEXT
-   - write `M33_INITSVTOR_CR` (not the NS one) with the secure fetch alias `0x0E060000`
-   - link the M33 at 0x0E060000.
+The demo previously ran the M33 non-secure; to go back:
+
+- Clear `CA35SYSCFG->M33_TZEN_CR` `CFG_SECEXT` and write `M33_INITNSVTOR_CR`
+  (not the secure one) with the non-secure fetch alias `0x0A060000`.
+- Link the M33 at `0x0A060000` (and `_estack = 0x0A080000`).
+- Leave SRAM2's RISAB pages non-secure (drop `sram2_set_secure()`).
+- Hand over every GPIO pin the M33 will drive by clearing its bit in
+  `GPIOx_SECCFGR` from the A35 (pins reset to secure, so a non-secure M33's
+  GPIO writes are silently ignored otherwise).
 

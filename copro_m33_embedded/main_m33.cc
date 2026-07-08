@@ -4,9 +4,13 @@
 // releases CPU2 from hold-boot. Prints occasionally over the shared console
 // UART and toggles PF9.
 //
-// Peripheral register access uses the same non-secure addresses the A35 uses
-// (see shared/print/uart_print.c and shared/mmu/mmu.cc), so the M33 runs
-// non-secure and shares the console UART with the A35.
+// The M33 runs *secure* (the A35 sets CFG_SECEXT before releasing it), with
+// the SAU left disabled -- so the whole address map is Secure and every bus
+// access the M33 makes is a secure transaction. That means:
+//  - it can use the same peripheral addresses the A35 uses (0x4xxxxxxx),
+//    no need for the 0x5xxxxxxx secure aliases;
+//  - it can drive GPIO pins directly, since pins reset to secure
+//    (GPIOx_SECCFGR = 0xFFFF) and secure accesses are always allowed.
 
 #include "print/print.hh"
 #include <cstdint>
@@ -15,7 +19,7 @@ extern "C" void init_uart(void);
 
 namespace
 {
-// RCC and GPIOF, non-secure aliases (match shared/print/uart_print.c).
+// RCC and GPIOF (same addresses the A35 uses; see comment at top of file).
 constexpr uintptr_t RCC_GPIOFCFGR = 0x44200540UL; // RCC->GPIOFCFGR
 constexpr uint32_t RCC_GPIOxEN = (1u << 1);
 

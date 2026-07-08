@@ -1,8 +1,8 @@
 /* Minimal Cortex-M33 startup for the STM32MP257F coprocessor.
  *
- * The A35 loads this image into SRAM2, points CA35SYSCFG->M33_INITNSVTOR_CR at
- * the vector table, and releases CPU2 from hold-boot. On reset the M33 loads SP
- * from vector[0] and PC from vector[1] (Reset_Handler below).
+ * The A35 loads this image into SRAM2, points CA35SYSCFG->M33_INITSVTOR_CR at
+ * the vector table (the M33 runs secure), and releases CPU2 from hold-boot. On
+ * reset the M33 loads SP from vector[0] and PC from vector[1] (Reset_Handler).
  *
  * We keep it tiny: enable the FPU, zero .bss, (no-op) copy .data, call main().
  * No interrupts are used by the demo, so only the core exception vectors are

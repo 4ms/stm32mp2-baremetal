@@ -13,9 +13,14 @@
 
 namespace
 {
-// SRAM2 non-secure instruction-fetch alias. Must match linkscript_m33.ld and
-// startup's vector-table location.
+// The A35 writes the M33 image into SRAM2 through this address (the A35's only
+// alias for SRAM2).
 constexpr uintptr_t M33_LOAD_ADDR = 0x0A060000UL;
+
+// The M33 runs secure and fetches its vector table through the SRAM2 *secure*
+// instruction-fetch alias. Same physical RAM as M33_LOAD_ADDR. Must match
+// linkscript_m33.ld.
+constexpr uintptr_t M33_SVTOR_ADDR = 0x0E060000UL;
 
 // PH8, toggled by the A35:
 constexpr uintptr_t RCC_GPIOHCFGR = 0x44200548UL;
@@ -49,15 +54,15 @@ void delay(unsigned n)
 		asm volatile("nop");
 }
 
-// Every GPIO pin resets to secure on the MP2 (GPIOx_SECCFGR reset value is
-// 0xFFFF, see RM0457 sec. 24.4.12). The M33 runs non-secure, so its writes to
-// a secure pin's MODER/BSRR/... bits are silently ignored and reads return 0.
-// The A35 (secure) must hand over each pin the M33 will drive by clearing that
-// pin's SEC bit.
-void gpio_pin_set_nonsecure(uintptr_t rcc_gpiocfgr, uintptr_t gpio_base, unsigned pin)
+// The M33 runs secure, so a secure instruction fetch to SRAM2 must land on
+// secure RISAB pages: RISAB SRWIAD only forgives secure *data* accesses to
+// non-secure pages, not fetches. block_ram_enable_el3() cleared all page
+// security bits at boot, so flip SRAM2's pages (RISAB4) back to secure. The
+// A35's own accesses are secure too, so it can still read/write SRAM2.
+void sram2_set_secure()
 {
-	reg(rcc_gpiocfgr) |= RCC_GPIOxEN;
-	reg(gpio_base + 0x30) &= ~(1u << pin); // GPIOx_SECCFGR
+	for (auto i = 0u; i < 32; i++)
+		RISAB4->PGSECCFGR[i] = 0xFF; // all 8 blocks of each page secure
 }
 
 void load_m33_firmware()
@@ -84,19 +89,18 @@ void start_m33()
 
 	load_m33_firmware();
 
-	// Make the LED pins non-secure so the non-secure M33 can drive them:
-	// PH8 (shared debug LED) and PF9 (the demo's M33 pin).
-	gpio_pin_set_nonsecure(RCC_GPIOHCFGR, GPIOH_ADDR, LED_PIN); // PH8
-	gpio_pin_set_nonsecure(0x44200540UL, 0x44290000UL, 9);		// GPIOF: PF9
+	sram2_set_secure();
 
-	// Run the M33 non-secure: make sure TrustZone is not enabled and point the
-	// non-secure vector table at the loaded image.
-	CA35SYSCFG->M33_TZEN_CR &= ~CA35SYSCFG_M33_TZEN_CR_CFG_SECEXT;
-	CA35SYSCFG->M33_INITNSVTOR_CR = (uint32_t)M33_LOAD_ADDR & CA35SYSCFG_M33_INITNSVTOR_CR_INITNSVTOR_Msk;
+	// Run the M33 secure: enable its TrustZone security extension and point the
+	// *secure* vector table at the loaded image (via the secure fetch alias).
+	// GPIO pins reset to secure (GPIOx_SECCFGR = 0xFFFF, RM0457 sec. 24.4.12),
+	// which the secure M33 can drive directly -- no per-pin handover needed.
+	CA35SYSCFG->M33_TZEN_CR |= CA35SYSCFG_M33_TZEN_CR_CFG_SECEXT;
+	CA35SYSCFG->M33_INITSVTOR_CR = (uint32_t)M33_SVTOR_ADDR & CA35SYSCFG_M33_INITSVTOR_CR_INITSVTOR_Msk;
 	dsb_sy();
 	isb();
 
-	// Release hold-boot -> the M33 boots from INITNSVTOR. The hardware
+	// Release hold-boot -> the M33 boots from INITSVTOR. The hardware
 	// automatically releases the M33 reset (see OP-TEE stm32_rproc_start()).
 	RCC->CPUBOOTCR |= RCC_CPUBOOTCR_BOOT_CPU2;
 }
@@ -105,11 +109,11 @@ void report_m33_boot_state()
 {
 	print("A35: --- M33 boot diagnostics ---\n");
 	print("A35: M33_ACCESS_CR     = ", Hex{CA35SYSCFG->M33_ACCESS_CR}, " (reset: 0x3 = secure+priv only)\n");
-	print("A35: M33_TZEN_CR       = ", Hex{CA35SYSCFG->M33_TZEN_CR}, " (want 0; 1 = write was blocked)\n");
-	print("A35: M33_INITNSVTOR_CR = ",
-		  Hex{CA35SYSCFG->M33_INITNSVTOR_CR},
+	print("A35: M33_TZEN_CR       = ", Hex{CA35SYSCFG->M33_TZEN_CR}, " (want 1 = M33 TrustZone/secure enabled)\n");
+	print("A35: M33_INITSVTOR_CR  = ",
+		  Hex{CA35SYSCFG->M33_INITSVTOR_CR},
 		  " (want ",
-		  Hex{(unsigned)M33_LOAD_ADDR},
+		  Hex{(unsigned)M33_SVTOR_ADDR},
 		  ")\n");
 	print("A35: RCC CPUBOOTCR     = ", Hex{RCC->CPUBOOTCR}, " (want bit0 BOOT_CPU2 = 1)\n");
 	print("A35: RCC C2RSTCSETR    = ", Hex{RCC->C2RSTCSETR}, " (want 0 = CPU2 reset released)\n");

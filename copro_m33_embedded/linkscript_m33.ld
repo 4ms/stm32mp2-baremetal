@@ -8,24 +8,25 @@
  * Address note (STM32MP25):
  *   The M33 fetches instructions from the "instruction fetch" alias of the
  *   SRAMs. For SRAM2 that is 0x0A060000 (non-secure) / 0x0E060000 (secure).
- *   We run the M33 non-secure, matching how the A35 (see shared/mmu/mmu.cc)
- *   maps the peripheral space as non-secure, so 0x0A060000 is used here and is
- *   also the value written into CA35SYSCFG->M33_INITNSVTOR_CR.
- *   The A35 sees this same physical SRAM2 at 0x0A060000 as well (mapped RW +
- *   executable, non-secure), so it copies the blob straight to 0x0A060000.
+ *   We run the M33 *secure* (CA35SYSCFG->M33_TZEN_CR CFG_SECEXT = 1), so the
+ *   image is linked at the secure alias 0x0E060000, which is also the value
+ *   written into CA35SYSCFG->M33_INITSVTOR_CR.
+ *   The A35 sees the same physical SRAM2 at 0x0A060000 (its only alias for
+ *   SRAM2), so it copies the blob to 0x0A060000; both addresses reach the
+ *   same RAM.
  */
 
 ENTRY(Reset_Handler)
 
 /* SRAM2 is 128 kB. Stack grows down from the top. */
-_estack = 0x0A080000;
+_estack = 0x0E080000;
 
 _Min_Heap_Size  = 0x400;
 _Min_Stack_Size = 0x800;
 
 MEMORY
 {
-	SRAM2 (rwx) : ORIGIN = 0x0A060000, LENGTH = 128K
+	SRAM2 (rwx) : ORIGIN = 0x0E060000, LENGTH = 128K
 }
 
 SECTIONS
