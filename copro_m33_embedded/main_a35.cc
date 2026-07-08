@@ -5,6 +5,7 @@
 // PH8 and the M33 toggles PF9.
 
 #include "aarch64/system_reg.hh"
+#include "drivers/pin.hh"
 #include "print/print.hh"
 #include "stm32mp2xx.h"
 #include <cstdint>
@@ -15,36 +16,10 @@ namespace
 {
 constexpr uintptr_t M33_LOAD_ADDR = 0x0E060000UL;
 
-// PH8, toggled by the A35:
-constexpr uintptr_t RCC_GPIOHCFGR = 0x44200548UL;
-constexpr uint32_t RCC_GPIOxEN = (1u << 1);
-constexpr uintptr_t GPIOH_ADDR = 0x442B0000UL;
-constexpr unsigned LED_PIN = 8; // PH8
-
-inline volatile uint32_t &reg(uintptr_t addr)
-{
-	return *reinterpret_cast<volatile uint32_t *>(addr);
-}
-
-void ph8_init()
-{
-	reg(RCC_GPIOHCFGR) |= RCC_GPIOxEN;
-	unsigned s2 = LED_PIN * 2u;
-	reg(GPIOH_ADDR + 0x00) = (reg(GPIOH_ADDR + 0x00) & ~(3u << s2)) | (1u << s2); // output
-	reg(GPIOH_ADDR + 0x04) &= ~(1u << LED_PIN);									  // push-pull
-	reg(GPIOH_ADDR + 0x08) = (reg(GPIOH_ADDR + 0x08) & ~(3u << s2)) | (2u << s2);
-	reg(GPIOH_ADDR + 0x0C) &= ~(3u << s2); // no pull
-}
-
-void ph8_set(bool on)
-{
-	reg(GPIOH_ADDR + 0x18) = on ? (1u << LED_PIN) : (1u << (LED_PIN + 16));
-}
-
 void delay(unsigned n)
 {
-	for (volatile unsigned i = 0; i < n; i++)
-		asm volatile("nop");
+	for (unsigned i = 0; i < n; i++)
+		asm("nop");
 }
 
 // The M33 runs secure, so a secure instruction fetch to SRAM2 must land on
@@ -103,11 +78,8 @@ void report_m33_boot_state()
 	print("A35: --- M33 boot diagnostics ---\n");
 	print("A35: M33_ACCESS_CR     = ", Hex{CA35SYSCFG->M33_ACCESS_CR}, " (reset: 0x3 = secure+priv only)\n");
 	print("A35: M33_TZEN_CR       = ", Hex{CA35SYSCFG->M33_TZEN_CR}, " (want 1 = M33 TrustZone/secure enabled)\n");
-	print("A35: M33_INITSVTOR_CR  = ",
-		  Hex{CA35SYSCFG->M33_INITSVTOR_CR},
-		  " (want ",
-		  Hex{(unsigned)M33_SVTOR_ADDR},
-		  ")\n");
+	print(
+		"A35: M33_INITSVTOR_CR  = ", Hex{CA35SYSCFG->M33_INITSVTOR_CR}, " (want ", Hex{(unsigned)M33_LOAD_ADDR}, ")\n");
 	print("A35: RCC CPUBOOTCR     = ", Hex{RCC->CPUBOOTCR}, " (want bit0 BOOT_CPU2 = 1)\n");
 	print("A35: RCC C2RSTCSETR    = ", Hex{RCC->C2RSTCSETR}, " (want 0 = CPU2 reset released)\n");
 
@@ -118,15 +90,8 @@ void report_m33_boot_state()
 	// Breadcrumbs: M33 startup writes 0xB007C0DE into vector slot 8 as its
 	// first instructions, and 0xB007C0DF into slot 9 right before main().
 	// Poll for a while, invalidating our dcache so we see the M33's writes.
-	volatile uint32_t *crumb0 = reinterpret_cast<volatile uint32_t *>(M33_LOAD_ADDR + 0x20);
-	volatile uint32_t *crumb1 = reinterpret_cast<volatile uint32_t *>(M33_LOAD_ADDR + 0x24);
-	for (unsigned i = 0; i < 100; i++) {
-		invalidate_dcache_address(M33_LOAD_ADDR + 0x20);
-		dsb_sy();
-		if (*crumb0 == 0xB007C0DE && *crumb1 == 0xB007C0DF)
-			break;
-		delay(100'000);
-	}
+	auto crumb0 = reinterpret_cast<uint32_t *>(M33_LOAD_ADDR + 0x20);
+	auto crumb1 = reinterpret_cast<uint32_t *>(M33_LOAD_ADDR + 0x24);
 	invalidate_dcache_address(M33_LOAD_ADDR + 0x20);
 	dsb_sy();
 	print("A35: M33 breadcrumb[0] = ", Hex{*crumb0}, " (0xB007C0DE = M33 reset handler ran)\n");
@@ -140,17 +105,17 @@ int main()
 {
 	print("\nA35: Hello from Cortex-A35!\n");
 
-	ph8_init();
+	Pin ph8{GPIO::H, PinNum::_8, PinMode::Output};
 
 	print("A35: Loading M33 firmware (", (int)m33_firmware_len, " bytes) into SRAM2\n");
 
 	print("A35: Starting M33 core after LED goes off in 3 ");
-	ph8_set(true);
+	ph8.on();
 	delay(8'000'000);
 	print("2 ");
 	delay(8'000'000);
 	print("1 ");
-	ph8_set(false);
+	ph8.off();
 	delay(8'000'000);
 	print("now\n");
 
@@ -161,9 +126,9 @@ int main()
 
 	unsigned count = 0;
 	while (true) {
-		ph8_set(true);
+		ph8.on();
 		delay(3'000'000);
-		ph8_set(false);
+		ph8.off();
 		delay(3'000'000);
 
 		if ((++count % 4) == 0)

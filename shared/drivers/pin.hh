@@ -19,7 +19,7 @@
 #pragma once
 
 #include "register_access.hh"
-#include "stm32mp2xx_hal.h"
+#include "stm32mp2xx_ll_gpio.h"
 #include <cstddef>
 
 enum class PinPolarity {

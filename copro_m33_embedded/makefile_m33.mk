@@ -22,6 +22,12 @@ MCU = -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mthumb -mfloat-abi=hard -mlittle-endia
 UART_CHOICE ?= 2
 DEFS = -DUART=$(UART_CHOICE)
 
+# Needed for stm32mp2xx_ll_gpio:
+DEFS += -DUSE_FULL_LL_DRIVER \
+			   -DSTM32MP257Cxx \
+			   -DSTM32MP2 \
+			   -DCORE_CM33
+
 # Objects don't otherwise depend on UART_CHOICE, so changing it would leave a
 # stale uart_print.o (compiled for the old UART) unless we force a rebuild.
 # Record the current choice in a stamp file all objects depend on.
@@ -33,10 +39,16 @@ $(UART_STAMP):
 
 INCLUDES = -I. -I$(SHAREDDIR)
 
+# Needed for stm32mp2xx_ll_gpio:
+INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
+INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
+INCLUDES += -I$(SHAREDDIR)/cmsis/Include
+
 SOURCES  = startup_m33.s
 SOURCES += main_m33.cc
 SOURCES += $(SHAREDDIR)/print/print.cc
 SOURCES += $(SHAREDDIR)/print/uart_print.c
+SOURCES += $(SHAREDDIR)/drivers/pin.cc
 
 CFLAGS = -g2 -fno-common $(MCU) $(DEFS) $(INCLUDES) \
 	-fdata-sections -ffunction-sections -ffreestanding -nostdlib -nostartfiles

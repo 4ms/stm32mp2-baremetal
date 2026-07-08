@@ -12,6 +12,7 @@ SOURCES += main_a35.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/mmu/mmu.cc
 SOURCES += $(SHAREDDIR)/drivers/risab.cc
+SOURCES += $(SHAREDDIR)/drivers/pin.cc
 SOURCES += $(SHAREDDIR)/interrupt/irq_init.c
 SOURCES += $(SHAREDDIR)/interrupt/interrupt_handler.cc
 SOURCES += $(SHAREDDIR)/print/uart_print.c
@@ -24,6 +25,7 @@ INCLUDES += -I$(SHAREDDIR)
 INCLUDES += -I$(SHAREDDIR)/cmsis/Include
 INCLUDES += -I$(SHAREDDIR)/cmsis/Core_A/Include
 INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
+INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc  # for stm32mp2xx_ll_gpio.h
 
 OPTFLAG := -O0
 
