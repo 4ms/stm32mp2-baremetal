@@ -58,15 +58,16 @@ static void populate_tables()
 	L1_sram.block_entry(0x20000000, MMU::MemType::Normal, MMU::AccessRW | MMU::NonSecure | MMU::PrivExecuteNever);
 	L1_sram.block_entry(0x30000000, MMU::MemType::Normal, MMU::AccessRW | MMU::PrivExecuteNever);
 
-	// Peripherals
-	L1_periphs.fill_block_entries(0x40000000,
-								  0x60000000,
-								  MMU::MemType::Device,
-								  MMU::PrivExecuteNever | MMU::NonShareable | MMU::NonSecure | MMU::AccessRW);
+	// Peripherals: Secure transactions
+	L1_periphs.fill_block_entries(
+		0x40000000, 0x60000000, MMU::MemType::Device, MMU::PrivExecuteNever | MMU::NonShareable | MMU::AccessRW);
 
 	// DDR:
 	L1_ddr1.fill_block_entries(0x80000000, 0xC0000000, MMU::MemType::Normal, MMU::AccessRW);
 	L1_ddr2.fill_block_entries(0xC0000000, 0x100000000, MMU::MemType::Normal, MMU::AccessRW);
+
+	// DMA non-cacheable pool (used in usb-drd example)
+	L1_ddr1.block_entry(0x8A000000, MMU::MemType::Noncache, MMU::AccessRW);
 
 	is_init = true;
 	dsb_sy();

@@ -70,6 +70,10 @@ struct PageTable {
 		descriptor |= Attributes::Valid;
 		descriptor |= Attributes::AccessedFlag;
 
+		// FIXME: how to enable non secure flag?
+		if (attribs & Attributes::NonSecure)
+			descriptor |= Attributes::NonSecure;
+
 		if (type == MemType::Normal)
 			descriptor |= InnerShareable;
 
