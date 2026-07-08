@@ -52,7 +52,7 @@ static void populate_tables()
 	L0.table_entry(0x80000000, L1_ddr1);
 	L0.table_entry(0xC0000000, L1_ddr2);
 
-	// 2MB entries for SYSRAM:
+	// 2MB entries for SYSRAM: FIXME: NonSecure is ignored in block_entry()
 	L1_sram.block_entry(0x0A000000, MMU::MemType::Normal, MMU::AccessRW | MMU::NonSecure);
 	L1_sram.block_entry(0x0E000000, MMU::MemType::Normal, MMU::AccessRW);
 	L1_sram.block_entry(0x20000000, MMU::MemType::Normal, MMU::AccessRW | MMU::NonSecure | MMU::PrivExecuteNever);
