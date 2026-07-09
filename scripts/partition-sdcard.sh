@@ -52,18 +52,19 @@ sudo sgdisk --resize-table=128 -a 1 \
 	-n 6:10274:18465 	-c 6:fip-b 		-t 6:19D5DF83-11B0-457B-BE2C-7559C13142A5 \
 	-n 7:18466:19489 	-c 7:u-boot-env -t 7:3DE21764-95BD-54BD-A5C3-4ABE786F38A8 \
 	-n 8:19490:150562 	-c 8:bootfs 	-t 8:0FC63DAF-8483-4772-8E79-3D69D8477DE4 \
-	-N 9 				-c 9:fatfs 		-t 9:EBD0A0A2-B9E5-4433-87C0-68B6B72699C7 \
+	-n 9:150563:183330 	-c 9:app 		-t 9:0FC63DAF-8483-4772-8E79-3D69D8477DE4 \
+	-N 10 				-c 10:fatfs 	-t 10:EBD0A0A2-B9E5-4433-87C0-68B6B72699C7 \
 	-p $1 || exit
 set +x
 
 echo ""
-echo "Formatting partition 9 as FAT32"
+echo "Formatting partition 10 as FAT32"
 
 echo ""
 case "$(uname -s)" in
 	Darwin)
 		set -x
-		diskutil eraseVolume FAT32 BAREAPP ${1}s9 || exit
+		diskutil eraseVolume FAT32 BAREAPP ${1}s10 || exit
 		sleep 1
 		diskutil unmountDisk $1
 		set +x
@@ -71,12 +72,12 @@ case "$(uname -s)" in
 	Linux)
 		read -p "You must eject and re-insert the SD Card now. Press enter when ready." READY
 		set -x
-		sudo umount ${1}9
-		sudo mkfs.fat -F 32 -n BAREAPP ${1}9 || exit
+		sudo umount ${1}10
+		sudo mkfs.fat -F 32 -n BAREAPP ${1}10 || exit
 		set +x
 		;;
 	*)
-		echo 'OS not supported: please format $1 partition 9 as FAT32'
+		echo 'OS not supported: please format $1 partition 10 as FAT32'
 		;;
 esac
 
