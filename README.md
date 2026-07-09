@@ -132,8 +132,6 @@ The partition types are critical for the above three partitions. The BOOTROM wil
 the card if the GUID is not set correctly. Also, TF-A will reject the FIP file if its 
 partition does not have the expected GUID.
 
-I believe the partition names are important too, but I haven't verified this.
-
 
 # Build and install the bootloader
 
