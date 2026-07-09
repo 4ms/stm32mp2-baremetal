@@ -111,7 +111,7 @@ partition-sdcard.sh /dev/diskX
 
 This will wipe the card clean, so double-check you use the right device path!
 
-The script sets up 9 partitions on the card. These aren't all needed, but we 
+The script sets up 10 partitions on the card. These aren't all needed, but we 
 do this for compatibility with STM's stock SD card. 
 Blocks are 512B, and the card must have a GPT partition scheme.
 
@@ -122,7 +122,11 @@ The important partitions are:
 - Partition 2: starting block 546, size 256kB, name "fsbla2", same GUID as above
    - This is a redundant copy of partition 1. Starting block must be 546 (address 0x44400)
 - Partition 5: name "fip-a", GUID 19D5DF83-11B0-457B-BE2C-7559C13142A5
-   - This is where the FIP file lives, which contains the DDR init firmware and your app.
+   - This is where the FIP file lives, which contains the DDR init firmware.
+     It is written once and doesn't change when you rebuild your app.
+- Partition 9: size 16MB, name "app"
+   - This is where your application (`build/main.uimg`) lives. TF-A finds this
+     partition by its GPT name, so the partition number doesn't matter.
 
 The partition types are critical for the above three partitions. The BOOTROM will reject
 the card if the GUID is not set correctly. Also, TF-A will reject the FIP file if its 
@@ -258,23 +262,41 @@ ls -l build/main.elf
 ```
 
 
-## Installing the application on the SD card
+## Installing the FIP on the SD card (once)
 
-The easiest way to run your project is to copy the main.bin file onto the SD
-card, as part of the FIP file. See the TF-A README for details.
-
-In short, you do this (but change the --bm-fw path to be the project you want to load,
-and also change `diskX5` to partition 5 of your SD card device)
+The FIP file contains only the DDR training firmware, so it needs to be
+written to the SD card just once -- it doesn't change when you rebuild your
+app. Create it and copy it to partition 5 (change `diskX5` to partition 5 of
+your SD card device):
 
 ```bash
 cd ../tf-a-stm32mp25
 tools/fiptool/fiptool --verbose create \
 	--ddr-fw drivers/st/ddr/phy/firmware/bin/stm32mp2/ddr4_pmu_train.bin \
-	--bm-fw ../stm32mp2-baremetal/minimal_boot/build/main.bin \
 	build/stm32mp2/release/fip.bin
 
 sudo dd if=build/stm32mp2/release/fip.bin of=/dev/diskX5
 ```
+
+## Installing the application on the SD card
+
+Copy the project's `.uimg` file to the "app" partition. From the project
+directory, either:
+
+```bash
+make flash SD=/dev/diskX      # finds the "app" partition and dd's to it
+```
+
+or do it by hand (the app partition is partition 9 if the card was set up
+with partition-sdcard.sh):
+
+```bash
+sudo dd if=build/main.uimg of=/dev/diskX9
+```
+
+TF-A's baremetal loader reads the uimg header (load address, entry point,
+size, CRCs) and starts the app. Rebuilding and re-flashing an app is just
+`make && make flash SD=/dev/diskX` -- the FSBL and FIP are never touched.
 
 
 ## Running the program
@@ -493,7 +515,7 @@ work on 64-bit systems. This has been corrected in the version in this repo.
 
 From TF-A boot, the SD card is organized:
 ```
-Partition table with 8 entries:
+Partition table with 10 entries:
 1: fsbla1                              4400-443fc
 2: fsbla2                              44400-843fc
 3: metadata1                           84400-c43fc
@@ -502,5 +524,7 @@ Partition table with 8 entries:
 6: fip-b                               504400-9043fc
 7: u-boot-env                          904400-9843fc
 8: bootfs                              984400-49843fc
+9: app                                 4984600-59845fc
+10: fatfs                              (rest of card)
 ```
 
