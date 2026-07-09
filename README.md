@@ -1,10 +1,11 @@
 # stm32mp2-baremetal
 
 This contains works-in-progress exploring the use of the STM32MP2xx chips in a
-bare-metal context on all cores.
+bare-metal context on all cores. All examples run in EL3 secure state.
 
 All projects are designed for the STM32MP257F-EV1 board, but changing to your
-own board should be trivial.
+own board should be trivial. Some of the projects explicitly take advantage of 
+features on a custom PCB, read the README for each project for details.
 
 Currently working examples:
 
@@ -41,7 +42,7 @@ TODO:
 
 # Project setup
 
-This repo depends on our modified TF-A bootloader, so you need to clone that repo as well.
+This repo depends on our [modified TF-A bootloader](https://github.com/4ms/tf-a-stm32mp25), so you need to clone that repo as well.
 Keep them organized under a parent directory.
 
 ```bash
@@ -76,28 +77,6 @@ aarch64-none-elf-gcc --version
 ```
 
 
-# Exception Level 3 (EL3) and Secure state
-
-All examples run in EL3 secure state. For this to happen, the bootloader needs
-to load the app in EL3 secure. You must use our fork of TF-A BL2 (FSBL) as
-the sole bootloader. This FSBL -A initializes DDR RAM and then loads your
-application as a secure payload. There is no OP-TEE, U-Boot, or BL31 Secure
-Monitor running. You only need the TF-A BL2 FSBL and your application.
-
-Obviously, running an application this way is inherently less secure. If you
-plan to use this in a production device, you should carefully consider the
-security requirements before running your main application in EL3 Secure state.
-For hobbyist projects, or some embedded projects with no connectivity (e.g. an
-audio FX unit without USB/Wi-Fi/etc), or for designing your own Secure Monitor,
-running in EL3 Secure is more convenient. 
-
-If you want to see examples running EL1 non-secure, then see the [el1-ns branch](https://github.com/4ms/stm32mp2-baremetal/tree/el1-ns).
-This requires OP-TEE to be modified to allow for non-secure access to the peripherals
-and memory regions that the examples use.
-
-Most of these examples should be agnostic to the EL level, and where it matters
-I've added `#ifdef RUN_EL3` to the code.
-
 
 # Prepare your SD Card
 
@@ -106,7 +85,7 @@ For simplicity we will boot from the SD card for all these examples.
 To prepare an SD card, use the partition-sdcard.sh script:
 
 ```bash
-partition-sdcard.sh /dev/diskX
+scripts/partition-sdcard.sh /dev/diskX
 ```
 
 This will wipe the card clean, so double-check you use the right device path!
@@ -128,19 +107,17 @@ The important partitions are:
    - This is where your application (`build/main.uimg`) lives. TF-A finds this
      partition by its GPT name, so the partition number doesn't matter.
 
-The partition types are critical for the above three partitions. The BOOTROM will reject
+The partition types are critical for partition 1, 2, and 5. The BOOTROM will reject
 the card if the GUID is not set correctly. Also, TF-A will reject the FIP file if its 
 partition does not have the expected GUID.
 
 
 # Build and install the bootloader
 
+You need to install TF-A BL2 on partitions 1 and 2 of your SD Card, and the 
+DDR training firmware onto partition 5.
 
-You need to install TF-A BL2 on partitions 1 and 2 of your SD Card.
-Then, you need to create a FIP file from your app binary and the DDR firmware
-binary and install that onto partition 5.
-
-See the TF-A README for details.
+Basic procedure is here, but see the TF-A README for more details.
 
 ## Build FSBL (BL2):
 
@@ -150,7 +127,6 @@ the device path to your SD card partitions 1 and 2:
 
 ```bash
 cd tf-a-stm32mp25
-# [Configure your TF-A build for USART1, USART2, or USART6 here]
 ./build.sh
 sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX1
 sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX2
@@ -486,6 +462,29 @@ or something like this, as it seems to work fine once the MMU is set up.
 
 The TRACE32 debugger will connect to the EV1 board reliably. I've included a
 t32 cmm file in scripts to help.
+
+
+# Exception Level 3 (EL3) and Secure state
+
+All examples run in EL3 secure state. For this to happen, the bootloader needs
+to load the app in EL3 secure. You must use our fork of TF-A BL2 (FSBL) as
+the sole bootloader. This FSBL -A initializes DDR RAM and then loads your
+application as a secure payload. There is no OP-TEE, U-Boot, or BL31 Secure
+Monitor running. You only need the TF-A BL2 FSBL and your application.
+
+Obviously, running an application this way is inherently less secure. If you
+plan to use this in a production device, you should carefully consider the
+security requirements before running your main application in EL3 Secure state.
+For hobbyist projects, or some embedded projects with no connectivity (e.g. an
+audio FX unit without USB/Wi-Fi/etc), or for designing your own Secure Monitor,
+running in EL3 Secure is more convenient. 
+
+If you want to see examples running EL1 non-secure, then see the [el1-ns branch](https://github.com/4ms/stm32mp2-baremetal/tree/el1-ns).
+This requires OP-TEE to be modified to allow for non-secure access to the peripherals
+and memory regions that the examples use.
+
+Most of these examples should be agnostic to the EL level, and where it matters
+I've added `#ifdef RUN_EL3` to the code.
 
 
 
