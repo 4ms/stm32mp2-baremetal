@@ -152,7 +152,7 @@ ELF 	= $(BUILDDIR)/$(BINARYNAME).elf
 HEX 	= $(BUILDDIR)/$(BINARYNAME).hex
 BIN 	= $(BUILDDIR)/$(BINARYNAME).bin
 
-all: Makefile $(ELF) $(BIN)
+all: Makefile $(ELF) $(BIN) $(UIMAGENAME)
 
 elf: $(ELF)
 
@@ -200,6 +200,16 @@ $(HEX): $(ELF)
 $(UIMAGENAME): $(BIN)
 	$(info Creating uimg file)
 	python3 $(SCRIPTDIR)/uimg_header.py $< $@ $(LOADADDR) $(ENTRYPOINT)
+
+# Copy the app to the SD card's "app" partition (TF-A boots it from there):
+#   make flash SD=/dev/diskX
+flash: $(UIMAGENAME)
+ifndef SD
+	$(error Usage: make flash SD=/dev/diskX  (the whole SD card device))
+endif
+	$(SCRIPTDIR)/flash-app.sh $(SD) $(UIMAGENAME)
+
+.PHONY: flash
 
 %.d: ;
 
