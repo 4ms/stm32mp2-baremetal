@@ -19,6 +19,16 @@ OPTFLAG = -O0
 
 MCU = -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mthumb -mfloat-abi=hard -mlittle-endian
 
+# Match the per-board UART defaulting in shared/makefile-common.mk (which this
+# arm-none-eabi build does not include), so the M33 lands on the same console
+# as the A35 when building with BOARD=devboard. BOARD and an explicit UART
+# reach this sub-make automatically (command-line vars propagate).
+BOARD ?= ev1
+ifeq ($(BOARD),devboard)
+  ifeq ($(origin UART),undefined)
+    UART := 1
+  endif
+endif
 UART ?= 2
 DEFS = -DUART=$(UART)
 
