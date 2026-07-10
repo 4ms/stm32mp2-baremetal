@@ -36,10 +36,10 @@ If you're using the ST-LINK connection and the USART via that USB device, then
 make sure the Makefile has the UART set to 2 (because the ST-LINK uses USART2):
 
 ```
-UART_CHOICE := 2
+UART := 2
 ```
 
 If you're using the USART6 via the pins on the GPIO Expander, then set it to 6:
 ```
-UART_CHOICE := 6
+UART := 6
 ```

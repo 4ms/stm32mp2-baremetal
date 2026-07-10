@@ -15,13 +15,13 @@ Break
 
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/ctest/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-dma/build/main.elf /CPP
-//Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/interrupts/build/main.elf /CPP
+Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/interrupts/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/multicore_smp/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/i2c/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-audio/build/main.elf /CPP
-Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
+//Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
 
-//break main
+break main
 
 SYStem.JtagClock 50MHz
 
@@ -31,6 +31,6 @@ ETM.ON
 
 Trace.arm
 
-go
+//go
 
 ENDDO

@@ -57,13 +57,10 @@ SOURCES += tcpp03.cc
 SOURCES += typec_ev1.cc
 else ifeq ($(BOARD),devboard)
 SOURCES += typec_devboard.cc
-BOARD_DEF := -DDEVBOARD_0_1
 # devboard v0.1 defaults device mode to Full speed: the reworked D+/D- and
 # the stub to the adaptor jack train a High-speed link but fail EP0 data.
 # Override with USB_DEVICE_SPEED=high to re-test HS after a board fix.
 USB_DEVICE_SPEED ?= full
-else
-$(error Invalid BOARD '$(BOARD)' - must be ev1 or devboard)
 endif
 
 USB_DEVICE_SPEED ?= high
@@ -96,14 +93,6 @@ OPTFLAG := -O2
 
 # Link stdlib for printf, malloc...
 LINK_STDLIB :=
-
-# Console UART: 1 = USART1 (PB8/PB10, AF6), 2 = ST-LINK, 6 = GPIO Expander
-# header. See shared/makefile-common.mk. A command-line UART_CHOICE=n wins.
-ifeq ($(BOARD),devboard)
-UART_CHOICE := 1
-else
-UART_CHOICE := 6
-endif
 
 # FPU := -ffast-math -funsafe-math-optimizations -mlow-precision-div -mlow-precision-sqrt -mlow-precision-recip-sqrt
 

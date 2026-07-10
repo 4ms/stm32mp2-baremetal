@@ -1,33 +1,32 @@
 # stm32mp2-baremetal
 
-This contains works-in-progress exploring the use of the STM32MP2xx chips in a
-bare-metal context on all cores. All examples run in EL3 secure state.
+This contains examples of the using the STM32MP257 in a
+bare-metal context on the Cortex A35 and Cortex M33 cores.
 
 All projects are designed for the STM32MP257F-EV1 board, but changing to your
-own board should be trivial. Some of the projects explicitly take advantage of 
-features on a custom PCB, read the README for each project for details.
+own board should be trivial. 
 
 Currently working examples:
 
-  - ✓ EL3 Secure state
-  - ✓ Nested interrupts (using the GIC)
-  - ✓ MMU configuration
-  - ✓ DMA memory-to-memory transfers
-  - ✓ Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
-  - ✓ SAI (audio)
-     - ✓ Using DMA
-     - ✓ SAI TX (DAC audio out)
-     - ✓ SAI RX (ADC audio in)
-  - ✓ I2C
-  - ✓ SMP Multi-core (dual CA35):
-     - ✓ Startup code for each core
-     - ✓ core-specific interrupts (SGI)
-  - ✓ Loading and running firmware on the M33 core
-  - ✓ USB dual-role host/device
-     ✓ Device via USB3DR
-     ✓ Host via USB3DR
-     ✓ USB Hub support
-  - ✓ ADC running with DMA
+  - EL3 Secure state
+  - Nested interrupts (using the GIC)
+  - MMU configuration
+  - DMA memory-to-memory transfers
+  - Clock configuration to run at full speed (1.5GHz for CA35, 400MHz for CM33)
+  - SAI (audio)
+     - Using DMA
+     - SAI TX (DAC audio out)
+     - SAI RX (ADC audio in)
+  - I2C
+  - SMP Multi-core (dual CA35):
+     - Startup code for each core
+     - core-specific interrupts (SGI)
+  - Loading and running firmware on the M33 core
+  - USB dual-role host/device
+     - Device via USB3DR
+     - Host via USB3DR
+     - USB Hub support
+  - ADC running with DMA
 
 TODO:
   - LTDC display controller:
@@ -39,33 +38,9 @@ TODO:
   - SDMMC read/write
   - XSPI read/write (requires custom board with a flash chip)
 
+# Quick Start
 
-# Project setup
-
-This repo depends on our [modified TF-A bootloader](https://github.com/4ms/tf-a-stm32mp25), so you need to clone that repo as well.
-Keep them organized under a parent directory.
-
-```bash
-# Create the project parent dir
-mkdir mp2-dev
-cd mp2-dev
-
-# Clone this repo
-git clone https://github.com/4ms/stm32mp2-baremetal
-
-# Clone the TF-A bootloader:
-git clone https://github.com/4ms/tf-a-stm32mp25
-```
-
-Now you should have a directory structure like this:
-
-```
-mp2-dev/
-   |_ stm32mp2-baremetal/
-   |_ tf-a-stm32mp25/
-```
-
-## Prerequisites
+#### Step 0: Prerequisites
 
 To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3, 13.1, and 14.2 have been tested but
 probably any later version will also work (please open an issue if you find a version that doesn't).
@@ -76,11 +51,16 @@ It should be on your PATH, so you can run it like this:
 aarch64-none-elf-gcc --version
 ```
 
+You also need to clone this repo:
+
+```bash
+git clone https://github.com/4ms/stm32mp2-baremetal
+```
+
+And you will need an SD card.
 
 
-# Prepare your SD Card
-
-For simplicity we will boot from the SD card for all these examples.
+#### Step 1: Prepare an SD Card 
 
 To prepare an SD card, use the partition-sdcard.sh script:
 
@@ -90,7 +70,98 @@ scripts/partition-sdcard.sh /dev/diskX
 
 This will wipe the card clean, so double-check you use the right device path!
 
-The script sets up 10 partitions on the card. These aren't all needed, but we 
+#### Step 2: Install the bootloaders on the SD card
+
+The bootloader is TF-A, which can be built here: [TF-A bootloader](https://github.com/4ms/tf-a-stm32mp25).
+For convenience, there are pre-built releases for the EV1 board [here](https://github.com/4ms/tf-a-stm32mp25/releases)
+
+Download (or build) the `tf-a-stm32mp257f-ev1.stm32` and `fip.bin` files.
+Then install them on the SD card like this:
+
+```bash
+sudo dd if=/path/to/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX1
+sudo dd if=/path/to/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX2
+sudo dd if=/path/to/fip.bin of=/dev/diskX5
+```
+
+In the commands above, specify the path to the files and the disk device name.
+
+#### Step 3: Build and install an example project
+
+Build any project by running `make` in its directory.
+
+```bash
+cd stm32mp2-baremetal
+cd minimal_boot
+make
+```
+
+This will create a `main.uimg` file in the `build/` dir.
+
+#### Step 4: Boot the board
+
+Insert the SD card into the EV1's card slot, set the BOOT switches to SD boot (down down down up -- see the EV1 docs),
+and power it up. Attach a USB-C cable to your computer and open a console to the tty device that
+shows up when you attach the cable. I use `minicom`, but screen, picocom and other options exist.
+
+```bash
+minicom -D /dev/cu.usbmodem1105
+```
+
+Press the reset button and you should see something like this:
+```
+NOTICE:  CPU: STM32MP257FAI Rev.?
+NOTICE:  Model: STMicroelectronics STM32MP257F-EV1 Evaluation Board
+NOTICE:  Board: MB1936 Var1.0 Rev.C-01
+INFO:    Reset reason: Power-on reset (por_rstn) (0x2035)
+INFO:    PMIC2 version = 0x11
+INFO:    PMIC2 product ID = 0x20
+INFO:    FCONF: Reading TB_FW firmware configuration file from: 0xe011000
+INFO:    FCONF: Reading firmware configuration information for: stm32mp_fuse
+INFO:    FCONF: Reading firmware configuration information for: stm32mp_io
+INFO:    Using SDMMC
+INFO:      Instance 1
+INFO:    Boot used partition fsbl1
+NOTICE:  BL2: v2.10-stm32mp2-r2.0(release):baremetal-v0.1(ba0a1568)
+NOTICE:  BL2: Built : 23:44:40, Jul  9 2026
+INFO:    BL2: Loading image id 26
+INFO:    Loading image id=26 at address 0xe041000
+INFO:    Image id=26 loaded: 0xe041000 - 0xe048524
+INFO:    BL2: Doing platform setup
+INFO:    RAM: DDR4 2x16Gbits 2x16bits 1200MHz
+INFO:    Memory size = 0x100000000 (4096 MB)
+INFO:    BL2: Skip loading image id 27
+INFO:    Loaded app 'stm32mp2-baremetal image': 64 bytes at 88000000, entry 88000000
+NOTICE:  BL2: Booting BL31
+INFO:    Entry point address = 0x88000000
+INFO:    SPSR = 0x3cd
+MP2
+```
+
+The MP2 at the end is the confirmation the `minimal_boot` example program ran.
+
+Each project has a README that describes what should happen. Some require
+interactivity (like `interrupts`), some require you to connect external devices
+(like `usb-drd` and `hal-audio`), and some just run on their own. 
+
+
+# Detailed description
+
+
+### TF-A bootloader
+
+This repo depends on our [modified TF-A
+bootloader](https://github.com/4ms/tf-a-stm32mp25), and as you start to extend
+these example projects to meet your own needs, you may need to change and
+re-build TF-A as well. 
+
+See the [TF-A README](https://github.com/4ms/tf-a-stm32mp25/blob/v2.10-stm32mp2-baremetal/readme.md)
+for instructions on how to build and customize that project.
+
+
+### SD card partitions details
+
+The `scripts/partition-sdcard.sh` script sets up 10 partitions on the card. These aren't all needed, but we 
 do this for compatibility with STM's stock SD card. 
 Blocks are 512B, and the card must have a GPT partition scheme.
 
@@ -112,68 +183,34 @@ the card if the GUID is not set correctly. Also, TF-A will reject the FIP file i
 partition does not have the expected GUID.
 
 
-# Build and install the bootloader
+## Configuring the example projects
 
-You need to install TF-A BL2 on partitions 1 and 2 of your SD Card, and the 
-DDR training firmware onto partition 5.
+The only thing to configure currently is the choice of UART (aka USART), which
+is how the STM chip sends and receives messages to/from your console. By
+default, USART2 is used, which is the one the EV1 board has connected to the
+ST-LINK interface via USB-C jack CN21.
 
-Basic procedure is here, but see the TF-A README for more details.
-
-## Build FSBL (BL2):
-
-Build `tf-a-stm32mp257f-ev1.stm32`, which is the FSBL (first stage bootloader).
-Then install it onto your SD card. Change the `diskX1` and `diskX2` below to
-the device path to your SD card partitions 1 and 2:
-
-```bash
-cd tf-a-stm32mp25
-./build.sh
-sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX1
-sudo dd if=build/stm32mp2/release/tf-a-stm32mp257f-ev1.stm32 of=/dev/diskX2
-```
-
-While you're in the tf-a project, build the fiptool:
-```bash
-make PLAT=stm32mp2 BAREMETAL_IMAGE_LOADER=1 fiptool
-```
-
-On some macOS systems, you will need to do this:
-
-```bash
-./buildfiptool.sh
-```
-
-You will need the fiptool later after building your application.
-
-# Build and install the application
-
-## Configuring a project
-
-The only thing to configure currently is the choice of UART.
-
-Set `UART_CHOICE` to `1`, `2`, or `6` (in the project's Makefile or on the
-`make` command line). The app configures its console UART itself at startup
-(clock, pin mux, and 115200 8N1 baud rate — see `init_uart()` in
-`shared/print/uart_print.c`), so you can switch the
-console per-project.
+To choose a different UART, set `UART` to `1`, `2`, or `6` in the
+project's Makefile or on the `make` command line. The app configures its
+console UART at startup in `init_uart()` in `shared/print/uart_print.c`.
+The settings are 115200 8N1
 
 Note that TF-A also inits and prints to its UART, which can be configured separately 
-(see TF-A project for details). Also note that TF-A's console is not de-initialized
-before the app runs. 
+(see TF-A project for details). By default, TF-A also uses USART2 (ST-LINK).
 
 ### Console via ST-LINK
 
 By default all console logging (print/printf) goes to USART2, which is
-connected to the ST-LINK adaptor via the USB-C jack.
+connected to the ST-LINK adaptor via the USB-C jack (CN21).
 To use this, make sure in your Makefile it says this (or doesn't set anything):
 
 ```
-UART_CHOICE := 2
+UART := 2
 ```
 
 ### Console via GPIO Expander header
 
-The other option is to use USART6 via the GPIO Expander port. This is the best
+Another option is to use USART6 via the GPIO Expander port. This is the best
 way to have a UART console if you are using an external debugger
 (TRACE32/J-Link) with the MIPI-10 header. 
 
@@ -185,13 +222,13 @@ You will need to attach a USB-UART dongle to the GPIO Expander:
 
 To use these pins, put this in your Makefile:
 ```
-UART_CHOICE := 6
+UART := 6
 ```
 
 or you can specify it at build time:
 
 ```bash
-make UART_CHOICE=6
+make UART=6
 ```
 
 The app brings USART6 up itself, so this works even if TF-A was built for 
@@ -207,13 +244,13 @@ Attach a USB-UART dongle to these pins (and to a GND pin on the header).
 
 To use USART1, put this in your Makefile:
 ```
-UART_CHOICE := 1
+UART := 1
 ```
 
 or specify it at build time:
 
 ```bash
-make UART_CHOICE=1
+make UART=1
 ```
 
 This assumes TF-A grants the secure world access to USART1 and GPIOB.
@@ -291,11 +328,11 @@ minicom -D /dev/cu.usbmodem1102
 
 Now, press Reset on the EV1. You should see messages from TF-A and then your app!
 
-If you don't see anything, verify your app was built with the right `UART_CHOICE`
+If you don't see anything, verify your app was built with the right `UART`
 (USART2 for ST-LINK, USART6 for the GPIO Expander header + dongle, or USART1 on
 custom board header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
 messages to *its* console, which is independent of the UART
-your app selects; only the app's `print()` output follows `UART_CHOICE`.
+your app selects; only the app's `print()` output follows `UART`.
 
 
 # Debugging

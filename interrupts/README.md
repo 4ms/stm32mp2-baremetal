@@ -25,23 +25,17 @@ interrupt with the same priority, regardless of sub-priority. So the pending
 interrupt (SGI3) waits to run until after the current active interrupt (SGI4 or
 UART IRQ) exits.
 
-Make sure to set the UART_CHOICE build flag in the Makefile:
+Make sure to set the UART build flag in the Makefile:
 
 For GPIO Expander pins 6,8,10:
 ```
-UART_CHOICE := 6
+UART := 6
 ```
 
 For ST-LINK:
 ```
-UART_CHOICE := 2
+UART := 2
 ```
-
-For USART1 on GPIO header pins PB8 (TX, AF6) / PB10 (RX, AF6):
-```
-UART_CHOICE := 1
-```
-
 
 Expected output: (notes in `[brackets]` are actions taken by you)
 

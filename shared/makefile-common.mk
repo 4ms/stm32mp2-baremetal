@@ -44,35 +44,38 @@ ARCH_CFLAGS ?= -DUSE_FULL_LL_DRIVER \
 OPTFLAG ?= -O0
 
 # Console UART selection:
-#   1 = USART1 on PB8 (TX, AF6) / PB10 (RX, AF6), on the GPIO header
+#   1 = USART1 on PB8 (TX) / PB10(RX), on the GPIO header
 #   2 = USART2, connected to the ST-LINK adaptor via the USB-C jack (default)
 #   6 = USART6 on the GPIO Expander header
-# Note whether a choice was supplied before applying the default (the `?=`
-# itself would otherwise change the variable's origin away from "undefined").
-ifeq ($(origin UART_CHOICE),undefined)
-UART_IS_DEFAULT := 1
-endif
-UART_CHOICE ?= 2
+# Default is EV1 board
+BOARD ?= ev1
 
-# Human-readable description per valid choice. An unknown choice yields an empty
-# string, which we turn into a hard error below.
-UART_1_DESC := USART1 (PB8 TX / PB10 RX, AF6) on the GPIO header
-UART_2_DESC := USART2 (ST-LINK adaptor via the USB-C jack)
-UART_6_DESC := USART6 (GPIO Expander header)
-UART_DESC := $(UART_$(UART_CHOICE)_DESC)
-
-ifeq ($(UART_DESC),)
-$(error Invalid UART_CHOICE '$(UART_CHOICE)' - must be 1, 2, or 6)
-endif
-
-# Print the selection so a wrong override (e.g. the typo `make USART_CHOICE=1`,
-# which leaves UART_CHOICE at its default) is visible instead of silent, and so
-# an omitted selection shows which default is in effect.
-ifeq ($(UART_IS_DEFAULT),1)
-$(info Console UART: $(UART_DESC) [default; override with UART_CHOICE=1|2|6])
+# If BOARD is `devboard` then default to using USART1 unless otherwise specifed.
+# Print an error if an invalid board is specified
+ifeq ($(BOARD),devboard)
+  ifeq ($(origin UART),undefined)
+    UART := 1
+  endif
+  BOARD_DEF := -DDEVBOARD_0_1
+else ifeq ($(BOARD),ev1)
+  BOARD_DEF := -DBOARD_EV1
 else
-$(info Console UART: $(UART_DESC) [UART_CHOICE=$(UART_CHOICE)])
+  $(error Invalid BOARD '$(BOARD)' - must be devboard or ev1)
 endif
+
+# Default UART is ST-LINK
+UART ?= 2
+
+# Human-readable description per valid choice.
+UART_1_DESC := USART1 (PB8/PB10 on custom board)
+UART_2_DESC := USART2 (EV1 ST-LINK USB-C jack)
+UART_6_DESC := USART6 (EV1 GPIO Expander header)
+UART_DESC := $(UART_$(UART)_DESC)
+ifeq ($(UART_DESC),)
+$(error Invalid UART '$(UART)' - must be 1, 2, or 6)
+endif
+
+$(info Console UART: $(UART_DESC))
 
 FREESTANDING ?= -ffreestanding
 
@@ -81,7 +84,7 @@ OPTION_FLAGS += \
 		$(MCU) \
 		${FREESTANDING} \
 		$(EL_LEVEL) \
-		-DUART=$(UART_CHOICE) \
+		-DUART=$(UART) \
 		$(BOARD_DEF)
 
 
@@ -153,6 +156,15 @@ HEX 	= $(BUILDDIR)/$(BINARYNAME).hex
 BIN 	= $(BUILDDIR)/$(BINARYNAME).bin
 
 all: Makefile $(ELF) $(BIN) $(UIMAGENAME)
+
+# Force rebuild if UART selection changes
+UART_STAMP = $(BUILDDIR)/uart_choice_is_$(UART)
+$(UART_STAMP):
+	@mkdir -p $(BUILDDIR)
+	@rm -f $(BUILDDIR)/uart_choice_is_*
+	@touch $@
+
+$(OBJECTS): $(UART_STAMP)
 
 elf: $(ELF)
 
