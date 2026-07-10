@@ -12,6 +12,10 @@
     mrs     \reg, spsr_el3
 .endm
 
+.macro get_far_elx reg
+    mrs     \reg, far_el3
+.endm
+
 .macro set_esr_elx reg
     msr     esr_el3, \reg
 .endm
@@ -36,6 +40,10 @@
 
 .macro get_spsr_elx reg
     mrs     \reg, spsr_el1
+.endm
+
+.macro get_far_elx reg
+    mrs     \reg, far_el1
 .endm
 
 .macro set_esr_elx reg
