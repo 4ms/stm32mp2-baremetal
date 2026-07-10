@@ -19,8 +19,8 @@ OPTFLAG = -O0
 
 MCU = -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mthumb -mfloat-abi=hard -mlittle-endian
 
-UART_CHOICE ?= 2
-DEFS = -DUART=$(UART_CHOICE)
+UART ?= 2
+DEFS = -DUART=$(UART)
 
 # Needed for stm32mp2xx_ll_gpio:
 DEFS += -DUSE_FULL_LL_DRIVER \
@@ -28,10 +28,10 @@ DEFS += -DUSE_FULL_LL_DRIVER \
 			   -DSTM32MP2 \
 			   -DCORE_CM33
 
-# Objects don't otherwise depend on UART_CHOICE, so changing it would leave a
+# Objects don't otherwise depend on UART, so changing it would leave a
 # stale uart_print.o (compiled for the old UART) unless we force a rebuild.
 # Record the current choice in a stamp file all objects depend on.
-UART_STAMP = $(BUILDDIR)/uart_choice_is_$(UART_CHOICE)
+UART_STAMP = $(BUILDDIR)/uart_choice_is_$(UART)
 $(UART_STAMP):
 	@mkdir -p $(BUILDDIR)
 	@rm -f $(BUILDDIR)/uart_choice_is_*

@@ -26,15 +26,15 @@ Tick = 7745
 The tick values are in milliseconds, you can use a stopwatch to verify the values increment by 1000 every second.
 
 
-Make sure you set the UART_CHOICE in the Makefile to match your choice of UART:
+Make sure you set the UART in the Makefile to match your choice of UART:
 For ST-LINK:
 ```
-UART_CHOICE := 2
+UART := 2
 ```
 
 For GPIO Expander pins 6=GND/8=TX
 ```
-UART_CHOICE := 6
+UART := 6
 ```
 
 

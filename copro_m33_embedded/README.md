@@ -85,7 +85,7 @@ make            # builds M33, embeds it, builds A35 -> build/corea35/main.uimg
 ```
 
 The console UART defaults to USART2 (ST-LINK / USB-C). Override the A35 and M33 console
-with e.g. `make UART_CHOICE=1`. 
+with e.g. `make UART=6` (as discussed in the top-level [README](../README.md)). 
 
 
 ## Running the M33 non-secure instead
