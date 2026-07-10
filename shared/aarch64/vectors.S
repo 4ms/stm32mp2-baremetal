@@ -19,23 +19,7 @@ print_esr_description:
 
 .macro handle_exception exc_type
     mov     x21, #(\exc_type)
-    get_esr_elx x22
-    mov     x0, '\n'
-    bl      putchar_s
-    mov     x0, 'X'
-    bl      putchar_s
-    mov     x0, x21
-    bl      early_puthex64
-    mov     x0, '\n'
-    bl      putchar_s
-    mov     x0, x22
-    bl      early_puthex64
-    mov     x0, '\n'
-    bl      putchar_s
-    mov     x0, x22
-    bl      print_esr_description
-
-    b       .
+    b       dump_exception_common
 .endm
 
 
@@ -218,3 +202,46 @@ exit_irq_handler:
 
 unhandled_int:
     b       .
+
+// Exception dump: prints the tag (X<n>, see .equ list above), then ESR, ELR
+// (faulting instruction address) and FAR (faulting data address), then the
+// human-readable ESR decode. Lives outside the vector table because each
+// vector slot only fits 32 instructions.
+// Entry: x21 = exception tag
+.text
+dump_exception_common:
+    get_esr_elx x22
+    mov     x0, '\n'
+    bl      putchar_s
+    mov     x0, 'X'
+    bl      putchar_s
+    mov     x0, x21
+    bl      early_puthex64
+    mov     x0, '\n'
+    bl      putchar_s
+    adr     x0, _str_esr
+    bl      early_puts
+    mov     x0, x22
+    bl      early_puthex64
+    mov     x0, '\n'
+    bl      putchar_s
+    adr     x0, _str_elr
+    bl      early_puts
+    get_elr_elx x0
+    bl      early_puthex64
+    mov     x0, '\n'
+    bl      putchar_s
+    adr     x0, _str_far
+    bl      early_puts
+    get_far_elx x0
+    bl      early_puthex64
+    mov     x0, '\n'
+    bl      putchar_s
+    mov     x0, x22
+    bl      print_esr_description
+    b       .
+
+_str_esr: .asciz "ESR: "
+_str_elr: .asciz "ELR: "
+_str_far: .asciz "FAR: "
+.balign 4
