@@ -69,6 +69,9 @@ $(error Invalid USB_DEVICE_SPEED '$(USB_DEVICE_SPEED)' - must be full or high)
 endif
 $(info Board: $(BOARD) (device mode max speed: $(USB_DEVICE_SPEED)))
 
+# Rebuild if the speed choice changes (see CONFIG_STAMP in makefile-common.mk)
+CONFIG_STAMP_VALS += spd$(USB_DEVICE_SPEED)
+
 INCLUDES := -I.
 INCLUDES += -I$(SHAREDDIR)
 INCLUDES += -I$(SHAREDDIR)/cmsis/Include

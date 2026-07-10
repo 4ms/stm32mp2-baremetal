@@ -157,14 +157,19 @@ BIN 	= $(BUILDDIR)/$(BINARYNAME).bin
 
 all: Makefile $(ELF) $(BIN) $(UIMAGENAME)
 
-# Force rebuild if UART selection changes
-UART_STAMP = $(BUILDDIR)/uart_choice_is_$(UART)
-$(UART_STAMP):
+# Force a rebuild if the build configuration (BOARD or UART selection)
+# changes: objects don't otherwise depend on the -D defines these produce, so
+# switching without a `make clean` would silently keep stale objects.
+# Projects can append their own config vars to CONFIG_STAMP_VALS before
+# including this file (e.g. usb-drd's USB_DEVICE_SPEED).
+CONFIG_STAMP_VALS += $(BOARD)_uart$(UART)
+CONFIG_STAMP = $(BUILDDIR)/config_is_$(subst $() ,_,$(strip $(CONFIG_STAMP_VALS)))
+$(CONFIG_STAMP):
 	@mkdir -p $(BUILDDIR)
-	@rm -f $(BUILDDIR)/uart_choice_is_*
+	@rm -f $(BUILDDIR)/config_is_*
 	@touch $@
 
-$(OBJECTS): $(UART_STAMP)
+$(OBJECTS): $(CONFIG_STAMP)
 
 elf: $(ELF)
 
