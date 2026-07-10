@@ -1,27 +1,25 @@
-//RESet
-//SYStem.RESet
+// This script is intended to be run after TF-A has booted.
+// TF-A should be just spinning, waiting for you to load a binary.
 
 SYStem.CPU STM32MP257F-CA35
 
-system.config DEBUGPORTTYPE JTAG 
+SYStem.config DEBUGPORTTYPE JTAG 
 SYStem.JtagClock 10MHz
 
 Trace.DISable
 SYStem.MemAccess DAP
-System.attach
-//SYStem.Up
+SYStem.attach
 
 Break
 
+// Choose a project here:
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/ctest/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-dma/build/main.elf /CPP
-Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/interrupts/build/main.elf /CPP
+//Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/interrupts/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/multicore_smp/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/i2c/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-audio/build/main.elf /CPP
-//Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
-
-break main
+Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
 
 SYStem.JtagClock 50MHz
 
@@ -31,6 +29,9 @@ ETM.ON
 
 Trace.arm
 
-//go
+// Set breakpoints or whether you want to auto-start here:
+
+//break main
+go
 
 ENDDO
