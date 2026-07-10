@@ -4,6 +4,7 @@ SHAREDDIR = ../shared
 
 SOURCES := startup.s
 SOURCES += main.cc
+SOURCES += pmic.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/mmu/mmu.cc
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
