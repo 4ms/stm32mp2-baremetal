@@ -3,6 +3,20 @@
 This contains examples of the using the STM32MP257 in a
 bare-metal context on the Cortex A35 and Cortex M33 cores.
 
+The STM32MP2xx (aka "MP2") chips are very powerful 64-bit 1.5GHz dual-core
+processors with access to fast DDR4 RAM, GPU, NEON instructions and a host of
+peripherals that are (mostly) compatible with the peripherals from other
+high-end STM32 MCUs such as the H7 and F7 series.
+
+While traditionally used to run Linux or other OS's, it's absolutely possible
+to run your own programs on the MP2 chips without any operating system. Whether
+or not a baremetal approach is a good idea for your project is a decision you
+should weigh out carefully, but the purpose of this repo is 1) explore and
+document the low-level workings of this architecture, and 2) help you get started
+making a project on these chips.
+
+This project is modeled after my [stm32mp1-baremetal](https://github.com/4ms/stm32mp1-baremetal) project.
+
 All projects are designed for the STM32MP257F-EV1 board, but changing to your
 own board should be trivial. 
 
@@ -96,7 +110,21 @@ cd minimal_boot
 make
 ```
 
-This will create a `main.uimg` file in the `build/` dir.
+This will create a `main.uimg` file in the `build/` dir. 
+
+Copy the `main.uimg` file to the "app" partition. From the project
+directory, either:
+
+```bash
+make flash SD=/dev/diskX      # finds the "app" partition and dd's to it
+```
+
+or do it by hand (the app partition is partition 9 if the card was set up
+with partition-sdcard.sh):
+
+```bash
+sudo dd if=build/main.uimg of=/dev/diskX9
+```
 
 #### Step 4: Boot the board
 
@@ -148,7 +176,7 @@ interactivity (like `interrupts`), some require you to connect external devices
 # Detailed description
 
 
-### TF-A bootloader
+## TF-A bootloader
 
 This repo depends on our [modified TF-A
 bootloader](https://github.com/4ms/tf-a-stm32mp25), and as you start to extend
@@ -158,34 +186,42 @@ re-build TF-A as well.
 See the [TF-A README](https://github.com/4ms/tf-a-stm32mp25/blob/v2.10-stm32mp2-baremetal/readme.md)
 for instructions on how to build and customize that project.
 
+When TF-A boots, it initializes the PMIC (power controller IC), turns on 
+various necessary peripherals, and sets up the security settings. Then it
+loads and executes a DDR RAM training binary. 
+Finally, it reads from the 'app' partition of the SD card and loads your
+application. It reads the uimg header (load address, entry point,
+size, CRCs) and starts the app. 
 
-### SD card partitions details
+## Console
 
-The `scripts/partition-sdcard.sh` script sets up 10 partitions on the card. These aren't all needed, but we 
-do this for compatibility with STM's stock SD card. 
-Blocks are 512B, and the card must have a GPT partition scheme.
+The UART communicates with your computer, which is running a console. This lets 
+you send/receive data from the STM32 chip, and is the primary method for verifying
+these examples.
 
-The important partitions are:
+You need to run a terminal console program on your computer, and connect to the TTY port at
+115200 8N1.
 
-- Partition 1: starting block 34, size 256kB, name "fsbla1", GUID 8DA63339-0007-60C0-C436-083AC8230908
-   - This is where the FSBL is loaded (TF-A BL2). The starting block must be 34 (address 0x4400)
-- Partition 2: starting block 546, size 256kB, name "fsbla2", same GUID as above
-   - This is a redundant copy of partition 1. Starting block must be 546 (address 0x44400)
-- Partition 5: name "fip-a", GUID 19D5DF83-11B0-457B-BE2C-7559C13142A5
-   - This is where the FIP file lives, which contains the DDR init firmware.
-     It is written once and doesn't change when you rebuild your app.
-- Partition 9: size 16MB, name "app"
-   - This is where your application (`build/main.uimg`) lives. TF-A finds this
-     partition by its GPT name, so the partition number doesn't matter.
+For example, using minicom on macOS (the device number varies): 
 
-The partition types are critical for partition 1, 2, and 5. The BOOTROM will reject
-the card if the GUID is not set correctly. Also, TF-A will reject the FIP file if its 
-partition does not have the expected GUID.
+```bash
+minicom -D /dev/cu.usbmodem1102
+```
 
+When you boot up the EV1, you should see messages from TF-A and then from your app.
 
-## Configuring the example projects
+If you don't see anything, verify your app was built with the right `UART`
+(USART2 for ST-LINK, USART6 for the GPIO Expander header + dongle, or USART1 on
+custom board header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
+messages to *its* console, which is independent of the UART
+your app selects; only the app's `print()` output follows `UART`.
+So if you are not using the ST-LINK UART2, then you will need to re-build TFA in order 
+to see it's console messages. If you choose not to rebuild TF-A, then it's
+safe to not see the TF-A boot messages.
 
-The only thing to configure currently is the choice of UART (aka USART), which
+### Console selection 
+
+The main thing to configure is the choice of UART (aka USART), which
 is how the STM chip sends and receives messages to/from your console. By
 default, USART2 is used, which is the one the EV1 board has connected to the
 ST-LINK interface via USB-C jack CN21.
@@ -216,8 +252,8 @@ way to have a UART console if you are using an external debugger
 
 You will need to attach a USB-UART dongle to the GPIO Expander:
 - Pin 6: GND
-- Pin 8: TX (mp2->computer) — PF13, AF3
-- Pin 10: RX (mp2<-computer) — PF14, AF3
+- Pin 8: TX (mp2->computer) — PF13
+- Pin 10: RX (mp2<-computer) — PF14
 
 
 To use these pins, put this in your Makefile:
@@ -237,8 +273,8 @@ a different console.
 ### Console via USART1 (custom board)
 
 A third option is USART1, which is used on a custom board. 
-- PB8: TX (mp2->computer), alternate function AF6
-- PB10: RX (mp2<-computer), alternate function AF6
+- PB8: TX (mp2->computer)
+- PB10: RX (mp2<-computer)
 
 Attach a USB-UART dongle to these pins (and to a GND pin on the header).
 
@@ -253,101 +289,30 @@ or specify it at build time:
 make UART=1
 ```
 
-This assumes TF-A grants the secure world access to USART1 and GPIOB.
+This assumes TF-A grants the secure world access to USART1 and powers up VDDIO4 for GPIOB (which our custom build does).
 
-## Building a project
+## BOARD selection
 
-Build a project by running `make` in its directory.
-
-```bash
-cd stm32mp2-baremetal
-cd minimal_boot
-make
-```
-
-
-Ensure the project was built:
-```bash
-ls -l build/main.bin
-ls -l build/main.elf
-```
-
-
-## Installing the FIP on the SD card (once)
-
-The FIP file contains only the DDR training firmware, so it needs to be
-written to the SD card just once -- it doesn't change when you rebuild your
-app. Create it and copy it to partition 5 (change `diskX5` to partition 5 of
-your SD card device):
-
-```bash
-cd ../tf-a-stm32mp25
-tools/fiptool/fiptool --verbose create \
-	--ddr-fw drivers/st/ddr/phy/firmware/bin/stm32mp2/ddr4_pmu_train.bin \
-	build/stm32mp2/release/fip.bin
-
-sudo dd if=build/stm32mp2/release/fip.bin of=/dev/diskX5
-```
-
-## Installing the application on the SD card
-
-Copy the project's `.uimg` file to the "app" partition. From the project
-directory, either:
-
-```bash
-make flash SD=/dev/diskX      # finds the "app" partition and dd's to it
-```
-
-or do it by hand (the app partition is partition 9 if the card was set up
-with partition-sdcard.sh):
-
-```bash
-sudo dd if=build/main.uimg of=/dev/diskX9
-```
-
-TF-A's baremetal loader reads the uimg header (load address, entry point,
-size, CRCs) and starts the app. Rebuilding and re-flashing an app is just
-`make && make flash SD=/dev/diskX` -- the FSBL and FIP are never touched.
-
-
-## Running the program
-
-Install the SD card into the EV1 board, and power on the board.
-
-Connect the USB jack to your computer (or if you're not using ST-LINK, then
-connect your USB-UART dongle to the GPIO header and to your computer).
-
-Run a terminal console program on your computer, and connect to the TTY port at
-115200 8N1.
-
-For example, using minicom on macOS (the device number varies): 
-
-```bash
-minicom -D /dev/cu.usbmodem1102
-```
-
-Now, press Reset on the EV1. You should see messages from TF-A and then your app!
-
-If you don't see anything, verify your app was built with the right `UART`
-(USART2 for ST-LINK, USART6 for the GPIO Expander header + dongle, or USART1 on
-custom board header pins PB8/PB10 + dongle). Note that TF-A prints its own early boot
-messages to *its* console, which is independent of the UART
-your app selects; only the app's `print()` output follows `UART`.
+By default all projects run on the EV1, but some examples (usb-drd and adc)
+have alternative configurations that you can select by setting the BOARD
+argument. Read the README for the project. Do not blindly set BOARD to a
+board you aren't using. Setting a custom board could **damage your EV1** (for
+example, one project enables an internal voltage reference on a pin that the
+EV1 supplies voltage to).
 
 
 # Debugging
 
 While it's easy to copy your binary onto the SD card and then reboot,
 it's not a good workflow if you're making lots of changes. A faster workflow
-is to load over SWD with a debugger. This has the added benefit of letting 
-you use a debugger to debug your program.
+is to load over SWD or JTAG with a debugger. This has the added benefit of
+letting you use a debugger to debug your program.
 
 There are two main ways of doing this: 
 - using the EV1 board's built-in ST-LINK with just a USB cable
 - or using the EV1 board's 10-pin SWD header (CN22 MIPI-10) with an external
   debugger such as the J-Link or TRACE32.
  
-
 First, you will need to load the minimal_boot project onto the SD card. Make sure
 it boots up and says "MP2" and then hangs.
 
@@ -465,10 +430,12 @@ the J-Link.
 
 ### UART connection
 
-This header is only usable if you install jumper JP3, which 
-puts the ST-LINK controller IC into reset. Therefore you cannot use USART2
-while using the MIPI-10 JTAG/SWD header, so USART6 is the best way to get
+I found that the SWD header is only usable if you install jumper JP3, which 
+puts the ST-LINK controller IC into reset. Therefore I cannot use USART2
+while using the MIPI-10 JTAG/SWD header, so USART6 is the only way I am able to get
 a UART console.
+However, one user on the ST forums described that they are able to use the SWD header
+without disabling the ST-LINK controller IC: https://community.st.com/stm32-mpus-products-and-hardware-related-39/connect-a-debugger-to-stm32mp257f-ev1-board-137825
 
 You will need a USB-to-UART dongle. See the above section on UART selection for
 the pins to connect.
@@ -524,7 +491,6 @@ Most of these examples should be agnostic to the EL level, and where it matters
 I've added `#ifdef RUN_EL3` to the code.
 
 
-
 # Misc Info
 
 ## Support files:
@@ -545,6 +511,7 @@ I've copied them into this repo in the shared/cmsis-device dir.
 There is a serious issue in the stm32mp2xx.h file provided by ST, that breaks
 several HAL peripherals. The issue is the POSITION_VAL function macro does not
 work on 64-bit systems. This has been corrected in the version in this repo.
+
 ## SD Card info
 
 From TF-A boot, the SD card is organized:
@@ -561,4 +528,26 @@ Partition table with 10 entries:
 9: app                                 4984600-59845fc
 10: fatfs                              (rest of card)
 ```
+
+The `scripts/partition-sdcard.sh` script sets up 10 partitions on the card. These aren't all needed, but we 
+do this for compatibility with STM's stock SD card. 
+Blocks are 512B, and the card must have a GPT partition scheme.
+
+The important partitions are:
+
+- Partition 1: starting block 34, size 256kB, name "fsbla1", GUID 8DA63339-0007-60C0-C436-083AC8230908
+   - This is where the FSBL is loaded (TF-A BL2). The starting block must be 34 (address 0x4400)
+- Partition 2: starting block 546, size 256kB, name "fsbla2", same GUID as above
+   - This is a redundant copy of partition 1. Starting block must be 546 (address 0x44400)
+- Partition 5: name "fip-a", GUID 19D5DF83-11B0-457B-BE2C-7559C13142A5
+   - This is where the FIP file lives, which contains the DDR init firmware.
+     It is written once and doesn't change when you rebuild your app.
+- Partition 9: size 16MB, name "app"
+   - This is where your application (`build/main.uimg`) lives. TF-A finds this
+     partition by its GPT name, so the partition number doesn't matter.
+
+The partition types are critical for partition 1, 2, and 5. The BOOTROM will reject
+the card if the GUID is not set correctly. Also, TF-A will reject the FIP file if its 
+partition does not have the expected GUID.
+
 
