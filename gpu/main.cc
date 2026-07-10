@@ -8,7 +8,8 @@
 #include "stm32mp2xx_hal.h"
 #include <array>
 #include <cstdint>
-#include <cstring>
+
+bool enable_buck3_on_pmic();
 
 // GPU bring-up example.
 //
