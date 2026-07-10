@@ -114,6 +114,8 @@ static bool enable_buck3_on_pmic()
 	};
 	static_assert(pll7.calc_freq(40'000'000) == 80'000'000);
 	RCC_Clocks::set_pll<RCC_Clocks::PLL7>(pll7);
+	while (!RCC_Clocks::PLL7::Ready::read())
+		;
 	FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_7, .findiv = 0x3F, .prediv = 0};
 	i2c_xbar.init(15); // flexgen channel 15 = ck_ker_i2c7
 
@@ -187,32 +189,40 @@ static bool enable_buck3_on_pmic()
 	return true;
 }
 
-static bool power_up_vddgpu()
+// Even with buck3 up, the GPU domain is electrically isolated until software
+// confirms the supply with the PWR voltage monitor and sets the "supply valid"
+// bit (like the other independent supplies, see drivers/pwr_vdd.hh).
+static bool power_up_vddgpu(unsigned timeout_us)
 {
-	// Even with buck3 up, the GPU domain is electrically isolated until
-	// software confirms the supply with the PWR voltage monitor and sets
-	// the "supply valid" bit (like the other independent supplies, see
-	// drivers/pwr_vdd.hh).
-	print("PWR CR12 = 0x", Hex{PWR->CR12}, "\n");
-
 	PWR->CR12 |= PWR_CR12_GPUVMEN;
-	unsigned timeout_us = 100'000;
 	while (!(PWR->CR12 & PWR_CR12_VDDGPURDY)) {
 		if (--timeout_us == 0) {
-			print("ERROR: VDDGPU never became ready (CR12 = 0x", Hex{PWR->CR12}, ")\n");
-			print("Check VDDGPU with a meter -- it should be 0.80V\n");
+			PWR->CR12 &= ~PWR_CR12_GPUVMEN;
+			print("VDDGPU is not present (CR12 = 0x", Hex{PWR->CR12}, ")\n");
 			return false;
 		}
 		udelay(1);
 	}
-	PWR->CR12 &= ~PWR_CR12_GPUVMEN;
+	// The monitor must STAY enabled: its live output releases the GPU power
+	// domain reset (vgpu_rstn, RM0457 fig. 90). Disabling it -- like
+	// pwr_vdd.hh does for the VDDIO supplies -- keeps the whole GPU domain
+	// (including PLL3's registers!) in reset, and accessing them hangs the bus.
 	PWR->CR12 |= PWR_CR12_GPUSV;
 	print("VDDGPU is valid (CR12 = 0x", Hex{PWR->CR12}, ")\n");
 	return true;
 }
 
-static void clock_and_reset_gpu()
+static bool clock_and_reset_gpu()
 {
+	// The PLL3 hardware physically lives inside the GPU subsystem (RM0457
+	// fig. 100: the RCC only sends it a reference clock, ck_gpuss_pll3_fref),
+	// so the GPU must be powered and its bus clocks enabled *before* PLL3 can
+	// be programmed and lock. The GPU comes out of power-on not in reset, so
+	// no GPURST release is needed first.
+	RCC_Enable::GPU_::set();
+	udelay(10);
+	print("GPU clock enabled (RCC GPUCFGR = 0x", Hex{RCC->GPUCFGR}, ")\n");
+
 	// PLL3 is dedicated to the GPU (no flexgen channel involved).
 	// 40 MHz HSE / 1 * 30 = 1200 MHz VCO, / 3 = 400 MHz.
 	// 400 MHz is a safe speed for the 0.80 V VDDGPU the PMIC provides.
@@ -230,13 +240,23 @@ static void clock_and_reset_gpu()
 		;
 	print("PLL3 locked at 400MHz\n");
 
-	// Hold the GPU in reset while enabling its clocks, then release
+	// Now that all GPU clocks are running, pulse the GPU reset. (RM0457
+	// requires the PLL3 ref clock to be slower than the GPU bus/kernel
+	// clocks when GPURST is used -- true now that ck_ker_gpu is 400MHz.)
 	RCC_Reset::GPU_::set();
-	RCC_Enable::GPU_::set();
 	udelay(10);
 	RCC_Reset::GPU_::clear();
-	udelay(10);
-	print("GPU clock enabled, reset released (RCC GPUCFGR = 0x", Hex{RCC->GPUCFGR}, ")\n");
+	// RM0457: read back GPURST to be sure the reset has been released
+	timeout = 1000;
+	while (RCC_Reset::GPU_::read()) {
+		if (--timeout == 0) {
+			print("ERROR: GPU reset never released (GPUCFGR = 0x", Hex{RCC->GPUCFGR}, ")\n");
+			return false;
+	}
+		udelay(1);
+	}
+	print("GPU reset pulsed and released\n");
+	return true;
 }
 
 static void setup_rif()
@@ -495,37 +515,40 @@ int main()
 
 	SystemA35_SYSTICK_Config(0); // init the generic timer so udelay() works
 
-	print("\n1) Enabling VDDGPU on the PMIC (buck3, via I2C7)\n");
-	bool ok = enable_buck3_on_pmic();
-
-	if (ok) {
-		print("\n2) Removing VDDGPU power isolation\n");
-		ok = power_up_vddgpu();
+	print("\n1) Powering VDDGPU\n");
+	// The stm32mp2-baremetal TF-A fork enables the GPU rail (PMIC buck3)
+	// during boot, so normally the supply monitor sees it immediately.
+	bool ok = power_up_vddgpu(10'000);
+	if (!ok) {
+		print("Your TF-A does not enable buck3 -- trying to enable it over I2C7...\n");
+		ok = enable_buck3_on_pmic() && power_up_vddgpu(100'000);
 	}
 
 	if (ok) {
-		print("\n3) Clocking GPU from PLL3\n");
-		clock_and_reset_gpu();
+		print("\n2) Clocking GPU from PLL3\n");
+		ok = clock_and_reset_gpu();
+	}
 
-		print("\n4) Configuring RIF for the GPU\n");
+	if (ok) {
+		print("\n3) Configuring RIF for the GPU\n");
 		setup_rif();
 
-		print("\n5) Pinging the GPU (chip identification)\n");
+		print("\n4) Pinging the GPU (chip identification)\n");
 		ok = ping_gpu();
 	}
 
 	if (ok) {
-		print("\n6) Soft-resetting the GPU core\n");
+		print("\n5) Soft-resetting the GPU core\n");
 		ok = reset_gpu_core();
 	}
 
 	if (ok) {
-		print("\n7) Running a NOP command stream (GPU fetches from DDR)\n");
+		print("\n6) Running a NOP command stream (GPU fetches from DDR)\n");
 		ok = test_command_fetch();
 	}
 
 	if (ok) {
-		print("\n8) Filling a buffer using the BLT engine\n");
+		print("\n7) Filling a buffer using the BLT engine\n");
 		ok = test_blt_fill();
 	}
 
