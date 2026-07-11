@@ -75,6 +75,23 @@ constexpr uint32_t FE_DMA_HIGH = 0x066C;
 // FE_COMMAND_CONTROL: prefetch counts in 64-bit (2-dword) units
 constexpr uint32_t FE_CONTROL_ENABLE = 1 << 16;
 
+// ------------------- Security-mode registers -------------------
+// Cores with the SECURITY feature (like this one) ignore FE_COMMAND_CONTROL:
+// the FE must (also) be started through the secure-bank mirror, and the core
+// is reset through MMUv2_AHB_CONTROL instead of HI_CLOCK_CONTROL.SOFT_RESET
+// (see ETNA_SEC_KERNEL handling in etnaviv_gpu.c).
+constexpr uint32_t MMUv2_SEC_COMMAND_CONTROL = 0x03A4; // ENABLE | prefetch, like FE_COMMAND_CONTROL
+constexpr uint32_t MMUv2_AHB_CONTROL = 0x03A8;
+constexpr uint32_t MMUv2_AHB_CONTROL_RESET = 1 << 0;
+constexpr uint32_t MMUv2_AHB_CONTROL_NONSEC_ACCESS = 1 << 1;
+
+// GPU-MMU fault status, 4 bits per MMU: 1="slave not present", 2="page not
+// present", 3="write violation", 4="out of bounds", 5="read security
+// violation", 6="write security violation". 0 = no fault.
+constexpr uint32_t MMUv2_STATUS = 0x0188;
+constexpr uint32_t MMUv2_SEC_STATUS = 0x0384;
+constexpr uint32_t MMUv2_SEC_EXCEPTION_ADDR = 0x0380;
+
 // ------------------- Command stream encoding (fed to the FE) -------------------
 // Every command occupies a multiple of 64 bits (2 dwords).
 
@@ -89,6 +106,7 @@ constexpr uint32_t CMD_STALL = 0x4800'0000; // second dword is a sync token
 
 // Sync token (both for the STALL command and the GL_SEMAPHORE_TOKEN state)
 constexpr uint32_t SYNC_RECIPIENT_FE = 0x01;
+constexpr uint32_t SYNC_RECIPIENT_PE = 0x07;
 constexpr uint32_t SYNC_RECIPIENT_BLT = 0x10;
 constexpr uint32_t sync_token(uint32_t from, uint32_t to)
 {
@@ -98,6 +116,16 @@ constexpr uint32_t sync_token(uint32_t from, uint32_t to)
 // ------------------- State registers written via LOAD_STATE -------------------
 
 constexpr uint32_t GL_SEMAPHORE_TOKEN = 0x3808;
+// Writing an event ID latches that bit in HI_INTR_ACKNOWLEDGE when the given
+// engine processes it -- the canonical "did my command stream get here" signal
+constexpr uint32_t GL_EVENT = 0x3804;
+constexpr uint32_t GL_EVENT_FROM_FE = 0x20;
+constexpr uint32_t GL_EVENT_FROM_PE = 0x40;
+constexpr uint32_t GL_EVENT_FROM_BLT = 0x80;
+constexpr uint32_t GL_FLUSH_CACHE = 0x380C;
+// The flush bits the etnaviv driver uses when ending 3D-pipe work:
+// DEPTH | COLOR | TEXTURE | TEXTUREVS | SHADER_L2
+constexpr uint32_t GL_FLUSH_CACHE_PIPE3D = 0x57;
 
 // BLT engine (halti5 cores like this one; replaces the older RS/2D engines)
 constexpr uint32_t BLT_SRC_ADDR = 0x1'4000;

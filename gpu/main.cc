@@ -1,11 +1,9 @@
 #include "aarch64/system_reg.hh"
-#include "drivers/pin.hh"
 #include "drivers/rcc.hh"
 #include "drivers/rcc_pll.hh"
-#include "drivers/rcc_xbar.hh"
 #include "gpu_regs.hh"
 #include "print/print.hh"
-#include "stm32mp2xx_hal.h"
+#include "stm32mp2xx.h"
 #include <array>
 #include <cstdint>
 
@@ -54,22 +52,6 @@ uint32_t bus_addr(const void *p)
 	return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(p));
 }
 
-void clean_dcache_range(const void *start, size_t bytes)
-{
-	auto addr = reinterpret_cast<uintptr_t>(start);
-	for (auto a = addr & ~63u; a < addr + bytes; a += 64)
-		clean_dcache_address(a);
-	dsb_sy();
-}
-
-void invalidate_dcache_range(const void *start, size_t bytes)
-{
-	auto addr = reinterpret_cast<uintptr_t>(start);
-	for (auto a = addr & ~63u; a < addr + bytes; a += 64)
-		invalidate_dcache_address(a);
-	dsb_sy();
-}
-
 // The GPU fetches commands and reads/writes images in DDR
 alignas(64) std::array<uint32_t, 128> cmdbuf;
 
@@ -88,107 +70,22 @@ bool wait_idle(uint32_t idle_bits, unsigned timeout_us)
 	return false;
 }
 
-} // namespace
-
-// VDDGPU comes from the STPMIC25's buck3 on the EV1. Nothing in the boot chain
-// enables it ("regulator-always-on" in the TF-A device tree only *prevents
-// disabling* -- TF-A BL2 registers PMIC regulators but never enables unused
-// ones), so we must switch it on ourselves, over I2C7 (PD15=SCL, PD14=SDA).
-static bool enable_buck3_on_pmic()
+// Wait for event bits to latch in HI_INTR_ACKNOWLEDGE. Unlike the idle bits
+// (which also read "idle" if the FE never started!), an event is positive
+// proof the command stream executed up to the EVENT command.
+// Reading the register clears it, so accumulate into intr_acc.
+bool wait_event(uint32_t event_mask, unsigned timeout_us, uint32_t &intr_acc)
 {
-	constexpr uint16_t PmicAddr = 0x33 << 1; // STPMIC25, 7-bit address 0x33
-	constexpr uint8_t ProductIdReg = 0x00;
-	constexpr uint8_t VersionReg = 0x01;
-	constexpr uint8_t Buck3MainCr1 = 0x2A; // voltage: (500 + 10 * n) mV
-	constexpr uint8_t Buck3MainCr2 = 0x2B; // bit 0: enable
-	constexpr uint8_t Buck3_800mV = 30;
-
-	// I2C7 kernel clock: PLL7 at 80 MHz into flexgen channel 15
-	// (same clock setup the i2c example uses for I2C1/2)
-	constexpr RCC_Clocks::PLLSettings pll7{
-		.src = RCC_Clocks::MuxSelSource::hse,
-		.mult = 2,
-		.refdiv = 1,
-		.postdiv1 = 1,
-		.postdiv2 = 1,
-		.frac = 0,
-	};
-	static_assert(pll7.calc_freq(40'000'000) == 80'000'000);
-	RCC_Clocks::set_pll<RCC_Clocks::PLL7>(pll7);
-	while (!RCC_Clocks::PLL7::Ready::read())
-		;
-	FlexbarConf i2c_xbar{.PLL = FlexbarConf::PLLx::_7, .findiv = 0x3F, .prediv = 0};
-	i2c_xbar.init(15); // flexgen channel 15 = ck_ker_i2c7
-
-	__HAL_RCC_I2C7_CLK_ENABLE();
-
-	Pin scl{GPIO::D,
-			PinNum::_15,
-			PinMode::Alt,
-			AltFunc10,
-			PinPull::None,
-			PinPolarity::Normal,
-			PinSpeed::Medium,
-			PinOType::OpenDrain};
-	Pin sda{GPIO::D,
-			PinNum::_14,
-			PinMode::Alt,
-			AltFunc10,
-			PinPull::None,
-			PinPolarity::Normal,
-			PinSpeed::Medium,
-			PinOType::OpenDrain};
-
-	static I2C_HandleTypeDef hi2c;
-	memset(&hi2c, 0, sizeof hi2c);
-	hi2c.Instance = I2C7;
-	hi2c.Init.Timing = 0x10702525; // about 100kHz (same kernel clock as i2c example)
-	hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	hi2c.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	hi2c.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	hi2c.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-
-	if (auto res = HAL_I2C_Init(&hi2c); res != HAL_OK) {
-		print("ERROR: HAL_I2C_Init returned ", res, "\n");
-		return false;
+	while (timeout_us--) {
+		intr_acc |= gpu_read(VivanteGpu::HI_INTR_ACKNOWLEDGE);
+		if ((intr_acc & event_mask) == event_mask)
+			return true;
+		udelay(1);
 	}
-
-	auto pmic_read = [&](uint8_t reg, uint8_t &val) {
-		return HAL_I2C_Mem_Read(&hi2c, PmicAddr, reg, I2C_MEMADD_SIZE_8BIT, &val, 1, 100);
-	};
-	auto pmic_write = [&](uint8_t reg, uint8_t val) {
-		return HAL_I2C_Mem_Write(&hi2c, PmicAddr, reg, I2C_MEMADD_SIZE_8BIT, &val, 1, 100);
-	};
-
-	uint8_t product_id = 0, version = 0;
-	if (auto res = pmic_read(ProductIdReg, product_id); res != HAL_OK) {
-		print("ERROR: cannot reach PMIC on I2C7 (HAL_I2C_Mem_Read returned ", res, ")\n");
-		return false;
-	}
-	pmic_read(VersionReg, version);
-	print("PMIC product ID 0x", Hex{product_id}, ", version 0x", Hex{version}, "\n");
-
-	uint8_t cr1 = 0, cr2 = 0;
-	pmic_read(Buck3MainCr1, cr1);
-	pmic_read(Buck3MainCr2, cr2);
-	print("Buck3 (VDDGPU) was: voltage code ", cr1, ", control 0x", Hex{cr2}, "\n");
-
-	if (auto res = pmic_write(Buck3MainCr1, Buck3_800mV); res != HAL_OK) {
-		print("ERROR: PMIC write failed (", res, ")\n");
-		return false;
-	}
-	if (auto res = pmic_write(Buck3MainCr2, cr2 | 1); res != HAL_OK) {
-		print("ERROR: PMIC write failed (", res, ")\n");
-		return false;
-	}
-	udelay(2000); // buck ramp: stpmic2 driver uses ~1ms enable ramp delay
-
-	pmic_read(Buck3MainCr1, cr1);
-	pmic_read(Buck3MainCr2, cr2);
-	print("Buck3 (VDDGPU) now: voltage code ", cr1, " (800mV), control 0x", Hex{cr2}, "\n");
-	return true;
+	return false;
 }
+
+} // namespace
 
 // Even with buck3 up, the GPU domain is electrically isolated until software
 // confirms the supply with the PWR voltage monitor and sets the "supply valid"
@@ -237,8 +134,15 @@ static bool clock_and_reset_gpu()
 	};
 	static_assert(pll3.calc_freq(40'000'000) == 400'000'000);
 	RCC_Clocks::set_pll<RCC_Clocks::PLL3>(pll3);
-	while (!RCC_Clocks::PLL3::Ready::read())
-		;
+
+	unsigned timeout = 10'000;
+	while (!RCC_Clocks::PLL3::Ready::read()) {
+		if (--timeout == 0) {
+			print("ERROR: PLL3 did not lock (PLL3CFGR1 = 0x", Hex{RCC->PLL3CFGR1}, ")\n");
+			return false;
+		}
+		udelay(1);
+	}
 	print("PLL3 locked at 400MHz\n");
 
 	// Now that all GPU clocks are running, pulse the GPU reset. (RM0457
@@ -253,7 +157,7 @@ static bool clock_and_reset_gpu()
 		if (--timeout == 0) {
 			print("ERROR: GPU reset never released (GPUCFGR = 0x", Hex{RCC->GPUCFGR}, ")\n");
 			return false;
-	}
+		}
 		udelay(1);
 	}
 	print("GPU reset pulsed and released\n");
@@ -266,11 +170,7 @@ static void setup_rif()
 	// non-secure, which still grants our secure (EL3) accesses, so nothing
 	// needs to change -- just show the state (GPU is RIFSC peripheral 79,
 	// bit 15 of SECCFGR[2]).
-	print("RIFSC: GPU periph SECCFGR2 = 0x",
-		  Hex{RISC->SECCFGR[2]},
-		  ", CIDCFGR = 0x",
-		  Hex{RISC->PER[79].CIDCFGR},
-		  "\n");
+	print("RIFSC: GPU periph SECCFGR2 = 0x", Hex{RISC->SECCFGR[2]}, ", CIDCFGR = 0x", Hex{RISC->PER[79].CIDCFGR}, "\n");
 
 	// Master side: transactions the GPU issues to DDR pass through RISAF4,
 	// which TF-A configured to allow only *secure* CID0/CID1 masters. The
@@ -334,9 +234,13 @@ static bool reset_gpu_core()
 		gpu_write(HI_CLOCK_CONTROL, control | CLK_FSCALE_CMD_LOAD);
 		gpu_write(HI_CLOCK_CONTROL, control);
 
-		// Isolate, soft reset, release
+		// Isolate, reset, release. This is a security-enabled core, so the
+		// reset goes through the secure-bank MMU AHB control register --
+		// HI_CLOCK_CONTROL.SOFT_RESET is for non-secure cores (we write it
+		// too; it's harmless).
 		control |= CLK_ISOLATE_GPU;
 		gpu_write(HI_CLOCK_CONTROL, control);
+		gpu_write(MMUv2_AHB_CONTROL, MMUv2_AHB_CONTROL_RESET);
 		gpu_write(HI_CLOCK_CONTROL, control | CLK_SOFT_RESET);
 		udelay(20);
 		gpu_write(HI_CLOCK_CONTROL, control);
@@ -347,6 +251,10 @@ static bool reset_gpu_core()
 			continue;
 		if (!(gpu_read(HI_CLOCK_CONTROL) & CLK_IDLE_3D))
 			continue;
+
+		// Let non-secure register accesses through as well (etnaviv does
+		// this after reset on security-enabled cores)
+		gpu_write(MMUv2_AHB_CONTROL, MMUv2_AHB_CONTROL_NONSEC_ACCESS);
 
 		print("GPU core soft-reset OK (idle = 0x", Hex{gpu_read(HI_IDLE_STATE)}, ")\n");
 		return true;
@@ -362,16 +270,42 @@ static bool reset_gpu_core()
 
 // Point the FE at a command buffer in DDR and start it.
 // num_dwords must be even (commands are 64-bit aligned).
-static void kick_fe(uint32_t num_dwords)
+//
+// The FE only starts fetching on a *rising* enable: after it halts at an END
+// it stays "enabled", and rewriting FE_COMMAND_CONTROL is ignored. (The
+// etnaviv driver never restarts the FE -- it starts it once per reset and
+// then chains buffers with WAIT/LINK.) So disable the FE first, and soft-
+// reset the core to be safe -- that's the state the first kick worked from.
+static bool kick_fe(uint32_t num_dwords)
 {
 	using namespace VivanteGpu;
 
 	clean_dcache_range(cmdbuf.data(), num_dwords * 4);
 
+	gpu_write(FE_COMMAND_CONTROL, 0);
+	if (!reset_gpu_core())
+		return false;
+
+	// Unmask all interrupt sources: with HI_INTR_ENBL at its reset value of
+	// 0, events never latch in HI_INTR_ACKNOWLEDGE at all (etnaviv writes ~0
+	// here at init). We poll ACKNOWLEDGE instead of taking the IRQ, but the
+	// enable mask still gates the latch.
+	gpu_write(HI_INTR_ENBL, 0xFFFFFFFF);
 	gpu_read(HI_INTR_ACKNOWLEDGE); // clear stale interrupt bits
 
 	gpu_write(FE_COMMAND_ADDRESS, bus_addr(cmdbuf.data()));
 	gpu_write(FE_COMMAND_CONTROL, FE_CONTROL_ENABLE | (num_dwords / 2));
+	// On security-enabled cores the FE only actually starts when the enable
+	// is also written through the secure bank (etnaviv_gpu_start_fe)
+	gpu_write(MMUv2_SEC_COMMAND_CONTROL, FE_CONTROL_ENABLE | (num_dwords / 2));
+	print("  FE armed at 0x",
+		  Hex{bus_addr(cmdbuf.data())},
+		  ", control readback 0x",
+		  Hex{gpu_read(FE_COMMAND_CONTROL)},
+		  " sec 0x",
+		  Hex{gpu_read(MMUv2_SEC_COMMAND_CONTROL)},
+		  "\n");
+	return true;
 }
 
 static void print_fe_status(const char *msg)
@@ -392,6 +326,27 @@ static void print_fe_status(const char *msg)
 		  " axi 0x",
 		  Hex{gpu_read(HI_AXI_STATUS)},
 		  "\n");
+	// GPU-MMU faults (see gpu_regs.hh for the 4-bit fault codes). A fetch
+	// that faults reads zeros, which looks like "executed nothing".
+	print("  GPU MMU status 0x",
+		  Hex{gpu_read(MMUv2_STATUS)},
+		  " sec 0x",
+		  Hex{gpu_read(MMUv2_SEC_STATUS)},
+		  " sec fault addr 0x",
+		  Hex{gpu_read(MMUv2_SEC_EXCEPTION_ADDR)},
+		  "\n");
+
+	// The Illegal Access Controller latches RIF violations chip-wide (RIF
+	// denials are otherwise silent: reads return 0, writes are dropped).
+	// 6 x 32 sources; nonzero = something was blocked since the last check.
+	volatile uint32_t *iac_isr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x80);
+	volatile uint32_t *iac_icr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x100);
+	print("  IAC violations:");
+	for (unsigned i = 0; i < 6; i++) {
+		print(" 0x", Hex{iac_isr[i]});
+		iac_icr[i] = 0xFFFFFFFF; // clear so the next check shows fresh ones
+	}
+	print("\n");
 }
 
 // Feed the FE a do-nothing command stream: proves the GPU can fetch from DDR
@@ -404,19 +359,26 @@ static bool test_command_fetch()
 	cmdbuf[n++] = 0;
 	cmdbuf[n++] = CMD_NOP;
 	cmdbuf[n++] = 0;
+	// The FE latches interrupt bit 1 when it executes this -- positive proof
+	// the stream ran (the idle bits also read "idle" if the FE never started)
+	cmdbuf[n++] = cmd_load_state(GL_EVENT);
+	cmdbuf[n++] = 1 | GL_EVENT_FROM_FE;
 	cmdbuf[n++] = CMD_END;
 	cmdbuf[n++] = 0;
 
-	kick_fe(n);
+	if (!kick_fe(n))
+		return false;
 
-	if (!wait_idle(IDLE_FE, 100'000)) {
-		print_fe_status("ERROR: FE did not go idle running a NOP stream");
-		print("(FE DMA addr stuck at the buffer address usually means the GPU's\n"
-			  " DDR reads are blocked -- check the RIMC/RISAF config)\n");
+	uint32_t intr = 0;
+	if (!wait_event(1 << 1, 100'000, intr)) {
+		print("ERROR: FE never signaled the event (intr seen: 0x", Hex{intr}, ")\n");
+		print_fe_status("  state");
+		print("(If the FE DMA addr is stuck at the buffer address, the GPU never\n"
+			  " fetched: kernel clock or RIMC/RISAF read-access problem)\n");
 		return false;
 	}
 
-	print_fe_status("FE executed a NOP command stream from DDR");
+	print_fe_status("FE really executed a command stream from DDR (event received)");
 	return true;
 }
 
@@ -455,21 +417,55 @@ static bool test_blt_fill()
 	p = load1(p, BLT_SET_COMMAND, 0x3);
 	p = load1(p, BLT_COMMAND, BLT_COMMAND_CLEAR_IMAGE);
 	p = load1(p, BLT_SET_COMMAND, 0x3);
+	// BLT latches interrupt bit 2 when the clear has completed
+	p = load1(p, GL_EVENT, 2 | GL_EVENT_FROM_BLT);
 	p = load1(p, BLT_ENABLE, 0);
 	// FE waits until the BLT engine is done (BLT must be enabled around
 	// semaphore/stall commands that target it)
+	auto stall_fe_on = [&](uint32_t recipient) {
+		if (recipient == SYNC_RECIPIENT_BLT)
+			p = load1(p, BLT_ENABLE, 1);
+		p = load1(p, GL_SEMAPHORE_TOKEN, sync_token(SYNC_RECIPIENT_FE, recipient));
+		*p++ = CMD_STALL;
+		*p++ = sync_token(SYNC_RECIPIENT_FE, recipient);
+		if (recipient == SYNC_RECIPIENT_BLT)
+			p = load1(p, BLT_ENABLE, 0);
+	};
+	stall_fe_on(SYNC_RECIPIENT_BLT);
+
+	// Flush the GPU-internal caches to memory, the way the etnaviv driver
+	// ends every 3D-pipe command buffer: without this, the cleared pixels
+	// can stay in the GPU's write-back caches and never reach DDR.
+	stall_fe_on(SYNC_RECIPIENT_PE);
+	p = load1(p, GL_FLUSH_CACHE, GL_FLUSH_CACHE_PIPE3D);
 	p = load1(p, BLT_ENABLE, 1);
-	p = load1(p, GL_SEMAPHORE_TOKEN, sync_token(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_BLT));
-	*p++ = CMD_STALL;
-	*p++ = sync_token(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_BLT);
+	p = load1(p, BLT_SET_COMMAND, 0x1); // BLT cache flush
 	p = load1(p, BLT_ENABLE, 0);
+	stall_fe_on(SYNC_RECIPIENT_PE);
+	stall_fe_on(SYNC_RECIPIENT_BLT);
+
+	// FE latches interrupt bit 3 when it gets here -- past all the stalls,
+	// so the clear and the cache flushes are complete
+	p = load1(p, GL_EVENT, 3 | GL_EVENT_FROM_FE);
 	*p++ = CMD_END;
 	*p++ = 0;
 
-	kick_fe(p - cmdbuf.data());
+	if (!kick_fe(p - cmdbuf.data()))
+		return false;
 
-	if (!wait_idle(IDLE_FE | IDLE_BLT, 100'000)) {
-		print_fe_status("ERROR: FE/BLT did not go idle");
+	uint32_t intr = 0;
+	bool done = wait_event(1 << 3, 100'000, intr);
+	print("BLT clear event: ",
+		  (intr & (1 << 2)) ? "received" : "MISSING",
+		  ", end-of-stream event: ",
+		  done ? "received" : "MISSING",
+		  " (intr seen: 0x",
+		  Hex{intr},
+		  ")\n");
+	if (!done) {
+		print_fe_status("  state");
+		if (!wait_idle(IDLE_FE | IDLE_BLT, 100'000))
+			print("  FE/BLT are not idle: the stream is stuck (semaphore never signaled?)\n");
 		return false;
 	}
 
