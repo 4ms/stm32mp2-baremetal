@@ -179,6 +179,7 @@ static void setup_rif()
 	// (its CID stays 0, which RISAF4 permits).
 	auto attr = RIMC->ATTR[9]; // RIF_MCID_GPU = 9
 	RIMC->ATTR[9] = attr | RIMC_ATTR_MSEC | RIMC_ATTR_MPRIV;
+	// prints CID 0
 	print("RIMC ATTR[9] (GPU master): 0x", Hex{attr}, " => 0x", Hex{RIMC->ATTR[9]}, "\n");
 }
 
@@ -187,36 +188,28 @@ static bool ping_gpu()
 	using namespace VivanteGpu;
 
 	auto model = gpu_read(HI_CHIP_MODEL);
-	auto rev = gpu_read(HI_CHIP_REV);
 
 	print("Chip model:      0x", Hex{model}, "\n");
-	print("Chip revision:   0x", Hex{rev}, "\n");
+	print("Chip revision:   0x", Hex{gpu_read(HI_CHIP_REV)}, "\n");
 	print("Chip date:       0x", Hex{gpu_read(HI_CHIP_DATE)}, "\n");
 	print("Product ID:      0x", Hex{gpu_read(HI_CHIP_PRODUCT_ID)}, "\n");
 	print("Customer ID:     0x", Hex{gpu_read(HI_CHIP_CUSTOMER_ID)}, "\n");
 	print("ECO ID:          0x", Hex{gpu_read(HI_CHIP_ECO_ID)}, "\n");
 	print("Identity:        0x", Hex{gpu_read(HI_CHIP_IDENTITY)}, "\n");
 	print("Features:        0x", Hex{gpu_read(HI_CHIP_FEATURE)}, "\n");
-	print("Minor features:  0x",
-		  Hex{gpu_read(HI_CHIP_MINOR_FEATURE_0)},
-		  " 0x",
-		  Hex{gpu_read(HI_CHIP_MINOR_FEATURE_1)},
-		  " 0x",
-		  Hex{gpu_read(HI_CHIP_MINOR_FEATURE_2)},
-		  " 0x",
-		  Hex{gpu_read(HI_CHIP_MINOR_FEATURE_3)},
-		  " 0x",
-		  Hex{gpu_read(HI_CHIP_MINOR_FEATURE_4)},
-		  " 0x",
-		  Hex{gpu_read(HI_CHIP_MINOR_FEATURE_5)},
-		  "\n");
+	print("Minor features:  0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_0)});
+	print(" 0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_0)});
+	print(" 0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_1)});
+	print(" 0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_2)});
+	print(" 0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_3)});
+	print(" 0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_4)});
+	print(" 0x", Hex{gpu_read(HI_CHIP_MINOR_FEATURE_5)}, "\n");
 	print("Specs:           0x", Hex{gpu_read(HI_CHIP_SPECS)}, "\n");
 	print("Idle state:      0x", Hex{gpu_read(HI_IDLE_STATE)}, "\n");
 	print("Clock control:   0x", Hex{gpu_read(HI_CLOCK_CONTROL)}, "\n");
 
 	if (model == 0 || model == 0xFFFFFFFF) {
-		print("ERROR: identity registers read as ", model ? "all-ones" : "zero", " -- GPU is not responding.\n");
-		print("(A silent zero-read usually means a RIF/clock/power problem, see README)\n");
+		print("ERROR: model register read as ", model ? "all-ones" : "zero", " -- GPU is not responding.\n");
 		return false;
 	}
 	return true;
