@@ -52,16 +52,12 @@ uint32_t bus_addr(const void *p)
 	return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(p));
 }
 
-// Non-secure GPU region setup in mmu.cc:
-constexpr uintptr_t GpuBufBase = 0x8A200000;
-constexpr uintptr_t GpuBufSize = 0x200000;
-
-auto &cmdbuf = *reinterpret_cast<std::array<uint32_t, 128> *>(GpuBufBase);
+alignas(64) std::array<uint32_t, 128> cmdbuf{};
 
 constexpr uint32_t ImgWidth = 64;
 constexpr uint32_t ImgHeight = 64;
 constexpr uint32_t ClearColor = 0x4D5A11AC;
-auto &image = *reinterpret_cast<std::array<uint32_t, ImgWidth * ImgHeight> *>(GpuBufBase + 0x1000);
+alignas(64) std::array<uint32_t, ImgWidth * ImgHeight> image;
 
 bool wait_idle(uint32_t idle_bits, unsigned timeout_us)
 {
