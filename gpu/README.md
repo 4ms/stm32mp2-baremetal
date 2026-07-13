@@ -1,7 +1,7 @@
 # GPU example
 
-The STM32MP25x contains a VeriSilicon (Vivante) *GCNanoUltra31* 3D GPU, at
-address 0x48280000. This example brings it up in stages:
+The STM32MP25x contains a VeriSilicon (Vivante) *GCNanoUltra31* 3D GPU.
+This example brings it up in stages:
 
 1. **Power**: VDDGPU is an independent supply: the STPMIC25's buck3 on the
    EV1 controls it. We have configured TF-A to turn this on, but just in case
@@ -28,12 +28,19 @@ address 0x48280000. This example brings it up in stages:
    DMAs a command buffer from memory. We feed it a trivial NOP+END stream,
    proving the GPU can master the bus and fetch from DDR.
 
-6. **Fill a buffer**: the actual "basic 2D operation". This GPU generation has
-   no separate 2D blitter; 2D-style operations (clears, copies, mipmap
-   generation) are done by the **BLT engine**. We build a command stream that
-   programs a solid-color clear of a 64x64 RGBA8888 image in DDR, make the FE
-   wait on a semaphore until the BLT engine finishes, then verify every pixel
-   with the CPU.
+6. **Fill a buffer**: the actual "basic 2D operation". This GPU has no 2D
+   pipe, and -- despite its own feature registers claiming otherwise -- **no
+   BLT engine** either (the authoritative feature list is the hardware
+   database entry ST upstreamed to Linux: `etnaviv_hwdb.c`, customer_id 0x15;
+   writing the nonexistent BLT registers wedges the FE with no fault). Fills
+   and blits on this core go through the **RS ("resolve") engine**, the same
+   path Mesa uses for clears here. We build a command stream that programs a
+   solid-color RS fill of a 64x64 RGBA8888 image in DDR, stall the FE on the
+   PE pipeline, flush the color cache, then verify every pixel with the CPU.
+   Note the RS runs behind the GPU's MMU: the memory-touching engines do not
+   work with the MMU in bypass, so the example first builds an identity
+   mapping of DDR and enables the MMU through the secure bank
+   (`gpu_mmu_enable()`, mirroring `etnaviv_iommuv2_restore_sec()`).
 
 Expected output ends with:
 
