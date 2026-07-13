@@ -1,34 +1,24 @@
 # GPU example
 
 The STM32MP25x contains a VeriSilicon (Vivante) *GCNanoUltra31* 3D GPU, at
-address 0x48280000. This example brings it up from cold and talks to it at the
-register level, in stages that each prove one thing:
+address 0x48280000. This example brings it up in stages:
 
 1. **Power**: VDDGPU is an independent supply: the STPMIC25's buck3 on the
-   EV1, and it is **off after boot**. (The TF-A BL2 device tree marks it
-   `regulator-always-on`, but that only prevents *disabling* -- BL2 registers
-   the PMIC regulators and never enables ones it doesn't use itself.) So the
-   example first talks to the PMIC over I2C7 (PD15=SCL, PD14=SDA, address
-   0x33) and programs buck3 to 0.80 V + enabled. Then, like the other
-   independent supplies, the PWR peripheral keeps the GPU domain electrically
-   isolated until software verifies the supply with the voltage monitor and
-   sets the "supply valid" bit (`PWR_CR12`).
+   EV1 controls it. We have configured TF-A to turn this on, but just in case
+   it will check and try to enable it via the PMIC (FIXME: PMIC configuration 
+   via I2C doesn't work!)
+   The example verifies the supply with the PWR voltage monitor and sets the
+   "supply valid" bit (`PWR_CR12`) to remove the GPU domain's electrical
+   isolation, like the other independent supplies.
 
-2. **Clock**: PLL3 is dedicated to the GPU -- no flexgen channel is involved.
-   We run it at 400 MHz, which is safe for the 0.80 V that the PMIC provides
-   on VDDGPU (the 800/900 MHz datasheet speeds need 0.90 V).
-   `RCC_GPUCFGR` holds the GPU's clock-enable and reset bits.
+2. **Clock**: PLL3 is dedicated to the GPU. We run it at 400 MHz, which is safe 
+   for the 0.80 V that the PMIC provides on VDDGPU (the 800/900 MHz datasheet
+   speeds need 0.90 V). `RCC_GPUCFGR` holds the GPU's clock-enable and reset bits.
 
-3. **RIF**: two sides to check whenever a peripheral "silently does nothing":
-   - *Slave side*: the GPU's register port is RIFSC peripheral 79. It resets
-     non-secure, which still admits our secure (EL3) CPU accesses, so nothing
-     needs configuring. The example prints the state.
-   - *Master side*: the GPU issues its own AXI transactions to DDR, and those
-     pass through the DDR firewall (RISAF4), which our TF-A configures to
-     admit only **secure** CID0/CID1 masters. The GPU's master attributes
-     (RIMC ATTR entry 9) reset to non-secure, so without help every command
-     fetch and pixel write would be *silently dropped*. The example sets the
-     master's MSEC/MPRIV bits.
+3. **RIF**: 
+   - The GPU's register port is RIFSC peripheral 79. It resets
+     non-secure, so we set it to secure because our buffers are in secure regions
+     of DDR4 memory. We also setup RIMC to allow secure and priv transactions.
 
 4. **Ping**: read the chip identity registers (model, revision, feature bits)
    and confirm the core reports idle. This is the "is anybody home?" test:
@@ -72,22 +62,28 @@ cross-reference against those sources and against `etnaviv_gpu.c` (whose
 
 ## Notes and gotchas
 
+- **PLL3 is inside the GPU subsystem**, not the RCC (the RCC only feeds it a
+  reference clock, `ck_gpuss_pll3_fref`). Touching the `RCC_PLL3CFGRx`
+  registers while the GPU is unpowered or unclocked hangs the bus.
+  Order of operations must be: VDDGPU valid, then `GPUEN`, then program PLL3,
+  and pulse `GPURST` only after the kernel clock is running (RM0457 requires
+  the ref clock to be slower than the GPU bus/kernel clocks during reset).
+- **The VDDGPU voltage monitor must stay enabled.** Its live output is what
+  releases the GPU power-domain reset which keeps PLL3 out of reset.
 - **Caches**: the GPU reads and writes physical DDR directly (its own MMU is
   off, and GPU addresses are 32-bit bus addresses). The CPU must clean the
   dcache over the command buffer before kicking the FE, and invalidate over
-  the image after the GPU writes it. Miss the invalidate and you'll "see" the
-  pre-fill pattern even though DDR holds the filled pixels.
+  the image after the GPU writes it.
 - **FE prefetch units**: `FE_COMMAND_CONTROL`'s prefetch count is in 64-bit
-  units, and every command occupies a multiple of 64 bits -- a lone
-  `LOAD_STATE` header is padded.
+  units, so you have to add padding if needed.
 - **Interrupts**: this example polls `HI_IDLE_STATE` instead of using the
   GPU's interrupt (GIC SPI 215). The FE-stalls-on-BLT-semaphore trick makes
   "FE idle" mean "everything done".
-- If the identity reads come back **zero**, suspect (in order): VDDGPU not
-  valid, `RCC_GPUCFGR` enable/reset bits, PLL3 not locked, RIF slave config.
+- If the identity reads come back zero, check if VDDGPU is
+  valid, `RCC_GPUCFGR` enable/reset bits, PLL3 not locked, and RIF config.
 - If identity reads work but the FE never goes idle and `FE_DMA_ADDRESS`
-  never advances past the buffer address, the GPU's *master* transactions are
-  being blocked: RIMC ATTR[9] and the RISAF4 DDR regions are the suspects.
+  never advances past the buffer address, the GPU's master transactions are
+  being blocked, so check RIMC `ATTR[9]` and the `RISAF4` DDR regions.
 
 ## Running
 
