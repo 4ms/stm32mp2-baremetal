@@ -52,13 +52,16 @@ uint32_t bus_addr(const void *p)
 	return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(p));
 }
 
-// The GPU fetches commands and reads/writes images in DDR
-alignas(64) std::array<uint32_t, 128> cmdbuf;
+// Non-secure GPU region setup in mmu.cc:
+constexpr uintptr_t GpuBufBase = 0x8A200000;
+constexpr uintptr_t GpuBufSize = 0x200000;
+
+auto &cmdbuf = *reinterpret_cast<std::array<uint32_t, 128> *>(GpuBufBase);
 
 constexpr uint32_t ImgWidth = 64;
 constexpr uint32_t ImgHeight = 64;
 constexpr uint32_t ClearColor = 0x4D5A11AC;
-alignas(64) std::array<uint32_t, ImgWidth * ImgHeight> image;
+auto &image = *reinterpret_cast<std::array<uint32_t, ImgWidth * ImgHeight> *>(GpuBufBase + 0x1000);
 
 bool wait_idle(uint32_t idle_bits, unsigned timeout_us)
 {
@@ -172,15 +175,44 @@ static void setup_rif()
 	// bit 15 of SECCFGR[2]).
 	print("RIFSC: GPU periph SECCFGR2 = 0x", Hex{RISC->SECCFGR[2]}, ", CIDCFGR = 0x", Hex{RISC->PER[79].CIDCFGR}, "\n");
 
-	// Master side: transactions the GPU issues to DDR pass through RISAF4,
-	// which TF-A configured to allow only *secure* CID0/CID1 masters. The
-	// GPU's RIMC entry resets to non-secure, so its DDR reads/writes would
-	// be silently dropped. Make it issue secure privileged transactions
-	// (its CID stays 0, which RISAF4 permits).
+	// Master side: transactions the GPU issues to DDR pass through the DDR
+	// firewall (RISAF4)
+	//  - RIMC_ATTR_MSEC doesn't seem to matter: the GPU issues non-secure
+	//    transactions whether or not it's set (which is why we use a non-secure
+	//    mmu region for the command buffer)
+
+	// RM0457, sec 8.3, table 37: GPU's CID is set byt RISUP79
+	// Set it to 1 to match the A35
+	RISC->PER[79].CIDCFGR = RISC_PERCIDCFGR_CFEN | RISC_PERCIDCFGR_SCID1;
+	////[0]: 0-31, [1]: 32-63, [2]: 64-95
+	RISC->SECCFGR[2] |= (1 << (79 - 64));
+	RISC->SECCFGR[4] |= (1 << (137 - 128));
+	RISC->PRIVCFGR[2] |= (1 << (79 - 64));
+	RISC->PRIVCFGR[4] |= (1 << (137 - 128));
+
 	auto attr = RIMC->ATTR[9]; // RIF_MCID_GPU = 9
-	RIMC->ATTR[9] = attr | RIMC_ATTR_MSEC | RIMC_ATTR_MPRIV;
-	// prints CID 0
-	print("RIMC ATTR[9] (GPU master): 0x", Hex{attr}, " => 0x", Hex{RIMC->ATTR[9]}, "\n");
+	RIMC->ATTR[9] = (attr & ~RIMC_ATTR_CIDSEL) | RIMC_ATTR_MSEC | RIMC_ATTR_MPRIV;
+	// print("RIMC ATTR[9] (GPU master): 0x",
+	// 	  Hex{attr},
+	// 	  " => 0x",
+	// 	  Hex{RIMC->ATTR[9]},
+	// 	  ", RISUP79 CIDCFGR => 0x",
+	// 	  Hex{RISC->PER[79].CIDCFGR},
+	// 	  "\n");
+
+	// Subregion A of region 1: the GPU buffer window, non-secure, CID1,
+	// read+write, any privilege. RISAF addresses are DDR-relative.
+	// constexpr uint32_t DdrBase = 0x80000000;
+	// RISAF4->REG[0].ASTARTR = GpuBufBase - DdrBase;
+	// RISAF4->REG[0].AENDR = GpuBufBase + GpuBufSize - 1 - DdrBase;
+	// RISAF4->REG[0].ACFGR = RISAF_REGZCFGR_SREN | RISAF_REGZCFGR_SRCID1 | RISAF_REGZCFGR_RDEN | RISAF_REGZCFGR_WREN;
+	// print("RISAF4 region1 subregion A: 0x",
+	// 	  Hex{RISAF4->REG[0].ASTARTR},
+	// 	  "..0x",
+	// 	  Hex{RISAF4->REG[0].AENDR},
+	// 	  " (DDR-relative), CFGR 0x",
+	// 	  Hex{RISAF4->REG[0].ACFGR},
+	// 	  " (non-secure, CID1 R/W)\n");
 }
 
 static bool ping_gpu()
@@ -304,34 +336,23 @@ static bool kick_fe(uint32_t num_dwords)
 static void print_fe_status(const char *msg)
 {
 	using namespace VivanteGpu;
-	print(msg,
-		  ": FE DMA addr 0x",
-		  Hex{gpu_read(FE_DMA_ADDRESS)},
-		  " status 0x",
-		  Hex{gpu_read(FE_DMA_STATUS)},
-		  " debug 0x",
-		  Hex{gpu_read(FE_DMA_DEBUG_STATE)},
-		  " last cmd 0x",
-		  Hex{gpu_read(FE_DMA_HIGH)},
-		  Hex{gpu_read(FE_DMA_LOW)},
-		  " intr 0x",
-		  Hex{gpu_read(HI_INTR_ACKNOWLEDGE)},
-		  " axi 0x",
-		  Hex{gpu_read(HI_AXI_STATUS)},
-		  "\n");
+	print(msg);
+	print(": FE DMA addr 0x", Hex{gpu_read(FE_DMA_ADDRESS)});
+	print(" status 0x", Hex{gpu_read(FE_DMA_STATUS)});
+	print(" debug 0x", Hex{gpu_read(FE_DMA_DEBUG_STATE)});
+	print(" last cmd 0x", Hex{gpu_read(FE_DMA_HIGH)}, Hex{gpu_read(FE_DMA_LOW)});
+	print(" intr 0x", Hex{gpu_read(HI_INTR_ACKNOWLEDGE)});
+	print(" axi 0x", Hex{gpu_read(HI_AXI_STATUS)}, "\n");
 	// GPU-MMU faults (see gpu_regs.hh for the 4-bit fault codes). A fetch
 	// that faults reads zeros, which looks like "executed nothing".
-	print("  GPU MMU status 0x",
-		  Hex{gpu_read(MMUv2_STATUS)},
-		  " sec 0x",
-		  Hex{gpu_read(MMUv2_SEC_STATUS)},
-		  " sec fault addr 0x",
-		  Hex{gpu_read(MMUv2_SEC_EXCEPTION_ADDR)},
-		  "\n");
+	print("  GPU MMU status 0x", Hex{gpu_read(MMUv2_STATUS)});
+	print(" sec 0x", Hex{gpu_read(MMUv2_SEC_STATUS)});
+	print(" sec fault addr 0x", Hex{gpu_read(MMUv2_SEC_EXCEPTION_ADDR)}, "\n");
 
 	// The Illegal Access Controller latches RIF violations chip-wide (RIF
 	// denials are otherwise silent: reads return 0, writes are dropped).
 	// 6 x 32 sources; nonzero = something was blocked since the last check.
+	// (Word 4 bit 9 = ID 137 = RISAF4, the DDR firewall.)
 	volatile uint32_t *iac_isr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x80);
 	volatile uint32_t *iac_icr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x100);
 	print("  IAC violations:");
@@ -340,6 +361,33 @@ static void print_fe_status(const char *msg)
 		iac_icr[i] = 0xFFFFFFFF; // clear so the next check shows fresh ones
 	}
 	print("\n");
+
+	// RISAF4 captures the attributes of the transaction it rejected: the
+	// address, compartment ID, and secure/privileged/write flags. IAR[0] is
+	// the first illegal access since last clear, IAR[1] the most recent.
+	print("  RISAF4 IASR 0x", Hex{RISAF4->IASR});
+	for (unsigned i = 0; i < 2; i++) {
+		auto esr = RISAF4->IAR[i].IAESR;
+		print("  [",
+			  int(i),
+			  "] addr 0x",
+			  Hex{RISAF4->IAR[i].IADDR},
+			  " CID",
+			  int(esr & RISAF_IAESR_IACID_Msk),
+			  (esr & RISAF_IAESR_IASEC) ? " sec" : " NONSEC",
+			  (esr & RISAF_IAESR_IAPRIV) ? " priv" : " unpriv",
+			  (esr & RISAF_IAESR_IANRW) ? " write" : " read");
+	}
+	RISAF4->IACR = 0xF; // clear for next time
+	print("\n  RISAF4 region1: CFGR 0x",
+		  Hex{RISAF4->REG[0].CFGR},
+		  " start 0x",
+		  Hex{RISAF4->REG[0].STARTR},
+		  " end 0x",
+		  Hex{RISAF4->REG[0].ENDR},
+		  " CIDCFGR 0x",
+		  Hex{RISAF4->REG[0].CIDCFGR},
+		  "\n");
 }
 
 // Feed the FE a do-nothing command stream: proves the GPU can fetch from DDR
@@ -515,14 +563,16 @@ int main()
 	}
 
 	if (ok) {
-		print("\n2) Clocking GPU from PLL3\n");
+		// RIF first: the master attributes should be in place before the
+		// GPU's bus interface ever comes out of reset
+		print("\n2) Configuring RIF for the GPU\n");
+		setup_rif();
+
+		print("\n3) Clocking GPU from PLL3\n");
 		ok = clock_and_reset_gpu();
 	}
 
 	if (ok) {
-		print("\n3) Configuring RIF for the GPU\n");
-		setup_rif();
-
 		print("\n4) Pinging the GPU (chip identification)\n");
 		ok = ping_gpu();
 	}

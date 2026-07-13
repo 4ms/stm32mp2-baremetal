@@ -67,7 +67,14 @@ static void populate_tables()
 	L1_ddr2.fill_block_entries(0xC0000000, 0x100000000, MMU::MemType::Normal, MMU::AccessRW);
 
 	// DMA non-cacheable pool (used in usb-drd example)
-	L1_ddr1.block_entry(0x8A000000, MMU::MemType::Noncache, MMU::AccessRW);
+	// L1_ddr1.block_entry(0x8A000000, MMU::MemType::Noncache, MMU::AccessRW);
+
+	// Non-secure buffer pool (used in the gpu example): the GPU masters DDR
+	// with non-secure transactions, so buffers it shares with the CPU live in
+	// a non-secure RISAF4 subregion -- which the CPU can only reach through a
+	// non-secure mapping.
+	// L1_ddr1.block_entry(0x8A200000, MMU::MemType::Normal, MMU::AccessRW /*| MMU::NonSecure*/ |
+	// MMU::PrivExecuteNever);
 
 	is_init = true;
 	dsb_sy();
