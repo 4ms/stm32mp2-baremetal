@@ -1,11 +1,18 @@
 .cpu cortex-a35
 
-.equ STM32_USART2_TDR, 0x400E0028
+#if UART==6
+.equ STM32_USART_TDR, 0x40220028
+#elif UART==1
+.equ STM32_USART_TDR, 0x40330028
+#else
+.equ STM32_USART_TDR, 0x400E0028
+#endif
+
 
 .global _Reset
 .global _start
 _Reset:
-    ldr     x4, =STM32_USART2_TDR
+    ldr     x4, =STM32_USART_TDR
 
 printMP2:
     // UART: print 'M'

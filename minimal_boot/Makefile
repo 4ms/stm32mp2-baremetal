@@ -1,7 +1,7 @@
 BUILDDIR = build
 SHAREDDIR = ../shared
 
-SOURCES := minboot.s
+SOURCES := min_boot.S
 
 include $(SHAREDDIR)/makefile-common.mk
 
