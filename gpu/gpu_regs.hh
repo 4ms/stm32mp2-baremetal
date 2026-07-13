@@ -92,6 +92,30 @@ constexpr uint32_t MMUv2_STATUS = 0x0188;
 constexpr uint32_t MMUv2_SEC_STATUS = 0x0384;
 constexpr uint32_t MMUv2_SEC_EXCEPTION_ADDR = 0x0380;
 
+// The GPU MMU proper. Both etnaviv and the vendor driver always enable it
+// before running any engine -- the memory-touching engines (PE/BLT) do not
+// reliably work in bypass on secure cores. On secure cores it is enabled
+// through the "PTA" (page table array) + SEC_CONTROL (see
+// etnaviv_iommuv2_restore_sec() in etnaviv_iommu_v2.c):
+constexpr uint32_t MMUv2_SEC_CONTROL = 0x0388; // bit 0: enable
+constexpr uint32_t MMUv2_PTA_ADDRESS_LOW = 0x038C;
+constexpr uint32_t MMUv2_PTA_ADDRESS_HIGH = 0x0390;
+constexpr uint32_t MMUv2_PTA_CONTROL = 0x0394; // bit 0: enable
+constexpr uint32_t MMUv2_NONSEC_SAFE_ADDR_LOW = 0x0398;
+constexpr uint32_t MMUv2_SEC_SAFE_ADDR_LOW = 0x039C;
+constexpr uint32_t MMUv2_SAFE_ADDRESS_CONFIG = 0x03A0;
+
+// State (written via LOAD_STATE) that makes the MMU load PTA entry N
+constexpr uint32_t MMUv2_PTA_CONFIG = 0x01AC;
+
+// Page table formats (MODE4_K): PTA is an array of 64-bit entries, one per
+// context: MTLB physical address | mode (0 = 4K pages). The MTLB has 1024
+// 32-bit entries, each mapping 4MB via one STLB page: STLB physical | PRESENT.
+// Each STLB has 1024 32-bit entries: page physical | PRESENT | WRITEABLE.
+constexpr uint32_t MMU_PTE_PRESENT = 1 << 0;
+constexpr uint32_t MMU_PTE_EXCEPTION = 1 << 1;
+constexpr uint32_t MMU_PTE_WRITEABLE = 1 << 2;
+
 // ------------------- Command stream encoding (fed to the FE) -------------------
 // Every command occupies a multiple of 64 bits (2 dwords).
 
@@ -127,7 +151,38 @@ constexpr uint32_t GL_FLUSH_CACHE = 0x380C;
 // DEPTH | COLOR | TEXTURE | TEXTUREVS | SHADER_L2
 constexpr uint32_t GL_FLUSH_CACHE_PIPE3D = 0x57;
 
-// BLT engine (halti5 cores like this one; replaces the older RS/2D engines)
+// RS ("resolve") engine: the fill/blit engine on this core. Note the MP25's
+// AHB feature registers falsely advertise a BLT engine (minor feature 5 bit
+// 31 reads 1); the authoritative hardware database entry ST upstreamed to
+// Linux (etnaviv_hwdb.c, customer_id 0x15) says there is NO BLT -- and
+// indeed writes to BLT registers hang the FE. Mesa uses the RS engine for
+// clears/blits on this core (see etna_clear_blit_rs_init / etnaviv_rs.c).
+constexpr uint32_t RS_KICKER = 0x1600; // write 0xbeebbeeb to start
+constexpr uint32_t RS_CONFIG = 0x1604; // src format | dest format << 8
+constexpr uint32_t RS_SOURCE_STRIDE = 0x160C;
+constexpr uint32_t RS_DEST_STRIDE = 0x1614;
+constexpr uint32_t RS_WINDOW_SIZE = 0x1620; // width | height << 16
+constexpr uint32_t RS_DITHER0 = 0x1630;
+constexpr uint32_t RS_DITHER1 = 0x1634;
+constexpr uint32_t RS_CLEAR_CONTROL = 0x163C; // bits[15:0] mask, bit16: enable
+constexpr uint32_t RS_FILL_VALUE0 = 0x1640; // ..4 consecutive dwords
+constexpr uint32_t RS_EXTRA_CONFIG = 0x16A0;
+constexpr uint32_t RS_SINGLE_BUFFER = 0x16B8;
+constexpr uint32_t RS_PIPE_SOURCE_ADDR0 = 0x16C0;
+constexpr uint32_t RS_PIPE_DEST_ADDR0 = 0x16E0;
+constexpr uint32_t RS_PIPE_OFFSET0 = 0x1700; // x | y << 16
+constexpr uint32_t RS_PIPE_OFFSET1 = 0x1704;
+
+constexpr uint32_t RS_FORMAT_A8R8G8B8 = 6;
+constexpr uint32_t RS_CLEAR_CONTROL_ENABLED1 = 1 << 16;
+constexpr uint32_t RS_KICK = 0xBEEBBEEB;
+
+// GL_FLUSH_CACHE bits for finishing RS/PE work
+constexpr uint32_t GL_FLUSH_CACHE_COLOR = 1 << 1;
+constexpr uint32_t GL_FLUSH_CACHE_DEPTH = 1 << 0;
+
+// BLT engine (halti5 cores; NOT PRESENT on the MP25 despite the feature
+// registers claiming otherwise -- kept for reference/other chips)
 constexpr uint32_t BLT_SRC_ADDR = 0x1'4000;
 constexpr uint32_t BLT_SRC_STRIDE = 0x1'4008;
 constexpr uint32_t BLT_SRC_CONFIG = 0x1'400C;
