@@ -169,50 +169,14 @@ static bool clock_and_reset_gpu()
 
 static void setup_rif()
 {
-	// Slave side: the GPU's AHB register port. RIF peripherals reset to
-	// non-secure, which still grants our secure (EL3) accesses, so nothing
-	// needs to change -- just show the state (GPU is RIFSC peripheral 79,
-	// bit 15 of SECCFGR[2]).
-	print("RIFSC: GPU periph SECCFGR2 = 0x", Hex{RISC->SECCFGR[2]}, ", CIDCFGR = 0x", Hex{RISC->PER[79].CIDCFGR}, "\n");
-
-	// Master side: transactions the GPU issues to DDR pass through the DDR
-	// firewall (RISAF4)
-	//  - RIMC_ATTR_MSEC doesn't seem to matter: the GPU issues non-secure
-	//    transactions whether or not it's set (which is why we use a non-secure
-	//    mmu region for the command buffer)
-
-	// RM0457, sec 8.3, table 37: GPU's CID is set byt RISUP79
-	// Set it to 1 to match the A35
-	RISC->PER[79].CIDCFGR = RISC_PERCIDCFGR_CFEN | RISC_PERCIDCFGR_SCID1;
-	////[0]: 0-31, [1]: 32-63, [2]: 64-95
+	// Enable secure transations from GPU
+	// RM0457, sec 8.3, table 37: GPU's CID is set by RISUP79
 	RISC->SECCFGR[2] |= (1 << (79 - 64));
-	RISC->SECCFGR[4] |= (1 << (137 - 128));
-	RISC->PRIVCFGR[2] |= (1 << (79 - 64));
-	RISC->PRIVCFGR[4] |= (1 << (137 - 128));
+	print("RIFSC: GPU periph SECCFGR2 = 0x", Hex{RISC->SECCFGR[2]}, ", CIDCFGR = 0x", Hex{RISC->PER[79].CIDCFGR}, "\n");
 
 	auto attr = RIMC->ATTR[9]; // RIF_MCID_GPU = 9
 	RIMC->ATTR[9] = (attr & ~RIMC_ATTR_CIDSEL) | RIMC_ATTR_MSEC | RIMC_ATTR_MPRIV;
-	// print("RIMC ATTR[9] (GPU master): 0x",
-	// 	  Hex{attr},
-	// 	  " => 0x",
-	// 	  Hex{RIMC->ATTR[9]},
-	// 	  ", RISUP79 CIDCFGR => 0x",
-	// 	  Hex{RISC->PER[79].CIDCFGR},
-	// 	  "\n");
-
-	// Subregion A of region 1: the GPU buffer window, non-secure, CID1,
-	// read+write, any privilege. RISAF addresses are DDR-relative.
-	// constexpr uint32_t DdrBase = 0x80000000;
-	// RISAF4->REG[0].ASTARTR = GpuBufBase - DdrBase;
-	// RISAF4->REG[0].AENDR = GpuBufBase + GpuBufSize - 1 - DdrBase;
-	// RISAF4->REG[0].ACFGR = RISAF_REGZCFGR_SREN | RISAF_REGZCFGR_SRCID1 | RISAF_REGZCFGR_RDEN | RISAF_REGZCFGR_WREN;
-	// print("RISAF4 region1 subregion A: 0x",
-	// 	  Hex{RISAF4->REG[0].ASTARTR},
-	// 	  "..0x",
-	// 	  Hex{RISAF4->REG[0].AENDR},
-	// 	  " (DDR-relative), CFGR 0x",
-	// 	  Hex{RISAF4->REG[0].ACFGR},
-	// 	  " (non-secure, CID1 R/W)\n");
+	print("RIMC ATTR[9] (GPU master): 0x", Hex{attr}, " => 0x", Hex{RIMC->ATTR[9]}, "\n");
 }
 
 static bool ping_gpu()
