@@ -55,6 +55,9 @@ constexpr uint32_t IDLE_PE = 1 << 2;
 constexpr uint32_t IDLE_BLT = 1 << 12;
 
 // HI_INTR_ACKNOWLEDGE bits
+constexpr uint32_t INTR_FROM_PE = 1u << 2;
+// constexpr uint32_t INTR_FROM_FE = 1u << 1;
+constexpr uint32_t INTR_FROM_FE = 1u << 3;
 constexpr uint32_t INTR_MMU_EXCEPTION = 1u << 30;
 constexpr uint32_t INTR_AXI_BUS_ERROR = 1u << 31;
 
@@ -165,7 +168,7 @@ constexpr uint32_t RS_WINDOW_SIZE = 0x1620; // width | height << 16
 constexpr uint32_t RS_DITHER0 = 0x1630;
 constexpr uint32_t RS_DITHER1 = 0x1634;
 constexpr uint32_t RS_CLEAR_CONTROL = 0x163C; // bits[15:0] mask, bit16: enable
-constexpr uint32_t RS_FILL_VALUE0 = 0x1640; // ..4 consecutive dwords
+constexpr uint32_t RS_FILL_VALUE0 = 0x1640;	  // ..4 consecutive dwords
 constexpr uint32_t RS_EXTRA_CONFIG = 0x16A0;
 constexpr uint32_t RS_SINGLE_BUFFER = 0x16B8;
 constexpr uint32_t RS_PIPE_SOURCE_ADDR0 = 0x16C0;

@@ -1,94 +1,36 @@
 #include "aarch64/system_reg.hh"
+#include "drivers/hal_cnt.hh"
 #include "drivers/rcc.hh"
 #include "drivers/rcc_pll.hh"
+#include "gpu_io.hh"
 #include "gpu_regs.hh"
+#include "interrupt/interrupt.hh"
 #include "print/print.hh"
-#include "stm32mp2xx.h"
 #include <array>
+#include <atomic>
 #include <cstdint>
 
+// Optional, not working: in pmic.cc:
 bool enable_buck3_on_pmic();
 
-// GPU bring-up example.
-//
-// The MP25x has a VeriSilicon (Vivante) GCNanoUltra31 GPU at GPU_BASE
-// (0x48280000). This example brings it up from a cold state and talks to it at
-// the register level (there is no vendor driver in a baremetal context):
-//
-//   1) Power:  VDDGPU (PMIC buck3 on the EV1, always-on in the TF-A BL2 device
-//      tree) is validated with the PWR supply monitor.
-//   2) Clock:  PLL3 is the GPU kernel clock. RCC_GPUCFGR gates/resets the GPU.
-//   3) RIF:    the GPU is also a bus *master*. The DDR firewall (RISAF4) is
-//      configured by TF-A to allow secure CID0/CID1 masters only, so the RIMC
-//      entry for the GPU must be set to issue secure transactions.
-//   4) Ping:   read the chip identity registers and check the core goes idle.
-//   5) FE:     run a trivial command stream (NOPs + END) from DDR through the
-//      command-stream front end -- first proof the GPU can master the bus.
-//   6) Fill:   use the BLT engine (the halti5-era blitter) to clear a small
-//      RGBA8888 image in DDR to a solid color, then verify it with the CPU.
-
-extern "C" uint32_t SystemA35_SYSTICK_Config(uint32_t);
-extern "C" void udelay(unsigned us);
+// Optional, seems not needed? in gpu_mmuv2.cc:
+// bool gpu_mmu_enable();
 
 namespace
 {
 
-volatile uint32_t *const gpu = reinterpret_cast<volatile uint32_t *>(GPU_BASE);
-
-uint32_t gpu_read(uint32_t offset)
-{
-	return gpu[offset / 4];
-}
-
-void gpu_write(uint32_t offset, uint32_t value)
-{
-	gpu[offset / 4] = value;
-}
-
-// GPU addresses are 32-bit bus addresses. We run with a flat (virt == phys)
-// MMU mapping, so a pointer is already a bus address.
-uint32_t bus_addr(const void *p)
-{
-	return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(p));
-}
-
+// Buffers (shared memory between CPU and GPU)
 alignas(64) std::array<uint32_t, 128> cmdbuf{};
-
-constexpr uint32_t ImgWidth = 64;
-constexpr uint32_t ImgHeight = 64;
-constexpr uint32_t ClearColor = 0x4D5A11AC;
+constexpr uint32_t ImgWidth = 1024;
+constexpr uint32_t ImgHeight = 1024;
 alignas(64) std::array<uint32_t, ImgWidth * ImgHeight> image;
 
-bool wait_idle(uint32_t idle_bits, unsigned timeout_us)
-{
-	while (timeout_us--) {
-		if ((gpu_read(VivanteGpu::HI_IDLE_STATE) & idle_bits) == idle_bits)
-			return true;
-		udelay(1);
-	}
-	return false;
-}
-
-// Wait for event bits to latch in HI_INTR_ACKNOWLEDGE. Unlike the idle bits
-// (which also read "idle" if the FE never started!), an event is positive
-// proof the command stream executed up to the EVENT command.
-// Reading the register clears it, so accumulate into intr_acc.
-bool wait_event(uint32_t event_mask, unsigned timeout_us, uint32_t &intr_acc)
-{
-	while (timeout_us--) {
-		intr_acc |= gpu_read(VivanteGpu::HI_INTR_ACKNOWLEDGE);
-		if ((intr_acc & event_mask) == event_mask)
-			return true;
-		udelay(1);
-	}
-	return false;
-}
+constexpr uint32_t ClearColor = 0x4D5A11AC;
 
 } // namespace
 
 // Even with buck3 up, the GPU domain is electrically isolated until software
-// confirms the supply with the PWR voltage monitor and sets the "supply valid"
-// bit (like the other independent supplies, see drivers/pwr_vdd.hh).
+// confirms the supply with the PWR voltage monitor and sets the "supply valid" bit
 static bool power_up_vddgpu(unsigned timeout_us)
 {
 	PWR->CR12 |= PWR_CR12_GPUVMEN;
@@ -100,38 +42,30 @@ static bool power_up_vddgpu(unsigned timeout_us)
 		}
 		udelay(1);
 	}
-	// The monitor must STAY enabled: its live output releases the GPU power
-	// domain reset (vgpu_rstn, RM0457 fig. 90). Disabling it -- like
-	// pwr_vdd.hh does for the VDDIO supplies -- keeps the whole GPU domain
-	// (including PLL3's registers!) in reset, and accessing them hangs the bus.
+	// The monitor must stay enabled:
 	PWR->CR12 |= PWR_CR12_GPUSV;
-	print("VDDGPU is valid (CR12 = 0x", Hex{PWR->CR12}, ")\n");
 	return true;
 }
 
 static bool clock_and_reset_gpu()
 {
-	// The PLL3 hardware physically lives inside the GPU subsystem (RM0457
-	// fig. 100: the RCC only sends it a reference clock, ck_gpuss_pll3_fref),
-	// so the GPU must be powered and its bus clocks enabled *before* PLL3 can
-	// be programmed and lock. The GPU comes out of power-on not in reset, so
-	// no GPURST release is needed first.
+	// GPU must be powered and have clocks enabled before PLL3 can be setup
 	RCC_Enable::GPU_::set();
 	udelay(10);
-	print("GPU clock enabled (RCC GPUCFGR = 0x", Hex{RCC->GPUCFGR}, ")\n");
+	print("GPU clock enabled\n");
 
-	// PLL3 is dedicated to the GPU (no flexgen channel involved).
 	// 40 MHz HSE / 1 * 30 = 1200 MHz VCO, / 3 = 400 MHz.
 	// 400 MHz is a safe speed for the 0.80 V VDDGPU the PMIC provides.
 	constexpr RCC_Clocks::PLLSettings pll3{
 		.src = RCC_Clocks::MuxSelSource::hse,
-		.mult = 30,
+		.mult = 30, // 40,
 		.refdiv = 1,
-		.postdiv1 = 3,
+		.postdiv1 = 3, // 2,
 		.postdiv2 = 1,
 		.frac = 0,
 	};
 	static_assert(pll3.calc_freq(40'000'000) == 400'000'000);
+	// static_assert(pll3.calc_freq(40'000'000) == 800'000'000);
 	RCC_Clocks::set_pll<RCC_Clocks::PLL3>(pll3);
 
 	unsigned timeout = 10'000;
@@ -168,11 +102,11 @@ static void setup_rif()
 	// Enable secure transations from GPU
 	// RM0457, sec 8.3, table 37: GPU's CID is set by RISUP79
 	RISC->SECCFGR[2] |= (1 << (79 - 64));
-	print("RIFSC: GPU periph SECCFGR2 = 0x", Hex{RISC->SECCFGR[2]}, ", CIDCFGR = 0x", Hex{RISC->PER[79].CIDCFGR}, "\n");
+	print("RIFSC: Set SECCFGR bit\n");
 
 	auto attr = RIMC->ATTR[9]; // RIF_MCID_GPU = 9
 	RIMC->ATTR[9] = (attr & ~RIMC_ATTR_CIDSEL) | RIMC_ATTR_MSEC | RIMC_ATTR_MPRIV;
-	print("RIMC ATTR[9] (GPU master): 0x", Hex{attr}, " => 0x", Hex{RIMC->ATTR[9]}, "\n");
+	print("RIMC ATTR[9] (GPU master) secure and privileged\n");
 }
 
 static bool ping_gpu()
@@ -241,15 +175,11 @@ static bool reset_gpu_core()
 		// this after reset on security-enabled cores)
 		gpu_write(MMUv2_AHB_CONTROL, MMUv2_AHB_CONTROL_NONSEC_ACCESS);
 
-		print("GPU core soft-reset OK (idle = 0x", Hex{gpu_read(HI_IDLE_STATE)}, ")\n");
 		return true;
 	}
 
-	print("ERROR: GPU did not go idle after soft reset: idle = 0x",
-		  Hex{gpu_read(HI_IDLE_STATE)},
-		  " clock control = 0x",
-		  Hex{gpu_read(HI_CLOCK_CONTROL)},
-		  "\n");
+	print("ERROR: GPU did not go idle after soft reset: idle = 0x", Hex{gpu_read(HI_IDLE_STATE)});
+	print(" clock control = 0x", Hex{gpu_read(HI_CLOCK_CONTROL)}, "\n");
 	return false;
 }
 
@@ -261,6 +191,18 @@ static bool reset_gpu_core()
 // etnaviv driver never restarts the FE -- it starts it once per reset and
 // then chains buffers with WAIT/LINK.) So disable the FE first, and soft-
 // reset the core to be safe -- that's the state the first kick worked from.
+// Point the FE at a command buffer and start it (the arm itself; see kick_fe)
+static void arm_fe(const uint32_t *buf, uint32_t num_dwords)
+{
+	using namespace VivanteGpu;
+
+	gpu_write(FE_COMMAND_ADDRESS, bus_addr(buf));
+	gpu_write(FE_COMMAND_CONTROL, FE_CONTROL_ENABLE | (num_dwords / 2));
+	// On security-enabled cores the FE only actually starts when the enable
+	// is also written through the secure bank (etnaviv_gpu_start_fe)
+	gpu_write(MMUv2_SEC_COMMAND_CONTROL, FE_CONTROL_ENABLE | (num_dwords / 2));
+}
+
 static bool kick_fe(uint32_t num_dwords)
 {
 	using namespace VivanteGpu;
@@ -278,18 +220,14 @@ static bool kick_fe(uint32_t num_dwords)
 	gpu_write(HI_INTR_ENBL, 0xFFFFFFFF);
 	gpu_read(HI_INTR_ACKNOWLEDGE); // clear stale interrupt bits
 
-	gpu_write(FE_COMMAND_ADDRESS, bus_addr(cmdbuf.data()));
-	gpu_write(FE_COMMAND_CONTROL, FE_CONTROL_ENABLE | (num_dwords / 2));
-	// On security-enabled cores the FE only actually starts when the enable
-	// is also written through the secure bank (etnaviv_gpu_start_fe)
-	gpu_write(MMUv2_SEC_COMMAND_CONTROL, FE_CONTROL_ENABLE | (num_dwords / 2));
-	print("  FE armed at 0x",
-		  Hex{bus_addr(cmdbuf.data())},
-		  ", control readback 0x",
-		  Hex{gpu_read(FE_COMMAND_CONTROL)},
-		  " sec 0x",
-		  Hex{gpu_read(MMUv2_SEC_COMMAND_CONTROL)},
-		  "\n");
+	// Note: it works without this:
+	// if (!gpu_mmu_enable())
+	// 	return false;
+
+	arm_fe(cmdbuf.data(), num_dwords);
+	// print("  FE armed at 0x", Hex{bus_addr(cmdbuf.data())});
+	// print(", control readback 0x", Hex{gpu_read(FE_COMMAND_CONTROL)});
+	// print(" sec 0x", Hex{gpu_read(MMUv2_SEC_COMMAND_CONTROL)}, "\n");
 	return true;
 }
 
@@ -302,7 +240,8 @@ static void print_fe_status(const char *msg)
 	print(" debug 0x", Hex{gpu_read(FE_DMA_DEBUG_STATE)});
 	print(" last cmd 0x", Hex{gpu_read(FE_DMA_HIGH)}, Hex{gpu_read(FE_DMA_LOW)});
 	print(" intr 0x", Hex{gpu_read(HI_INTR_ACKNOWLEDGE)});
-	print(" axi 0x", Hex{gpu_read(HI_AXI_STATUS)}, "\n");
+	print(" axi 0x", Hex{gpu_read(HI_AXI_STATUS)});
+	print(" idle 0x", Hex{gpu_read(HI_IDLE_STATE)}, "\n");
 	// GPU-MMU faults (see gpu_regs.hh for the 4-bit fault codes). A fetch
 	// that faults reads zeros, which looks like "executed nothing".
 	print("  GPU MMU status 0x", Hex{gpu_read(MMUv2_STATUS)});
@@ -313,8 +252,8 @@ static void print_fe_status(const char *msg)
 	// denials are otherwise silent: reads return 0, writes are dropped).
 	// 6 x 32 sources; nonzero = something was blocked since the last check.
 	// (Word 4 bit 9 = ID 137 = RISAF4, the DDR firewall.)
-	volatile uint32_t *iac_isr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x80);
-	volatile uint32_t *iac_icr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x100);
+	auto iac_isr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x80);
+	auto iac_icr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x100);
 	print("  IAC violations:");
 	for (unsigned i = 0; i < 6; i++) {
 		print(" 0x", Hex{iac_isr[i]});
@@ -328,26 +267,18 @@ static void print_fe_status(const char *msg)
 	print("  RISAF4 IASR 0x", Hex{RISAF4->IASR});
 	for (unsigned i = 0; i < 2; i++) {
 		auto esr = RISAF4->IAR[i].IAESR;
-		print("  [",
-			  int(i),
-			  "] addr 0x",
-			  Hex{RISAF4->IAR[i].IADDR},
-			  " CID",
+		print("  [", int(i), "] addr 0x", Hex{RISAF4->IAR[i].IADDR});
+		print(" CID",
 			  int(esr & RISAF_IAESR_IACID_Msk),
 			  (esr & RISAF_IAESR_IASEC) ? " sec" : " NONSEC",
 			  (esr & RISAF_IAESR_IAPRIV) ? " priv" : " unpriv",
 			  (esr & RISAF_IAESR_IANRW) ? " write" : " read");
 	}
 	RISAF4->IACR = 0xF; // clear for next time
-	print("\n  RISAF4 region1: CFGR 0x",
-		  Hex{RISAF4->REG[0].CFGR},
-		  " start 0x",
-		  Hex{RISAF4->REG[0].STARTR},
-		  " end 0x",
-		  Hex{RISAF4->REG[0].ENDR},
-		  " CIDCFGR 0x",
-		  Hex{RISAF4->REG[0].CIDCFGR},
-		  "\n");
+	print("\n  RISAF4 region1: CFGR 0x", Hex{RISAF4->REG[0].CFGR});
+	print(" start 0x", Hex{RISAF4->REG[0].STARTR});
+	print(" end 0x", Hex{RISAF4->REG[0].ENDR});
+	print(" CIDCFGR 0x", Hex{RISAF4->REG[0].CIDCFGR}, "\n");
 }
 
 // Feed the FE a do-nothing command stream: proves the GPU can fetch from DDR
@@ -367,6 +298,7 @@ static bool test_command_fetch()
 	cmdbuf[n++] = CMD_END;
 	cmdbuf[n++] = 0;
 
+	clean_dcache_range(cmdbuf.data(), n * 4);
 	if (!kick_fe(n))
 		return false;
 
@@ -383,12 +315,20 @@ static bool test_command_fetch()
 	return true;
 }
 
-// Have the BLT engine fill (clear) an RGBA8888 image in DDR, and verify it
-static bool test_blt_fill()
+// Have the RS ("resolve") engine fill an RGBA8888 image in DDR, and verify
+// it. The RS engine is this core's fill/copy engine: the MP25's GPU has no 2D
+// pipe and -- despite what its own feature registers claim -- NO BLT engine
+// (see gpu_regs.hh). This mirrors the clear that Mesa emits on this core:
+// etna_rs_gen_clear_cmd() + etna_submit_rs_state() in etnaviv_rs.c.
+static bool test_rs_fill()
 {
 	using namespace VivanteGpu;
 
+	auto start1_tm = read_cntpct();
 	image.fill(0xDEADBEEF); // so we can tell how far a partial fill got
+	auto end1_tm = read_cntpct();
+	print("Initial fill (cpu) takes ", end1_tm - start1_tm, " ticks\n");
+
 	clean_dcache_range(image.data(), sizeof(image));
 
 	auto load1 = [](uint32_t *p, uint32_t state, uint32_t value) {
@@ -397,76 +337,98 @@ static bool test_blt_fill()
 		return p + 2;
 	};
 
-	// The clear-image sequence the Mesa etnaviv driver emits (etnaviv_blt.c),
-	// followed by a FE-waits-for-BLT semaphore+stall so that FE idle also
-	// means BLT done, then END.
+	static_assert(ImgWidth % 16 == 0, "RS requires width to be a multiple of 16");
+
 	uint32_t *p = cmdbuf.data();
-	p = load1(p, BLT_ENABLE, 1);
-	p = load1(p, BLT_CONFIG, blt_config_clear_bpp(4));
-	p = load1(p, BLT_DEST_STRIDE, blt_stride(ImgWidth * 4));
-	p = load1(p, BLT_DEST_CONFIG, BLT_IMAGE_CONFIG_PLAIN);
-	p = load1(p, BLT_DEST_ADDR, bus_addr(image.data()));
-	p = load1(p, BLT_SRC_STRIDE, blt_stride(ImgWidth * 4));
-	p = load1(p, BLT_SRC_CONFIG, BLT_IMAGE_CONFIG_PLAIN);
-	p = load1(p, BLT_SRC_ADDR, bus_addr(image.data()));
-	p = load1(p, BLT_DEST_POS, 0); // x=0, y=0
-	p = load1(p, BLT_IMAGE_SIZE, ImgWidth | (ImgHeight << 16));
-	p = load1(p, BLT_CLEAR_COLOR0, ClearColor);
-	p = load1(p, BLT_CLEAR_COLOR1, ClearColor);
-	p = load1(p, BLT_CLEAR_BITS0, 0xFFFFFFFF);
-	p = load1(p, BLT_CLEAR_BITS1, 0xFFFFFFFF);
-	p = load1(p, BLT_SET_COMMAND, 0x3);
-	p = load1(p, BLT_COMMAND, BLT_COMMAND_CLEAR_IMAGE);
-	p = load1(p, BLT_SET_COMMAND, 0x3);
-	// BLT latches interrupt bit 2 when the clear has completed
-	p = load1(p, GL_EVENT, 2 | GL_EVENT_FROM_BLT);
-	p = load1(p, BLT_ENABLE, 0);
-	// FE waits until the BLT engine is done (BLT must be enabled around
-	// semaphore/stall commands that target it)
-	auto stall_fe_on = [&](uint32_t recipient) {
-		if (recipient == SYNC_RECIPIENT_BLT)
-			p = load1(p, BLT_ENABLE, 1);
-		p = load1(p, GL_SEMAPHORE_TOKEN, sync_token(SYNC_RECIPIENT_FE, recipient));
+	p = load1(p, RS_CONFIG, RS_FORMAT_A8R8G8B8 | (RS_FORMAT_A8R8G8B8 << 8)); // linear, no swap
+	p = load1(p, RS_SOURCE_STRIDE, 0);										 // no source: this is a fill
+	p = load1(p, RS_DEST_STRIDE, ImgWidth * 4);
+	p = load1(p, RS_PIPE_SOURCE_ADDR0, bus_addr(image.data())); // unused but emitted (like Mesa)
+	p = load1(p, RS_PIPE_DEST_ADDR0, bus_addr(image.data()));
+	p = load1(p, RS_PIPE_OFFSET0, 0);
+	p = load1(p, RS_PIPE_OFFSET1, 0);
+	p = load1(p, RS_WINDOW_SIZE, ImgWidth | (ImgHeight << 16));
+	p = load1(p, RS_DITHER0, 0xFFFFFFFF);
+	p = load1(p, RS_DITHER1, 0xFFFFFFFF);
+	p = load1(p, RS_CLEAR_CONTROL, RS_CLEAR_CONTROL_ENABLED1 | 0xFFFF); // fill all 16 bit-planes
+	p = load1(p, RS_FILL_VALUE0 + 0x0, ClearColor);
+	p = load1(p, RS_FILL_VALUE0 + 0x4, ClearColor);
+	p = load1(p, RS_FILL_VALUE0 + 0x8, ClearColor);
+	p = load1(p, RS_FILL_VALUE0 + 0xC, ClearColor);
+	p = load1(p, RS_EXTRA_CONFIG, 0);
+	p = load1(p, RS_SINGLE_BUFFER, 1); // this core has the SINGLE_BUFFER feature
+	p = load1(p, RS_KICKER, RS_KICK);  // magic value starts the resolve
+	p = load1(p, RS_SINGLE_BUFFER, 0);
+
+	// The RS runs as part of the PE pipeline: stall the FE until the PE is
+	// done, flush the color cache to memory, and stall again
+	auto stall_fe_on_pe = [&]() {
+		p = load1(p, GL_SEMAPHORE_TOKEN, sync_token(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE));
 		*p++ = CMD_STALL;
-		*p++ = sync_token(SYNC_RECIPIENT_FE, recipient);
-		if (recipient == SYNC_RECIPIENT_BLT)
-			p = load1(p, BLT_ENABLE, 0);
+		*p++ = sync_token(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
 	};
-	stall_fe_on(SYNC_RECIPIENT_BLT);
+	stall_fe_on_pe();
+	p = load1(p, GL_FLUSH_CACHE, GL_FLUSH_CACHE_COLOR | GL_FLUSH_CACHE_DEPTH);
+	stall_fe_on_pe();
 
-	// Flush the GPU-internal caches to memory, the way the etnaviv driver
-	// ends every 3D-pipe command buffer: without this, the cleared pixels
-	// can stay in the GPU's write-back caches and never reach DDR.
-	stall_fe_on(SYNC_RECIPIENT_PE);
-	p = load1(p, GL_FLUSH_CACHE, GL_FLUSH_CACHE_PIPE3D);
-	p = load1(p, BLT_ENABLE, 1);
-	p = load1(p, BLT_SET_COMMAND, 0x1); // BLT cache flush
-	p = load1(p, BLT_ENABLE, 0);
-	stall_fe_on(SYNC_RECIPIENT_PE);
-	stall_fe_on(SYNC_RECIPIENT_BLT);
-
-	// FE latches interrupt bit 3 when it gets here -- past all the stalls,
-	// so the clear and the cache flushes are complete
+	// PE latches interrupt bit 2 when the fill (and flush) is complete;
+	// the FE latches bit 3 when it gets here, past all the stalls
+	p = load1(p, GL_EVENT, 2 | GL_EVENT_FROM_PE);
 	p = load1(p, GL_EVENT, 3 | GL_EVENT_FROM_FE);
 	*p++ = CMD_END;
 	*p++ = 0;
 
+	clean_dcache_range(cmdbuf.data(), (p - cmdbuf.data()) * 4);
+
+	// Start measuring how long it takes to fill an area with the GPU:
+	auto start_tm = read_cntpct();
+
 	if (!kick_fe(p - cmdbuf.data()))
 		return false;
 
+// #define USE_POLLING
+#ifdef USE_POLLING
 	uint32_t intr = 0;
-	bool done = wait_event(1 << 3, 100'000, intr);
-	print("BLT clear event: ",
-		  (intr & (1 << 2)) ? "received" : "MISSING",
-		  ", end-of-stream event: ",
-		  done ? "received" : "MISSING",
-		  " (intr seen: 0x",
-		  Hex{intr},
-		  ")\n");
-	if (!done) {
+	bool done = wait_event((1 << 3) | (1 << 2), 100'000, intr); // 103000 ticks
+	auto end_tm = read_cntpct();
+#else
+	uint32_t intr = 0;
+	// std::atomic<bool> done = false;
+	bool done = false;
+	std::atomic<uint32_t> end_tm = 0;
+	std::atomic<uint32_t> end_tm2 = 0;
+
+	InterruptManager::register_and_start_isr(GPU_IRQn, 0, 0, [&]() {
+		auto ack = gpu_read(VivanteGpu::HI_INTR_ACKNOWLEDGE);
+		if (ack & (VivanteGpu::INTR_AXI_BUS_ERROR | VivanteGpu::INTR_MMU_EXCEPTION)) {
+			end_tm = read_cntpct();
+		}
+		if (ack & VivanteGpu::INTR_FROM_PE) {
+			end_tm = read_cntpct();
+		} else if (ack & VivanteGpu::INTR_FROM_FE) {
+			end_tm2 = read_cntpct();
+		}
+	});
+
+	uint32_t timeout = 100000;
+	while (end_tm == 0) { // done.load(std::memory_order_acquire) == false) {
+		if (--timeout == 0) {
+			break;
+		}
+		asm("wfe");
+	}
+	done = timeout > 0;
+#endif
+
+	if (done) {
+		print("RS fill event PE:", end_tm - start_tm, " ticks, FE:", end_tm2 - start_tm, " ticks\n");
+	} else {
+		print("RS fill event: ", (intr & (1 << 2)) ? "received" : "MISSING");
+		print(", end-of-stream event: ", (intr & (1 << 3)) ? "received" : "MISSING");
+		print(" (intr seen: 0x", Hex{intr}, ")\n");
 		print_fe_status("  state");
-		if (!wait_idle(IDLE_FE | IDLE_BLT, 100'000))
-			print("  FE/BLT are not idle: the stream is stuck (semaphore never signaled?)\n");
+		if (!wait_idle(IDLE_FE | IDLE_PE, 100'000))
+			print("  FE/PE are not idle: the stream is stuck\n");
 		return false;
 	}
 
@@ -484,25 +446,15 @@ static bool test_blt_fill()
 	}
 
 	if (wrong) {
-		print("ERROR: ",
-			  int(wrong),
-			  " of ",
-			  int(image.size()),
-			  " pixels wrong. First wrong pixel [",
-			  int(first_wrong),
-			  "] = 0x",
-			  Hex{image[first_wrong]},
-			  "\n");
+		print("ERROR: ", int(wrong), " of ", int(image.size()));
+		print(" pixels wrong. First wrong pixel [", int(first_wrong), "] ");
+		print("= 0x", Hex{image[first_wrong]}, "\n");
 		return false;
 	}
 
-	print("GPU filled a ",
-		  int(ImgWidth),
-		  "x",
-		  int(ImgHeight),
-		  " RGBA image with 0x",
-		  Hex{ClearColor},
-		  " -- verified by CPU. \\o/\n");
+	print("\n");
+	print("GPU filled a ", int(ImgWidth), "x", int(ImgHeight));
+	print(" RGBA image with 0x", Hex{ClearColor}, " -- verified by CPU. \\o/\n");
 	return true;
 }
 
@@ -548,8 +500,8 @@ int main()
 	}
 
 	if (ok) {
-		print("\n7) Filling a buffer using the BLT engine\n");
-		ok = test_blt_fill();
+		print("\n7) Filling a buffer using the RS (resolve) engine\n");
+		ok = test_rs_fill();
 	}
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
