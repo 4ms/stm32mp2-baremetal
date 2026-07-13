@@ -313,8 +313,8 @@ There are two main ways of doing this:
 - or using the EV1 board's 10-pin SWD header (CN22 MIPI-10) with an external
   debugger such as the J-Link or TRACE32.
  
-First, you will need to load the minimal_boot project onto the SD card. Make sure
-it boots up and says "MP2" and then hangs.
+First, you will need to load the `debug_load` project onto the SD card. Make sure
+it boots up and says "Ready" and then hangs.
 
 While it's hanging, you can load or reload any of the other projects over SWD.
 You can just leave the SD card installed in the EV1, and reboot with the Reset button.
