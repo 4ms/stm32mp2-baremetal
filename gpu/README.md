@@ -27,68 +27,76 @@ This example brings it up in stages:
    DMAs a command buffer from memory. We feed it a trivial NOP+END stream,
    proving the GPU can master the bus and fetch from DDR.
 
-6. **Fill a buffer**: the actual "basic 2D operation". This GPU has no 2D
-   pipe, and -- despite its own feature registers claiming otherwise -- **no
-   BLT engine** either (the authoritative feature list is the hardware
-   database entry ST upstreamed to Linux: `etnaviv_hwdb.c`, customer_id 0x15;
-   writing the nonexistent BLT registers wedges the FE with no fault). Fills
-   and blits on this core go through the **RS ("resolve") engine**, the same
-   path Mesa uses for clears here. We build a command stream that programs a
-   solid-color RS fill of an RGBA8888 image in DDR, stall the FE on the PE
-   pipeline, flush the color cache, then verify every pixel with the CPU.
+6. **Fill a buffer**: the actual "basic 2D operation". This GPU has no 2D pipe
+   (no BLT, despite the feature bit being set). Fills and blits on this core go
+   through the **RS ("resolve") engine**, the same path Mesa uses for clears.
+   We build a command stream that programs a solid-color RS fill of an RGBA8888
+   image in DDR, stall the FE on the PE pipeline, flush the color cache, then
+   verify every pixel with the CPU. The fill operation is actually slower on the
+   GPU than with a naive CPU memset, but of course 1) it happens in the background
+   while the CPU does other work, and 2) GPUs shine when doing mathematical 
+   operations in parallel, not in pure writes to RAM.
 
-7. **Blit + format-convert**: a fill is pure write bandwidth, and there the
-   GPU has no edge over a CPU `memset` -- it wins on *work per byte* and on
-   running async while the CPU does something else. So this step exercises a
-   real per-pixel transform: the RS engine copies a source image into the
-   destination while **swapping the red and blue channels** in flight
-   (RGBA<->BGRA, via `VIVS_RS_CONFIG_SWAP_RB`). Same RS submit path as the
-   fill, but with a real source, no clear mode, and the swap bit; the CPU
-   verifies `dest[i] == swap_rb(source[i])`.
+7. **Blit + format-convert**: This step exercises a per-pixel transform: the RS
+   engine copies a source image into the destination while swapping the red and
+   blue channels (RGBA<->BGRA, via `VIVS_RS_CONFIG_SWAP_RB`). Same RS submit
+   path as the fill, but with a real source, no clearing, and a swap bit.
+   The CPU verifies `dest[i] == swap_rb(source[i])`.
 
-Expected output ends with:
+Expected output:
 
 ```
+GPU Example (etna API)
+======================
+
+etna: bringing up GPU
+etna: GC model 0x8000 rev 0x6205 (product 0x80003, customer 0x15)
+RS fill (1024x1024) in 844106 ticks
 GPU filled 1024x1024 with 0x4D5A11AC -- verified. \o/
+RS blit+convert (1024x1024) in 3760067 ticks
 GPU copied 1024x1024, swapping R<->B -- verified. \o/
-Ring throughput (16 x 64x64 clears): sequential <N> ticks, pipelined <M> ticks
+Ring throughput (16 x 64x64 clears): sequential 87562 ticks, pipelined 59045 ticks
 
 SUCCESS
 ```
 
 ## The `etna` API
 
-The example is built on a small reusable GPU API (`etna.hh` / `etna.cc`) rather
-than open-coded command streams. It's modeled on the clean, MIT-licensed seam
-in the middle of the Linux etnaviv stack -- libdrm's `etna_cmd_stream` /
-`etna_bo` interface, the contract that Mesa's operation emitters are written
-against. By providing that seam on baremetal, Mesa's MIT operation code
-(`etnaviv_rs.c`, ...) ports near-mechanically; what can't come along is Mesa
-itself (Gallium + the NIR shader compiler), so 3D would use offline-compiled
-shaders.
+The example is built on a small reusable GPU API (`etna.hh` / `etna.cc`),
+modeled on libdrm's `etna_cmd_stream` / `etna_bo` interface, the contract that
+Mesa's operation emitters are written against. This is the MIT-licensed seam in
+the middle of the Linux etnaviv stack. By providing that seam on baremetal,
+Mesa's MIT operation code (`etnaviv_rs.c`, ...) should port easily.
+
+What can't be ported easily is Mesa itself (Gallium + the NIR shader compiler),
+so 3D will need to use offline-compiled shaders (TODO).
 
 The surface:
 
-- `etna::Gpu` -- `init()` does all bring-up (power/clock/RIF/reset/identify)
-  and starts a persistent **WAIT/LINK command ring**; `alloc()` carves buffers
-  from a DDR pool; `submit()`/`wait()`/`submit_and_wait()` run a command stream.
-  The FE is armed exactly once (in `init()`) and then spins on the ring's idle
-  `WAIT; LINK->self` loop forever. `submit()` appends the op to the ring and
-  **patches the idle WAIT into a LINK** to it -- no per-op reset -- so ops can
-  be queued back-to-back (see the throughput test). The ring lives in
-  non-cacheable DDR so the FE sees host writes without cache maintenance; ops
-  must not emit `END` (that would halt the ring).
-- `etna::Bo` -- a buffer object (physically-contiguous DDR; on this identity-map
-  system, cpu pointer == physical == GPU address). `cpu_prep()`/`cpu_fini()`
+- `etna::Gpu` 
+    - `init()` does all bring-up (power/clock/RIF/reset/identify) and starts a
+      persistent WAIT/LINK command ring. The FE is armed in `init()` and then
+      spins on the ring's idle `WAIT; LINK->self` loop forever. The ring lives
+      in non-cacheable DDR so the FE sees host writes without cache
+      maintenance.
+    - `alloc()` creates buffers from a DDR pool and
+      `submit()`/`wait()`/`submit_and_wait()` run a command stream.
+    - `submit()` appends the op to the ring and patches the idle WAIT into a
+      LINK so ops can be queued back-to-back (see the throughput test). ops
+      must not emit `END` (that would halt the ring). 
+    - `wait()` is IRQ-driven: it sleeps on `WFE` (CPU and GPU register bus
+      idle) until the GPU interrupt fires, rather than busy-polling. In a real
+      project, the CPU would be free to do other things instead of calling `wait()`.
+
+- `etna::Bo` -- a buffer object (physically-contiguous). We use an identity-map
+  system, so cpu pointer = physical = GPU address. `cpu_prep()`/`cpu_fini()`
   make the cache bracketing explicit so it can't be forgotten.
 - `etna::CmdStream` -- a growable command buffer with libdrm/Mesa-shaped
   `emit`/`reserve`/`set_state`/`emit_reloc` helpers.
 - `etna::clear()` / `etna::blit()` -- the RS fill and copy+convert operations.
 
-Each `[HAVE]`/`[NEW]`/`[LATER]` tag in `etna.hh` marks the roadmap: the ring
-buffer (WAIT/LINK) for throughput, IRQ-driven async completion, the GPU MMU,
-and the 3D pipe are the deferred pieces. The whole `main.cc` is now just
-`gpu.init()`, two `alloc()`s, and three API calls with CPU verification.
+Each `[HAVE]`/`[NEW]`/`[LATER]` tag in `etna.hh` marks the roadmap: 
+the GPU MMU, and the 3D pipe are the deferred pieces. 
 
 ## Where the register definitions come from
 
@@ -123,9 +131,12 @@ cross-reference against those sources and against `etnaviv_gpu.c` (whose
   the image after the GPU writes it.
 - **FE prefetch units**: `FE_COMMAND_CONTROL`'s prefetch count is in 64-bit
   units, so you have to add padding if needed.
-- **Interrupts**: this example polls `HI_IDLE_STATE` instead of using the
-  GPU's interrupt (GIC SPI 215). The FE-stalls-on-BLT-semaphore trick makes
-  "FE idle" mean "everything done".
+- **Interrupts**: completion is delivered by the GPU interrupt (GIC SPI 215).
+  The ISR (`Gpu::on_irq`) is the *sole* reader of `HI_INTR_ACKNOWLEDGE` -- that
+  register is read-to-clear and also de-asserts the GIC line, so a second
+  reader (e.g. a polling `wait()`) would steal the event bits. `wait()` instead
+  sleeps on `WFE`, woken by the ISR, and consumes its fence's event bit from an
+  atomic accumulator.
 - If the identity reads come back zero, check if VDDGPU is
   valid, `RCC_GPUCFGR` enable/reset bits, PLL3 not locked, and RIF config.
 - If identity reads work but the FE never goes idle and `FE_DMA_ADDRESS`
