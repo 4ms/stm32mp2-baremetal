@@ -21,6 +21,7 @@ bool enable_buck3_on_pmic()
 	constexpr uint8_t Buck3MainCr1 = 0x2A; // voltage: (500 + 10 * n) mV
 	constexpr uint8_t Buck3MainCr2 = 0x2B; // bit 0: enable
 	constexpr uint8_t Buck3_800mV = 30;
+	constexpr uint8_t Buck3_900mV = 40;
 
 	// I2C7 kernel clock (flexgen channel 15 = ck_ker_i2c7).
 	// 64MHz / (findiv+1) = 64/4 = 16 MHz kernel clock -> ~100 kHz with the
@@ -103,7 +104,7 @@ bool enable_buck3_on_pmic()
 	pmic_read(Buck3MainCr2, cr2);
 	print("Buck3 (VDDGPU) was: voltage code ", cr1, ", control 0x", Hex{cr2}, "\n");
 
-	if (auto res = pmic_write(Buck3MainCr1, Buck3_800mV); res != HAL_OK) {
+	if (auto res = pmic_write(Buck3MainCr1, Buck3_900mV); res != HAL_OK) {
 		print("ERROR: PMIC write failed (", res, ")\n");
 		return false;
 	}
