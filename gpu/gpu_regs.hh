@@ -180,6 +180,12 @@ constexpr uint32_t RS_FORMAT_A8R8G8B8 = 6;
 constexpr uint32_t RS_CLEAR_CONTROL_ENABLED1 = 1 << 16;
 constexpr uint32_t RS_KICK = 0xBEEBBEEB;
 
+// RS_CONFIG bits: the RS datapath can swap the R and B channels (RGBA<->BGRA)
+// and vertically flip while it copies -- a genuine per-pixel transform. See
+// VIVS_RS_CONFIG_SWAP_RB / _FLIP in Mesa's state_3d.xml.h.
+constexpr uint32_t RS_CONFIG_SWAP_RB = 0x20000000;
+constexpr uint32_t RS_CONFIG_FLIP = 0x40000000;
+
 // GL_FLUSH_CACHE bits for finishing RS/PE work
 constexpr uint32_t GL_FLUSH_CACHE_COLOR = 1 << 1;
 constexpr uint32_t GL_FLUSH_CACHE_DEPTH = 1 << 0;

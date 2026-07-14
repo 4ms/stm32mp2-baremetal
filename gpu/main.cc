@@ -23,9 +23,16 @@ namespace
 alignas(64) std::array<uint32_t, 128> cmdbuf{};
 constexpr uint32_t ImgWidth = 1024;
 constexpr uint32_t ImgHeight = 1024;
-alignas(64) std::array<uint32_t, ImgWidth * ImgHeight> image;
+alignas(64) std::array<uint32_t, ImgWidth * ImgHeight> image;  // dest
+alignas(64) std::array<uint32_t, ImgWidth * ImgHeight> source; // src for the blit test
 
 constexpr uint32_t ClearColor = 0x4D5A11AC;
+
+// Swap the red and blue channels of an A8R8G8B8 pixel: 0xAARRGGBB -> 0xAABBGGRR
+constexpr uint32_t swap_rb(uint32_t px)
+{
+	return (px & 0xFF00FF00u) | ((px >> 16) & 0xFFu) | ((px & 0xFFu) << 16);
+}
 
 } // namespace
 
@@ -449,6 +456,118 @@ static bool test_rs_fill()
 	return true;
 }
 
+// Use the RS engine to copy `source` into `image` while swapping the R and B
+// channels in flight (RGBA<->BGRA) -- a genuine per-pixel transform, unlike the
+// plain fill. This is the same RS submit path (etna_submit_rs_state in
+// etnaviv_rs.c) but with a real source, no clear mode, and VIVS_RS_CONFIG_SWAP_RB.
+static bool test_rs_blit_convert()
+{
+	using namespace VivanteGpu;
+
+	// A gradient source so the channel swap is visible and verifiable per pixel
+	// (R ramps with x, G with y, B diagonally -- so R != B for most pixels).
+	for (uint32_t y = 0; y < ImgHeight; y++)
+		for (uint32_t x = 0; x < ImgWidth; x++)
+			source[y * ImgWidth + x] =
+				0xFF000000u | ((x & 0xFFu) << 16) | ((y & 0xFFu) << 8) | ((x + y) & 0xFFu);
+	clean_dcache_range(source.data(), sizeof(source));
+
+	image.fill(0xDEADBEEF); // poison dest so a partial/failed blit is obvious
+	clean_dcache_range(image.data(), sizeof(image));
+
+	auto load1 = [](uint32_t *p, uint32_t state, uint32_t value) {
+		p[0] = cmd_load_state(state);
+		p[1] = value;
+		return p + 2;
+	};
+
+	static_assert(ImgWidth % 16 == 0, "RS requires width to be a multiple of 16");
+
+	uint32_t *p = cmdbuf.data();
+	// A8R8G8B8 both sides, swap R<->B while copying. CLEAR_CONTROL=0 => real copy.
+	p = load1(p, RS_CONFIG, RS_FORMAT_A8R8G8B8 | (RS_FORMAT_A8R8G8B8 << 8) | RS_CONFIG_SWAP_RB);
+	p = load1(p, RS_SOURCE_STRIDE, ImgWidth * 4);
+	p = load1(p, RS_DEST_STRIDE, ImgWidth * 4);
+	p = load1(p, RS_PIPE_SOURCE_ADDR0, bus_addr(source.data()));
+	p = load1(p, RS_PIPE_DEST_ADDR0, bus_addr(image.data()));
+	p = load1(p, RS_PIPE_OFFSET0, 0);
+	p = load1(p, RS_PIPE_OFFSET1, 0);
+	p = load1(p, RS_WINDOW_SIZE, ImgWidth | (ImgHeight << 16));
+	p = load1(p, RS_DITHER0, 0xFFFFFFFF);
+	p = load1(p, RS_DITHER1, 0xFFFFFFFF);
+	p = load1(p, RS_CLEAR_CONTROL, 0); // not a clear
+	p = load1(p, RS_EXTRA_CONFIG, 0);
+	p = load1(p, RS_SINGLE_BUFFER, 1);
+	p = load1(p, RS_KICKER, RS_KICK);
+	p = load1(p, RS_SINGLE_BUFFER, 0);
+
+	auto stall_fe_on_pe = [&]() {
+		p = load1(p, GL_SEMAPHORE_TOKEN, sync_token(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE));
+		*p++ = CMD_STALL;
+		*p++ = sync_token(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
+	};
+	stall_fe_on_pe();
+	p = load1(p, GL_FLUSH_CACHE, GL_FLUSH_CACHE_COLOR | GL_FLUSH_CACHE_DEPTH);
+	stall_fe_on_pe();
+	p = load1(p, GL_EVENT, 2 | GL_EVENT_FROM_PE); // bit 2 = true completion
+	*p++ = CMD_END;
+	*p++ = 0;
+
+	// Register the completion ISR *before* the kick, so it replaces the stale
+	// one the fill test left registered before the GPU can raise an interrupt.
+	std::atomic<uint32_t> pe_tm = 0;
+	std::atomic<bool> err = false;
+	InterruptManager::register_and_start_isr(GPU_IRQn, 0, 0, [&]() {
+		auto ack = gpu_read(HI_INTR_ACKNOWLEDGE); // read-to-clear + acks the GIC line
+		if (ack & (INTR_AXI_BUS_ERROR | INTR_MMU_EXCEPTION))
+			err.store(true, std::memory_order_release);
+		if (ack & INTR_FROM_PE)
+			pe_tm.store(read_cntpct(), std::memory_order_release);
+	});
+
+	uint32_t start_tm = read_cntpct();
+	if (!kick_fe(p - cmdbuf.data()))
+		return false;
+
+	// Busy-wait (hang-proof: wall-clock deadline). The ISR records the exact
+	// completion tick; we just wait for it.
+	uint64_t deadline = read_cntpct() + 64'000'000u; // ~1s at 64MHz
+	while (pe_tm.load(std::memory_order_acquire) == 0) {
+		if (err.load(std::memory_order_acquire) || read_cntpct() > deadline) {
+			print("ERROR: RS blit did not complete\n");
+			print_fe_status("  state");
+			return false;
+		}
+	}
+	print("RS blit+convert (", int(ImgWidth), "x", int(ImgHeight));
+	print(") in ", pe_tm.load() - start_tm, " ticks\n");
+
+	invalidate_dcache_range(image.data(), sizeof(image));
+
+	unsigned wrong = 0;
+	unsigned first_wrong = 0;
+	for (auto i = 0u; i < image.size(); i++) {
+		if (image[i] != swap_rb(source[i])) {
+			if (wrong == 0)
+				first_wrong = i;
+			wrong++;
+		}
+	}
+
+	if (wrong) {
+		print("ERROR: ", int(wrong), " of ", int(image.size()), " pixels wrong. ");
+		print("[", int(first_wrong), "] src 0x", Hex{source[first_wrong]});
+		print(" expected 0x", Hex{swap_rb(source[first_wrong])});
+		print(" got 0x", Hex{image[first_wrong]}, "\n");
+		return false;
+	}
+
+	print("\n");
+	print("GPU copied ", int(ImgWidth), "x", int(ImgHeight));
+	print(" source to dest, swapping R<->B per pixel -- verified by CPU. \\o/\n");
+	return true;
+}
+
 int main()
 {
 	print("\nGPU Example\n");
@@ -493,6 +612,11 @@ int main()
 	if (ok) {
 		print("\n7) Filling a buffer using the RS (resolve) engine\n");
 		ok = test_rs_fill();
+	}
+
+	if (ok) {
+		print("\n8) Blit + format-convert (R<->B) using the RS engine\n");
+		ok = test_rs_blit_convert();
 	}
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");

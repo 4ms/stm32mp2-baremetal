@@ -35,17 +35,29 @@ This example brings it up in stages:
    writing the nonexistent BLT registers wedges the FE with no fault). Fills
    and blits on this core go through the **RS ("resolve") engine**, the same
    path Mesa uses for clears here. We build a command stream that programs a
-   solid-color RS fill of a 64x64 RGBA8888 image in DDR, stall the FE on the
-   PE pipeline, flush the color cache, then verify every pixel with the CPU.
-   Note the RS runs behind the GPU's MMU: the memory-touching engines do not
-   work with the MMU in bypass, so the example first builds an identity
-   mapping of DDR and enables the MMU through the secure bank
-   (`gpu_mmu_enable()`, mirroring `etnaviv_iommuv2_restore_sec()`).
+   solid-color RS fill of an RGBA8888 image in DDR, stall the FE on the PE
+   pipeline, flush the color cache, then verify every pixel with the CPU.
+
+7. **Blit + format-convert**: a fill is pure write bandwidth, and there the
+   GPU has no edge over a CPU `memset` -- it wins on *work per byte* and on
+   running async while the CPU does something else. So this step exercises a
+   real per-pixel transform: the RS engine copies a source image into the
+   destination while **swapping the red and blue channels** in flight
+   (RGBA<->BGRA, via `VIVS_RS_CONFIG_SWAP_RB`). Same RS submit path as the
+   fill, but with a real source, no clear mode, and the swap bit; the CPU
+   verifies `dest[i] == swap_rb(source[i])`.
+
+Completion is detected two ways: the fill polls the interrupt-acknowledge
+register; the blit takes the GPU interrupt (GIC SPI 215) and keys off the
+**FROM_PE event (bit 2)** -- the one pipelined behind the RS writes and cache
+flush. The FROM_FE event (bit 1/3) fires as soon as the front-end reaches it,
+long before the pixels are in DDR, so it is *not* a valid completion signal.
 
 Expected output ends with:
 
 ```
-GPU filled a 64x64 RGBA image with 0x4D5A11AC -- verified by CPU. \o/
+GPU filled a 1024x1024 RGBA image with 0x4D5A11AC -- verified by CPU. \o/
+GPU copied 1024x1024 source to dest, swapping R<->B per pixel -- verified by CPU. \o/
 
 SUCCESS
 ```
