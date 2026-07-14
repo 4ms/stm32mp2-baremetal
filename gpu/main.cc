@@ -23,27 +23,43 @@ constexpr uint32_t swap_rb(uint32_t px)
 	return (px & 0xFF00FF00u) | ((px >> 16) & 0xFFu) | ((px & 0xFFu) << 16);
 }
 
-// A trivial command stream (NOP + FROM_FE event + END) that proves the FE can
-// fetch and execute from DDR before we ask it to do real work. Uses the low
-// level of the API directly since it isn't an RS/PE operation.
-bool test_command_fetch(etna::Gpu &gpu)
+// Exercise the WAIT/LINK ring: run N small clears two ways and compare.
+//  - sequential: submit + wait for each (one op in flight at a time)
+//  - pipelined:  submit all N, then wait only for the last
+// The FE is never reset between ops (it has been running the ring since
+// init()); pipelining lets it run them back-to-back with no host round-trip.
+bool test_throughput(etna::Gpu &gpu)
 {
-	using namespace VivanteGpu;
-	auto cs = gpu.new_cmd_stream(16);
-	cs.emit(CMD_NOP);
-	cs.emit(0);
-	// FROM_FE event (id 1) fires when the FE *fetches* it -- the right proof
-	// that the FE can DMA and execute from DDR (no pixel-pipe work involved).
-	cs.event(1, GL_EVENT_FROM_FE);
-	cs.emit(CMD_END);
-	cs.emit(0);
+	constexpr int N = 16;	   // <= 29 so the rolling event ids stay distinct
+	constexpr uint32_t W = 64; // small: per-op overhead, not RS bandwidth, dominates
+	constexpr uint32_t H = 64;
 
-	auto f = gpu.submit(cs);
-	if (!f || !gpu.wait(f, 100'000, 1u << 1)) { // wait for event id 1
-		print("ERROR: FE did not execute a NOP stream\n");
+	auto buf = gpu.alloc(W * H * 4);
+	if (!buf)
 		return false;
+
+	auto t0 = read_cntpct();
+	for (int i = 0; i < N; i++) {
+		auto cs = gpu.new_cmd_stream();
+		etna::clear(cs, buf, W, H, 0x11223300u | i);
+		if (!gpu.submit_and_wait(cs))
+			return false;
 	}
-	print("FE executed a command stream from DDR\n");
+	auto seq = (uint32_t)(read_cntpct() - t0);
+
+	auto t1 = read_cntpct();
+	etna::Fence last;
+	for (int i = 0; i < N; i++) {
+		auto cs = gpu.new_cmd_stream();
+		etna::clear(cs, buf, W, H, 0x22334400u | i);
+		last = gpu.submit(cs); // queue without waiting
+	}
+	if (!gpu.wait(last)) // one wait for the whole batch (FIFO -> last is last)
+		return false;
+	auto pipe = (uint32_t)(read_cntpct() - t1);
+
+	print("Ring throughput (", int(N), " x ", int(W), "x", int(H), " clears): ");
+	print("sequential ", seq, " ticks, pipelined ", pipe, " ticks\n");
 	return true;
 }
 
@@ -136,11 +152,11 @@ int main()
 	}
 
 	if (ok)
-		ok = test_command_fetch(gpu);
-	if (ok)
 		ok = test_fill(gpu, fb);
 	if (ok)
 		ok = test_blit_convert(gpu, fb, src);
+	if (ok)
+		ok = test_throughput(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 

@@ -140,14 +140,15 @@ void arm_fe(uint32_t addr, uint32_t num_dwords)
 // Append the generic PE-pipeline completion trailer: drain the FE onto the PE,
 // flush the color/depth caches to DDR, drain again, latch the completion event,
 // then END. Used by every RS/PE op so completion means "results are in DDR".
-void emit_pe_completion(CmdStream &cs)
+// Drain the RS/PE pipeline and flush its writes to DDR: stall the FE onto the
+// PE, flush the color/depth caches, stall again. The op leaves the pipeline
+// drained; submit() appends the ring completion trailer (event + wait + link).
+// Deliberately NO event and NO END here -- an END would halt the FE's ring.
+void emit_pe_drain(CmdStream &cs)
 {
 	cs.stall(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
 	cs.flush_cache();
 	cs.stall(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
-	cs.event(kEventComplete, GL_EVENT_FROM_PE);
-	cs.emit(CMD_END);
-	cs.emit(0); // pad to 64-bit
 }
 
 } // namespace
@@ -268,6 +269,41 @@ bool Gpu::init()
 	}
 	print("etna: GC model 0x", Hex{info_.model}, " rev 0x", Hex{info_.revision});
 	print(" (product 0x", Hex{info_.product_id}, ", customer 0x", Hex{info_.customer_id}, ")\n");
+
+	// Start the persistent command ring: this is the only time the FE is armed.
+	// From here it spins on the ring's WAIT/LINK idle loop, and submit() feeds
+	// it work by patching -- no more per-op resets.
+	return ring_init();
+}
+
+// The ring lives in NON-CACHEABLE DDR so CPU writes are immediately visible to
+// the FE's DMA (a dsb is enough; no cache maintenance on the hot path). We use
+// the shared "noncache" block the MMU maps at 0x8A000000 (see shared/mmu/mmu.cc).
+bool Gpu::ring_init()
+{
+	ring_base_ = 0x8A000000;
+	ring_dwords_ = 4096; // 16 KB
+	auto ring = reinterpret_cast<volatile uint32_t *>(static_cast<uintptr_t>(ring_base_));
+
+	// Home idle loop at offset 0: WAIT; LINK -> WAIT. (WAIT is 1 dword but
+	// occupies a qword; the FE resumes at the next qword, the LINK.)
+	ring[0] = cmd_wait(200);
+	ring[1] = 0; // pad
+	ring[2] = cmd_link(2);
+	ring[3] = ring_base_ + 0; // link back to the WAIT at offset 0
+	dsb_sy();
+
+	ring_tail_ = 0; // the WAIT the FE idles on
+	ring_head_ = 4; // next free dword (qword-aligned)
+	next_event_ = 1;
+	intr_acc_ = 0;
+
+	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE.
+	gpu_write(HI_INTR_ENBL, 0xFFFFFFFF);
+	gpu_read(HI_INTR_ACKNOWLEDGE);
+
+	// Arm the FE once, on the ring home (prefetch = 2 qwords = the WAIT/LINK).
+	arm_fe(ring_base_, 2);
 	return true;
 }
 
@@ -291,48 +327,84 @@ CmdStream Gpu::new_cmd_stream(uint32_t words)
 
 Fence Gpu::submit(CmdStream &cs)
 {
-	// Make the command buffer visible to the FE's DMA, then (single-shot model)
-	// reset the core and arm the FE at it. [LATER] a persistent WAIT/LINK ring
-	// appends instead of resetting.
-	uint32_t num_dwords = cs.offset();
-	clean_dcache_range(cs.bo().map(), num_dwords * 4);
+	auto ring = reinterpret_cast<volatile uint32_t *>(static_cast<uintptr_t>(ring_base_));
 
-	gpu_write(FE_COMMAND_CONTROL, 0);
-	if (!reset_gpu_core())
-		return Fence{}; // null
+	// The block we append: the op's work (from cs) + a completion trailer of
+	// EVENT (2 dwords) + WAIT (2) + LINK (2) = 6 dwords.
+	uint32_t op_dw = cs.offset();
+	uint32_t block_dw = op_dw + 6;
 
-	// Unmask interrupt sources so events latch in HI_INTR_ACKNOWLEDGE, and
-	// clear any stale bits.
-	gpu_write(HI_INTR_ENBL, 0xFFFFFFFF);
-	gpu_read(HI_INTR_ACKNOWLEDGE);
+	// Wrap if it won't fit. Safe only because callers wait for completion (the
+	// FE is parked at the current tail, far from offset 0) before reusing the
+	// ring start. [LATER] a real free-cursor lets us wrap while work is queued.
+	if (ring_head_ + block_dw > ring_dwords_)
+		ring_head_ = 4; // keep the home wait-link at 0..3 intact
 
-	arm_fe(cs.bo().gpu_addr(), num_dwords);
-	return Fence{++seqno_};
+	uint32_t start = ring_head_;
+	uint32_t w = start;
+
+	// Copy the op's commands into the ring (cs backing is cacheable and
+	// CPU-written, so a plain read is coherent; the ring is non-cacheable).
+	auto src = static_cast<const uint32_t *>(cs.bo().map());
+	for (uint32_t i = 0; i < op_dw; i++)
+		ring[w++] = src[i];
+
+	// Completion trailer: latch a rolling event id FROM_PE, then a fresh idle
+	// WAIT/LINK that becomes the new tail.
+	uint32_t event_id = next_event_;
+	next_event_ = (next_event_ % 29) + 1; // 1..29 (avoid bits 30/31 = MMU/AXI error)
+	intr_acc_ &= ~(1u << event_id);		  // drop any stale accumulated bit for this id
+	ring[w++] = cmd_load_state(GL_EVENT);
+	ring[w++] = event_id | GL_EVENT_FROM_PE;
+
+	uint32_t new_wait = w;
+	ring[w++] = cmd_wait(200);
+	ring[w++] = 0; // pad
+	ring[w++] = cmd_link(2);
+	ring[w++] = ring_base_ + new_wait * 4; // link back to this WAIT (idle)
+	dsb_sy();							   // the whole block is in DDR before we divert the FE
+
+	// Divert the FE: replace the tail's WAIT with a LINK to `start`. Write the
+	// target first, barrier, then the LINK header -- so the FE (which may fetch
+	// at any instant) never sees a LINK header pointing at a stale address.
+	// (Mirrors etnaviv_buffer_replace_wait.)
+	uint32_t prefetch = block_dw / 2; // qwords
+	ring[ring_tail_ + 1] = ring_base_ + start * 4;
+	dsb_sy();
+	ring[ring_tail_ + 0] = cmd_link(prefetch);
+	dsb_sy();
+
+	ring_tail_ = new_wait;
+	ring_head_ = w;
+	return Fence{.event_id = event_id, .seqno = ++seqno_};
 }
 
-bool Gpu::wait(Fence f, uint32_t timeout_us, uint32_t done_bit)
+bool Gpu::wait(Fence f, uint32_t timeout_us)
 {
 	if (!f)
 		return false;
 
-	// Poll the interrupt-acknowledge register for `done_bit`.
-	// Reading it is clears the bit, so accumulate all reads.
-	// IRQ-driven async completion is a later enhancement; polling is robust for submit+wait.
+	// Poll HI_INTR_ACKNOWLEDGE for f's event bit. The read is destructive and
+	// may return several ops' events at once, so accumulate into intr_acc_
+	// (persists across waits) and only consume this fence's bit.
+	// [LATER] deliver via the GPU IRQ instead of polling.
+	const uint32_t done_bit = 1u << f.event_id;
 	const uint32_t err_bits = INTR_AXI_BUS_ERROR | INTR_MMU_EXCEPTION;
 	uint64_t deadline = read_cntpct() + (uint64_t)timeout_us * (read_cntfreq() / 1'000'000);
 
-	uint32_t acc = 0;
 	while (true) {
-		acc |= gpu_read(HI_INTR_ACKNOWLEDGE);
-		if (acc & done_bit)
-			return true;
-		if (acc & err_bits) {
-			print("etna: GPU error interrupt 0x", Hex{acc}, "\n");
+		intr_acc_ |= gpu_read(HI_INTR_ACKNOWLEDGE);
+		if (intr_acc_ & err_bits) {
+			print("etna: GPU error interrupt 0x", Hex{intr_acc_}, "\n");
 			dump_status("  on submit");
 			return false;
 		}
+		if (intr_acc_ & done_bit) {
+			intr_acc_ &= ~done_bit; // consume it
+			return true;
+		}
 		if (read_cntpct() > deadline) {
-			print("etna: submission timed out\n");
+			print("etna: submission timed out (event ", int(f.event_id), ")\n");
 			dump_status("  timeout");
 			return false;
 		}
@@ -384,7 +456,7 @@ void clear(CmdStream &cs, const Bo &dst, uint32_t width, uint32_t height, uint32
 	cs.set_state(RS_SINGLE_BUFFER, 1);
 	cs.set_state(RS_KICKER, RS_KICK);
 	cs.set_state(RS_SINGLE_BUFFER, 0);
-	emit_pe_completion(cs);
+	emit_pe_drain(cs);
 }
 
 void blit(CmdStream &cs, const Bo &dst, const Bo &src, uint32_t width, uint32_t height, Format fmt, uint32_t flags)
@@ -411,7 +483,7 @@ void blit(CmdStream &cs, const Bo &dst, const Bo &src, uint32_t width, uint32_t 
 	cs.set_state(RS_SINGLE_BUFFER, 1);
 	cs.set_state(RS_KICKER, RS_KICK);
 	cs.set_state(RS_SINGLE_BUFFER, 0);
-	emit_pe_completion(cs);
+	emit_pe_drain(cs);
 }
 
 } // namespace etna

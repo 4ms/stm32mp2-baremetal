@@ -131,6 +131,20 @@ constexpr uint32_t CMD_END = 0x1000'0000;
 constexpr uint32_t CMD_NOP = 0x1800'0000;
 constexpr uint32_t CMD_STALL = 0x4800'0000; // second dword is a sync token
 
+// WAIT: the FE waits `cycles` then advances to the next (64-bit-aligned)
+// command. A WAIT immediately followed by a LINK back to the WAIT is the
+// canonical FE idle loop the WAIT/LINK ring is built on.
+constexpr uint32_t cmd_wait(uint32_t cycles)
+{
+	return 0x3800'0000 | (cycles & 0xFFFF);
+}
+// LINK: second dword is the target address. `prefetch` is how many 64-bit
+// words to prefetch from the target (in qwords).
+constexpr uint32_t cmd_link(uint32_t prefetch_qwords)
+{
+	return 0x4000'0000 | (prefetch_qwords & 0xFFFF);
+}
+
 // Sync token (both for the STALL command and the GL_SEMAPHORE_TOKEN state)
 constexpr uint32_t SYNC_RECIPIENT_FE = 0x01;
 constexpr uint32_t SYNC_RECIPIENT_PE = 0x07;

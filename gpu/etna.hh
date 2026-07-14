@@ -185,15 +185,16 @@ private:
 };
 
 // -----------------------------------------------------------------------------
-//  Fence -- completion token for a submission                    [NEW/LATER]
+//  Fence -- completion token for a submission                    [NEW]
 // -----------------------------------------------------------------------------
 // Mirrors the (timestamp, pipe_wait) fence model of libdrm. A submission
-// completes when its GL_EVENT(FROM_PE) latches. First cut: one outstanding
-// submission, so a Fence is just "the Nth submission's PE event". [LATER] a
-// rolling event id per submit + a small in-flight table enables >1 in flight.
+// completes when its GL_EVENT(FROM_PE) latches HI_INTR_ACKNOWLEDGE bit
+// `event_id`. Each submit gets a distinct rolling event id (1..29), so several
+// submissions can be in flight and waited for independently.
 struct Fence {
+	uint32_t event_id = 0; // 0 = null; else the HI_INTR_ACKNOWLEDGE bit to poll
 	uint32_t seqno = 0;
-	explicit operator bool() const { return seqno != 0; }
+	explicit operator bool() const { return event_id != 0; }
 };
 
 // -----------------------------------------------------------------------------
@@ -227,18 +228,20 @@ public:
 	// Create a command stream backed by a freshly allocated Bo. [NEW]
 	CmdStream new_cmd_stream(uint32_t words = 1024);
 
-	// Submit a finished command stream to the FE and return a Fence. The stream
-	// must end with a completion event + END (the op helpers add these).
-	// First cut: reset core + arm FE per submit (single-shot). [HAVE, wrap]
-	// [LATER]: append to a persistent WAIT/LINK ring; no per-submit reset.
+	// Submit a command stream (which must contain an op's work + PE drain, NO
+	// END -- the op helpers emit exactly that). Appends it to the persistent
+	// WAIT/LINK ring plus a completion trailer (event + wait + link), then
+	// diverts the FE by patching its idle WAIT into a LINK to the new block.
+	// The FE is never reset per submit -- it has been running the ring since
+	// init(). Returns a Fence carrying the op's rolling event id. [NEW: ring]
 	Fence submit(CmdStream &cs);
 
-	// Block until `f` completes or timeout. Mirrors etna_pipe_wait. First cut
-	// polls HI_INTR_ACKNOWLEDGE for `done_bit` (default the FROM_PE completion
-	// event); returns false on timeout / AXI / MMU error. Pass a different bit
-	// for low-level streams that signal via a different event id. [HAVE, wrap]
+	// Block until `f` completes or timeout. Mirrors etna_pipe_wait. Polls
+	// HI_INTR_ACKNOWLEDGE (accumulating, since the read is destructive) for
+	// f's event bit; returns false on timeout / AXI / MMU error. Several
+	// fences can be outstanding and waited in any order. [HAVE, wrap]
 	// [LATER] deliver via the GPU IRQ (GIC SPI 215) for true async.
-	bool wait(Fence f, uint32_t timeout_us = 1'000'000, uint32_t done_bit = (1u << kEventComplete));
+	bool wait(Fence f, uint32_t timeout_us = 1'000'000);
 
 	// Print FE/PE/IAC/RISAF diagnostics -- the instrumentation from bring-up,
 	// for when a submission times out or errors.
@@ -252,9 +255,19 @@ public:
 	}
 
 private:
+	// Persistent WAIT/LINK command ring (non-cacheable DDR, FE-coherent). The
+	// FE spins on an idle WAIT/LINK at `ring_tail_`; submit() appends after
+	// `ring_head_` and patches the tail's WAIT into a LINK to the new block.
+	bool ring_init();
+
 	Info info_{};
-	uint32_t pool_next_ = 0; // bump pointer into the DDR carve-out
-	uint32_t seqno_ = 0;	 // rolling submission counter -> Fence
+	uint32_t seqno_ = 0;	   // monotonic submission counter (diagnostic)
+	uint32_t ring_base_ = 0;   // physical address of the ring (== cpu == gpu)
+	uint32_t ring_dwords_ = 0; // ring capacity
+	uint32_t ring_head_ = 0;   // dword cursor for the next append (qword-aligned)
+	uint32_t ring_tail_ = 0;   // dword offset of the WAIT the FE is idling on
+	uint32_t next_event_ = 1;  // rolling completion event id (1..29)
+	uint32_t intr_acc_ = 0;	   // accumulated HI_INTR_ACKNOWLEDGE bits (read is destructive)
 };
 
 // =============================================================================
@@ -278,9 +291,9 @@ enum BlitFlags : uint32_t {
 	BlitFlipY = 1 << 1,	 // vertical flip (VIVS_RS_CONFIG_FLIP)
 };
 
-// Solid-color fill of `dst` (width x height, linear). Emits the full RS clear
-// sequence including the PE-completion trailer (stall + cache flush + event +
-// END), so it is ready to submit(). Replaces test_rs_fill. [HAVE -> move here]
+// Solid-color fill of `dst` (width x height, linear). Emits the RS clear
+// sequence + PE drain (stall + cache flush + stall); submit() adds the ring
+// completion trailer. Note: no END -- END would halt the FE's ring loop.
 void clear(CmdStream &cs, const Bo &dst, uint32_t width, uint32_t height, uint32_t argb);
 
 // Copy `src` -> `dst` (same size, linear) with optional per-pixel transform

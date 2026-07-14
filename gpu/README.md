@@ -51,6 +51,7 @@ Expected output ends with:
 ```
 GPU filled 1024x1024 with 0x4D5A11AC -- verified. \o/
 GPU copied 1024x1024, swapping R<->B -- verified. \o/
+Ring throughput (16 x 64x64 clears): sequential <N> ticks, pipelined <M> ticks
 
 SUCCESS
 ```
@@ -68,9 +69,15 @@ shaders.
 
 The surface:
 
-- `etna::Gpu` -- `init()` does all bring-up (power/clock/RIF/reset/identify);
-  `alloc()` carves buffers from a DDR pool; `submit()`/`wait()`/`submit_and_wait()`
-  run a command stream.
+- `etna::Gpu` -- `init()` does all bring-up (power/clock/RIF/reset/identify)
+  and starts a persistent **WAIT/LINK command ring**; `alloc()` carves buffers
+  from a DDR pool; `submit()`/`wait()`/`submit_and_wait()` run a command stream.
+  The FE is armed exactly once (in `init()`) and then spins on the ring's idle
+  `WAIT; LINK->self` loop forever. `submit()` appends the op to the ring and
+  **patches the idle WAIT into a LINK** to it -- no per-op reset -- so ops can
+  be queued back-to-back (see the throughput test). The ring lives in
+  non-cacheable DDR so the FE sees host writes without cache maintenance; ops
+  must not emit `END` (that would halt the ring).
 - `etna::Bo` -- a buffer object (physically-contiguous DDR; on this identity-map
   system, cpu pointer == physical == GPU address). `cpu_prep()`/`cpu_fini()`
   make the cache bracketing explicit so it can't be forgotten.
