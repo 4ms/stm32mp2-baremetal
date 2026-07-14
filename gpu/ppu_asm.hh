@@ -182,11 +182,19 @@ inline uint32_t get_pixel(uint32_t fmt)
 	return (fmt == 0x3 || fmt == 0x6) ? 7 : 15;
 }
 
+// A built shader: its size in dwords and how many temp registers it uses.
+// Both feed the dispatch (InstCount / RegCount). A "kernel" is one of these
+// builders; add more to run other computations.
+struct ShaderInfo {
+	unsigned inst_dwords; // total dwords (4 per instruction)
+	unsigned reg_count;	  // temp registers the shader uses
+};
+
 // Build the flop-reset compute kernel: OutImage = InImage + InImage, in EVIS
 // (img_load x2, dp2x8 add, img_store). Mirrors _ProgramPPUInstruction exactly.
-// Writes 16 dwords into `inst`, returns the count (16). RegCount is 3.
-// dataType 0x7 = u8, numShaderCores from the feature DB (2 on our chip).
-inline unsigned build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+// Writes 16 dwords into `inst`. dataType 0x7 = u8, numShaderCores from the
+// feature DB (2 on our chip).
+inline ShaderInfo build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
 {
 	for (unsigned i = 0; i < 16; i++)
 		inst[i] = 0;
@@ -225,7 +233,35 @@ inline unsigned build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, uin
 	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
 	n += 4;
 
-	return n;
+	return ShaderInfo{n, 3}; // RegCount 3 (from _ProgramPPUInstruction)
+}
+
+// Build a copy kernel: OutImage = InImage (img_load -> img_store, no arithmetic
+// in between). The simplest EVIS kernel -- a probe for whether the per-pixel
+// load/store path round-trips cleanly, independent of any compute op.
+inline ShaderInfo build_copy_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	// img_load.u8 r1, c0, r0.xy
+	add_opcode(0x79, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	// img_store.u8 r1, c1, r0.xy, r1
+	add_opcode(0x7A, 0, dataType, &inst[n]);
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 2};
 }
 
 } // namespace ppu

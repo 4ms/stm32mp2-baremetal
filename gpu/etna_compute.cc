@@ -19,12 +19,15 @@
 namespace etna
 {
 
-// This is a command stream for the FE, which runs a shader on an input
-// We replace certain words with the address of our input buffer, output buffer,
-// and shader code (which was generated in ppu_asm.hh).
+// This is a command stream for the FE that loads and runs a shader over an
+// input image, writing an output image. It is the fixed 64x6 sequence extracted
+// from the vendor's _ProgramPPUCommand; emit_ppu_dispatch() below uses it as a
+// TEMPLATE and patches the size/address/count slots so it works for any shader
+// and image size (the vendor computes the group counts from width/height, so
+// varying size is exactly what the dispatch is built to do).
 
 // clang-format off
-static const uint32_t kPpuDispatch[118] = {
+static const uint32_t kPpuDispatchTemplate[118] = {
 	0x08010E13, 0x00000002, 0x08010E02, 0x00000701, 0x48000000, 0x00000701, 0x0804D800, 0x00000000, // [7]=IN
 	0x00000040, 0x00060040, 0x444051F0, 0xFFFFFFFF, 0x0804D804, 0x00000000, 0x00000040, 0x00060040, // [13]=OUT
 	0x444051F0, 0xFFFFFFFF, 0x0810D808, 0x55555555, 0x00000000, 0x01234567, 0x89ABCDEF, 0x55555555,
@@ -42,74 +45,144 @@ static const uint32_t kPpuDispatch[118] = {
 	0x08010E03, 0x00000C23, 0x08010594, 0x00000001, 0x08010E03, 0x00000C23,
 };
 // clang-format on
-constexpr unsigned kInIdx = 7, kOutIdx = 13, kInstIdx = 53;
 
-bool compute_add_test(Gpu &gpu)
+// Template patch slots (dword offsets), verified against the extracted sequence.
+enum : unsigned {
+	kInAddr = 7,		// input image base address
+	kInStride = 8,		// input stride (bytes)
+	kInDims = 9,		// (height << 16) | width
+	kOutAddr = 13,		// output image base address
+	kOutStride = 14,	// output stride
+	kOutDims = 15,		// (height << 16) | width
+	kRegCount = 43,		// shader temp register count
+	kInstCount4 = 51,	// InstCount / 4  (== number of instructions)
+	kInstAddr = 53,		// shader binary base address
+	kInstCount4m1 = 59, // InstCount / 4 - 1
+	kGroupCountX = 95,	// groupCountX - 1
+	kGroupCountY = 96,	// groupCountY - 1
+};
+
+// Emit the PPU dispatch for `shader` over a `width` x `height` u8 image. The
+// group counts are derived from the size the way the vendor's _ProgramPPUCommand
+// does (globalScale 4x1), so this handles any size; everything else (USC config,
+// uniforms, format, kick, drain) is the fixed template.
+static void emit_ppu_dispatch(CmdStream &cs, uint32_t in_addr, uint32_t out_addr, uint32_t shader_addr,
+							  uint32_t inst_dwords, uint32_t reg_count, uint32_t width, uint32_t height)
 {
-	constexpr uint32_t W = 64, H = 6;
-	constexpr uint32_t N = W * H; // 384 bytes, u8
+	const uint32_t stride = width; // u8: 1 byte per pixel
+	const uint32_t dims = (height << 16) | width;
+	const uint32_t group_x = (width + 3) / 4; // globalScaleX = 4
+	const uint32_t group_y = height;		  // globalScaleY = 1
 
-	Bo in = gpu.alloc(N);
-	Bo out = gpu.alloc(N);
-	Bo shader = gpu.alloc(16 * 4); // 4 instructions x 4 dwords
+	for (unsigned i = 0; i < 118; i++) {
+		uint32_t v = kPpuDispatchTemplate[i];
+		switch (i) {
+		case kInAddr:      v = in_addr; break;
+		case kInStride:    v = stride; break;
+		case kInDims:      v = dims; break;
+		case kOutAddr:     v = out_addr; break;
+		case kOutStride:   v = stride; break;
+		case kOutDims:     v = dims; break;
+		case kRegCount:    v = reg_count; break;
+		case kInstCount4:  v = inst_dwords / 4; break;
+		case kInstAddr:    v = shader_addr; break;
+		case kInstCount4m1: v = inst_dwords / 4 - 1; break;
+		case kGroupCountX: v = group_x - 1; break;
+		case kGroupCountY: v = group_y - 1; break;
+		}
+		cs.emit(v);
+	}
+	// No emit_pe_drain: the template already ends with the vendor's drain;
+	// submit() adds the ring's event + wait + link trailer.
+}
+
+bool compute(Gpu &gpu, const Bo &shader, uint32_t inst_dwords, uint32_t reg_count, const Bo &in, const Bo &out,
+			 uint32_t width, uint32_t height)
+{
+	auto cs = gpu.new_cmd_stream(256);
+	emit_ppu_dispatch(cs, in.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height);
+	return gpu.submit_and_wait(cs);
+}
+
+// Run an arbitrary kernel over a width x height u8 image: build the shader,
+// fill the input with fill(i), dispatch, and verify each output byte equals
+// expect(i). Dumps the first 16 in/out bytes on the first mismatch so the
+// actual per-element behavior is visible.
+using BuildFn = ppu::ShaderInfo (*)(uint32_t *, uint32_t, uint32_t);
+using ByteFn = uint8_t (*)(uint32_t);
+
+static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fill,
+				ByteFn expect)
+{
+	uint32_t n = width * height;
+	Bo in = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(16 * 4);
 	if (!in || !out || !shader)
 		return false;
 
-	// Build the "out = in + in" kernel into the shader buffer.
 	uint32_t inst[16];
-	ppu::build_add_shader(inst, 0x7, 2);
+	auto si = build(inst, 0x7, 2);
 	auto sp = static_cast<uint32_t *>(shader.map());
-	for (unsigned i = 0; i < 16; i++)
+	for (unsigned i = 0; i < si.inst_dwords; i++)
 		sp[i] = inst[i];
 	shader.cpu_fini(RelocWrite);
 
-	// Input image: every byte = 0x01 (PPU_IMAGE_DATA).
-	auto ip = static_cast<uint32_t *>(in.map());
-	for (uint32_t i = 0; i < N / 4; i++)
-		ip[i] = 0x01010101;
+	auto ib = static_cast<uint8_t *>(in.map());
+	for (uint32_t i = 0; i < n; i++)
+		ib[i] = fill(i);
 	in.cpu_fini(RelocWrite);
 
-	// Poison the output so a partial/failed dispatch is obvious.
-	auto op = static_cast<uint32_t *>(out.map());
-	for (uint32_t i = 0; i < N / 4; i++)
-		op[i] = 0xDEADBEEF;
+	auto ob = static_cast<uint8_t *>(out.map());
+	for (uint32_t i = 0; i < n; i++)
+		ob[i] = 0xEE; // poison
 	out.cpu_fini(RelocWrite);
 
-	// Emit the dispatch, patching in the buffer addresses. The sequence already
-	// ends with the vendor's own drain, so no emit_pe_drain -- submit() just
-	// adds the ring's event + wait + link trailer.
-	auto cs = gpu.new_cmd_stream(256);
-	for (unsigned i = 0; i < 118; i++) {
-		uint32_t v = kPpuDispatch[i];
-		if (i == kInIdx)
-			v = in.gpu_addr();
-		else if (i == kOutIdx)
-			v = out.gpu_addr();
-		else if (i == kInstIdx)
-			v = shader.gpu_addr();
-		cs.emit(v);
-	}
-
 	auto start = read_cntpct();
-	if (!gpu.submit_and_wait(cs))
+	if (!compute(gpu, shader, si.inst_dwords, si.reg_count, in, out, width, height))
 		return false;
-	print("PPU compute dispatch in ", (uint32_t)(read_cntpct() - start), " ticks\n");
+	uint32_t ticks = read_cntpct() - start;
 
 	out.cpu_prep(RelocRead);
-	unsigned wrong = 0, first = 0;
-	for (uint32_t i = 0; i < N / 4; i++) {
-		if (op[i] != 0x02020202) {
-			if (wrong == 0)
-				first = i;
-			wrong++;
+	in.cpu_prep(RelocRead);
+	for (uint32_t i = 0; i < n; i++) {
+		if (ob[i] != expect(i)) {
+			print("ERROR: ", name, " wrong at byte ", int(i), ": got ", int(ob[i]), " expected ", int(expect(i)),
+				  "\n  in [0..15]:");
+			for (int j = 0; j < 16 && j < (int)n; j++)
+				print(" ", int(ib[j]));
+			print("\n  out[0..15]:");
+			for (int j = 0; j < 16 && j < (int)n; j++)
+				print(" ", int(ob[j]));
+			print("\n");
+			return false;
 		}
 	}
-	if (wrong) {
-		print("ERROR: compute wrong at ", int(wrong), " of ", int(N / 4), " words. [", int(first));
-		print("] = 0x", Hex{op[first]}, " (expected 0x02020202)\n");
+	print("GPU ", name, " over ", int(width), "x", int(height), " (", int(n), " bytes) in ", ticks,
+		  " ticks -- verified. \\o/\n");
+	return true;
+}
+
+bool compute_test(Gpu &gpu)
+{
+	// Probe: copy (out = in). If this verifies with gradient data, the per-pixel
+	// load/store path is clean and only the compute op needs sorting out.
+	if (!run(gpu,
+			 "copy",
+			 64,
+			 6,
+			 ppu::build_copy_shader,
+			 [](uint32_t i) -> uint8_t { return i & 0x7F; },
+			 [](uint32_t i) -> uint8_t { return i & 0x7F; }))
 		return false;
-	}
-	print("GPU compute shader: out = in + in over ", int(N), " bytes -- verified. \\o/\n");
+	// The vendor flop-reset kernel with constant input (its only verifiable case:
+	// dp2x8 is a convolution, so it only lands on 2*in when every input is equal).
+	if (!run(gpu,
+			 "add(const)",
+			 64,
+			 6,
+			 ppu::build_add_shader,
+			 [](uint32_t) -> uint8_t { return 0x01; },
+			 [](uint32_t) -> uint8_t { return 0x02; }))
+		return false;
 	return true;
 }
 

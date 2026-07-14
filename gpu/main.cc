@@ -158,7 +158,7 @@ int main()
 	if (ok)
 		ok = test_throughput(gpu);
 	if (ok)
-		ok = etna::compute_add_test(gpu);
+		ok = etna::compute_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 

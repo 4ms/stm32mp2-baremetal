@@ -298,10 +298,23 @@ enum BlitFlags : uint32_t {
 	BlitFlipY = 1 << 1,	 // vertical flip (VIVS_RS_CONFIG_FLIP)
 };
 
-// Compute (PPU / unified-shader) demo: runs a ported halti5 shader
-// "out = in + in" over a 64x6 u8 image and verifies it. The programmable-core
-// path (etna_compute.cc), as opposed to the fixed-function RS engine below.
-bool compute_add_test(Gpu &gpu);
+// Compute (PPU / unified-shader) path -- run an arbitrary halti5 shader over an
+// input->output u8 image of any size (etna_compute.cc). `shader` holds the
+// shader binary (build it with ppu::build_*_shader in ppu_asm.hh); inst_dwords
+// and reg_count come from that builder's ShaderInfo. width must be a multiple
+// of 16 (the EVIS vector width); stride is width bytes (u8). Emits the ported
+// PPU dispatch, submits through the ring, and waits.
+bool compute(Gpu &gpu,
+			 const Bo &shader,
+			 uint32_t inst_dwords,
+			 uint32_t reg_count,
+			 const Bo &in,
+			 const Bo &out,
+			 uint32_t width,
+			 uint32_t height);
+
+// Demo/self-test: runs the "out = in + in" kernel at two sizes (verifies).
+bool compute_test(Gpu &gpu);
 
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
 // sequence + PE drain (stall + cache flush + stall); submit() adds the ring
