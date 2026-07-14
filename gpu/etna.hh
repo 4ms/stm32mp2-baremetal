@@ -53,6 +53,11 @@
 namespace etna
 {
 
+// The event id our RS/PE ops assign to "operation complete", raised FROM_PE so
+// it latches only after the pipeline drains and caches flush. wait() keys off
+// bit `kEventComplete` by default.
+inline constexpr uint32_t kEventComplete = 2;
+
 // -----------------------------------------------------------------------------
 //  Relocations
 // -----------------------------------------------------------------------------
@@ -93,8 +98,9 @@ struct Bo {
 	// op = RelocWrite: CPU is about to WRITE data the GPU will read  -> clean after
 	// op = RelocRead : CPU is about to READ data the GPU wrote       -> invalidate
 	// [NEW] implemented in etna.cc via clean_/invalidate_dcache_range().
-	void cpu_prep(uint32_t op); // wait for pending GPU work (once fences exist) + prep
-	void cpu_fini(uint32_t op); // finish CPU access: clean if we wrote
+	// const: they touch the backing memory, not the handle.
+	void cpu_prep(uint32_t op) const; // wait for pending GPU work (once fences exist) + prep
+	void cpu_fini(uint32_t op) const; // finish CPU access: clean if we wrote
 };
 
 // -----------------------------------------------------------------------------
@@ -227,10 +233,16 @@ public:
 	// [LATER]: append to a persistent WAIT/LINK ring; no per-submit reset.
 	Fence submit(CmdStream &cs);
 
-	// Block until `f` completes (its FROM_PE event latched) or timeout. Mirrors
-	// etna_pipe_wait. Completion is delivered by the GPU IRQ (GIC SPI 215) keyed
-	// on INTR_FROM_PE; returns false on timeout / AXI / MMU error. [HAVE, wrap]
-	bool wait(Fence f, uint32_t timeout_us = 1'000'000);
+	// Block until `f` completes or timeout. Mirrors etna_pipe_wait. First cut
+	// polls HI_INTR_ACKNOWLEDGE for `done_bit` (default the FROM_PE completion
+	// event); returns false on timeout / AXI / MMU error. Pass a different bit
+	// for low-level streams that signal via a different event id. [HAVE, wrap]
+	// [LATER] deliver via the GPU IRQ (GIC SPI 215) for true async.
+	bool wait(Fence f, uint32_t timeout_us = 1'000'000, uint32_t done_bit = (1u << kEventComplete));
+
+	// Print FE/PE/IAC/RISAF diagnostics -- the instrumentation from bring-up,
+	// for when a submission times out or errors.
+	void dump_status(const char *msg);
 
 	// Convenience: submit + wait. Mirrors etna_cmd_stream_finish().
 	bool submit_and_wait(CmdStream &cs, uint32_t timeout_us = 1'000'000)
@@ -266,21 +278,21 @@ enum BlitFlags : uint32_t {
 	BlitFlipY = 1 << 1,	 // vertical flip (VIVS_RS_CONFIG_FLIP)
 };
 
-// Solid-color fill of `dst` (width x height, linear). Emits the RS clear
-// sequence + PE stall + cache flush + completion event. Replaces test_rs_fill.
-// [HAVE -> move here]
-void clear(CmdStream &cs, const Bo &dst, uint32_t width, uint32_t height, uint32_t argb, uint32_t event_id = 2);
+// Solid-color fill of `dst` (width x height, linear). Emits the full RS clear
+// sequence including the PE-completion trailer (stall + cache flush + event +
+// END), so it is ready to submit(). Replaces test_rs_fill. [HAVE -> move here]
+void clear(CmdStream &cs, const Bo &dst, uint32_t width, uint32_t height, uint32_t argb);
 
 // Copy `src` -> `dst` (same size, linear) with optional per-pixel transform
-// (R<->B swap, flip). Replaces test_rs_blit_convert. [HAVE -> move here]
+// (R<->B swap, flip), including the completion trailer. Replaces
+// test_rs_blit_convert. [HAVE -> move here]
 void blit(CmdStream &cs,
 		  const Bo &dst,
 		  const Bo &src,
 		  uint32_t width,
 		  uint32_t height,
 		  Format fmt = Format::A8R8G8B8,
-		  uint32_t flags = BlitNone,
-		  uint32_t event_id = 2);
+		  uint32_t flags = BlitNone);
 
 // =============================================================================
 //  Usage sketch -- how the current tests become API calls

@@ -15,8 +15,7 @@ This example brings it up in stages:
    for the 0.80 V that the PMIC provides on VDDGPU (the 800/900 MHz datasheet
    speeds need 0.90 V). `RCC_GPUCFGR` holds the GPU's clock-enable and reset bits.
 
-3. **RIF**: 
-   - The GPU's register port is RIFSC peripheral 79. It resets
+3. **RIF**: The GPU's register port is RIFSC peripheral 79. It resets
      non-secure, so we set it to secure because our buffers are in secure regions
      of DDR4 memory. We also setup RIMC to allow secure and priv transactions.
 
@@ -47,20 +46,42 @@ This example brings it up in stages:
    fill, but with a real source, no clear mode, and the swap bit; the CPU
    verifies `dest[i] == swap_rb(source[i])`.
 
-Completion is detected two ways: the fill polls the interrupt-acknowledge
-register; the blit takes the GPU interrupt (GIC SPI 215) and keys off the
-**FROM_PE event (bit 2)** -- the one pipelined behind the RS writes and cache
-flush. The FROM_FE event (bit 1/3) fires as soon as the front-end reaches it,
-long before the pixels are in DDR, so it is *not* a valid completion signal.
-
 Expected output ends with:
 
 ```
-GPU filled a 1024x1024 RGBA image with 0x4D5A11AC -- verified by CPU. \o/
-GPU copied 1024x1024 source to dest, swapping R<->B per pixel -- verified by CPU. \o/
+GPU filled 1024x1024 with 0x4D5A11AC -- verified. \o/
+GPU copied 1024x1024, swapping R<->B -- verified. \o/
 
 SUCCESS
 ```
+
+## The `etna` API
+
+The example is built on a small reusable GPU API (`etna.hh` / `etna.cc`) rather
+than open-coded command streams. It's modeled on the clean, MIT-licensed seam
+in the middle of the Linux etnaviv stack -- libdrm's `etna_cmd_stream` /
+`etna_bo` interface, the contract that Mesa's operation emitters are written
+against. By providing that seam on baremetal, Mesa's MIT operation code
+(`etnaviv_rs.c`, ...) ports near-mechanically; what can't come along is Mesa
+itself (Gallium + the NIR shader compiler), so 3D would use offline-compiled
+shaders.
+
+The surface:
+
+- `etna::Gpu` -- `init()` does all bring-up (power/clock/RIF/reset/identify);
+  `alloc()` carves buffers from a DDR pool; `submit()`/`wait()`/`submit_and_wait()`
+  run a command stream.
+- `etna::Bo` -- a buffer object (physically-contiguous DDR; on this identity-map
+  system, cpu pointer == physical == GPU address). `cpu_prep()`/`cpu_fini()`
+  make the cache bracketing explicit so it can't be forgotten.
+- `etna::CmdStream` -- a growable command buffer with libdrm/Mesa-shaped
+  `emit`/`reserve`/`set_state`/`emit_reloc` helpers.
+- `etna::clear()` / `etna::blit()` -- the RS fill and copy+convert operations.
+
+Each `[HAVE]`/`[NEW]`/`[LATER]` tag in `etna.hh` marks the roadmap: the ring
+buffer (WAIT/LINK) for throughput, IRQ-driven async completion, the GPU MMU,
+and the 3D pipe are the deferred pieces. The whole `main.cc` is now just
+`gpu.init()`, two `alloc()`s, and three API calls with CPU verification.
 
 ## Where the register definitions come from
 
