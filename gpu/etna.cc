@@ -1,9 +1,9 @@
 #include "etna.hh"
-#include "aarch64/system_reg.hh"	 // cache ops, read_cntpct/read_cntfreq
-#include "drivers/hal_cnt.hh"		 // udelay
+#include "aarch64/system_reg.hh" // cache ops, read_cntpct/read_cntfreq
+#include "drivers/hal_cnt.hh"	 // udelay
 #include "drivers/rcc.hh"
 #include "drivers/rcc_pll.hh"
-#include "gpu_io.hh"				 // gpu_read/write, wait_idle
+#include "gpu_io.hh"			  // gpu_read/write, wait_idle
 #include "interrupt/interrupt.hh" // InterruptManager (GPU IRQ)
 #include "print/print.hh"
 #include "stm32mp2xx.h"
@@ -54,7 +54,7 @@ bool clock_and_reset_gpu()
 	RCC_Enable::GPU_::set();
 	udelay(10);
 
-	// 800 MHz needs the 0.90 V VDDGPU max; drop postdiv1 to 4 for 400 MHz at 0.80 V.
+	// 800 MHz needs the 0.90V VDDGPU; set postdiv1 to 4 for 400 MHz at 0.80 V.
 	constexpr RCC_Clocks::PLLSettings pll3{
 		.src = RCC_Clocks::MuxSelSource::hse,
 		.mult = 40,
@@ -368,8 +368,8 @@ Fence Gpu::submit(CmdStream &cs)
 	// Completion trailer: latch a rolling event id FROM_PE, then a fresh idle
 	// WAIT/LINK that becomes the new tail.
 	uint32_t event_id = next_event_;
-	next_event_ = (next_event_ % 29) + 1;			// 1..29 (avoid bits 30/31 = MMU/AXI error)
-	intr_acc_.fetch_and(~(1u << event_id));			// drop any stale accumulated bit for this id
+	next_event_ = (next_event_ % 29) + 1;	// 1..29 (avoid bits 30/31 = MMU/AXI error)
+	intr_acc_.fetch_and(~(1u << event_id)); // drop any stale accumulated bit for this id
 	ring[w++] = cmd_load_state(GL_EVENT);
 	ring[w++] = event_id | GL_EVENT_FROM_PE;
 
