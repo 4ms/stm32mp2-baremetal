@@ -54,18 +54,17 @@ static bool clock_and_reset_gpu()
 	udelay(10);
 	print("GPU clock enabled\n");
 
-	// 40 MHz HSE / 1 * 30 = 1200 MHz VCO, / 3 = 400 MHz.
-	// 400 MHz is a safe speed for the 0.80 V VDDGPU the PMIC provides.
+	// 400 MHz is a safe speed for the 0.80 V VDDGPU the PMIC provides at min.
+	// 800 MHz is high speed for the 0.90 V VDDGPU max.
 	constexpr RCC_Clocks::PLLSettings pll3{
 		.src = RCC_Clocks::MuxSelSource::hse,
-		.mult = 30, // 40,
+		.mult = 40,
 		.refdiv = 1,
-		.postdiv1 = 3, // 2,
+		.postdiv1 = 2,
 		.postdiv2 = 1,
 		.frac = 0,
 	};
-	static_assert(pll3.calc_freq(40'000'000) == 400'000'000);
-	// static_assert(pll3.calc_freq(40'000'000) == 800'000'000);
+	static_assert(pll3.calc_freq(40'000'000) == 800'000'000);
 	RCC_Clocks::set_pll<RCC_Clocks::PLL3>(pll3);
 
 	unsigned timeout = 10'000;
@@ -76,7 +75,7 @@ static bool clock_and_reset_gpu()
 		}
 		udelay(1);
 	}
-	print("PLL3 locked at 400MHz\n");
+	print("PLL3 locked at 800MHz\n");
 
 	// Now that all GPU clocks are running, pulse the GPU reset. (RM0457
 	// requires the PLL3 ref clock to be slower than the GPU bus/kernel
@@ -185,13 +184,6 @@ static bool reset_gpu_core()
 
 // Point the FE at a command buffer in DDR and start it.
 // num_dwords must be even (commands are 64-bit aligned).
-//
-// The FE only starts fetching on a *rising* enable: after it halts at an END
-// it stays "enabled", and rewriting FE_COMMAND_CONTROL is ignored. (The
-// etnaviv driver never restarts the FE -- it starts it once per reset and
-// then chains buffers with WAIT/LINK.) So disable the FE first, and soft-
-// reset the core to be safe -- that's the state the first kick worked from.
-// Point the FE at a command buffer and start it (the arm itself; see kick_fe)
 static void arm_fe(const uint32_t *buf, uint32_t num_dwords)
 {
 	using namespace VivanteGpu;
@@ -326,10 +318,9 @@ static bool test_rs_fill()
 
 	auto start1_tm = read_cntpct();
 	image.fill(0xDEADBEEF); // so we can tell how far a partial fill got
+	clean_dcache_range(image.data(), sizeof(image));
 	auto end1_tm = read_cntpct();
 	print("Initial fill (cpu) takes ", end1_tm - start1_tm, " ticks\n");
-
-	clean_dcache_range(image.data(), sizeof(image));
 
 	auto load1 = [](uint32_t *p, uint32_t state, uint32_t value) {
 		p[0] = cmd_load_state(state);
