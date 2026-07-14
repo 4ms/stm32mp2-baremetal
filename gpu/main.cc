@@ -157,6 +157,8 @@ int main()
 		ok = test_blit_convert(gpu, fb, src);
 	if (ok)
 		ok = test_throughput(gpu);
+	if (ok)
+		ok = etna::compute_add_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 

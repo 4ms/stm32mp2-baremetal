@@ -298,6 +298,11 @@ enum BlitFlags : uint32_t {
 	BlitFlipY = 1 << 1,	 // vertical flip (VIVS_RS_CONFIG_FLIP)
 };
 
+// Compute (PPU / unified-shader) demo: runs a ported halti5 shader
+// "out = in + in" over a 64x6 u8 image and verifies it. The programmable-core
+// path (etna_compute.cc), as opposed to the fixed-function RS engine below.
+bool compute_add_test(Gpu &gpu);
+
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
 // sequence + PE drain (stall + cache flush + stall); submit() adds the ring
 // completion trailer. Note: no END -- END would halt the FE's ring loop.
