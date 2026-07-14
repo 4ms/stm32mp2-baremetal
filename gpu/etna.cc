@@ -1,9 +1,10 @@
 #include "etna.hh"
-#include "aarch64/system_reg.hh" // cache ops, read_cntpct/read_cntfreq
-#include "drivers/hal_cnt.hh"	 // udelay
+#include "aarch64/system_reg.hh"	 // cache ops, read_cntpct/read_cntfreq
+#include "drivers/hal_cnt.hh"		 // udelay
 #include "drivers/rcc.hh"
 #include "drivers/rcc_pll.hh"
-#include "gpu_io.hh" // gpu_read/write, wait_idle
+#include "gpu_io.hh"				 // gpu_read/write, wait_idle
+#include "interrupt/interrupt.hh" // InterruptManager (GPU IRQ)
 #include "print/print.hh"
 #include "stm32mp2xx.h"
 
@@ -296,15 +297,30 @@ bool Gpu::ring_init()
 	ring_tail_ = 0; // the WAIT the FE idles on
 	ring_head_ = 4; // next free dword (qword-aligned)
 	next_event_ = 1;
-	intr_acc_ = 0;
+	intr_acc_.store(0);
 
-	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE.
+	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE, and
+	// take the GPU interrupt (GIC SPI 215) rather than polling. The ISR is the
+	// ONLY reader of HI_INTR_ACKNOWLEDGE.
 	gpu_write(HI_INTR_ENBL, 0xFFFFFFFF);
-	gpu_read(HI_INTR_ACKNOWLEDGE);
+	gpu_read(HI_INTR_ACKNOWLEDGE); // clear stale bits
+	InterruptManager::register_and_start_isr(GPU_IRQn, 0, 0, [this] { on_irq(); });
 
 	// Arm the FE once, on the ring home (prefetch = 2 qwords = the WAIT/LINK).
 	arm_fe(ring_base_, 2);
 	return true;
+}
+
+// GPU interrupt handler. Reading HI_INTR_ACKNOWLEDGE returns the fired event
+// bits AND clears them / de-asserts the GIC line, so we read it exactly once
+// and accumulate. SEV wakes any waiter parked on WFE (belt-and-suspenders for
+// the case where the IRQ landed just before the waiter's WFE).
+void Gpu::on_irq()
+{
+	uint32_t ack = gpu_read(HI_INTR_ACKNOWLEDGE);
+	if (ack)
+		intr_acc_.fetch_or(ack, std::memory_order_release);
+	asm volatile("sev" ::: "memory");
 }
 
 Bo Gpu::alloc(uint32_t bytes, uint32_t align, bool cacheable)
@@ -352,8 +368,8 @@ Fence Gpu::submit(CmdStream &cs)
 	// Completion trailer: latch a rolling event id FROM_PE, then a fresh idle
 	// WAIT/LINK that becomes the new tail.
 	uint32_t event_id = next_event_;
-	next_event_ = (next_event_ % 29) + 1; // 1..29 (avoid bits 30/31 = MMU/AXI error)
-	intr_acc_ &= ~(1u << event_id);		  // drop any stale accumulated bit for this id
+	next_event_ = (next_event_ % 29) + 1;			// 1..29 (avoid bits 30/31 = MMU/AXI error)
+	intr_acc_.fetch_and(~(1u << event_id));			// drop any stale accumulated bit for this id
 	ring[w++] = cmd_load_state(GL_EVENT);
 	ring[w++] = event_id | GL_EVENT_FROM_PE;
 
@@ -384,23 +400,26 @@ bool Gpu::wait(Fence f, uint32_t timeout_us)
 	if (!f)
 		return false;
 
-	// Poll HI_INTR_ACKNOWLEDGE for f's event bit. The read is destructive and
-	// may return several ops' events at once, so accumulate into intr_acc_
-	// (persists across waits) and only consume this fence's bit.
-	// [LATER] deliver via the GPU IRQ instead of polling.
+	// Block until the ISR records f's event bit in intr_acc_. We do NOT read
+	// HI_INTR_ACKNOWLEDGE here -- that would steal bits from the ISR. Sleep on
+	// WFE between checks so the CPU (and the GPU register bus) is idle while
+	// the GPU works; the ISR's SEV/IRQ wakes us.
+	// Caveat: the deadline is only evaluated on wake, so a totally hung GPU
+	// (no interrupt at all) would block. GPU *errors* do interrupt (bits
+	// 30/31), so those are caught. A timer-backstop wake is [LATER].
 	const uint32_t done_bit = 1u << f.event_id;
 	const uint32_t err_bits = INTR_AXI_BUS_ERROR | INTR_MMU_EXCEPTION;
 	uint64_t deadline = read_cntpct() + (uint64_t)timeout_us * (read_cntfreq() / 1'000'000);
 
 	while (true) {
-		intr_acc_ |= gpu_read(HI_INTR_ACKNOWLEDGE);
-		if (intr_acc_ & err_bits) {
-			print("etna: GPU error interrupt 0x", Hex{intr_acc_}, "\n");
+		uint32_t acc = intr_acc_.load(std::memory_order_acquire);
+		if (acc & err_bits) {
+			print("etna: GPU error interrupt 0x", Hex{acc}, "\n");
 			dump_status("  on submit");
 			return false;
 		}
-		if (intr_acc_ & done_bit) {
-			intr_acc_ &= ~done_bit; // consume it
+		if (acc & done_bit) {
+			intr_acc_.fetch_and(~done_bit); // consume it
 			return true;
 		}
 		if (read_cntpct() > deadline) {
@@ -408,6 +427,7 @@ bool Gpu::wait(Fence f, uint32_t timeout_us)
 			dump_status("  timeout");
 			return false;
 		}
+		asm volatile("wfe" ::: "memory"); // woken by the GPU IRQ / the ISR's SEV
 	}
 }
 

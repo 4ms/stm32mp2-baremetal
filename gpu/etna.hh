@@ -1,5 +1,6 @@
 #pragma once
 #include "gpu_regs.hh"
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 
@@ -267,7 +268,13 @@ private:
 	uint32_t ring_head_ = 0;   // dword cursor for the next append (qword-aligned)
 	uint32_t ring_tail_ = 0;   // dword offset of the WAIT the FE is idling on
 	uint32_t next_event_ = 1;  // rolling completion event id (1..29)
-	uint32_t intr_acc_ = 0;	   // accumulated HI_INTR_ACKNOWLEDGE bits (read is destructive)
+
+	// Completion is delivered by the GPU IRQ (GIC SPI 215): the ISR is the sole
+	// reader of HI_INTR_ACKNOWLEDGE (a read clears it and de-asserts the line)
+	// and ORs the fired event bits into intr_acc_; wait() consumes its bit and
+	// sleeps on WFE in between. Atomic since ISR and wait() touch it concurrently.
+	std::atomic<uint32_t> intr_acc_{0};
+	void on_irq(); // the GPU interrupt handler
 };
 
 // =============================================================================
