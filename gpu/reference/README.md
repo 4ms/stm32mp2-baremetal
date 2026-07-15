@@ -16,6 +16,16 @@ files and register headers are MIT. Per-file:
 | `etnaviv_blt.c` | Mesa `src/gallium/drivers/etnaviv/etnaviv_blt.c` | MIT |
 | `state_3d.xml.h` | Mesa `src/etnaviv/hw/state_3d.xml.h` | MIT |
 | `state_blt.xml.h` | Mesa `src/etnaviv/hw/state_blt.xml.h` | MIT |
+| `vivante_isa.xml` | etna_viv `rnndb/isa.xml` | MIT |
+
+`vivante_isa.xml` is the annotated Vivante **shader instruction set** (opcode +
+type + operand tables). It backs `../ppu_asm.hh`'s kernel builders: the base-ALU
+opcodes (ADD `0x01`, MUL `0x03`, AND `0x5D`, …) and `INST_TYPE` (U8 `= 7`) come
+from here, and its `ADD: dst := src0 + src2` doc is why the per-element add puts
+its second operand in src2, not src1. The EVIS ops the vendor flop-reset uses
+(img_load `0x79`, img_store `0x7A`, dp2x8 via `0x45`+extended) are a newer
+extension not fully covered by this older file — those came from the gcnano
+vendor encoder ported in `../ppu_asm.hh` (see `gcnano_flop_reset/`).
 
 The register *definitions* we actually compile against live in `../gpu_regs.hh`
 (hand-transcribed, keeping the etnaviv `VIVS_*` names). The RS clear/blit
