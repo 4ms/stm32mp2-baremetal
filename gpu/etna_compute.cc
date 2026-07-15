@@ -67,6 +67,12 @@ enum : unsigned {
 	kInBStride = 20, // input B stride
 	kInBDims = 21,	 // input B (height << 16) | width
 	kInBFmt = 22,	 // input B format (same as input A's 0xD803)
+	// Third input image descriptor -- uniform c3, next 4 words of the 0xD808
+	// block (0xD80C..0xD80F). Used by three-input kernels (e.g. alpha blend).
+	kInCAddr = 23,
+	kInCStride = 24,
+	kInCDims = 25,
+	kInCFmt = 26,
 };
 
 constexpr uint32_t kImgFormat = 0x444051F0; // u8 image format word (from the template)
@@ -83,7 +89,8 @@ static void emit_ppu_dispatch(CmdStream &cs,
 							  uint32_t reg_count,
 							  uint32_t width,
 							  uint32_t height,
-							  uint32_t in_b_addr = 0)
+							  uint32_t in_b_addr = 0,
+							  uint32_t in_c_addr = 0)
 {
 	const uint32_t stride = width; // u8: 1 byte per pixel
 	const uint32_t dims = (height << 16) | width;
@@ -116,6 +123,15 @@ static void emit_ppu_dispatch(CmdStream &cs,
 			case kInBStride: v = stride; break;
 			case kInBDims:   v = dims; break;
 			case kInBFmt:    v = kImgFormat; break;
+			}
+		}
+		// Third input image (uniform c3), only for three-input shaders.
+		if (in_c_addr) {
+			switch (i) {
+			case kInCAddr:   v = in_c_addr; break;
+			case kInCStride: v = stride; break;
+			case kInCDims:   v = dims; break;
+			case kInCFmt:    v = kImgFormat; break;
 			}
 		}
 		cs.emit(v);
@@ -151,6 +167,23 @@ bool compute2(Gpu &gpu,
 	auto cs = gpu.new_cmd_stream(256);
 	emit_ppu_dispatch(cs, in_a.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height,
 					  in_b.gpu_addr());
+	return gpu.submit_and_wait(cs);
+}
+
+bool compute3(Gpu &gpu,
+			  const Bo &shader,
+			  uint32_t inst_dwords,
+			  uint32_t reg_count,
+			  const Bo &in_a,
+			  const Bo &in_b,
+			  const Bo &in_c,
+			  const Bo &out,
+			  uint32_t width,
+			  uint32_t height)
+{
+	auto cs = gpu.new_cmd_stream(256);
+	emit_ppu_dispatch(cs, in_a.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height,
+					  in_b.gpu_addr(), in_c.gpu_addr());
 	return gpu.submit_and_wait(cs);
 }
 
@@ -271,6 +304,72 @@ static bool run2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bu
 	return true;
 }
 
+// Three-input variant (a, b, c), shader up to 8 instructions (inst[32]).
+static bool run3(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fillA,
+				 ByteFn fillB, ByteFn fillC, ByteFn expect)
+{
+	uint32_t n = width * height;
+	Bo a = gpu.alloc(n), b = gpu.alloc(n), c = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(32 * 4);
+	if (!a || !b || !c || !out || !shader)
+		return false;
+
+	uint32_t inst[32];
+	auto si = build(inst, 0x7, 2);
+	auto sp = static_cast<uint32_t *>(shader.map());
+	for (unsigned i = 0; i < si.inst_dwords; i++)
+		sp[i] = inst[i];
+	shader.cpu_fini(RelocWrite);
+
+	auto ab = static_cast<uint8_t *>(a.map());
+	auto bb = static_cast<uint8_t *>(b.map());
+	auto cb = static_cast<uint8_t *>(c.map());
+	for (uint32_t i = 0; i < n; i++) {
+		ab[i] = fillA(i);
+		bb[i] = fillB(i);
+		cb[i] = fillC(i);
+	}
+	a.cpu_fini(RelocWrite);
+	b.cpu_fini(RelocWrite);
+	c.cpu_fini(RelocWrite);
+
+	auto ob = static_cast<uint8_t *>(out.map());
+	for (uint32_t i = 0; i < n; i++)
+		ob[i] = 0xEE; // poison
+	out.cpu_fini(RelocWrite);
+
+	auto start = read_cntpct();
+	if (!compute3(gpu, shader, si.inst_dwords, si.reg_count, a, b, c, out, width, height))
+		return false;
+	uint32_t ticks = read_cntpct() - start;
+
+	out.cpu_prep(RelocRead);
+	a.cpu_prep(RelocRead);
+	b.cpu_prep(RelocRead);
+	c.cpu_prep(RelocRead);
+	for (uint32_t i = 0; i < n; i++) {
+		if (ob[i] != expect(i)) {
+			print("ERROR: ", name, " wrong at byte ", int(i));
+			print(": got ", int(ob[i]), " expected ", int(expect(i)), "\n  a:");
+			for (int j = 0; j < 12 && j < (int)n; j++)
+				print(" ", int(ab[j]));
+			print("\n  b:");
+			for (int j = 0; j < 12 && j < (int)n; j++)
+				print(" ", int(bb[j]));
+			print("\n  c:");
+			for (int j = 0; j < 12 && j < (int)n; j++)
+				print(" ", int(cb[j]));
+			print("\n  out:");
+			for (int j = 0; j < 12 && j < (int)n; j++)
+				print(" ", int(ob[j]));
+			print("\n");
+			return false;
+		}
+	}
+	print("GPU ", name, " over ", int(width), "x", int(height));
+	print(" (", int(n), " bytes) in ", ticks, " ticks -- verified. \\o/\n");
+	return true;
+}
+
 // A per-element gradient and its identity expectation, for the copy probe.
 static uint8_t grad(uint32_t i)
 {
@@ -327,6 +426,20 @@ bool compute_test(Gpu &gpu)
 			[](uint32_t) -> uint8_t { return 255; }))
 		return false;
 
+	// ADDITIVE (saturating) blend of two images: out = saturate(A + B). A =
+	// gradient, B = constant 128, so out clips to 255 once A >= 128. A real
+	// compositing mode ("linear dodge") over two distinct images.
+	if (!run2(
+			gpu,
+			"blend-add(sat(A+B))",
+			128,
+			32,
+			ppu::build_addsat2_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t) -> uint8_t { return 128; },
+			[](uint32_t i) -> uint8_t { uint32_t s = (i & 0xFF) + 128; return s > 255 ? 255 : s; }))
+		return false;
+
 	// Bitwise AND with u32 immediate 0x0F. The immediate broadcasts to the 4
 	// vector COMPONENTS, so under u8 SIMD it masks only the (i%4)==0 byte-lane
 	// and zeroes the other three: out[i] = (i%4==0) ? in[i]&0x0F : 0.
@@ -351,6 +464,63 @@ bool compute_test(Gpu &gpu)
 			ppu::build_dp2x8_shader,
 			[](uint32_t) -> uint8_t { return 0x01; },
 			[](uint32_t) -> uint8_t { return 0x02; }))
+		return false;
+
+	// PROBE (last, so a scalar-multiply failure doesn't block verified tests):
+	// per-byte multiply out = (A*B)&0xFF. A = gradient, B = constant 3. If this
+	// verifies, IMULLO is per-byte SIMD and fractional alpha is reachable; if it
+	// fails, the dump shows whether it's scalar (broadcast of A[0]*3).
+	if (!run2(
+			gpu,
+			"PROBE mul2((A*B)&0xFF)",
+			64,
+			6,
+			ppu::build_mul2_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t) -> uint8_t { return 3; },
+			[](uint32_t i) -> uint8_t { return ((i & 0xFF) * 3) & 0xFF; }))
+		return false;
+
+	// PROBE: high-half multiply out = mul_hi(A, B). B = 128, so if u8 mul_hi is
+	// (A*B)>>8 then out = (A*128)>>8 = A>>1. Confirms the primitive for a*alpha.
+	if (!run2(
+			gpu,
+			"PROBE mulhi2(mul_hi(A,B))",
+			64,
+			6,
+			ppu::build_mulhi2_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t) -> uint8_t { return 128; },
+			[](uint32_t i) -> uint8_t { return (i & 0xFF) >> 1; }))
+		return false;
+
+	// PROBE: bitwise NOT, out = ~in = 255 - in (needed for beta = 255 - alpha).
+	if (!run(
+			gpu,
+			"PROBE not(~in)",
+			64,
+			6,
+			ppu::build_not_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t i) -> uint8_t { return 255 - (i & 0xFF); }))
+		return false;
+
+	// TRUE fractional alpha blend: out = mul_hi(a,alpha) + mul_hi(b,255-alpha).
+	// a = ramp up, b = ramp down, alpha = ramp up (per-pixel). Verified exactly
+	// against the same integer math on the CPU.
+	if (!run3(
+			gpu,
+			"blend-lerp(a*A + b*(1-A))",
+			128,
+			32,
+			ppu::build_blend_lerp_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },		   // a
+			[](uint32_t i) -> uint8_t { return 255 - (i & 0xFF); }, // b
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },		   // alpha
+			[](uint32_t i) -> uint8_t {
+				uint32_t a = i & 0xFF, b = 255 - (i & 0xFF), al = i & 0xFF;
+				return (uint8_t)(((a * al) >> 8) + ((b * (255 - al)) >> 8));
+			}))
 		return false;
 	return true;
 }

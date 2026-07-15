@@ -327,6 +327,226 @@ inline ShaderInfo build_add2_shader(uint32_t inst[16], uint32_t dataType = 0x7, 
 	return ShaderInfo{n, 3};
 }
 
+// Build an ADDITIVE (saturating) blend of two images: out = saturate(A + B),
+// the "linear dodge" compositing mode. Like build_add2 but IADDSAT so bright
+// sums clamp to 255 instead of wrapping. Verified per-byte ops (IADDSAT + the
+// two-input c2 path). RegCount 3.
+inline ShaderInfo build_addsat2_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r1, c0 (A)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r2, c2 (B)
+	set_destination(2, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 2, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x3B, 0, dataType, &inst[n]); // iaddsat.u8 r1 = r1 + r2 (dst=src0+src2)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(2, 2, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x7A, 0, dataType, &inst[n]); // img_store r1, c1
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 3};
+}
+
+// PROBE: per-byte integer multiply out = (A * B) & 0xFF, via IMULLO0 (0x3C).
+// The ISA documents IMULLO as SCALAR (only .x, broadcast) with no GC3000 SIMD
+// note -- unlike ADD -- so this tests whether a per-byte multiply actually
+// exists on our chip. NOTE IMULLO is dst := src0.x * src1.x, so the 2nd operand
+// goes in src1 (not src2 like ADD). If this verifies, true fractional alpha
+// blend becomes reachable; if it comes out as a broadcast of A[0]*B[0], the
+// multiply is scalar and we need EVIS or another path.
+inline ShaderInfo build_mul2_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r1, c0 (A)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r2, c2 (B)
+	set_destination(2, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 2, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x3C, 0, dataType, &inst[n]); // imullo.u8 r1 = r1 * r2 (dst=src0.x*src1.x)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]); // src0 = r1
+	set_tempreg(1, 2, VX_SWIZZLE, 0, &inst[n]); // src1 = r2
+	n += 4;
+
+	add_opcode(0x7A, 0, dataType, &inst[n]); // img_store r1, c1
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 3};
+}
+
+// PROBE: high-half per-byte multiply out = mul_hi(A, B), via IMULHI0 (0x40).
+// The ISA says (src0.x*src1.x)>>32 but "matches OpenCL mul_hi", which is
+// width-dependent -- for u8 that should be (A*B)>>8. If out = (A*128)>>8 = A>>1
+// this holds and is the missing primitive for fractional alpha (a*alpha>>8);
+// if out is all-zero it's a literal >>32 and we need another path. Like mul2,
+// dst := src0.x * src1.x so the 2nd operand is src1.
+inline ShaderInfo build_mulhi2_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r1, c0 (A)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r2, c2 (B)
+	set_destination(2, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 2, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x40, 0, dataType, &inst[n]); // imulhi.u8 r1 = mul_hi(r1, r2)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]); // src0 = r1
+	set_tempreg(1, 2, VX_SWIZZLE, 0, &inst[n]); // src1 = r2
+	n += 4;
+
+	add_opcode(0x7A, 0, dataType, &inst[n]); // img_store r1, c1
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 3};
+}
+
+// PROBE: bitwise NOT, out = ~in = 255 - in (u8). NOT is dst := ~src2.x. Used to
+// form beta = 255 - alpha in the blend without a 4th input image.
+inline ShaderInfo build_not_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r1, c0
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x5F, 0, dataType, &inst[n]); // not.u8 r1 = ~r1 (dst := ~src2.x)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]); // src2 = r1
+	n += 4;
+
+	add_opcode(0x7A, 0, dataType, &inst[n]); // img_store r1, c1
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 2};
+}
+
+// TRUE fractional alpha blend: out = mul_hi(a, alpha) + mul_hi(b, 255-alpha),
+// i.e. ~= (a*alpha + b*(255-alpha)) / 256 -- a per-pixel lerp between images a
+// and b by a per-pixel alpha image. 3 inputs: a=c0, b=c2, alpha=c3; beta=255-a
+// via NOT (no 4th input). Both mul_hi terms are <=254 and their sum <=254 so a
+// plain ADD can't overflow. 8 instructions, RegCount 5 (r0 coords + r1..r4).
+inline ShaderInfo build_blend_lerp_shader(uint32_t inst[32], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 32; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r1, c0 (a)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r2, c2 (b)
+	set_destination(2, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 2, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x79, 0, dataType, &inst[n]); // img_load r3, c3 (alpha)
+	set_destination(3, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 3, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x5F, 0, dataType, &inst[n]); // not.u8 r4 = ~r3 (255 - alpha)
+	set_destination(4, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(2, 3, VX_SWIZZLE, 0, &inst[n]); // src2 = r3
+	n += 4;
+
+	add_opcode(0x40, 0, dataType, &inst[n]); // imulhi.u8 r1 = mul_hi(r1, r3)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]); // src0 = r1 (a)
+	set_tempreg(1, 3, VX_SWIZZLE, 0, &inst[n]); // src1 = r3 (alpha)
+	n += 4;
+
+	add_opcode(0x40, 0, dataType, &inst[n]); // imulhi.u8 r2 = mul_hi(r2, r4)
+	set_destination(2, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 2, VX_SWIZZLE, 0, &inst[n]); // src0 = r2 (b)
+	set_tempreg(1, 4, VX_SWIZZLE, 0, &inst[n]); // src1 = r4 (255-alpha)
+	n += 4;
+
+	add_opcode(0x01, 0, dataType, &inst[n]); // add.u8 r1 = r1 + r2 (dst=src0+src2)
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(2, 2, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	add_opcode(0x7A, 0, dataType, &inst[n]); // img_store r1, c1
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 5};
+}
+
 // Build a saturating per-element add: OutImage = saturate(InImage + InImage),
 // i.e. out = min(2*in, 255) for u8. Identical to build_add_shader but with the
 // IADDSAT opcode (0x3B) instead of ADD -- so 200+200 clamps to 255 rather than
