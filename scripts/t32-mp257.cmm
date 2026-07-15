@@ -29,10 +29,11 @@ ETM.Trace ON
 ETM.ON
 
 Trace.arm
+system.Option DUALPORT on
 
 // Set breakpoints or whether you want to auto-start here:
 
-//break main
+break main
 go
 
 ENDDO
