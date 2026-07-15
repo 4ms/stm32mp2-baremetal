@@ -191,6 +191,18 @@ bool compute_test(Gpu &gpu)
 		if (!run(gpu, "copy", s.w, s.h, ppu::build_copy_shader, grad, grad))
 			return false;
 
+	// Real per-element add (base ALU ADD.u8, out = in + in) with a FULL-range
+	// gradient -- verifies both per-element arithmetic and u8 wraparound.
+	if (!run(
+			gpu,
+			"add(out=in+in)",
+			128,
+			32,
+			ppu::build_add_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t i) -> uint8_t { return (i & 0xFF) * 2; }))
+		return false;
+
 	// The vendor flop-reset kernel, constant input -- its only verifiable case:
 	// dp2x8 is a dot-product (out[j] = sum of src0[k]*src1[k] over a pair, i.e.
 	// sums of squares here), so it only lands on 2*in when every input is equal.
@@ -199,7 +211,7 @@ bool compute_test(Gpu &gpu)
 			"flop-reset(dp2x8, const in)",
 			64,
 			6,
-			ppu::build_add_shader,
+			ppu::build_dp2x8_shader,
 			[](uint32_t) -> uint8_t { return 0x01; },
 			[](uint32_t) -> uint8_t { return 0x02; }))
 		return false;

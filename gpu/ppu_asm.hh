@@ -190,11 +190,12 @@ struct ShaderInfo {
 	unsigned reg_count;	  // temp registers the shader uses
 };
 
-// Build the flop-reset compute kernel: OutImage = InImage + InImage, in EVIS
-// (img_load x2, dp2x8 add, img_store). Mirrors _ProgramPPUInstruction exactly.
-// Writes 16 dwords into `inst`. dataType 0x7 = u8, numShaderCores from the
-// feature DB (2 on our chip).
-inline ShaderInfo build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+// Build the vendor flop-reset kernel: img_load x2 -> dp2x8 -> img_store, a
+// faithful copy of _ProgramPPUInstruction. NOTE despite the vendor's comment
+// this is NOT a per-element add: dp2x8 is a dot-product (out[j] = sum of
+// src0[k]*src1[k] over a pair), which only looks like 2*in when every input is
+// equal. Kept as-is because it's the known-good flop-toggle the vendor ships.
+inline ShaderInfo build_dp2x8_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
 {
 	for (unsigned i = 0; i < 16; i++)
 		inst[i] = 0;
@@ -234,6 +235,45 @@ inline ShaderInfo build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, u
 	n += 4;
 
 	return ShaderInfo{n, 3}; // RegCount 3 (from _ProgramPPUInstruction)
+}
+
+// Build a real per-element add: OutImage = InImage + InImage. img_load/img_store
+// stay EVIS (the copy probe proved they round-trip per pixel); between them a
+// base ALU ADD (opcode 0x01, INST_OPCODE_ADD) with U8 operand type (INST_TYPE
+// U8 = 7) doubles each byte in place -- out[pixel] = 2*in[pixel] mod 256. This
+// is the template for arbitrary per-element ops: swap 0x01 for MUL 0x03,
+// IADDSAT 0x3B, AND 0x5D, etc. Opcodes from the etnaviv rnndb isa.xml.
+inline ShaderInfo build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	// img_load.u8 r1, c0, r0.xy
+	add_opcode(0x79, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	// add.u8 r1, r1, r1  (base ALU ADD: dst := src0 + src2, so src2 holds the
+	// second operand; src1 is unused by ADD -- per isa.xml. No EVIS.)
+	add_opcode(0x01, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	// img_store.u8 r1, c1, r0.xy, r1
+	add_opcode(0x7A, 0, dataType, &inst[n]);
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 2};
 }
 
 // Build a copy kernel: OutImage = InImage (img_load -> img_store, no arithmetic
