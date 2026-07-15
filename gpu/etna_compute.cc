@@ -80,29 +80,10 @@ enum : unsigned {
 
 constexpr uint32_t kImgFormat = 0x444051F0; // u8 image format word (from the template)
 
-// Largest power-of-two tile edge (<= maxg) that evenly divides `threads`, so the
-// dispatch tiles into full workgroups with no partial/out-of-bounds threads.
-static uint32_t pick_group_size(uint32_t threads, uint32_t maxg)
-{
-	for (uint32_t g = maxg; g > 1; g >>= 1)
-		if (threads % g == 0)
-			return g;
-	return 1;
-}
-
 // Emit the PPU dispatch for `shader` over a `width` x `height` u8 image. The
 // group counts are derived from the size the way the vendor's _ProgramPPUCommand
 // does (globalScale 4x1), so this handles any size; everything else (USC config,
 // uniforms, format, kick, drain) is the fixed template.
-//
-// WORKGROUP TILING: the vendor bakes groupSize 1x1 -> one 1-thread workgroup per
-// 4 output bytes (262144 launches for a 512x512 ARGB image), which is launch- and
-// coalescing-bound (~125x slower than the CPU, measured). We instead pack threads
-// into up-to-8x8 workgroups (each thread still does globalScale=4 pixels), so
-// neighboring threads issue coalesced DDR bursts and there are ~64x fewer
-// launches. total coverage = groupCount * groupSize * globalScale is unchanged
-// (the groupSize factor cancels), so any tile that divides the thread count is
-// correct; per-thread r0 coordinates are hardware-generated from the group config.
 static void emit_ppu_dispatch(CmdStream &cs,
 							  uint32_t in_addr,
 							  uint32_t out_addr,
@@ -116,15 +97,18 @@ static void emit_ppu_dispatch(CmdStream &cs,
 {
 	const uint32_t stride = width; // u8: 1 byte per pixel
 	const uint32_t dims = (height << 16) | width;
-	// Threads per dim (each does globalScale pixels): X uses globalScaleX=4, Y=1.
-	const uint32_t threads_x = (width + 3) / 4;
-	const uint32_t threads_y = height;
-	// Pack threads into up-to-8x8 workgroups (falls back to 1 for indivisible dims).
-	const uint32_t gsx = pick_group_size(threads_x, 8);
-	const uint32_t gsy = pick_group_size(threads_y, 8);
-	const uint32_t group_x = threads_x / gsx; // number of workgroups in X
-	const uint32_t group_y = threads_y / gsy;
-	const uint32_t thread_alloc = (gsx * gsy + 8 - 1) / 8; // cores*4 = 2*4 = 8
+	// groupSize stays the vendor's 1x1 (one thread per workgroup, each doing
+	// globalScale=4 pixels), so groupCount == thread count.
+	//
+	// We TRIED packing threads into up-to-8x8 workgroups to cut the 262144
+	// launches (kThreadAlloc/kGroupSizeX/Y are the registers). It verified
+	// correct but ran SLIGHTLY SLOWER: the thread count is unchanged (tiling cuts
+	// launches, not threads), so per-thread DDR latency still dominates; this Nano
+	// core has no cross-thread coalescing to gain; and bigger groups cut occupancy
+	// for register-heavy kernels (blend RegCount 5 -> 11% slower; copy RegCount 2
+	// unchanged). 1x1 maximizes occupancy for latency-hiding, so it wins here.
+	const uint32_t group_x = (width + 3) / 4; // globalScaleX = 4
+	const uint32_t group_y = height;		  // globalScaleY = 1
 
 	for (unsigned i = 0; i < 118; i++) {
 		uint32_t v = kPpuDispatchTemplate[i];
@@ -140,11 +124,8 @@ static void emit_ppu_dispatch(CmdStream &cs,
 			case kInstCount4:  v = inst_dwords / 4; break;
 			case kInstAddr:    v = shader_addr; break;
 			case kInstCount4m1: v = inst_dwords / 4 - 1; break;
-			case kThreadAlloc: v = thread_alloc; break;
 			case kGroupCountX: v = group_x - 1; break;
 			case kGroupCountY: v = group_y - 1; break;
-			case kGroupSizeX:  v = gsx - 1; break;
-			case kGroupSizeY:  v = gsy - 1; break;
 		}
 		// clang-format on
 		// Second input image (uniform c2), only for two-input shaders. Patches
