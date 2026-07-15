@@ -130,6 +130,70 @@ bool test_blit_convert(etna::Gpu &gpu, const etna::Bo &dst, const etna::Bo &src)
 	return true;
 }
 
+// Real-image integration: alpha-blend two ARGB8888 images with a per-pixel
+// alpha, on the programmable shader cores via the compute API. An ARGB W x H
+// image is just a u8 image of (4*W) x H, so the per-byte alpha-lerp kernel
+// blends each color channel independently:
+//     out = mul_hi(A, alpha) + mul_hi(B, 255-alpha)   (per byte)
+// A = red horizontal gradient, B = blue vertical gradient, alpha = a left->right
+// ramp (same across a pixel's 4 bytes), so the result cross-fades A into B.
+bool test_image_blend(etna::Gpu &gpu)
+{
+	constexpr uint32_t W = 512, H = 512; // ARGB pixels
+	constexpr uint32_t BW = W * 4;		 // width in BYTES (the u8 image width; 2048 % 16 == 0)
+
+	auto a = gpu.alloc(BW * H);
+	auto b = gpu.alloc(BW * H);
+	auto alpha = gpu.alloc(BW * H);
+	auto out = gpu.alloc(BW * H);
+	if (!a || !b || !alpha || !out)
+		return false;
+
+	auto ap = static_cast<uint8_t *>(a.map());
+	auto bp = static_cast<uint8_t *>(b.map());
+	auto lp = static_cast<uint8_t *>(alpha.map());
+	for (uint32_t y = 0; y < H; y++)
+		for (uint32_t x = 0; x < W; x++) {
+			uint32_t p = (y * W + x) * 4;			   // byte offset of pixel (B,G,R,A)
+			uint8_t av = uint8_t((x * 255) / (W - 1)); // alpha ramps left -> right
+			ap[p + 0] = 0;
+			ap[p + 1] = 0;
+			ap[p + 2] = uint8_t((x * 255) / (W - 1)); // A: red gradient
+			ap[p + 3] = 255;
+			bp[p + 0] = uint8_t((y * 255) / (H - 1)); // B: blue gradient
+			bp[p + 1] = 0;
+			bp[p + 2] = 0;
+			bp[p + 3] = 255;
+			lp[p + 0] = lp[p + 1] = lp[p + 2] = lp[p + 3] = av; // same alpha per channel
+		}
+	a.cpu_fini(etna::RelocWrite);
+	b.cpu_fini(etna::RelocWrite);
+	alpha.cpu_fini(etna::RelocWrite);
+
+	auto blend = etna::make_kernel(gpu, ppu::build_blend_lerp_shader);
+	if (!blend)
+		return false;
+
+	auto start = read_cntpct();
+	if (!etna::compute(gpu, blend, out, a, b, alpha, BW, H))
+		return false;
+	auto end = read_cntpct();
+	print("Alpha-blended two ", int(W), "x", int(H), " ARGB images in ", (uint32_t)(end - start), " ticks\n");
+
+	out.cpu_prep(etna::RelocRead);
+	auto op = static_cast<uint8_t *>(out.map());
+	for (uint32_t i = 0; i < BW * H; i++) {
+		uint32_t al = lp[i];
+		uint8_t expect = uint8_t(((uint32_t(ap[i]) * al) >> 8) + ((uint32_t(bp[i]) * (255 - al)) >> 8));
+		if (op[i] != expect) {
+			print("ERROR: image blend wrong at byte ", int(i), " got ", int(op[i]), " expected ", int(expect), "\n");
+			return false;
+		}
+	}
+	print("GPU alpha-blended ", int(W), "x", int(H), " ARGB (per-channel lerp) -- verified. \\o/\n");
+	return true;
+}
+
 } // namespace
 
 int main()
@@ -159,6 +223,8 @@ int main()
 		ok = test_throughput(gpu);
 	if (ok)
 		ok = etna::compute_test(gpu);
+	if (ok)
+		ok = test_image_blend(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 

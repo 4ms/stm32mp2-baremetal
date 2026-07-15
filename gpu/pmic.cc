@@ -116,6 +116,6 @@ bool enable_buck3_on_pmic()
 
 	pmic_read(Buck3MainCr1, cr1);
 	pmic_read(Buck3MainCr2, cr2);
-	print("Buck3 (VDDGPU) now: voltage code ", cr1, " (800mV), control 0x", Hex{cr2}, "\n");
+	print("Buck3 (VDDGPU) now: voltage code ", cr1, " (900mV), control 0x", Hex{cr2}, "\n");
 	return true;
 }

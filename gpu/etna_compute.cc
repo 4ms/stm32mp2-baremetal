@@ -140,51 +140,48 @@ static void emit_ppu_dispatch(CmdStream &cs,
 	// submit() adds the ring's event + wait + link trailer.
 }
 
-bool compute(Gpu &gpu,
-			 const Bo &shader,
-			 uint32_t inst_dwords,
-			 uint32_t reg_count,
-			 const Bo &in,
-			 const Bo &out,
-			 uint32_t width,
+Kernel make_kernel(Gpu &gpu, ShaderBuilder build)
+{
+	uint32_t inst[32];
+	auto si = build(inst, 0x7, 2); // dataType u8, NumShaderCores 2
+	Kernel k;
+	k.binary = gpu.alloc(si.inst_dwords * 4);
+	if (!k.binary)
+		return k; // empty
+	auto p = static_cast<uint32_t *>(k.binary.map());
+	for (unsigned i = 0; i < si.inst_dwords; i++)
+		p[i] = inst[i];
+	k.binary.cpu_fini(RelocWrite);
+	k.inst_dwords = si.inst_dwords;
+	k.reg_count = si.reg_count;
+	return k;
+}
+
+// Shared implementation for all input arities; in1/in2 are null when unused.
+static bool run_kernel(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo *in1, const Bo *in2,
+					   uint32_t width, uint32_t height)
+{
+	auto cs = gpu.new_cmd_stream(256);
+	emit_ppu_dispatch(cs, in0.gpu_addr(), out.gpu_addr(), k.binary.gpu_addr(), k.inst_dwords, k.reg_count, width,
+					  height, in1 ? in1->gpu_addr() : 0, in2 ? in2->gpu_addr() : 0);
+	return gpu.submit_and_wait(cs);
+}
+
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, uint32_t width, uint32_t height)
+{
+	return run_kernel(gpu, k, out, in0, nullptr, nullptr, width, height);
+}
+
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, uint32_t width,
 			 uint32_t height)
 {
-	auto cs = gpu.new_cmd_stream(256);
-	emit_ppu_dispatch(cs, in.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height);
-	return gpu.submit_and_wait(cs);
+	return run_kernel(gpu, k, out, in0, &in1, nullptr, width, height);
 }
 
-bool compute2(Gpu &gpu,
-			  const Bo &shader,
-			  uint32_t inst_dwords,
-			  uint32_t reg_count,
-			  const Bo &in_a,
-			  const Bo &in_b,
-			  const Bo &out,
-			  uint32_t width,
-			  uint32_t height)
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, const Bo &in2,
+			 uint32_t width, uint32_t height)
 {
-	auto cs = gpu.new_cmd_stream(256);
-	emit_ppu_dispatch(cs, in_a.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height,
-					  in_b.gpu_addr());
-	return gpu.submit_and_wait(cs);
-}
-
-bool compute3(Gpu &gpu,
-			  const Bo &shader,
-			  uint32_t inst_dwords,
-			  uint32_t reg_count,
-			  const Bo &in_a,
-			  const Bo &in_b,
-			  const Bo &in_c,
-			  const Bo &out,
-			  uint32_t width,
-			  uint32_t height)
-{
-	auto cs = gpu.new_cmd_stream(256);
-	emit_ppu_dispatch(cs, in_a.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height,
-					  in_b.gpu_addr(), in_c.gpu_addr());
-	return gpu.submit_and_wait(cs);
+	return run_kernel(gpu, k, out, in0, &in1, &in2, width, height);
 }
 
 // Run an arbitrary kernel over a width x height u8 image: build the shader,
@@ -197,16 +194,10 @@ using ByteFn = uint8_t (*)(uint32_t);
 static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fill, ByteFn expect)
 {
 	uint32_t n = width * height;
-	Bo in = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(16 * 4);
-	if (!in || !out || !shader)
+	Bo in = gpu.alloc(n), out = gpu.alloc(n);
+	Kernel k = make_kernel(gpu, build);
+	if (!in || !out || !k)
 		return false;
-
-	uint32_t inst[16];
-	auto si = build(inst, 0x7, 2);
-	auto sp = static_cast<uint32_t *>(shader.map());
-	for (unsigned i = 0; i < si.inst_dwords; i++)
-		sp[i] = inst[i];
-	shader.cpu_fini(RelocWrite);
 
 	auto ib = static_cast<uint8_t *>(in.map());
 	for (uint32_t i = 0; i < n; i++)
@@ -219,7 +210,7 @@ static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bui
 	out.cpu_fini(RelocWrite);
 
 	auto start = read_cntpct();
-	if (!compute(gpu, shader, si.inst_dwords, si.reg_count, in, out, width, height))
+	if (!compute(gpu, k, out, in, width, height))
 		return false;
 	uint32_t ticks = read_cntpct() - start;
 
@@ -250,16 +241,10 @@ static bool run2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bu
 				 ByteFn fillB, ByteFn expect)
 {
 	uint32_t n = width * height;
-	Bo a = gpu.alloc(n), b = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(16 * 4);
-	if (!a || !b || !out || !shader)
+	Bo a = gpu.alloc(n), b = gpu.alloc(n), out = gpu.alloc(n);
+	Kernel k = make_kernel(gpu, build);
+	if (!a || !b || !out || !k)
 		return false;
-
-	uint32_t inst[16];
-	auto si = build(inst, 0x7, 2);
-	auto sp = static_cast<uint32_t *>(shader.map());
-	for (unsigned i = 0; i < si.inst_dwords; i++)
-		sp[i] = inst[i];
-	shader.cpu_fini(RelocWrite);
 
 	auto ab = static_cast<uint8_t *>(a.map());
 	auto bb = static_cast<uint8_t *>(b.map());
@@ -276,7 +261,7 @@ static bool run2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bu
 	out.cpu_fini(RelocWrite);
 
 	auto start = read_cntpct();
-	if (!compute2(gpu, shader, si.inst_dwords, si.reg_count, a, b, out, width, height))
+	if (!compute(gpu, k, out, a, b, width, height))
 		return false;
 	uint32_t ticks = read_cntpct() - start;
 
@@ -309,16 +294,10 @@ static bool run3(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bu
 				 ByteFn fillB, ByteFn fillC, ByteFn expect)
 {
 	uint32_t n = width * height;
-	Bo a = gpu.alloc(n), b = gpu.alloc(n), c = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(32 * 4);
-	if (!a || !b || !c || !out || !shader)
+	Bo a = gpu.alloc(n), b = gpu.alloc(n), c = gpu.alloc(n), out = gpu.alloc(n);
+	Kernel k = make_kernel(gpu, build);
+	if (!a || !b || !c || !out || !k)
 		return false;
-
-	uint32_t inst[32];
-	auto si = build(inst, 0x7, 2);
-	auto sp = static_cast<uint32_t *>(shader.map());
-	for (unsigned i = 0; i < si.inst_dwords; i++)
-		sp[i] = inst[i];
-	shader.cpu_fini(RelocWrite);
 
 	auto ab = static_cast<uint8_t *>(a.map());
 	auto bb = static_cast<uint8_t *>(b.map());
@@ -338,7 +317,7 @@ static bool run3(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bu
 	out.cpu_fini(RelocWrite);
 
 	auto start = read_cntpct();
-	if (!compute3(gpu, shader, si.inst_dwords, si.reg_count, a, b, c, out, width, height))
+	if (!compute(gpu, k, out, a, b, c, width, height))
 		return false;
 	uint32_t ticks = read_cntpct() - start;
 

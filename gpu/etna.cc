@@ -9,7 +9,6 @@
 #include "stm32mp2xx.h"
 
 // PMIC buck3 fallback (pmic.cc) -- only used if TF-A did not enable VDDGPU.
-// FIXME: i2c not working?
 bool enable_buck3_on_pmic();
 
 namespace etna

@@ -1,5 +1,6 @@
 #pragma once
 #include "gpu_regs.hh"
+#include "ppu_asm.hh" // ppu::ShaderInfo / build_*_shader (for Kernel/make_kernel)
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -298,50 +299,68 @@ enum BlitFlags : uint32_t {
 	BlitFlipY = 1 << 1,	 // vertical flip (VIVS_RS_CONFIG_FLIP)
 };
 
-// Compute (PPU / unified-shader) path -- run an arbitrary halti5 shader over an
-// input->output u8 image of any size (etna_compute.cc). `shader` holds the
-// shader binary (build it with ppu::build_*_shader in ppu_asm.hh); inst_dwords
-// and reg_count come from that builder's ShaderInfo. width must be a multiple
-// of 16 (the EVIS vector width); stride is width bytes (u8). Emits the ported
-// PPU dispatch, submits through the ring, and waits.
-bool compute(Gpu &gpu,
-			 const Bo &shader,
-			 uint32_t inst_dwords,
-			 uint32_t reg_count,
-			 const Bo &in,
-			 const Bo &out,
-			 uint32_t width,
+// =============================================================================
+//  Compute -- the programmable shader cores (PPU / unified shader)
+// =============================================================================
+// The RS engine above is fixed-function (fill/blit only). For arbitrary per-pixel
+// math we run a *shader* on the PPU (parallel processing unit = unified shader
+// cores), dispatched by the same FE command ring. Implemented in etna_compute.cc;
+// the shader assembler + kernel library is ppu_asm.hh.
+//
+//  MODEL
+//   - A *kernel* is a short shader program that runs once per pixel across the
+//     whole image, in parallel. Build one with a ppu::build_*_shader.
+//   - It reads 1..3 input images and writes 1 output image, all the same
+//     width x height u8 buffer. Images bind to descriptor *uniforms*:
+//     input0 -> c0, output -> c1, input1 -> c2, input2 -> c3.
+//   - "u8 image" is just bytes: an ARGB8888 W x H framebuffer is a u8 image of
+//     (4*W) x H, and a per-byte kernel then operates independently per channel.
+//   - `width` is in BYTES and must be a multiple of 16 (the EVIS vector width).
+//
+//  THE OP TOOLKIT (all hardware-verified per-byte u8 SIMD; see ppu_asm.hh)
+//     ADD, IADDSAT (saturating), IMULLO (low half), IMULHI/mul_hi (high half),
+//     AND, NOT, u32 immediates, and img_load/img_store. New kernels compose these
+//     with the emit_* helpers in ppu_asm.hh.
+//
+//  USAGE
+//     Kernel add   = make_kernel(gpu, ppu::build_add_shader);       // compile once
+//     Kernel blend = make_kernel(gpu, ppu::build_blend_lerp_shader);
+//     compute(gpu, add,   out, in,        W, H);   // out = in + in
+//     compute(gpu, blend, out, a, b, alpha, W, H); // per-pixel alpha lerp
+//     out.cpu_prep(RelocRead);                     // invalidate before CPU reads
+
+// A compiled kernel: the shader binary in GPU memory + its instruction and
+// register counts (which feed the dispatch's InstCount/RegCount). Build once
+// with make_kernel(), then reuse across many compute() calls.
+struct Kernel {
+	Bo binary;				  // the shader program in GPU memory
+	uint32_t inst_dwords = 0; // program size in dwords (4 per instruction)
+	uint32_t reg_count = 0;	  // temp registers the program uses
+	explicit operator bool() const { return bool(binary); }
+};
+
+// A ppu::build_*_shader function: writes the program into inst[] (up to 8
+// instructions = 32 dwords) and returns its ShaderInfo.
+using ShaderBuilder = ppu::ShaderInfo (*)(uint32_t *, uint32_t, uint32_t);
+
+// Compile a shader builder into a reusable Kernel (allocates GPU memory for the
+// program and uploads it). Returns an empty Kernel (operator bool == false) on
+// allocation failure.
+Kernel make_kernel(Gpu &gpu, ShaderBuilder build);
+
+// Run `k` over its input image(s) -> `out` (all width x height u8, width a
+// multiple of 16). Blocks until the GPU finishes. The three overloads bind 1, 2,
+// or 3 inputs; use the arity that matches the kernel. The caller handles cache
+// bracketing: cpu_fini(RelocWrite) the inputs before, cpu_prep(RelocRead) the
+// output after.
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, uint32_t width, uint32_t height);
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, uint32_t width,
+			 uint32_t height);
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, const Bo &in2, uint32_t width,
 			 uint32_t height);
 
-// Two-input variant: out = f(in_a, in_b), e.g. out = A + B. The shader reads
-// input B from image-descriptor uniform c2, which this binds in the dispatch.
-// Use with ppu::build_add2_shader (or any two-input kernel). Both inputs and
-// the output are the same width x height u8 image.
-bool compute2(Gpu &gpu,
-			  const Bo &shader,
-			  uint32_t inst_dwords,
-			  uint32_t reg_count,
-			  const Bo &in_a,
-			  const Bo &in_b,
-			  const Bo &out,
-			  uint32_t width,
-			  uint32_t height);
-
-// Three-input variant: out = f(a, b, c). Binds a third input image at uniform
-// c3 (descriptor slot 3). Used by the fractional alpha blend
-// (out = mul_hi(a, alpha) + mul_hi(b, 255-alpha), alpha = the third image).
-bool compute3(Gpu &gpu,
-			  const Bo &shader,
-			  uint32_t inst_dwords,
-			  uint32_t reg_count,
-			  const Bo &in_a,
-			  const Bo &in_b,
-			  const Bo &in_c,
-			  const Bo &out,
-			  uint32_t width,
-			  uint32_t height);
-
-// Demo/self-test: runs the "out = in + in" kernel at two sizes (verifies).
+// Demo/self-test: builds and runs the whole kernel suite (copy, add, blends,
+// multiply, alpha lerp, ...) over gradient data and verifies each on the CPU.
 bool compute_test(Gpu &gpu);
 
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
