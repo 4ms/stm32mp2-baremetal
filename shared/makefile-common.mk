@@ -75,7 +75,19 @@ ifeq ($(UART_DESC),)
 $(error Invalid UART '$(UART)' - must be 1, 2, or 6)
 endif
 
-$(info Console UART: $(UART_DESC))
+ifeq ("$(MAKECMDGOALS)","clean")
+  silent = 1
+endif
+
+ifeq ("$(MAKECMDGOALS)","flash-t32")
+  silent = 1
+endif
+
+silent ?= 0
+
+ifeq ($(silent),0)
+  $(info Console UART: $(UART_DESC))
+endif
 
 FREESTANDING ?= -ffreestanding
 
@@ -227,6 +239,10 @@ endif
 	$(SCRIPTDIR)/flash-app.sh $(SD) $(UIMAGENAME)
 
 .PHONY: flash
+
+# Use TRACE32 to flash the current project 
+flash-t32:
+	python3 ../scripts/flash_t32.py
 
 %.d: ;
 
