@@ -5,13 +5,13 @@ This example brings it up in stages:
 
 1. **Power**: VDDGPU is an independent supply: the STPMIC25's buck3 on the
    EV1 controls it. We have configured TF-A to turn this on, but just in case
-   it will check and try to enable it via the PMIC (FIXME: PMIC configuration 
-   via I2C doesn't work!)
+   it will check and try to enable it via the PMIC.
    The example verifies the supply with the PWR voltage monitor and sets the
    "supply valid" bit (`PWR_CR12`) to remove the GPU domain's electrical
    isolation, like the other independent supplies.
 
-2. **Clock**: PLL3 is dedicated to the GPU. We run it at 400 MHz, which is safe 
+2. **Clock**: PLL3 is dedicated to the GPU. We run it at 800 MHz, because both
+   the custom TF-A and the PMIC init code here set VDDGPU to 0.9V, and our PMIC init code awhich is safe 
    for the 0.80 V that the PMIC provides on VDDGPU (the 800/900 MHz datasheet
    speeds need 0.90 V). `RCC_GPUCFGR` holds the GPU's clock-enable and reset bits.
 
@@ -46,16 +46,41 @@ This example brings it up in stages:
 Expected output:
 
 ```
-GPU Example (etna API)
+``GPU Example (etna API)
 ======================
 
 etna: bringing up GPU
+etna: VDDGPU not present (CR12 = 0x0)
+etna: VDDGPU off -- trying to enable buck3 over I2C7...
+PMIC product ID 0x21, version 0x11
+Buck3 (VDDGPU) was: voltage code 0, control 0x0
+Buck3 (VDDGPU) now: voltage code 40 (900mV), control 0x1
 etna: GC model 0x8000 rev 0x6205 (product 0x80003, customer 0x15)
-RS fill (1024x1024) in 844106 ticks
+RS fill (1024x1024) in 848705 ticks
 GPU filled 1024x1024 with 0x4D5A11AC -- verified. \o/
-RS blit+convert (1024x1024) in 3760067 ticks
+RS blit+convert (1024x1024) in 3751200 ticks
 GPU copied 1024x1024, swapping R<->B -- verified. \o/
-Ring throughput (16 x 64x64 clears): sequential 87562 ticks, pipelined 59045 ticks
+Ring throughput (16 x 64x64 clears): sequential 92377 ticks, pipelined 59187 ticks
+GPU copy over 64x6 (384 bytes) in 23526 ticks -- verified. \o/
+GPU copy over 128x32 (4096 bytes) in 30457 ticks -- verified. \o/
+GPU copy over 256x64 (16384 bytes) in 28530 ticks -- verified. \o/
+GPU copy over 32x4 (128 bytes) in 22471 ticks -- verified. \o/
+GPU add(out=in+in) over 128x32 (4096 bytes) in 26235 ticks -- verified. \o/
+GPU addsat(min(in+in,255)) over 128x32 (4096 bytes) in 21815 ticks -- verified. \o/
+GPU add2(A+B, ramp+inv=255) over 128x32 (4096 bytes) in 16699 ticks -- verified. \o/
+GPU blend-add(sat(A+B)) over 128x32 (4096 bytes) in 28096 ticks -- verified. \o/
+GPU and(in & 0x0F, imm) over 64x6 (384 bytes) in 26976 ticks -- verified. \o/
+GPU flop-reset(dp2x8, const in) over 64x6 (384 bytes) in 12051 ticks -- verified. \o/
+GPU mul2((A*B)&0xFF) over 64x6 (384 bytes) in 18185 ticks -- verified. \o/
+GPU mulhi2(mul_hi(A,B)) over 64x6 (384 bytes) in 26887 ticks -- verified. \o/
+GPU not(~in) over 64x6 (384 bytes) in 15982 ticks -- verified. \o/
+GPU blend-lerp(a*A + b*(1-A)) over 128x32 (4096 bytes) in 33474 ticks -- verified. \o/
+Alpha-blended two 512x512 ARGB images (GPU) in 116765573 ticks
+GPU alpha-blended 512x512 ARGB (per-channel lerp) -- verified. \o/
+Same blend on the CPU in 836747 ticks   (GPU / CPU = 139x)
+CPU and GPU blends agree. \o/
+Launch-overhead diagnostic (512x512): copy(2 instr)=58418519  add(3)=58410957  blend(8)=116765573 ticks
+  blend/copy = 1x  (near 1 => launch-bound; near 4 => compute-bound)
 
 SUCCESS
 ```
@@ -65,11 +90,10 @@ SUCCESS
 The example is built on a small reusable GPU API (`etna.hh` / `etna.cc`),
 modeled on libdrm's `etna_cmd_stream` / `etna_bo` interface, the contract that
 Mesa's operation emitters are written against. This is the MIT-licensed seam in
-the middle of the Linux etnaviv stack. By providing that seam on baremetal,
+the middle of the Linux etnaviv stack. By providing this baremetal,
 Mesa's MIT operation code (`etnaviv_rs.c`, ...) should port easily.
 
-What can't be ported easily is Mesa itself (Gallium + the NIR shader compiler),
-so 3D will need to use offline-compiled shaders (TODO).
+What can't be ported easily is Mesa itself (Gallium + the NIR shader compiler).
 
 The surface:
 
@@ -95,8 +119,6 @@ The surface:
   `emit`/`reserve`/`set_state`/`emit_reloc` helpers.
 - `etna::clear()` / `etna::blit()` -- the RS fill and copy+convert operations.
 
-Each `[HAVE]`/`[NEW]`/`[LATER]` tag in `etna.hh` marks the roadmap: 
-the GPU MMU, and the 3D pipe are the deferred pieces. 
 
 ## Where the register definitions come from
 
@@ -132,7 +154,7 @@ cross-reference against those sources and against `etnaviv_gpu.c` (whose
 - **FE prefetch units**: `FE_COMMAND_CONTROL`'s prefetch count is in 64-bit
   units, so you have to add padding if needed.
 - **Interrupts**: completion is delivered by the GPU interrupt (GIC SPI 215).
-  The ISR (`Gpu::on_irq`) is the *sole* reader of `HI_INTR_ACKNOWLEDGE` -- that
+  The ISR (`Gpu::on_irq`) is the sole reader of `HI_INTR_ACKNOWLEDGE` -- that
   register is read-to-clear and also de-asserts the GIC line, so a second
   reader (e.g. a polling `wait()`) would steal the event bits. `wait()` instead
   sleeps on `WFE`, woken by the ISR, and consumes its fence's event bit from an
