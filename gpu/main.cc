@@ -77,16 +77,17 @@ bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 	auto start = read_cntpct();
 	if (!gpu.submit_and_wait(cs))
 		return false;
-	print("RS fill (", int(ImgWidth), "x", int(ImgHeight), ") in ", (uint32_t)(read_cntpct() - start), " ticks\n");
+	auto end = read_cntpct();
+	print("RS fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks\n");
 
 	fb.cpu_prep(etna::RelocRead);
 	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++) {
 		if (pixels[i] != ClearColor) {
-			print("ERROR: fill wrong at [", int(i), "] = 0x", Hex{pixels[i]}, "\n");
+			print("ERROR: fill wrong at [", i, "] = 0x", Hex{pixels[i]}, "\n");
 			return false;
 		}
 	}
-	print("GPU filled ", int(ImgWidth), "x", int(ImgHeight), " with 0x", Hex{ClearColor}, " -- verified. \\o/\n");
+	print("GPU filled ", ImgWidth, "x", ImgHeight, " with 0x", Hex{ClearColor}, " -- verified. \\o/\n");
 	return true;
 }
 
@@ -110,13 +111,8 @@ bool test_blit_convert(etna::Gpu &gpu, const etna::Bo &dst, const etna::Bo &src)
 	auto start = read_cntpct();
 	if (!gpu.submit_and_wait(cs))
 		return false;
-	print("RS blit+convert (",
-		  int(ImgWidth),
-		  "x",
-		  int(ImgHeight),
-		  ") in ",
-		  (uint32_t)(read_cntpct() - start),
-		  " ticks\n");
+	auto end = read_cntpct();
+	print("RS blit+convert (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks\n");
 
 	dst.cpu_prep(etna::RelocRead);
 	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++) {
@@ -178,7 +174,7 @@ bool test_image_blend(etna::Gpu &gpu)
 	if (!etna::compute(gpu, blend, out, a, b, alpha, BW, H))
 		return false;
 	auto end = read_cntpct();
-	print("Alpha-blended two ", int(W), "x", int(H), " ARGB images in ", (uint32_t)(end - start), " ticks\n");
+	print("Alpha-blended two ", W, "x", H, " ARGB images in ", (end - start), " ticks\n");
 
 	out.cpu_prep(etna::RelocRead);
 	auto op = static_cast<uint8_t *>(out.map());
@@ -190,7 +186,7 @@ bool test_image_blend(etna::Gpu &gpu)
 			return false;
 		}
 	}
-	print("GPU alpha-blended ", int(W), "x", int(H), " ARGB (per-channel lerp) -- verified. \\o/\n");
+	print("GPU alpha-blended ", W, "x", H, " ARGB (per-channel lerp) -- verified. \\o/\n");
 	return true;
 }
 

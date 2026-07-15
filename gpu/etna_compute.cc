@@ -191,7 +191,7 @@ bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &
 using BuildFn = ppu::ShaderInfo (*)(uint32_t *, uint32_t, uint32_t);
 using ByteFn = uint8_t (*)(uint32_t);
 
-static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fill, ByteFn expect)
+static bool run_test(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fill, ByteFn expect)
 {
 	uint32_t n = width * height;
 	Bo in = gpu.alloc(n), out = gpu.alloc(n);
@@ -235,9 +235,9 @@ static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bui
 	return true;
 }
 
-// Like run(), but two input images: fill a with fillA(i), b with fillB(i),
+// Like run_test(), but two input images: fill a with fillA(i), b with fillB(i),
 // dispatch a two-input kernel, and verify out[i] == expect(i).
-static bool run2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fillA,
+static bool run_test_2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fillA,
 				 ByteFn fillB, ByteFn expect)
 {
 	uint32_t n = width * height;
@@ -290,7 +290,7 @@ static bool run2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bu
 }
 
 // Three-input variant (a, b, c), shader up to 8 instructions (inst[32]).
-static bool run3(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fillA,
+static bool run_test_3(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fillA,
 				 ByteFn fillB, ByteFn fillC, ByteFn expect)
 {
 	uint32_t n = width * height;
@@ -362,12 +362,12 @@ bool compute_test(Gpu &gpu)
 		uint32_t w, h;
 	} sizes[] = {{64, 6}, {128, 32}, {256, 64}, {32, 4}};
 	for (auto &s : sizes)
-		if (!run(gpu, "copy", s.w, s.h, ppu::build_copy_shader, grad, grad))
+		if (!run_test(gpu, "copy", s.w, s.h, ppu::build_copy_shader, grad, grad))
 			return false;
 
 	// Real per-element add (base ALU ADD.u8, out = in + in) with a FULL-range
 	// gradient -- verifies both per-element arithmetic and u8 wraparound.
-	if (!run(
+	if (!run_test(
 			gpu,
 			"add(out=in+in)",
 			128,
@@ -379,7 +379,7 @@ bool compute_test(Gpu &gpu)
 
 	// Saturating add (IADDSAT.u8, out = min(in+in, 255)) -- same gradient, but
 	// now high values clamp instead of wrapping (e.g. 200 -> 255, not 144).
-	if (!run(
+	if (!run_test(
 			gpu,
 			"addsat(min(in+in,255))",
 			128,
@@ -394,7 +394,7 @@ bool compute_test(Gpu &gpu)
 	// everywhere -- a strong check: any index misalignment or ignored B breaks
 	// the constant. Proves the shader reads a genuine second image. (Runs before
 	// the AND test so the two-input path is exercised regardless of it.)
-	if (!run2(
+	if (!run_test_2(
 			gpu,
 			"add2(A+B, ramp+inv=255)",
 			128,
@@ -408,7 +408,7 @@ bool compute_test(Gpu &gpu)
 	// ADDITIVE (saturating) blend of two images: out = saturate(A + B). A =
 	// gradient, B = constant 128, so out clips to 255 once A >= 128. A real
 	// compositing mode ("linear dodge") over two distinct images.
-	if (!run2(
+	if (!run_test_2(
 			gpu,
 			"blend-add(sat(A+B))",
 			128,
@@ -422,7 +422,7 @@ bool compute_test(Gpu &gpu)
 	// Bitwise AND with u32 immediate 0x0F. The immediate broadcasts to the 4
 	// vector COMPONENTS, so under u8 SIMD it masks only the (i%4)==0 byte-lane
 	// and zeroes the other three: out[i] = (i%4==0) ? in[i]&0x0F : 0.
-	if (!run(
+	if (!run_test(
 			gpu,
 			"and(in & 0x0F, imm)",
 			64,
@@ -435,7 +435,7 @@ bool compute_test(Gpu &gpu)
 	// The vendor flop-reset kernel, constant input -- its only verifiable case:
 	// dp2x8 is a dot-product (out[j] = sum of src0[k]*src1[k] over a pair, i.e.
 	// sums of squares here), so it only lands on 2*in when every input is equal.
-	if (!run(
+	if (!run_test(
 			gpu,
 			"flop-reset(dp2x8, const in)",
 			64,
@@ -445,13 +445,12 @@ bool compute_test(Gpu &gpu)
 			[](uint32_t) -> uint8_t { return 0x02; }))
 		return false;
 
-	// PROBE (last, so a scalar-multiply failure doesn't block verified tests):
 	// per-byte multiply out = (A*B)&0xFF. A = gradient, B = constant 3. If this
 	// verifies, IMULLO is per-byte SIMD and fractional alpha is reachable; if it
 	// fails, the dump shows whether it's scalar (broadcast of A[0]*3).
-	if (!run2(
+	if (!run_test_2(
 			gpu,
-			"PROBE mul2((A*B)&0xFF)",
+			"mul2((A*B)&0xFF)",
 			64,
 			6,
 			ppu::build_mul2_shader,
@@ -460,11 +459,11 @@ bool compute_test(Gpu &gpu)
 			[](uint32_t i) -> uint8_t { return ((i & 0xFF) * 3) & 0xFF; }))
 		return false;
 
-	// PROBE: high-half multiply out = mul_hi(A, B). B = 128, so if u8 mul_hi is
+	// High-half multiply out = mul_hi(A, B). B = 128, so if u8 mul_hi is
 	// (A*B)>>8 then out = (A*128)>>8 = A>>1. Confirms the primitive for a*alpha.
-	if (!run2(
+	if (!run_test_2(
 			gpu,
-			"PROBE mulhi2(mul_hi(A,B))",
+			"mulhi2(mul_hi(A,B))",
 			64,
 			6,
 			ppu::build_mulhi2_shader,
@@ -473,10 +472,10 @@ bool compute_test(Gpu &gpu)
 			[](uint32_t i) -> uint8_t { return (i & 0xFF) >> 1; }))
 		return false;
 
-	// PROBE: bitwise NOT, out = ~in = 255 - in (needed for beta = 255 - alpha).
-	if (!run(
+	//  Bitwise NOT, out = ~in = 255 - in (needed for beta = 255 - alpha).
+	if (!run_test(
 			gpu,
-			"PROBE not(~in)",
+			"not(~in)",
 			64,
 			6,
 			ppu::build_not_shader,
@@ -484,10 +483,10 @@ bool compute_test(Gpu &gpu)
 			[](uint32_t i) -> uint8_t { return 255 - (i & 0xFF); }))
 		return false;
 
-	// TRUE fractional alpha blend: out = mul_hi(a,alpha) + mul_hi(b,255-alpha).
+	// Fractional alpha blend: out = mul_hi(a,alpha) + mul_hi(b,255-alpha).
 	// a = ramp up, b = ramp down, alpha = ramp up (per-pixel). Verified exactly
 	// against the same integer math on the CPU.
-	if (!run3(
+	if (!run_test_3(
 			gpu,
 			"blend-lerp(a*A + b*(1-A))",
 			128,
