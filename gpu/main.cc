@@ -126,6 +126,19 @@ bool test_blit_convert(etna::Gpu &gpu, const etna::Bo &dst, const etna::Bo &src)
 	return true;
 }
 
+// Build `build`, run it once over in -> out (width x height u8), return the
+// elapsed ticks. For the launch-overhead diagnostic below.
+uint64_t time_kernel(etna::Gpu &gpu, etna::ShaderBuilder build, const etna::Bo &out, const etna::Bo &in, uint32_t w,
+					 uint32_t h)
+{
+	auto k = etna::make_kernel(gpu, build);
+	if (!k)
+		return 0;
+	auto s = read_cntpct();
+	etna::compute(gpu, k, out, in, w, h);
+	return read_cntpct() - s;
+}
+
 // Real-image integration: alpha-blend two ARGB8888 images with a per-pixel
 // alpha, on the programmable shader cores via the compute API. An ARGB W x H
 // image is just a u8 image of (4*W) x H, so the per-byte alpha-lerp kernel
@@ -173,8 +186,8 @@ bool test_image_blend(etna::Gpu &gpu)
 	auto start = read_cntpct();
 	if (!etna::compute(gpu, blend, out, a, b, alpha, BW, H))
 		return false;
-	auto end = read_cntpct();
-	print("Alpha-blended two ", W, "x", H, " ARGB images in ", (end - start), " ticks\n");
+	auto gpu_ticks = read_cntpct() - start;
+	print("Alpha-blended two ", W, "x", H, " ARGB images (GPU) in ", gpu_ticks, " ticks\n");
 
 	out.cpu_prep(etna::RelocRead);
 	auto op = static_cast<uint8_t *>(out.map());
@@ -187,6 +200,44 @@ bool test_image_blend(etna::Gpu &gpu)
 		}
 	}
 	print("GPU alpha-blended ", W, "x", H, " ARGB (per-channel lerp) -- verified. \\o/\n");
+
+	// Pure-CPU reference: the identical per-byte math on the identical buffers,
+	// timed the same way, so the GPU compute path can be compared head to head.
+	auto ocpu = gpu.alloc(BW * H);
+	if (!ocpu)
+		return false;
+	auto cp = static_cast<uint8_t *>(ocpu.map());
+	auto cstart = read_cntpct();
+	for (uint32_t i = 0; i < BW * H; i++) {
+		uint32_t al = lp[i];
+		cp[i] = uint8_t(((uint32_t(ap[i]) * al) >> 8) + ((uint32_t(bp[i]) * (255 - al)) >> 8));
+	}
+	auto cpu_ticks = read_cntpct() - cstart;
+	print("Same blend on the CPU in ", cpu_ticks, " ticks");
+	if (cpu_ticks)
+		print("   (GPU / CPU = ", (uint32_t)(gpu_ticks / cpu_ticks), "x)");
+	print("\n");
+
+	// The CPU result must match the GPU's, byte for byte.
+	for (uint32_t i = 0; i < BW * H; i++)
+		if (cp[i] != op[i]) {
+			print("ERROR: CPU/GPU blend mismatch at byte ", int(i), "\n");
+			return false;
+		}
+	print("CPU and GPU blends agree. \\o/\n");
+
+	// Launch-overhead diagnostic: time same-size kernels of growing instruction
+	// count. copy = 2 instr (1 load, 1 store); add = 3 instr (+1 ALU, same
+	// memory); blend = 8 instr (3 loads + 4 ALU + store). If all three take
+	// nearly the same time, the per-pixel work is free and the ~262144 one-thread
+	// workgroup launches dominate -- i.e. the dispatch geometry is the bottleneck,
+	// not the shader. (out is free to reuse; the blend result is already checked.)
+	auto t_copy = time_kernel(gpu, ppu::build_copy_shader, out, a, BW, H);
+	auto t_add = time_kernel(gpu, ppu::build_add_shader, out, a, BW, H);
+	print("Launch-overhead diagnostic (512x512): copy(2 instr)=", t_copy, "  add(3)=", t_add, "  blend(8)=",
+		  gpu_ticks, " ticks\n");
+	if (t_copy)
+		print("  blend/copy = ", (uint32_t)(gpu_ticks / t_copy), "x  (near 1 => launch-bound; near 4 => compute-bound)\n");
 	return true;
 }
 
