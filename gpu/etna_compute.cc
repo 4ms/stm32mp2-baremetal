@@ -66,8 +66,14 @@ enum : unsigned {
 // group counts are derived from the size the way the vendor's _ProgramPPUCommand
 // does (globalScale 4x1), so this handles any size; everything else (USC config,
 // uniforms, format, kick, drain) is the fixed template.
-static void emit_ppu_dispatch(CmdStream &cs, uint32_t in_addr, uint32_t out_addr, uint32_t shader_addr,
-							  uint32_t inst_dwords, uint32_t reg_count, uint32_t width, uint32_t height)
+static void emit_ppu_dispatch(CmdStream &cs,
+							  uint32_t in_addr,
+							  uint32_t out_addr,
+							  uint32_t shader_addr,
+							  uint32_t inst_dwords,
+							  uint32_t reg_count,
+							  uint32_t width,
+							  uint32_t height)
 {
 	const uint32_t stride = width; // u8: 1 byte per pixel
 	const uint32_t dims = (height << 16) | width;
@@ -76,28 +82,36 @@ static void emit_ppu_dispatch(CmdStream &cs, uint32_t in_addr, uint32_t out_addr
 
 	for (unsigned i = 0; i < 118; i++) {
 		uint32_t v = kPpuDispatchTemplate[i];
+		// clang-format off
 		switch (i) {
-		case kInAddr:      v = in_addr; break;
-		case kInStride:    v = stride; break;
-		case kInDims:      v = dims; break;
-		case kOutAddr:     v = out_addr; break;
-		case kOutStride:   v = stride; break;
-		case kOutDims:     v = dims; break;
-		case kRegCount:    v = reg_count; break;
-		case kInstCount4:  v = inst_dwords / 4; break;
-		case kInstAddr:    v = shader_addr; break;
-		case kInstCount4m1: v = inst_dwords / 4 - 1; break;
-		case kGroupCountX: v = group_x - 1; break;
-		case kGroupCountY: v = group_y - 1; break;
+			case kInAddr:      v = in_addr; break;
+			case kInStride:    v = stride; break;
+			case kInDims:      v = dims; break;
+			case kOutAddr:     v = out_addr; break;
+			case kOutStride:   v = stride; break;
+			case kOutDims:     v = dims; break;
+			case kRegCount:    v = reg_count; break;
+			case kInstCount4:  v = inst_dwords / 4; break;
+			case kInstAddr:    v = shader_addr; break;
+			case kInstCount4m1: v = inst_dwords / 4 - 1; break;
+			case kGroupCountX: v = group_x - 1; break;
+			case kGroupCountY: v = group_y - 1; break;
 		}
+		// clang-format on
 		cs.emit(v);
 	}
 	// No emit_pe_drain: the template already ends with the vendor's drain;
 	// submit() adds the ring's event + wait + link trailer.
 }
 
-bool compute(Gpu &gpu, const Bo &shader, uint32_t inst_dwords, uint32_t reg_count, const Bo &in, const Bo &out,
-			 uint32_t width, uint32_t height)
+bool compute(Gpu &gpu,
+			 const Bo &shader,
+			 uint32_t inst_dwords,
+			 uint32_t reg_count,
+			 const Bo &in,
+			 const Bo &out,
+			 uint32_t width,
+			 uint32_t height)
 {
 	auto cs = gpu.new_cmd_stream(256);
 	emit_ppu_dispatch(cs, in.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height);
@@ -111,8 +125,7 @@ bool compute(Gpu &gpu, const Bo &shader, uint32_t inst_dwords, uint32_t reg_coun
 using BuildFn = ppu::ShaderInfo (*)(uint32_t *, uint32_t, uint32_t);
 using ByteFn = uint8_t (*)(uint32_t);
 
-static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fill,
-				ByteFn expect)
+static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fill, ByteFn expect)
 {
 	uint32_t n = width * height;
 	Bo in = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(16 * 4);
@@ -145,8 +158,9 @@ static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bui
 	in.cpu_prep(RelocRead);
 	for (uint32_t i = 0; i < n; i++) {
 		if (ob[i] != expect(i)) {
-			print("ERROR: ", name, " wrong at byte ", int(i), ": got ", int(ob[i]), " expected ", int(expect(i)),
-				  "\n  in [0..15]:");
+			print("ERROR: ", name, " wrong at byte ", int(i));
+			print(": got ", int(ob[i]), " expected ", int(expect(i)), "\n");
+			print("in [0..15]:");
 			for (int j = 0; j < 16 && j < (int)n; j++)
 				print(" ", int(ib[j]));
 			print("\n  out[0..15]:");
@@ -156,32 +170,38 @@ static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bui
 			return false;
 		}
 	}
-	print("GPU ", name, " over ", int(width), "x", int(height), " (", int(n), " bytes) in ", ticks,
-		  " ticks -- verified. \\o/\n");
+	print("GPU ", name, " over ", int(width), "x", int(height));
+	print(" (", int(n), " bytes) in ", ticks, " ticks -- verified. \\o/\n");
 	return true;
+}
+
+// A per-element gradient and its identity expectation, for the copy probe.
+static uint8_t grad(uint32_t i)
+{
+	return i & 0x7F;
 }
 
 bool compute_test(Gpu &gpu)
 {
-	// Probe: copy (out = in). If this verifies with gradient data, the per-pixel
-	// load/store path is clean and only the compute op needs sorting out.
-	if (!run(gpu,
-			 "copy",
-			 64,
-			 6,
-			 ppu::build_copy_shader,
-			 [](uint32_t i) -> uint8_t { return i & 0x7F; },
-			 [](uint32_t i) -> uint8_t { return i & 0x7F; }))
-		return false;
-	// The vendor flop-reset kernel with constant input (its only verifiable case:
-	// dp2x8 is a convolution, so it only lands on 2*in when every input is equal).
-	if (!run(gpu,
-			 "add(const)",
-			 64,
-			 6,
-			 ppu::build_add_shader,
-			 [](uint32_t) -> uint8_t { return 0x01; },
-			 [](uint32_t) -> uint8_t { return 0x02; }))
+	// Copy (out = in) with a per-element gradient, at several sizes.
+	struct {
+		uint32_t w, h;
+	} sizes[] = {{64, 6}, {128, 32}, {256, 64}, {32, 4}};
+	for (auto &s : sizes)
+		if (!run(gpu, "copy", s.w, s.h, ppu::build_copy_shader, grad, grad))
+			return false;
+
+	// The vendor flop-reset kernel, constant input -- its only verifiable case:
+	// dp2x8 is a dot-product (out[j] = sum of src0[k]*src1[k] over a pair, i.e.
+	// sums of squares here), so it only lands on 2*in when every input is equal.
+	if (!run(
+			gpu,
+			"flop-reset(dp2x8, const in)",
+			64,
+			6,
+			ppu::build_add_shader,
+			[](uint32_t) -> uint8_t { return 0x01; },
+			[](uint32_t) -> uint8_t { return 0x02; }))
 		return false;
 	return true;
 }
