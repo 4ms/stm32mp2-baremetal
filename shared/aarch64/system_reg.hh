@@ -207,6 +207,7 @@ inline uint64_t read_cntfreq()
 }
 
 // Read physical counter ticks (cntpct)
+// Counter runs at 64MHz, so each tick is 15.625ns
 inline uint64_t read_cntpct()
 {
 	uint64_t v;
