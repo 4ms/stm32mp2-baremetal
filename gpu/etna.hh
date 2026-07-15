@@ -313,6 +313,20 @@ bool compute(Gpu &gpu,
 			 uint32_t width,
 			 uint32_t height);
 
+// Two-input variant: out = f(in_a, in_b), e.g. out = A + B. The shader reads
+// input B from image-descriptor uniform c2, which this binds in the dispatch.
+// Use with ppu::build_add2_shader (or any two-input kernel). Both inputs and
+// the output are the same width x height u8 image.
+bool compute2(Gpu &gpu,
+			  const Bo &shader,
+			  uint32_t inst_dwords,
+			  uint32_t reg_count,
+			  const Bo &in_a,
+			  const Bo &in_b,
+			  const Bo &out,
+			  uint32_t width,
+			  uint32_t height);
+
 // Demo/self-test: runs the "out = in + in" kernel at two sizes (verifies).
 bool compute_test(Gpu &gpu);
 

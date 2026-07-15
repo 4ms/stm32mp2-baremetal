@@ -48,11 +48,15 @@ constexpr uint32_t vx_swizzle2(uint32_t x, uint32_t y)
 
 constexpr uint32_t SH_TYPE_INVALID = ~0u; // "no instruction-type override"
 
-// gckPPU_SetImmediate
+// gckPPU_SetImmediate. NOTE: the vendor function omits the SRCx_USE bit, which
+// flop-reset never caught because it uses no immediates -- without it the
+// operand reads as 0 (verified: an AND with an immediate mask came out all-zero
+// until USE was set). We set it here so the immediate operand is actually read.
 inline void set_immediate(unsigned where, uint32_t value, uint32_t type, uint32_t *inst)
 {
 	switch (where) {
 	case 0:
+		setbits(inst[1], 11, 11, 1); // SRC0_USE
 		setbits(inst[1], 20, 12, getbits(value, 8, 0));
 		setbits(inst[1], 29, 22, getbits(value, 16, 9));
 		setbits(inst[1], 30, 30, getbit(value, 17));
@@ -61,6 +65,7 @@ inline void set_immediate(unsigned where, uint32_t value, uint32_t type, uint32_
 		setbits(inst[2], 5, 3, 0x7);
 		break;
 	case 1:
+		setbits(inst[2], 6, 6, 1); // SRC1_USE
 		setbits(inst[2], 15, 7, getbits(value, 8, 0));
 		setbits(inst[2], 24, 17, getbits(value, 16, 9));
 		setbits(inst[2], 25, 25, getbit(value, 17));
@@ -69,6 +74,7 @@ inline void set_immediate(unsigned where, uint32_t value, uint32_t type, uint32_
 		setbits(inst[3], 2, 0, 0x7);
 		break;
 	case 2:
+		setbits(inst[3], 3, 3, 1); // SRC2_USE
 		setbits(inst[3], 12, 4, getbits(value, 8, 0));
 		setbits(inst[3], 21, 14, getbits(value, 16, 9));
 		setbits(inst[3], 22, 22, getbit(value, 17));
@@ -274,6 +280,136 @@ inline ShaderInfo build_add_shader(uint32_t inst[16], uint32_t dataType = 0x7, u
 	n += 4;
 
 	return ShaderInfo{n, 2};
+}
+
+// Build a TWO-INPUT add: OutImage = InA + InB, per element. A second img_load
+// reads input B from image-descriptor uniform c2 (the dispatch binds it at
+// state 0xD808); the base ALU ADD then does r1 = r1(A) + r2(B). Unlike
+// build_add_shader (which adds A to itself), this reads a genuine second image.
+// RegCount 3 (r0 coords, r1 = A, r2 = B).
+inline ShaderInfo build_add2_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	// img_load.u8 r1, c0, r0.xy   (input A)
+	add_opcode(0x79, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	// img_load.u8 r2, c2, r0.xy   (input B -- second image descriptor)
+	add_opcode(0x79, 0, dataType, &inst[n]);
+	set_destination(2, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 2, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	// add.u8 r1, r1, r2   (dst := src0 + src2 = A + B)
+	add_opcode(0x01, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(2, 2, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	// img_store.u8 r1, c1, r0.xy, r1
+	add_opcode(0x7A, 0, dataType, &inst[n]);
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 3};
+}
+
+// Build a saturating per-element add: OutImage = saturate(InImage + InImage),
+// i.e. out = min(2*in, 255) for u8. Identical to build_add_shader but with the
+// IADDSAT opcode (0x3B) instead of ADD -- so 200+200 clamps to 255 rather than
+// wrapping to 144. Same operand convention as ADD (dst := src0 + src2).
+inline ShaderInfo build_addsat_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	// img_load.u8 r1, c0, r0.xy
+	add_opcode(0x79, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	// iaddsat.u8 r1, r1, r1  (saturating add; dst := src0 + src2, clamped)
+	add_opcode(0x3B, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	// img_store.u8 r1, c1, r0.xy, r1
+	add_opcode(0x7A, 0, dataType, &inst[n]);
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 2};
+}
+
+// Build a bitwise-AND kernel: out = in & <immediate mask>. dst := src0 & src2
+// with src2 a u32 immediate (SRC2_AMODE = 4/u32; passing the instruction
+// dataType here instead gives an undefined AMODE and the AND silently becomes
+// identity -- that bug cost a flash cycle). Per the ISA, an immediate is a
+// 20-bit value broadcast to the 4 vector COMPONENTS, not sub-byte; so under u8
+// SIMD (16 byte-lanes, consecutive pixels i..i+3 = the 4 bytes of a component)
+// a small mask like 0x0F only masks the (i%4)==0 byte-lane and zeroes the rest:
+// out[i] = (i%4==0) ? in[i]&0x0F : 0. A per-byte-uniform mask needs a uniform
+// register (0x0F0F0F0F) or a second image full of the constant, not an immediate.
+inline ShaderInfo build_and_imm_shader(uint32_t inst[16], uint32_t imm, uint32_t dataType = 0x7,
+									   uint32_t numShaderCores = 2)
+{
+	for (unsigned i = 0; i < 16; i++)
+		inst[i] = 0;
+	unsigned n = 0;
+
+	// img_load.u8 r1, c0, r0.xy
+	add_opcode(0x79, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_evis(0, get_pixel(dataType), 1, &inst[n]);
+	set_uniform(0, 0, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	n += 4;
+
+	// and.u8 r1, r1, #imm  (dst := src0 & src2; src2 = u32 immediate, AMODE 4)
+	add_opcode(0x5D, 0, dataType, &inst[n]);
+	set_destination(1, VX_ENABLE, 0, &inst[n]);
+	set_tempreg(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_immediate(2, imm, 2 /* u32: AMODE = type<<1 = 4 */, &inst[n]);
+	n += 4;
+
+	// img_store.u8 r1, c1, r0.xy, r1
+	add_opcode(0x7A, 0, dataType, &inst[n]);
+	set_evis(0, (get_pixel(dataType) + 1) / numShaderCores - 1, 1, &inst[n]);
+	set_uniform(0, 1, VX_SWIZZLE, 0, &inst[n]);
+	set_tempreg(1, 0, vx_swizzle2(0, 1), 0, &inst[n]);
+	set_tempreg(2, 1, VX_SWIZZLE, 0, &inst[n]);
+	n += 4;
+
+	return ShaderInfo{n, 2};
+}
+
+// AND with a fixed 0x0F mask, matching the (inst, dataType, cores) builder
+// signature the test harness expects.
+inline ShaderInfo build_and_shader(uint32_t inst[16], uint32_t dataType = 0x7, uint32_t numShaderCores = 2)
+{
+	return build_and_imm_shader(inst, 0x0F, dataType, numShaderCores);
 }
 
 // Build a copy kernel: OutImage = InImage (img_load -> img_store, no arithmetic

@@ -60,7 +60,16 @@ enum : unsigned {
 	kInstCount4m1 = 59, // InstCount / 4 - 1
 	kGroupCountX = 95,	// groupCountX - 1
 	kGroupCountY = 96,	// groupCountY - 1
+	// Second input image descriptor -- uniform c2, the first 4 words of the
+	// 0xD808 block (unused by single-input/copy shaders; the dp2x8 coefficients
+	// otherwise). A two-input shader's 2nd img_load reads c2.
+	kInBAddr = 19,	 // input B base address
+	kInBStride = 20, // input B stride
+	kInBDims = 21,	 // input B (height << 16) | width
+	kInBFmt = 22,	 // input B format (same as input A's 0xD803)
 };
+
+constexpr uint32_t kImgFormat = 0x444051F0; // u8 image format word (from the template)
 
 // Emit the PPU dispatch for `shader` over a `width` x `height` u8 image. The
 // group counts are derived from the size the way the vendor's _ProgramPPUCommand
@@ -73,7 +82,8 @@ static void emit_ppu_dispatch(CmdStream &cs,
 							  uint32_t inst_dwords,
 							  uint32_t reg_count,
 							  uint32_t width,
-							  uint32_t height)
+							  uint32_t height,
+							  uint32_t in_b_addr = 0)
 {
 	const uint32_t stride = width; // u8: 1 byte per pixel
 	const uint32_t dims = (height << 16) | width;
@@ -98,6 +108,16 @@ static void emit_ppu_dispatch(CmdStream &cs,
 			case kGroupCountY: v = group_y - 1; break;
 		}
 		// clang-format on
+		// Second input image (uniform c2), only for two-input shaders. Patches
+		// the first 4 words of the 0xD808 block into a real image descriptor.
+		if (in_b_addr) {
+			switch (i) {
+			case kInBAddr:   v = in_b_addr; break;
+			case kInBStride: v = stride; break;
+			case kInBDims:   v = dims; break;
+			case kInBFmt:    v = kImgFormat; break;
+			}
+		}
 		cs.emit(v);
 	}
 	// No emit_pe_drain: the template already ends with the vendor's drain;
@@ -115,6 +135,22 @@ bool compute(Gpu &gpu,
 {
 	auto cs = gpu.new_cmd_stream(256);
 	emit_ppu_dispatch(cs, in.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height);
+	return gpu.submit_and_wait(cs);
+}
+
+bool compute2(Gpu &gpu,
+			  const Bo &shader,
+			  uint32_t inst_dwords,
+			  uint32_t reg_count,
+			  const Bo &in_a,
+			  const Bo &in_b,
+			  const Bo &out,
+			  uint32_t width,
+			  uint32_t height)
+{
+	auto cs = gpu.new_cmd_stream(256);
+	emit_ppu_dispatch(cs, in_a.gpu_addr(), out.gpu_addr(), shader.gpu_addr(), inst_dwords, reg_count, width, height,
+					  in_b.gpu_addr());
 	return gpu.submit_and_wait(cs);
 }
 
@@ -175,6 +211,66 @@ static bool run(Gpu &gpu, const char *name, uint32_t width, uint32_t height, Bui
 	return true;
 }
 
+// Like run(), but two input images: fill a with fillA(i), b with fillB(i),
+// dispatch a two-input kernel, and verify out[i] == expect(i).
+static bool run2(Gpu &gpu, const char *name, uint32_t width, uint32_t height, BuildFn build, ByteFn fillA,
+				 ByteFn fillB, ByteFn expect)
+{
+	uint32_t n = width * height;
+	Bo a = gpu.alloc(n), b = gpu.alloc(n), out = gpu.alloc(n), shader = gpu.alloc(16 * 4);
+	if (!a || !b || !out || !shader)
+		return false;
+
+	uint32_t inst[16];
+	auto si = build(inst, 0x7, 2);
+	auto sp = static_cast<uint32_t *>(shader.map());
+	for (unsigned i = 0; i < si.inst_dwords; i++)
+		sp[i] = inst[i];
+	shader.cpu_fini(RelocWrite);
+
+	auto ab = static_cast<uint8_t *>(a.map());
+	auto bb = static_cast<uint8_t *>(b.map());
+	for (uint32_t i = 0; i < n; i++) {
+		ab[i] = fillA(i);
+		bb[i] = fillB(i);
+	}
+	a.cpu_fini(RelocWrite);
+	b.cpu_fini(RelocWrite);
+
+	auto ob = static_cast<uint8_t *>(out.map());
+	for (uint32_t i = 0; i < n; i++)
+		ob[i] = 0xEE; // poison
+	out.cpu_fini(RelocWrite);
+
+	auto start = read_cntpct();
+	if (!compute2(gpu, shader, si.inst_dwords, si.reg_count, a, b, out, width, height))
+		return false;
+	uint32_t ticks = read_cntpct() - start;
+
+	out.cpu_prep(RelocRead);
+	a.cpu_prep(RelocRead);
+	b.cpu_prep(RelocRead);
+	for (uint32_t i = 0; i < n; i++) {
+		if (ob[i] != expect(i)) {
+			print("ERROR: ", name, " wrong at byte ", int(i));
+			print(": got ", int(ob[i]), " expected ", int(expect(i)), "\n  a[0..15]:");
+			for (int j = 0; j < 16 && j < (int)n; j++)
+				print(" ", int(ab[j]));
+			print("\n  b[0..15]:");
+			for (int j = 0; j < 16 && j < (int)n; j++)
+				print(" ", int(bb[j]));
+			print("\n  out[0..15]:");
+			for (int j = 0; j < 16 && j < (int)n; j++)
+				print(" ", int(ob[j]));
+			print("\n");
+			return false;
+		}
+	}
+	print("GPU ", name, " over ", int(width), "x", int(height));
+	print(" (", int(n), " bytes) in ", ticks, " ticks -- verified. \\o/\n");
+	return true;
+}
+
 // A per-element gradient and its identity expectation, for the copy probe.
 static uint8_t grad(uint32_t i)
 {
@@ -201,6 +297,47 @@ bool compute_test(Gpu &gpu)
 			ppu::build_add_shader,
 			[](uint32_t i) -> uint8_t { return i & 0xFF; },
 			[](uint32_t i) -> uint8_t { return (i & 0xFF) * 2; }))
+		return false;
+
+	// Saturating add (IADDSAT.u8, out = min(in+in, 255)) -- same gradient, but
+	// now high values clamp instead of wrapping (e.g. 200 -> 255, not 144).
+	if (!run(
+			gpu,
+			"addsat(min(in+in,255))",
+			128,
+			32,
+			ppu::build_addsat_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t i) -> uint8_t { uint32_t s = (i & 0xFF) * 2; return s > 255 ? 255 : s; }))
+		return false;
+
+	// TWO-INPUT add: OutImage = A + B, reading a second input image from
+	// descriptor c2. A = ramp up (i), B = ramp down (255-i), so A+B = 255
+	// everywhere -- a strong check: any index misalignment or ignored B breaks
+	// the constant. Proves the shader reads a genuine second image. (Runs before
+	// the AND test so the two-input path is exercised regardless of it.)
+	if (!run2(
+			gpu,
+			"add2(A+B, ramp+inv=255)",
+			128,
+			32,
+			ppu::build_add2_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t i) -> uint8_t { return 255 - (i & 0xFF); },
+			[](uint32_t) -> uint8_t { return 255; }))
+		return false;
+
+	// Bitwise AND with u32 immediate 0x0F. The immediate broadcasts to the 4
+	// vector COMPONENTS, so under u8 SIMD it masks only the (i%4)==0 byte-lane
+	// and zeroes the other three: out[i] = (i%4==0) ? in[i]&0x0F : 0.
+	if (!run(
+			gpu,
+			"and(in & 0x0F, imm)",
+			64,
+			6,
+			ppu::build_and_shader,
+			[](uint32_t i) -> uint8_t { return i & 0xFF; },
+			[](uint32_t i) -> uint8_t { return (i % 4 == 0) ? ((i & 0xFF) & 0x0F) : 0; }))
 		return false;
 
 	// The vendor flop-reset kernel, constant input -- its only verifiable case:
