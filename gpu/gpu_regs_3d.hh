@@ -155,6 +155,7 @@ constexpr uint32_t PE_COLOR_FORMAT = 0x142C; // FORMAT|COMPONENTS|OVERWRITE|tili
 constexpr uint32_t PE_COLOR_STRIDE = 0x1434;
 constexpr uint32_t PE_HDEPTH_CONTROL = 0x1454;
 constexpr uint32_t PE_PIPE_COLOR_ADDR0 = 0x1460; // reloc: render target base
+constexpr uint32_t PE_PIPE_DEPTH_ADDR0 = 0x1480; // reloc: depth buffer base
 constexpr uint32_t PE_STENCIL_CONFIG_EXT = 0x14A0;
 constexpr uint32_t PE_LOGIC_OP = 0x14A4; // COPY | SINGLE_BUFFER(2) = 0x000E4200
 constexpr uint32_t PE_DITHER0 = 0x14A8;  // 0xffffffff
@@ -170,6 +171,13 @@ constexpr uint32_t PE_COLOR_FORMAT_OVERWRITE = 0x10000;
 constexpr uint32_t PE_LOGIC_OP_COPY_SINGLEBUF = 0x000E420C;
 constexpr uint32_t PE_DEPTH_CONFIG_DISABLED = 0x01000700; // NONE|ALWAYS|DISABLE_ZS
 constexpr uint32_t RA_EARLY_DEPTH_DISABLED = 0x15000030;   // FORWARD_Z|W|WRITE_DISABLE
+// Depth test ON, D16, LESS, write-enabled, late-z (no EARLY_Z, no DISABLE_ZS):
+// DEPTH_FORMAT_D16(0) | DEPTH_MODE_Z(1) | UNK18(0x40000) | DEPTH_FUNC(LESS=1)<<8
+// | WRITE_ENABLE(0x1000). RA_EARLY_DEPTH stays 0x15000030 (its FORWARD_Z + late-z
+// WRITE_DISABLE are exactly what a PE-side late-z test wants).
+constexpr uint32_t PE_DEPTH_CONFIG_D16_LESS_WRITE = 0x00041101;
+constexpr uint32_t PIPE_FUNC_LESS = 1;    // PE_DEPTH_CONFIG DEPTH_FUNC value
+constexpr uint32_t PIPE_FUNC_GREATER = 4; // (for the reverse-order sanity draw)
 
 // ---- SH (shader instruction cache count + unified uniforms, high block) -----
 constexpr uint32_t SH_CONFIG = 0x15600;      // RTNE_ROUNDING = 0x2

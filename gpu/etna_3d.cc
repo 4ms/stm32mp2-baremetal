@@ -98,7 +98,9 @@ static void emit_reset(CmdStream &cs)
 }
 
 // Emit the full per-draw state + shader upload + DRAW for a position-only VS +
-// constant-color FS, one render target, depth/blend/cull off, no varyings.
+// constant-color FS, one render target, blend/cull off, no varyings. Depth is
+// off unless a `depth` buffer is passed, in which case the depth test is LESS
+// with depth writes (D16); the caller supplies a cleared depth buffer + stride.
 static void emit_triangle(CmdStream &cs,
 						  const Bo &rt,
 						  uint32_t rt_stride,
@@ -108,8 +110,10 @@ static void emit_triangle(CmdStream &cs,
 						  const Bo &ps,
 						  uint32_t width,
 						  uint32_t height,
-						  const float color[4],
-						  uint32_t vertex_count)
+						  std::span<const float, 4> color,
+						  uint32_t vertex_count,
+						  const Bo *depth = nullptr,
+						  uint32_t depth_stride = 0)
 {
 	emit_reset(cs);
 
@@ -172,12 +176,14 @@ static void emit_triangle(CmdStream &cs,
 	cs.set_state(PS_TEMP_REGISTER_CONTROL, 2); // NUM_TEMPS
 	cs.set_state(PS_CONTROL, 0x2);			   // SATURATE_RT0 (unorm)
 
-	// --- PE: render target, depth disabled -----------------------------------
-	cs.set_state(PE_DEPTH_CONFIG, PE_DEPTH_CONFIG_DISABLED);
+	// --- PE: render target + depth (off, or D16 LESS-write if a buffer given) -
+	cs.set_state(PE_DEPTH_CONFIG, depth ? PE_DEPTH_CONFIG_D16_LESS_WRITE : PE_DEPTH_CONFIG_DISABLED);
 	cs.set_state(PE_DEPTH_NEAR, fui(0.0f));
 	cs.set_state(PE_DEPTH_FAR, fui(1.0f));
-	cs.set_state(PE_DEPTH_NORMALIZE, 0);
-	cs.set_state(PE_DEPTH_STRIDE, 0);
+	cs.set_state(PE_DEPTH_NORMALIZE, depth ? fui(65535.0f) : 0); // exp2(16)-1 for D16
+	cs.set_state(PE_DEPTH_STRIDE, depth_stride);
+	if (depth)
+		cs.set_state_reloc(PE_PIPE_DEPTH_ADDR0, {depth, static_cast<uint32_t>(RelocRead | RelocWrite), 0});
 	cs.set_state(PE_STENCIL_OP, 0);
 	cs.set_state(PE_STENCIL_CONFIG, 0);
 	cs.set_state(PE_ALPHA_OP, 0);
@@ -290,7 +296,7 @@ bool triangle_test(Gpu &gpu)
 	std::ranges::copy(kPsCode, ps.span<uint32_t>().begin());
 	ps.cpu_fini(RelocWrite);
 
-	const float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+	const std::array<float, 4> red = {1.0f, 0.0f, 0.0f, 1.0f};
 
 	auto cs = gpu.new_cmd_stream(1024);
 	emit_triangle(cs, rt, stride, vtx, 12, vs, ps, W, H, red, 3);
@@ -582,6 +588,107 @@ bool triangle_color_test(Gpu &gpu)
 		return false;
 	}
 	print("GPU interpolated a per-vertex-color varying across the triangle. \\o/\n");
+	return true;
+}
+
+// =============================================================================
+//  Depth test: the nearer triangle occludes the farther one
+// =============================================================================
+//
+// Draw the SAME triangle twice into one RT sharing a D16 depth buffer, in ONE
+// command stream (so the PE's depth cache stays hot and draw 2 sees draw 1's
+// depth): near (z=0.3) in RED first, then far (z=0.7) in GREEN. Window depth =
+// 0.5*z + 0.5, so near->0.65, far->0.85. Depth test LESS + write: the red near
+// triangle writes 0.65; the green far triangle's 0.85 fails LESS *everywhere the
+// red drew* (same geometry) -> rejected. Result: the triangle stays RED.
+//
+// This is an unambiguous pass/fail: with depth OFF it would be painter's order
+// (green drawn last wins) -> all GREEN. Solid colors -> tiling-invariant, so we
+// read the tiled RT directly and just count red vs green fragments.
+bool triangle_depth_test(Gpu &gpu)
+{
+	constexpr uint32_t W = 64, H = 64;
+	constexpr uint32_t pw = (W + 15) & ~15u;
+	constexpr uint32_t ph = (H + 3) & ~3u;
+	constexpr uint32_t stride = pw * 4;
+	constexpr uint32_t rt_size = stride * ph;
+	constexpr uint32_t dstride = pw * 2; // D16 = 2 bytes/pixel, same 16-wide tiling
+	constexpr uint32_t depth_size = dstride * ph;
+	constexpr uint32_t CLEAR = 0xFF0000FF; // blue background
+
+	Bo rt = gpu.alloc(rt_size);
+	Bo depth = gpu.alloc(depth_size);
+	Bo vnear = gpu.alloc(3 * 3 * 4);
+	Bo vfar = gpu.alloc(3 * 3 * 4);
+	Bo vs = gpu.alloc(sizeof(kVsCode));
+	Bo ps = gpu.alloc(sizeof(kPsCode));
+	if (!rt || !depth || !vnear || !vfar || !vs || !ps)
+		return false;
+
+	// Clear color to blue and depth to 0xFFFF (far). Both uniform => the tiled
+	// layout doesn't matter for the clear, and the GPU addresses depth via
+	// PE_DEPTH_STRIDE consistently for both draws.
+	std::ranges::fill(rt.span<uint32_t>(), CLEAR);
+	rt.cpu_fini(RelocWrite);
+	std::ranges::fill(depth.span<uint16_t>(), uint16_t(0xFFFF));
+	depth.cpu_fini(RelocWrite);
+
+	// Red triangle in front (z=0.3) and blocking 50% of green triangle in back (z=0.7)
+	// The green triangle is the same as the red triangle but flipped over the X-axis.
+	const std::array<float, 9> near_v = {-0.8f, -0.8f, 0.3f, 0.8f, -0.8f, 0.3f, 0.0f, 0.8f, 0.3f};
+	const std::array<float, 9> far_v = {-0.8f, 0.8f, 0.7f, 0.8f, 0.8f, 0.7f, 0.0f, -0.8f, 0.7f};
+	std::ranges::copy(near_v, vnear.span<float>().begin());
+	vnear.cpu_fini(RelocWrite);
+	std::ranges::copy(far_v, vfar.span<float>().begin());
+	vfar.cpu_fini(RelocWrite);
+
+	std::ranges::copy(kVsCode, vs.span<uint32_t>().begin());
+	vs.cpu_fini(RelocWrite);
+	std::ranges::copy(kPsCode, ps.span<uint32_t>().begin());
+	ps.cpu_fini(RelocWrite);
+
+	const std::array<float, 4> red = {1.0f, 0.0f, 0.0f, 1.0f};
+	const std::array<float, 4> green = {0.0f, 1.0f, 0.0f, 1.0f};
+
+	// Both draws in one stream: near red, then far green, against the shared depth.
+	auto cs = gpu.new_cmd_stream(2048);
+	emit_triangle(cs, rt, stride, vnear, 12, vs, ps, W, H, red, 3, &depth, dstride);
+	emit_triangle(cs, rt, stride, vfar, 12, vs, ps, W, H, green, 3, &depth, dstride);
+
+	auto start = read_cntpct();
+	if (!gpu.submit_and_wait(cs)) {
+		gpu.dump_status("depth draw");
+		return false;
+	}
+	print("depth: two triangles drawn in ", (read_cntpct() - start), " ticks\n");
+
+	rt.cpu_prep(RelocRead);
+
+	uint32_t drawn = 0, reds = 0, greens = 0;
+	for (uint32_t p : rt.span<uint32_t>()) {
+		if (p == CLEAR)
+			continue;
+		drawn++;
+		uint32_t R = (p >> 16) & 0xFF, G = (p >> 8) & 0xFF;
+		if (R > 128 && G < 64)
+			reds++;
+		else if (G > 128 && R < 64)
+			greens++;
+	}
+	print("depth test: ", drawn, " drawn -> ", reds, " red (near), ", greens, " green (far)\n");
+	if (drawn == 0) {
+		print("FAILED: nothing drawn\n");
+		return false;
+	}
+	if (greens > (reds / 2 + 6) || greens < (reds / 2 - 6)) { // +/-6 in case we have an aliased pixel each intersection
+		print("FAILED: wrong number of green fragments survived -> we should see ~50% green");
+		return false;
+	}
+	if (reds == 0) {
+		print("FAILED: no red -> near triangle missing\n");
+		return false;
+	}
+	print("GPU depth test occluded the farther triangle -- depth buffer works. \\o/\n");
 	return true;
 }
 

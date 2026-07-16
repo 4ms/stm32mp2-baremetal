@@ -372,6 +372,7 @@ bool compute_test(Gpu &gpu);
 // color. First light for the graphics path.
 bool triangle_test(Gpu &gpu);
 bool triangle_color_test(Gpu &gpu);
+bool triangle_depth_test(Gpu &gpu);
 
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
 // sequence + PE drain (stall + cache flush + stall); submit() adds the ring
