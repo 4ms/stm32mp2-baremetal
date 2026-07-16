@@ -249,16 +249,21 @@ int main()
 			print("ERROR: could not allocate GPU buffers\n");
 	}
 
+	print("\nRS Engine tests:\n");
 	if (ok)
 		ok = test_fill(gpu, fb);
 	if (ok)
 		ok = test_blit_convert(gpu, fb, src);
 	if (ok)
 		ok = test_throughput(gpu);
+
+	print("\nPPU compute/shader tests:\n");
 	if (ok)
 		ok = etna::compute_test(gpu);
 	if (ok)
 		ok = test_image_blend(gpu);
+
+	print("\n3D tests:\n");
 	if (ok)
 		ok = etna::triangle_test(gpu);
 	if (ok)

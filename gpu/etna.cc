@@ -213,6 +213,8 @@ bool Gpu::init()
 	if (!reset_gpu_core())
 		return false;
 
+	print("\n");
+
 	info_.model = gpu_read(HI_CHIP_MODEL);
 	info_.revision = gpu_read(HI_CHIP_REV);
 	info_.product_id = gpu_read(HI_CHIP_PRODUCT_ID);
