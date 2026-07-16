@@ -161,7 +161,7 @@ Kernel make_kernel(Gpu &gpu, ShaderBuilder build)
 	k.binary = gpu.alloc(si.inst_dwords * 4);
 	if (!k.binary)
 		return k; // empty
-	auto p = static_cast<uint32_t *>(k.binary.map());
+	auto p = k.binary.span<uint32_t>();
 	for (unsigned i = 0; i < si.inst_dwords; i++)
 		p[i] = inst[i];
 	k.binary.cpu_fini(RelocWrite);
@@ -212,12 +212,12 @@ static bool run_test(Gpu &gpu, const char *name, uint32_t width, uint32_t height
 	if (!in || !out || !k)
 		return false;
 
-	auto ib = static_cast<uint8_t *>(in.map());
+	auto ib = in.span<uint8_t>();
 	for (uint32_t i = 0; i < n; i++)
 		ib[i] = fill(i);
 	in.cpu_fini(RelocWrite);
 
-	auto ob = static_cast<uint8_t *>(out.map());
+	auto ob = out.span<uint8_t>();
 	for (uint32_t i = 0; i < n; i++)
 		ob[i] = 0xEE; // poison
 	out.cpu_fini(RelocWrite);
@@ -259,8 +259,8 @@ static bool run_test_2(Gpu &gpu, const char *name, uint32_t width, uint32_t heig
 	if (!a || !b || !out || !k)
 		return false;
 
-	auto ab = static_cast<uint8_t *>(a.map());
-	auto bb = static_cast<uint8_t *>(b.map());
+	auto ab = a.span<uint8_t>();
+	auto bb = b.span<uint8_t>();
 	for (uint32_t i = 0; i < n; i++) {
 		ab[i] = fillA(i);
 		bb[i] = fillB(i);
@@ -268,7 +268,7 @@ static bool run_test_2(Gpu &gpu, const char *name, uint32_t width, uint32_t heig
 	a.cpu_fini(RelocWrite);
 	b.cpu_fini(RelocWrite);
 
-	auto ob = static_cast<uint8_t *>(out.map());
+	auto ob = out.span<uint8_t>();
 	for (uint32_t i = 0; i < n; i++)
 		ob[i] = 0xEE; // poison
 	out.cpu_fini(RelocWrite);
@@ -312,9 +312,9 @@ static bool run_test_3(Gpu &gpu, const char *name, uint32_t width, uint32_t heig
 	if (!a || !b || !c || !out || !k)
 		return false;
 
-	auto ab = static_cast<uint8_t *>(a.map());
-	auto bb = static_cast<uint8_t *>(b.map());
-	auto cb = static_cast<uint8_t *>(c.map());
+	auto ab = a.span<uint8_t>();
+	auto bb = b.span<uint8_t>();
+	auto cb = c.span<uint8_t>();
 	for (uint32_t i = 0; i < n; i++) {
 		ab[i] = fillA(i);
 		bb[i] = fillB(i);
@@ -324,7 +324,7 @@ static bool run_test_3(Gpu &gpu, const char *name, uint32_t width, uint32_t heig
 	b.cpu_fini(RelocWrite);
 	c.cpu_fini(RelocWrite);
 
-	auto ob = static_cast<uint8_t *>(out.map());
+	auto ob = out.span<uint8_t>();
 	for (uint32_t i = 0; i < n; i++)
 		ob[i] = 0xEE; // poison
 	out.cpu_fini(RelocWrite);

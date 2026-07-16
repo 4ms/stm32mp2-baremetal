@@ -3,6 +3,8 @@
 #include "gpu_regs.hh"
 #include "gpu_regs_3d.hh"
 #include "print/print.hh"
+#include <algorithm>
+#include <array>
 
 // =============================================================================
 //  etna_3d.cc -- minimal 3D triangle on the HALTI5 graphics pipe
@@ -51,9 +53,9 @@ static void set_state_fixp(CmdStream &cs, uint32_t addr, uint32_t value)
 // Trivial HALTI5 shaders (Vivante ISA, 1 instruction = 4 dwords each).
 // VS: MOV t1, t0  -- pass the position attribute (lands in t0) straight through
 //     as the clip-space position; vs_pos_out_reg = 1.
-static const uint32_t kVsCode[4] = {0x07811009, 0x00000000, 0x00000000, 0x00390008};
+static const std::array<uint32_t, 4> kVsCode = {0x07811009, 0x00000000, 0x00000000, 0x00390008};
 // FS: MOV t1, u0  -- output the constant color from uniform u0; ps_color_out = 1.
-static const uint32_t kPsCode[4] = {0x07811009, 0x00000000, 0x00000000, 0x20390008};
+static const std::array<uint32_t, 4> kPsCode = {0x07811009, 0x00000000, 0x00000000, 0x20390008};
 
 // Per-vertex-color shaders. Same MOV encoding, decoded from the two above:
 //   opcode MOV = 0x09 (word0[5:0]); DST_REG = word0[22:16]; DST_COMPS=0xF (xyzw);
@@ -62,12 +64,14 @@ static const uint32_t kPsCode[4] = {0x07811009, 0x00000000, 0x00000000, 0x203900
 //   kPsCode above). So word0 = 0x07801009 | (dst<<16), word3 = 0x00390008 |
 //   (src<<4) [| 0x20000000 for a uniform].
 // VS: pass position (in t0 -> out t2) and color (in t1 -> out t3, a varying).
-static const uint32_t kVsColorCode[8] = {
+static const std::array<uint32_t, 8> kVsColorCode = {
+	// clang-format off
 	0x07821009, 0x00000000, 0x00000000, 0x00390008, // MOV t2, t0  (position)
 	0x07831009, 0x00000000, 0x00000000, 0x00390018, // MOV t3, t1  (color -> varying)
+	// clang-format on
 };
 // FS: output the interpolated color varying (rasterizer lands it in t1); out t1.
-static const uint32_t kPsColorCode[4] = {0x07811009, 0x00000000, 0x00000000, 0x00390018}; // MOV t1, t1
+static const std::array<uint32_t, 4> kPsColorCode = {0x07811009, 0x00000000, 0x00000000, 0x00390018}; // MOV t1, t1
 
 // One-time HALTI5 pipe init (subset of etna_reset_gpu_state). Idempotent state,
 // so we just emit it ahead of the draw.
@@ -127,8 +131,8 @@ static void emit_triangle(CmdStream &cs,
 	cs.set_state(GL_MULTI_SAMPLE_CONFIG, 0); // MSAA_SAMPLES_NONE
 
 	// --- VS config -----------------------------------------------------------
-	cs.set_state(VS_OUTPUT_COUNT, 1);          // 1 + num_varyings
-	cs.set_state(VS_INPUT_COUNT, 0x101);       // COUNT(1) | UNK8(1)
+	cs.set_state(VS_OUTPUT_COUNT, 1);		   // 1 + num_varyings
+	cs.set_state(VS_INPUT_COUNT, 0x101);	   // COUNT(1) | UNK8(1)
 	cs.set_state(VS_TEMP_REGISTER_CONTROL, 2); // NUM_TEMPS
 	cs.set_state(VS_LOAD_BALANCING, 0x0F3F0241);
 
@@ -163,10 +167,10 @@ static void emit_triangle(CmdStream &cs,
 	cs.set_state(RA_EARLY_DEPTH, RA_EARLY_DEPTH_DISABLED);
 
 	// --- PS config -----------------------------------------------------------
-	cs.set_state(PS_OUTPUT_REG, 1);            // ps_color_out_reg
-	cs.set_state(PS_INPUT_COUNT, 0x101);       // COUNT(1) | UNK8(1)
+	cs.set_state(PS_OUTPUT_REG, 1);			   // ps_color_out_reg
+	cs.set_state(PS_INPUT_COUNT, 0x101);	   // COUNT(1) | UNK8(1)
 	cs.set_state(PS_TEMP_REGISTER_CONTROL, 2); // NUM_TEMPS
-	cs.set_state(PS_CONTROL, 0x2);             // SATURATE_RT0 (unorm)
+	cs.set_state(PS_CONTROL, 0x2);			   // SATURATE_RT0 (unorm)
 
 	// --- PE: render target, depth disabled -----------------------------------
 	cs.set_state(PE_DEPTH_CONFIG, PE_DEPTH_CONFIG_DISABLED);
@@ -256,10 +260,10 @@ static void emit_triangle(CmdStream &cs,
 bool triangle_test(Gpu &gpu)
 {
 	constexpr uint32_t W = 64, H = 64;
-	const uint32_t pw = (W + 15) & ~15u; // pad width to 16
-	const uint32_t ph = (H + 3) & ~3u;   // pad height to 4
-	const uint32_t stride = pw * 4;
-	const uint32_t rt_size = stride * ph;
+	constexpr uint32_t pw = (W + 15) & ~15u; // pad width to 16
+	constexpr uint32_t ph = (H + 3) & ~3u;	 // pad height to 4
+	constexpr uint32_t stride = pw * 4;
+	constexpr uint32_t rt_size = stride * ph;
 	constexpr uint32_t CLEAR = 0xFF0000FF; // blue (B,G,R,A = FF,00,00,FF)
 
 	Bo rt = gpu.alloc(rt_size);
@@ -270,26 +274,20 @@ bool triangle_test(Gpu &gpu)
 		return false;
 
 	// clear RT (solid -> same in every byte regardless of tiling)
-	auto rp = static_cast<uint32_t *>(rt.map());
-	for (uint32_t i = 0; i < rt_size / 4; i++)
-		rp[i] = CLEAR;
+	auto rp = rt.span<uint32_t>();
+	std::ranges::fill(rp, CLEAR);
 	rt.cpu_fini(RelocWrite);
 
 	// a triangle fully INSIDE the clip volume (no fullscreen/guardband trick),
 	// z = 0.5 (mid depth range, off the near plane). Covers most of the screen.
-	const float verts[9] = {-0.8f, -0.8f, 0.5f, 0.8f, -0.8f, 0.5f, 0.0f, 0.8f, 0.5f};
-	auto vp = static_cast<float *>(vtx.map());
-	for (int i = 0; i < 9; i++)
-		vp[i] = verts[i];
+	const std::array<float, 9> verts = {-0.8f, -0.8f, 0.5f, 0.8f, -0.8f, 0.5f, 0.0f, 0.8f, 0.5f};
+	std::ranges::copy(verts, vtx.span<float>().begin());
 	vtx.cpu_fini(RelocWrite);
 
-	auto vsp = static_cast<uint32_t *>(vs.map());
-	for (int i = 0; i < 4; i++)
-		vsp[i] = kVsCode[i];
+	std::ranges::copy(kVsCode, vs.span<uint32_t>().begin());
 	vs.cpu_fini(RelocWrite);
-	auto psp = static_cast<uint32_t *>(ps.map());
-	for (int i = 0; i < 4; i++)
-		psp[i] = kPsCode[i];
+
+	std::ranges::copy(kPsCode, ps.span<uint32_t>().begin());
 	ps.cpu_fini(RelocWrite);
 
 	const float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -302,7 +300,7 @@ bool triangle_test(Gpu &gpu)
 		gpu.dump_status("triangle draw");
 		return false;
 	}
-	print("3D triangle drawn in ", (uint32_t)(read_cntpct() - start), " ticks\n");
+	print("3D triangle drawn in ", (read_cntpct() - start), " ticks\n");
 
 	rt.cpu_prep(RelocRead);
 	// The triangle is a solid color, so it reads back the same in the tiled RT
@@ -320,7 +318,7 @@ bool triangle_test(Gpu &gpu)
 			drawn++;
 		}
 	}
-	print("RT: ", int(drawn), " of ", int(rt_size / 4), " pixels drawn, color 0x", Hex{sample});
+	print("RT: ", drawn, " of ", int(rt_size / 4), " pixels drawn, color 0x", Hex{sample});
 	print(uniform ? " (uniform)\n" : " (NOT uniform!)\n");
 	if (drawn == 0) {
 		print("FAILED: the draw wrote no pixels (pipe/state issue)\n");
@@ -369,13 +367,13 @@ static void emit_triangle_color(CmdStream &cs,
 	// Mesa groups them: attr0 is CONSECUTIVE (no 0x800), attr1 closes the group
 	// (NONCONSECUTIVE) and its END is the full 28-byte span from the group start.
 	// attr0 = position, R32G32B32_FLOAT at byte 0:
-	cs.set_state(NFE_ATTRIB_CONFIG0_0 + 0, NFE_TYPE_FLOAT | (3u << 12));            // 0x00003008
+	cs.set_state(NFE_ATTRIB_CONFIG0_0 + 0, NFE_TYPE_FLOAT | (3u << 12)); // 0x00003008
 	cs.set_state(NFE_ATTRIB_SCALE0 + 0, fui(1.0f));
-	cs.set_state(NFE_ATTRIB_CONFIG1_0 + 0, 12u);                                   // END=12
+	cs.set_state(NFE_ATTRIB_CONFIG1_0 + 0, 12u); // END=12
 	// attr1 = color, R32G32B32A32_FLOAT at byte 12:
 	cs.set_state(NFE_ATTRIB_CONFIG0_0 + 4, NFE_TYPE_FLOAT | (4u << 12) | (12u << 16)); // 0x000C4008
 	cs.set_state(NFE_ATTRIB_SCALE0 + 4, fui(1.0f));
-	cs.set_state(NFE_ATTRIB_CONFIG1_0 + 4, 0x800u | 28u);                          // NONCONSEC | END=28
+	cs.set_state(NFE_ATTRIB_CONFIG1_0 + 4, 0x800u | 28u); // NONCONSEC | END=28
 	cs.set_state_reloc(NFE_VERTEX_STREAM_BASE0, {&vtx, RelocRead, 0});
 	cs.set_state(NFE_VERTEX_STREAM_CONTROL0, vtx_stride); // stride = 28
 	cs.set_state(NFE_VERTEX_STREAM_DIVISOR0, 0);
@@ -383,8 +381,8 @@ static void emit_triangle_color(CmdStream &cs,
 	cs.set_state(GL_MULTI_SAMPLE_CONFIG, 0);
 
 	// --- VS config: 2 inputs, 2 outputs (position + 1 varying) ---------------
-	cs.set_state(VS_OUTPUT_COUNT, 2);          // 1 + num_varyings
-	cs.set_state(VS_INPUT_COUNT, 0x102);       // COUNT(2) | UNK8(1)
+	cs.set_state(VS_OUTPUT_COUNT, 2);		   // 1 + num_varyings
+	cs.set_state(VS_INPUT_COUNT, 0x102);	   // COUNT(2) | UNK8(1)
 	cs.set_state(VS_TEMP_REGISTER_CONTROL, 4); // t0,t1 in; t2,t3 out
 	cs.set_state(VS_LOAD_BALANCING, 0x0F3F0241);
 
@@ -419,10 +417,10 @@ static void emit_triangle_color(CmdStream &cs,
 	cs.set_state(RA_EARLY_DEPTH, RA_EARLY_DEPTH_DISABLED);
 
 	// --- PS config: 1 varying input, color out in t1 -------------------------
-	cs.set_state(PS_OUTPUT_REG, 1);            // ps_color_out_reg
-	cs.set_state(PS_INPUT_COUNT, 0x102);       // COUNT(num_varyings+1=2) | UNK8(1)
+	cs.set_state(PS_OUTPUT_REG, 1);		 // ps_color_out_reg
+	cs.set_state(PS_INPUT_COUNT, 0x102); // COUNT(num_varyings+1=2) | UNK8(1)
 	cs.set_state(PS_TEMP_REGISTER_CONTROL, 2);
-	cs.set_state(PS_CONTROL, 0x2);             // SATURATE_RT0 (unorm)
+	cs.set_state(PS_CONTROL, 0x2); // SATURATE_RT0 (unorm)
 
 	// --- PE render target (same) ---------------------------------------------
 	cs.set_state(PE_DEPTH_CONFIG, PE_DEPTH_CONFIG_DISABLED);
@@ -450,10 +448,10 @@ static void emit_triangle_color(CmdStream &cs,
 	cs.set_state(FE_HALTI5_ID_CONFIG, 0);
 	cs.set_state(VS_HALTI5_OUTPUT_COUNT, 0x2002); // vs_output_count = 2
 	cs.set_state(VS_HALTI5_UNK008A0, 0x0881000E); // 0x0001000e | ((0x110/2)<<20)
-	cs.set_state(VS_HALTI5_OUTPUT0, 0x0302);      // pos=t2 (byte0), varying=t3 (byte1)
-	cs.set_state(VS_HALTI5_INPUT0, 0x0100);       // attr0->t0 (byte0), attr1->t1 (byte1)
+	cs.set_state(VS_HALTI5_OUTPUT0, 0x0302);	  // pos=t2 (byte0), varying=t3 (byte1)
+	cs.set_state(VS_HALTI5_INPUT0, 0x0100);		  // attr0->t0 (byte0), attr1->t1 (byte1)
 	cs.set_state(PA_VS_OUTPUT_COUNT, 2);
-	cs.set_state(PA_VARYING_NUM_COMPONENTS0, 4);  // varying0 has 4 components
+	cs.set_state(PA_VARYING_NUM_COMPONENTS0, 4); // varying0 has 4 components
 	cs.set_state(PA_VARYING_NUM_COMPONENTS1, 0);
 	cs.set_state(PS_VARYING_NUM_COMPONENTS0, 4);
 	cs.set_state(PS_VARYING_NUM_COMPONENTS1, 0);
@@ -503,10 +501,10 @@ static void emit_triangle_color(CmdStream &cs,
 bool triangle_color_test(Gpu &gpu)
 {
 	constexpr uint32_t W = 64, H = 64;
-	const uint32_t pw = (W + 15) & ~15u;
-	const uint32_t ph = (H + 3) & ~3u;
-	const uint32_t stride = pw * 4;
-	const uint32_t rt_size = stride * ph;
+	constexpr uint32_t pw = (W + 15) & ~15u;
+	constexpr uint32_t ph = (H + 3) & ~3u;
+	constexpr uint32_t stride = pw * 4;
+	constexpr uint32_t rt_size = stride * ph;
 	// Clear to opaque black. The gradient's colors all satisfy R+G+B ~= 255
 	// (barycentric blend of the three corners), so no drawn pixel is black --
 	// black is a safe "not drawn" sentinel (unlike blue, which collides with a
@@ -520,29 +518,23 @@ bool triangle_color_test(Gpu &gpu)
 	if (!rt || !vtx || !vs || !ps)
 		return false;
 
-	auto rp = static_cast<uint32_t *>(rt.map());
-	for (uint32_t i = 0; i < rt_size / 4; i++)
-		rp[i] = CLEAR;
+	auto rp = rt.span<uint32_t>();
+	std::ranges::fill(rp, CLEAR);
 	rt.cpu_fini(RelocWrite);
 
 	// interleaved pos.xyz + color.rgba, 7 floats/vertex: red, green, blue corners
-	const float verts[3 * 7] = {
+	const std::array<float, 3 * 7> verts = {
 		-0.8f, -0.8f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, // v0 red
-		0.8f, -0.8f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f,  // v1 green
-		0.0f, 0.8f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f,   // v2 blue
+		0.8f,  -0.8f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, // v1 green
+		0.0f,  0.8f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, // v2 blue
 	};
-	auto vp = static_cast<float *>(vtx.map());
-	for (int i = 0; i < 3 * 7; i++)
-		vp[i] = verts[i];
+	std::ranges::copy(verts, vtx.span<float>().begin());
 	vtx.cpu_fini(RelocWrite);
 
-	auto vsp = static_cast<uint32_t *>(vs.map());
-	for (unsigned i = 0; i < sizeof(kVsColorCode) / 4; i++)
-		vsp[i] = kVsColorCode[i];
+	std::ranges::copy(kVsColorCode, vs.span<uint32_t>().begin());
 	vs.cpu_fini(RelocWrite);
-	auto psp = static_cast<uint32_t *>(ps.map());
-	for (unsigned i = 0; i < sizeof(kPsColorCode) / 4; i++)
-		psp[i] = kPsColorCode[i];
+
+	std::ranges::copy(kPsColorCode, ps.span<uint32_t>().begin());
 	ps.cpu_fini(RelocWrite);
 
 	auto cs = gpu.new_cmd_stream(1024);
@@ -575,8 +567,8 @@ bool triangle_color_test(Gpu &gpu)
 		if (B > 100 && B > R && B > G)
 			sawB = true;
 	}
-	print("RT: ", int(drawn), " of ", int(rt_size / 4), " pixels drawn; corners seen R=",
-		  int(sawR), " G=", int(sawG), " B=", int(sawB), uniform ? " (uniform!)\n" : " (varied)\n");
+	print("RT: ", drawn, " of ", int(rt_size / 4), " pixels drawn.");
+	print(" corners seen R=", sawR, " G=", sawG, " B=", sawB, uniform ? " (uniform!)\n" : " (varied)\n");
 	if (drawn == 0) {
 		print("FAILED: the draw wrote no pixels\n");
 		return false;

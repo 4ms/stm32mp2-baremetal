@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 
 // =============================================================================
 //  etna.hh -- a baremetal GPU API for the STM32MP25 Vivante (GCNanoUltra31)
@@ -92,6 +93,10 @@ struct Bo {
 	bool cacheable = true;
 
 	void *map() const { return reinterpret_cast<void *>(static_cast<uintptr_t>(phys)); }
+
+	template<typename T>
+	std::span<T> span() const { return {static_cast<T *>(map()), bytes / sizeof(T)}; }
+
 	uint32_t gpu_addr() const { return phys; } // what a reloc emits
 	uint32_t size() const { return bytes; }
 	explicit operator bool() const { return phys != 0; }
@@ -116,13 +121,12 @@ class CmdStream {
 public:
 	// Backed by a Bo of `words` dwords. [NEW] Gpu::new_cmd_stream() creates one.
 	CmdStream(Bo backing, uint32_t words)
-		: buf_{static_cast<uint32_t *>(backing.map())}
-		, cap_{words}
+		: buf_{backing.span<uint32_t>().first(words)}
 		, bo_{backing}
 	{
 	}
 
-	uint32_t avail() const { return cap_ - len_; }
+	uint32_t avail() const { return static_cast<uint32_t>(buf_.size()) - len_; }
 	uint32_t offset() const { return len_; } // in dwords
 	const Bo &bo() const { return bo_; }
 
@@ -180,8 +184,7 @@ public:
 	void reset() { len_ = 0; }
 
 private:
-	uint32_t *buf_;
-	uint32_t cap_;
+	std::span<uint32_t> buf_;
 	uint32_t len_ = 0;
 	Bo bo_;
 };

@@ -66,7 +66,7 @@ bool test_throughput(etna::Gpu &gpu)
 // Fill a buffer with a solid color via the RS engine, and verify with the CPU.
 bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 {
-	auto pixels = static_cast<uint32_t *>(fb.map());
+	auto pixels = fb.span<uint32_t>();
 	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++)
 		pixels[i] = 0xDEADBEEF; // poison so a partial fill is obvious
 	fb.cpu_fini(etna::RelocWrite);
@@ -95,8 +95,8 @@ bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 // verify the per-pixel transform with the CPU.
 bool test_blit_convert(etna::Gpu &gpu, const etna::Bo &dst, const etna::Bo &src)
 {
-	auto s = static_cast<uint32_t *>(src.map());
-	auto d = static_cast<uint32_t *>(dst.map());
+	auto s = src.span<uint32_t>();
+	auto d = dst.span<uint32_t>();
 	for (uint32_t y = 0; y < ImgHeight; y++)
 		for (uint32_t x = 0; x < ImgWidth; x++)
 			s[y * ImgWidth + x] = 0xFF000000u | ((x & 0xFFu) << 16) | ((y & 0xFFu) << 8) | ((x + y) & 0xFFu);
@@ -158,9 +158,9 @@ bool test_image_blend(etna::Gpu &gpu)
 	if (!a || !b || !alpha || !out)
 		return false;
 
-	auto ap = static_cast<uint8_t *>(a.map());
-	auto bp = static_cast<uint8_t *>(b.map());
-	auto lp = static_cast<uint8_t *>(alpha.map());
+	auto ap = a.span<uint8_t>();
+	auto bp = b.span<uint8_t>();
+	auto lp = alpha.span<uint8_t>();
 	for (uint32_t y = 0; y < H; y++)
 		for (uint32_t x = 0; x < W; x++) {
 			uint32_t p = (y * W + x) * 4;			   // byte offset of pixel (B,G,R,A)
@@ -190,7 +190,7 @@ bool test_image_blend(etna::Gpu &gpu)
 	print("Alpha-blended two ", W, "x", H, " ARGB images (GPU) in ", gpu_ticks, " ticks\n");
 
 	out.cpu_prep(etna::RelocRead);
-	auto op = static_cast<uint8_t *>(out.map());
+	auto op = out.span<uint8_t>();
 	for (uint32_t i = 0; i < BW * H; i++) {
 		uint32_t al = lp[i];
 		uint8_t expect = uint8_t(((uint32_t(ap[i]) * al) >> 8) + ((uint32_t(bp[i]) * (255 - al)) >> 8));
@@ -206,7 +206,7 @@ bool test_image_blend(etna::Gpu &gpu)
 	auto ocpu = gpu.alloc(BW * H);
 	if (!ocpu)
 		return false;
-	auto cp = static_cast<uint8_t *>(ocpu.map());
+	auto cp = ocpu.span<uint8_t>();
 	auto cstart = read_cntpct();
 	for (uint32_t i = 0; i < BW * H; i++) {
 		uint32_t al = lp[i];

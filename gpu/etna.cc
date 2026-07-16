@@ -176,8 +176,8 @@ void Bo::cpu_fini(uint32_t op) const
 void CmdStream::reserve(uint32_t n)
 {
 	// Single-shot model: no ring wrap yet, so this only guards against overflow.
-	if (len_ + n > cap_)
-		print("etna: CmdStream overflow (need ", int(len_ + n), " of ", int(cap_), " dwords)\n");
+	if (len_ + n > buf_.size())
+		print("etna: CmdStream overflow (need ", int(len_ + n), " of ", int(buf_.size()), " dwords)\n");
 }
 
 void CmdStream::emit_reloc(const Reloc &r)
@@ -362,7 +362,7 @@ Fence Gpu::submit(CmdStream &cs)
 
 	// Copy the op's commands into the ring (cs backing is cacheable and
 	// CPU-written, so a plain read is coherent; the ring is non-cacheable).
-	auto src = static_cast<const uint32_t *>(cs.bo().map());
+	auto src = cs.bo().span<const uint32_t>();
 	for (uint32_t i = 0; i < op_dw; i++)
 		ring[w++] = src[i];
 
