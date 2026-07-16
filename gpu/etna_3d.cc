@@ -211,6 +211,7 @@ static void emit_triangle(CmdStream &cs,
 	// --- uniforms: VS none, PS color = u0 (RGBA) -----------------------------
 	cs.set_state(VS_UNIFORM_BASE, 0);
 	cs.set_state(PS_UNIFORM_BASE, 0); // vs_uniform_count/4
+	// PS color -> u0 at the PS unified-uniform bank (0x36000).
 	cs.emit(cmd_load_state(SH_HALTI5_UNIFORMS0, 4));
 	cs.emit(fui(color[0]));
 	cs.emit(fui(color[1]));
@@ -288,23 +289,34 @@ bool triangle_test(Gpu &gpu)
 		return false;
 	}
 	print("3D triangle drawn in ", (uint32_t)(read_cntpct() - start), " ticks\n");
-	gpu.dump_status("after 3D draw"); // DEBUG: PE/FE/IAC/RISAF state -- did the PE fault or just draw nothing?
 
 	rt.cpu_prep(RelocRead);
+	// The triangle is a solid color, so it reads back the same in the tiled RT
+	// regardless of layout. Count changed pixels and confirm they're one uniform
+	// non-clear color (= the FS constant reached the render target).
 	uint32_t drawn = 0, sample = 0;
-	for (uint32_t i = 0; i < rt_size / 4; i++)
-		if (rp[i] != CLEAR) {
+	bool uniform = true;
+	for (uint32_t i = 0; i < rt_size / 4; i++) {
+		uint32_t p = rp[i];
+		if (p != CLEAR) {
 			if (!drawn)
-				sample = rp[i];
+				sample = p;
+			else if (p != sample)
+				uniform = false;
 			drawn++;
 		}
-	print("RT pixels changed from clear: ", int(drawn), " of ", int(rt_size / 4));
-	print("  (first drawn pixel = 0x", Hex{sample}, ", clear was 0x", Hex{CLEAR}, ")\n");
+	}
+	print("RT: ", int(drawn), " of ", int(rt_size / 4), " pixels drawn, color 0x", Hex{sample});
+	print(uniform ? " (uniform)\n" : " (NOT uniform!)\n");
 	if (drawn == 0) {
 		print("FAILED: the draw wrote no pixels (pipe/state issue)\n");
 		return false;
 	}
-	print("GPU 3D pipe wrote pixels -- triangle path is alive. \\o/\n");
+	if (!uniform || sample == 0) {
+		print("FAILED: triangle pixels are not a single non-zero color\n");
+		return false;
+	}
+	print("GPU drew a solid triangle in 0x", Hex{sample}, " -- 3D pipe verified. \\o/\n");
 	return true;
 }
 
