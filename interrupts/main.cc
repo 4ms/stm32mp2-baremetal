@@ -1,6 +1,8 @@
 #include "drivers/button.hh"
-#include "interrupt/interrupt.hh"
+#include "drivers/interrupt.hh"
 #include "print/print.hh"
+
+using namespace mdrivlib;
 
 #if UART == 1
 #define USARTx USART1

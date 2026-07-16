@@ -3,7 +3,7 @@
 
 inline void button_user1_init()
 {
-	PowerControl::enable_vddio3(PowerControl::Present::Always);
+	mdrivlib::PowerControl::enable_vddio3(mdrivlib::PowerControl::Present::Always);
 	// Enable RCC for GPIOD
 	RCC->GPIODCFGR |= RCC_GPIODCFGR_GPIOxEN;
 	// PD2 mode = input (0b00)
