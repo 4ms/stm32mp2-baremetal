@@ -1,23 +1,24 @@
+import sys
 import lauterbach.trace32.rcl as t32
 from pathlib import Path
 
 dbg = t32.connect()
 # Dir where we're calling the script from, e.g. an example project dir
 basepath = Path.cwd()
-elfpath = basepath / "build"/"main.elf"
+elfpath = basepath / "build" / "main.elf"
 
 dbg.print(f"Flashing via python rcl {elfpath}...")
 
-
-# FIXME: we have to do it twice -- the first time it fails on attach
-# Doing either reset or system.reset makes it always fail
+# Attaching right after a target reset races the DAP / debug-power domain coming
+# back up on the MP25, so the first attach usually fails. Reset once, then retry
+# the attach a few times (reconfiguring each try) so one `make flash-t32` is
+# enough -- no manual re-run.
 
 dbg.cmd("reset")
-# dbg.cmd("SYSTEM.reset")
 
 try:
     dbg.cmd("system.RESETOUT")
-except:
+except Exception:
     print("First resetout failed")
     dbg.cmd("wait 0.5")
     dbg.cmd("SYSTEM.reset")
@@ -25,30 +26,37 @@ except:
 
 dbg.cmd("wait 2.0")
 
-dbg.cmd("SYStem.CPU STM32MP257F-CA35")
-dbg.cmd("SYStem.config DEBUGPORTTYPE SWD ")
-dbg.cmd("SYStem.JtagClock 10MHz")
 
-dbg.cmd("Trace.DISable")
-dbg.cmd("SYStem.MemAccess DAP")
-dbg.cmd("system.Option DUALPORT on")
-
-try:
-    dbg.cmd("SYSTEM.attach")
-except:
-    print("First attach failed")
-    dbg.cmd("wait 0.5")
+def configure():
     dbg.cmd("SYStem.CPU STM32MP257F-CA35")
     dbg.cmd("SYStem.config DEBUGPORTTYPE SWD ")
-    dbg.cmd("SYStem.JtagClock 10MHz")
-    dbg.cmd("SYSTEM.attach")
-    
+    dbg.cmd("SYStem.JtagClock 50MHz")
+    dbg.cmd("Trace.DISable")
+    dbg.cmd("SYStem.MemAccess DAP")
+    dbg.cmd("system.Option DUALPORT on")
+
+
+configure()
+
+ATTEMPTS = 6
+attached = False
+for i in range(1, ATTEMPTS + 1):
+    try:
+        dbg.cmd("SYSTEM.attach")
+        attached = True
+        print(f"attached on attempt {i}")
+        break
+    except Exception as e:
+        print(f"attach {i}/{ATTEMPTS} failed: {e}")
+        dbg.cmd("wait 0.1")
+
+if not attached:
+    print("ERROR: could not attach to the target after retries")
+    sys.exit(1)
 
 dbg.cmd("Break")
 
 dbg.cmd(f"Data.LOAD.Elf {elfpath} /CPP")
-
-dbg.cmd("SYStem.JtagClock 50MHz")
 
 dbg.cmd("Trace.METHOD ONCHIP")
 dbg.cmd("ETM.Trace ON")
@@ -57,4 +65,4 @@ dbg.cmd("ETM.ON")
 dbg.cmd("Trace.arm")
 
 dbg.cmd("Go")
-
+dbg.print("running")
