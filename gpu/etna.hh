@@ -373,6 +373,7 @@ bool compute_test(Gpu &gpu);
 bool triangle_test(Gpu &gpu);
 bool triangle_color_test(Gpu &gpu);
 bool triangle_depth_test(Gpu &gpu);
+bool triangle_texture_test(Gpu &gpu);
 
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
 // sequence + PE drain (stall + cache flush + stall); submit() adds the ring
@@ -389,6 +390,18 @@ void blit(CmdStream &cs,
 		  uint32_t height,
 		  Format fmt = Format::A8R8G8B8,
 		  uint32_t flags = BlitNone);
+
+// Resolve (untile): copy a tiled surface (what the 3D pipe renders) to a
+// linear one (pixel (x,y) at y*dst_stride + x*4) -- for CPU access or display
+// scanout. src_tiled_stride is the tiled row stride (align(W,16)*4); width
+// must be a multiple of 16. A8R8G8B8 only for now.
+void resolve(CmdStream &cs,
+			 const Bo &dst,
+			 const Bo &src,
+			 uint32_t width,
+			 uint32_t height,
+			 uint32_t src_tiled_stride,
+			 uint32_t dst_stride);
 
 // =============================================================================
 //  Usage sketch -- how the current tests become API calls

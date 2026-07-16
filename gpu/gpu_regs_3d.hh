@@ -187,7 +187,41 @@ constexpr uint32_t SH_CONFIG_RTNE = 0x2;
 constexpr uint32_t SH_HALTI5_UNIFORMS_MIRROR0 = 0x34000; // VS unified uniforms
 constexpr uint32_t SH_HALTI5_UNIFORMS0 = 0x36000;        // PS unified uniforms
 
-// ---- NTE (descriptor engine, HALTI5 init) -----------------------------------
-constexpr uint32_t NTE_DESCRIPTOR_CONTROL = 0x14C40; // ENABLE at init
+// ---- NTE (descriptor-based texture engine, HALTI5) ---------------------------
+// Textures on HALTI5 are 256-byte in-memory descriptors (TXDESC); the registers
+// below just point sampler slot i at a descriptor and hold the sampler state
+// (filter/wrap live in registers, NOT in the descriptor). FS sampler k selects
+// slot k (PS_SAMPLER_BASE = 0); VS samplers start at slot 32/2 (VS_SAMPLER_BASE
+// = 0x20). From Mesa etnaviv_texture_desc.c + state_3d.xml.h.
+constexpr uint32_t NTE_DESCRIPTOR_CONTROL = 0x14C40;    // ENABLE at init
+constexpr uint32_t NTE_DESCRIPTOR_FLUSH = 0x14C44;      // write 0 after CPU writes a TXDESC
+constexpr uint32_t NTE_DESCRIPTOR_INVALIDATE = 0x14C48; // 0x20000000 | slot, after (re)pointing ADDR
+constexpr uint32_t NTE_DESCRIPTOR_ADDR0 = 0x15C00;      // + 4*slot: reloc, TXDESC base (64B aligned)
+constexpr uint32_t NTE_DESCRIPTOR_TX_CTRL0 = 0x15E00;   // + 4*slot: 0x40 = 128B_TILE, TS off
+constexpr uint32_t NTE_DESCRIPTOR_SAMP_CTRL0_0 = 0x16C00;     // + 4*slot: wrap|filter
+constexpr uint32_t NTE_DESCRIPTOR_SAMP_CTRL1_0 = 0x16E00;     // + 4*slot: UNK1 = 2
+constexpr uint32_t NTE_DESCRIPTOR_SAMP_LOD_MINMAX0 = 0x17000; // + 4*slot
+constexpr uint32_t NTE_DESCRIPTOR_SAMP_LOD_BIAS0 = 0x17200;   // + 4*slot
+constexpr uint32_t NTE_DESCRIPTOR_SAMP_ANISOTROPY0 = 0x17400; // + 4*slot
+constexpr uint32_t NTE_TX_CTRL_128B_TILE = 0x40;
+// SAMP_CTRL0 = UWRAP(2=CLAMP_TO_EDGE) | VWRAP<<3 | WWRAP<<6 | MIN(1=NEAREST)<<9
+// | MIP(0=NONE)<<11 | MAG(1)<<13 | UNK21(0x200000) | INT_FILTER(0x800000)
+constexpr uint32_t NTE_SAMP_CTRL0_CLAMP_NEAREST = 0x00A02292;
+constexpr uint32_t NTE_SAMP_CTRL1_UNK1 = 0x2;
+constexpr uint32_t NTE_DESCRIPTOR_INVALIDATE_UNK29 = 0x20000000;
+
+// TXDESC dword values for a single-level tiled 2D A8R8G8B8 texture (all other
+// dwords zero; layout in texdesc_3d.xml.h, fill code etnaviv_texture_desc.c):
+//   CONFIG0 = TYPE_2D(2) | FORMAT_A8R8G8B8(7)<<13, ADDRESSING_MODE_TILED(0)
+//   CONFIG1 = identity swizzle R0<<8|G1<<12|B2<<16|A3<<20 | HALIGN_SIXTEEN(1)<<26
+constexpr uint32_t TXDESC_CONFIG0_2D_ARGB8_TILED = 0x0000E002;
+constexpr uint32_t TXDESC_CONFIG1_SWIZ_HALIGN16 = 0x04321000;
+constexpr uint32_t TXDESC_ASTC0_MAGIC = 0x0C0C0C00;  // UNK8/16/24 = 0xC always
+constexpr uint32_t TXDESC_CONFIG2_MAGIC = 0x00030000; // always
+
+// GL_FLUSH_CACHE bits for texture/descriptor coherency (state.xml.h)
+constexpr uint32_t GL_FLUSH_CACHE_TEXTURE = 0x04;
+constexpr uint32_t GL_FLUSH_CACHE_TEXTUREVS = 0x10;
+constexpr uint32_t GL_FLUSH_CACHE_DESCRIPTOR = 0x3000; // UNK12|UNK13
 
 } // namespace VivanteGpu

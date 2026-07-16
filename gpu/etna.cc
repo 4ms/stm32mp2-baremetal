@@ -507,4 +507,38 @@ void blit(CmdStream &cs, const Bo &dst, const Bo &src, uint32_t width, uint32_t 
 	emit_pe_drain(cs);
 }
 
+// Resolve = untile: copy a (basic-)tiled surface -- what the PE renders -- to a
+// LINEAR destination a CPU/display can address as y*stride + x*4. This is the
+// RS engine's namesake job. Same recipe as blit() with two differences (mirrors
+// Mesa etnaviv_rs.c): RS_CONFIG gains SOURCE_TILED, and the source stride
+// register holds the tiled stride << 2 (one RS "source row" = a row of 4x4
+// tiles = 4 pixel rows). Width must be a multiple of 16 (RS alignment).
+void resolve(CmdStream &cs,
+			 const Bo &dst,
+			 const Bo &src,
+			 uint32_t width,
+			 uint32_t height,
+			 uint32_t src_tiled_stride,
+			 uint32_t dst_stride)
+{
+	cs.reserve(64);
+	uint32_t config = RS_FORMAT_A8R8G8B8 | RS_CONFIG_SOURCE_TILED | (RS_FORMAT_A8R8G8B8 << 8);
+	cs.set_state(RS_CONFIG, config);
+	cs.set_state(RS_SOURCE_STRIDE, src_tiled_stride << 2);
+	cs.set_state(RS_DEST_STRIDE, dst_stride);
+	cs.set_state_reloc(RS_PIPE_SOURCE_ADDR0, {&src, RelocRead, 0});
+	cs.set_state_reloc(RS_PIPE_DEST_ADDR0, {&dst, RelocWrite, 0});
+	cs.set_state(RS_PIPE_OFFSET0, 0);
+	cs.set_state(RS_PIPE_OFFSET1, 0);
+	cs.set_state(RS_WINDOW_SIZE, width | (height << 16));
+	cs.set_state(RS_DITHER0, 0xFFFFFFFF);
+	cs.set_state(RS_DITHER1, 0xFFFFFFFF);
+	cs.set_state(RS_CLEAR_CONTROL, 0);
+	cs.set_state(RS_EXTRA_CONFIG, 0);
+	cs.set_state(RS_SINGLE_BUFFER, 1);
+	cs.set_state(RS_KICKER, RS_KICK);
+	cs.set_state(RS_SINGLE_BUFFER, 0);
+	emit_pe_drain(cs);
+}
+
 } // namespace etna

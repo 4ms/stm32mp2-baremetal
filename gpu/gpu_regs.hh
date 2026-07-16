@@ -199,6 +199,10 @@ constexpr uint32_t RS_KICK = 0xBEEBBEEB;
 // VIVS_RS_CONFIG_SWAP_RB / _FLIP in Mesa's state_3d.xml.h.
 constexpr uint32_t RS_CONFIG_SWAP_RB = 0x20000000;
 constexpr uint32_t RS_CONFIG_FLIP = 0x40000000;
+// Source is a (basic-)tiled surface: the RS untiles as it copies ("resolve").
+// Pair with RS_SOURCE_STRIDE = tiled_stride << 2 (a tile row = 4 pixel rows).
+// The 0x80000000 stride TILING bit is only for SUPER-tiled sources -- not us.
+constexpr uint32_t RS_CONFIG_SOURCE_TILED = 0x00000080;
 
 // GL_FLUSH_CACHE bits for finishing RS/PE work
 constexpr uint32_t GL_FLUSH_CACHE_COLOR = 1 << 1;

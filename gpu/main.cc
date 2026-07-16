@@ -270,6 +270,8 @@ int main()
 		ok = etna::triangle_color_test(gpu);
 	if (ok)
 		ok = etna::triangle_depth_test(gpu);
+	if (ok)
+		ok = etna::triangle_texture_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 
