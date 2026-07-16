@@ -273,6 +273,8 @@ int main()
 		ok = triangle_depth_test(gpu);
 	if (ok)
 		ok = triangle_texture_test(gpu);
+	if (ok)
+		ok = spinning_cube_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 

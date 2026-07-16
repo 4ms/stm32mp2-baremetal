@@ -33,7 +33,7 @@
 //        cpu_pointer == physical_address == gpu_address
 //  A "buffer object" (Bo) is therefore just a physically-contiguous DDR
 //  allocation. Relocations (below) keep the abstraction so that (a) Mesa code
-//  ports unchanged and (b) if a GPU MMU is added [LATER], only the Bo->gpu_addr
+//  ports unchanged and (b) if a GPU MMU is ever added, only the Bo->gpu_addr
 //  mapping changes, not the callers.
 //
 //  CACHE COHERENCY (the sharp edge)

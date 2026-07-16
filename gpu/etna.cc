@@ -353,7 +353,7 @@ Fence Gpu::submit(CmdStream &cs)
 
 	// Wrap if it won't fit. Safe only because callers wait for completion (the
 	// FE is parked at the current tail, far from offset 0) before reusing the
-	// ring start. [LATER] a real free-cursor lets us wrap while work is queued.
+	// ring start. A real free-cursor would let us wrap while work is queued.
 	if (ring_head_ + block_dw > ring_dwords_)
 		ring_head_ = 4; // keep the home wait-link at 0..3 intact
 
@@ -407,7 +407,7 @@ bool Gpu::wait(Fence f, uint32_t timeout_us)
 	// the GPU works; the ISR's SEV/IRQ wakes us.
 	// Caveat: the deadline is only evaluated on wake, so a totally hung GPU
 	// (no interrupt at all) would block. GPU *errors* do interrupt (bits
-	// 30/31), so those are caught. A timer-backstop wake is [LATER].
+	// 30/31), so those are caught. A timer-backstop wake would close the gap.
 	const uint32_t done_bit = 1u << f.event_id;
 	const uint32_t err_bits = INTR_AXI_BUS_ERROR | INTR_MMU_EXCEPTION;
 	uint64_t deadline = read_cntpct() + (uint64_t)timeout_us * (read_cntfreq() / 1'000'000);

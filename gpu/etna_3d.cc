@@ -1,3 +1,4 @@
+#include "etna_3d.hh"
 #include "etna.hh"
 #include "gpu_regs.hh"
 #include "gpu_regs_3d.hh"
@@ -107,8 +108,8 @@ void emit_triangle(CmdStream &cs,
 				   uint32_t height,
 				   std::span<const float, 4> color,
 				   uint32_t vertex_count,
-				   const Bo *depth = nullptr,
-				   uint32_t depth_stride = 0)
+				   const Bo *depth, // defaults live in etna_3d.hh
+				   uint32_t depth_stride)
 {
 	emit_reset(cs);
 
@@ -579,6 +580,158 @@ void emit_triangle_tex(CmdStream &cs,
 	// --- DRAW ------------------------------------------------------------------
 	cs.emit(FE_DRAW_INSTANCED | (PRIM_TRIANGLES << 16) | 1);
 	cs.emit(vertex_count & 0x00FFFFFF);
+	cs.emit(0);
+	cs.emit(0);
+
+	cs.stall(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
+	cs.flush_cache();
+	cs.stall(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
+}
+
+// Generalized mesh draw (see etna_3d.hh). The per-draw sequence is the proven
+// vec4-varying triangle path with three generalizations: optional D16 LESS
+// depth (as in emit_triangle), parametric shader sizes/registers, and a float
+// uniform upload to the unified bank (VS reads them as u0.. with rgroup=
+// uniform; VS_UNIFORM_BASE = 0). Vertex format is fixed: pos vec3 @0 + vec4
+// attribute @12, one interleaved stream.
+void emit_mesh(CmdStream &cs, const MeshDraw &d)
+{
+	emit_reset(cs);
+
+	cs.flush_cache();
+	cs.stall(SYNC_RECIPIENT_RA, SYNC_RECIPIENT_PE);
+
+	// --- vertex input (NFE): pos vec3 @0 + vec4 @12, one interleaved stream --
+	cs.set_state(NFE_ATTRIB_CONFIG0_0 + 0, NFE_TYPE_FLOAT | (3u << 12));
+	cs.set_state(NFE_ATTRIB_SCALE0 + 0, fui(1.0f));
+	cs.set_state(NFE_ATTRIB_CONFIG1_0 + 0, 12u);
+	cs.set_state(NFE_ATTRIB_CONFIG0_0 + 4, NFE_TYPE_FLOAT | (4u << 12) | (12u << 16));
+	cs.set_state(NFE_ATTRIB_SCALE0 + 4, fui(1.0f));
+	cs.set_state(NFE_ATTRIB_CONFIG1_0 + 4, 0x800u | 28u);
+	cs.set_state_reloc(NFE_VERTEX_STREAM_BASE0, {d.vtx, RelocRead, 0});
+	cs.set_state(NFE_VERTEX_STREAM_CONTROL0, d.vtx_stride);
+	cs.set_state(NFE_VERTEX_STREAM_DIVISOR0, 0);
+
+	cs.set_state(GL_MULTI_SAMPLE_CONFIG, 0);
+
+	// --- VS config: 2 inputs, 2 outputs (position + 1 varying) ---------------
+	cs.set_state(VS_OUTPUT_COUNT, 2);
+	cs.set_state(VS_INPUT_COUNT, 0x102);
+	cs.set_state(VS_TEMP_REGISTER_CONTROL, d.vs_temps);
+	cs.set_state(VS_LOAD_BALANCING, 0x0F3F0241);
+
+	// --- PA viewport -----------------------------------------------------------
+	set_state_fixp(cs, PA_VIEWPORT_SCALE_X, fixp16(d.width / 2.0f));
+	set_state_fixp(cs, PA_VIEWPORT_SCALE_Y, fixp16(d.height / 2.0f));
+	cs.set_state(PA_VIEWPORT_SCALE_Z, fui(1.0f));
+	set_state_fixp(cs, PA_VIEWPORT_OFFSET_X, fixp16(d.width / 2.0f));
+	set_state_fixp(cs, PA_VIEWPORT_OFFSET_Y, fixp16(d.height / 2.0f));
+	cs.set_state(PA_VIEWPORT_OFFSET_Z, fui(0.0f));
+	cs.set_state(PA_LINE_WIDTH, fui(0.5f));
+	cs.set_state(PA_POINT_SIZE, fui(0.5f));
+	cs.set_state(PA_SYSTEM_MODE, 0x1);
+	cs.set_state(PA_ATTRIBUTE_ELEMENT_COUNT, 1); // 1 varying
+	cs.set_state(PA_CONFIG, PA_CONFIG_TRIANGLE);
+	cs.set_state(PA_WIDE_LINE_WIDTH0, fui(0.5f));
+	cs.set_state(PA_WIDE_LINE_WIDTH1, fui(0.5f));
+
+	// --- SE scissor + clip ------------------------------------------------------
+	set_state_fixp(cs, SE_SCISSOR_LEFT, 0);
+	set_state_fixp(cs, SE_SCISSOR_TOP, 0);
+	set_state_fixp(cs, SE_SCISSOR_RIGHT, (d.width << 16) + SE_SCISSOR_MARGIN_RIGHT);
+	set_state_fixp(cs, SE_SCISSOR_BOTTOM, (d.height << 16) + SE_SCISSOR_MARGIN_BOTTOM);
+	cs.set_state(SE_DEPTH_SCALE, 0);
+	cs.set_state(SE_DEPTH_BIAS, 0);
+	cs.set_state(SE_CONFIG, 0);
+	set_state_fixp(cs, SE_CLIP_RIGHT, (d.width << 16) + SE_CLIP_MARGIN_RIGHT);
+	set_state_fixp(cs, SE_CLIP_BOTTOM, (d.height << 16) + SE_CLIP_MARGIN_BOTTOM);
+
+	// --- RA ----------------------------------------------------------------------
+	cs.set_state(RA_CONTROL, 0x1);
+	cs.set_state(RA_EARLY_DEPTH, RA_EARLY_DEPTH_DISABLED);
+
+	// --- PS config ----------------------------------------------------------------
+	cs.set_state(PS_OUTPUT_REG, d.ps_out_reg);
+	cs.set_state(PS_INPUT_COUNT, 0x102); // COUNT(2) | UNK8(1)
+	cs.set_state(PS_TEMP_REGISTER_CONTROL, d.ps_temps);
+	cs.set_state(PS_CONTROL, 0x2); // SATURATE_RT0
+
+	// --- PE render target + optional depth -----------------------------------
+	cs.set_state(PE_DEPTH_CONFIG, d.depth ? PE_DEPTH_CONFIG_D16_LESS_WRITE : PE_DEPTH_CONFIG_DISABLED);
+	cs.set_state(PE_DEPTH_NEAR, fui(0.0f));
+	cs.set_state(PE_DEPTH_FAR, fui(1.0f));
+	cs.set_state(PE_DEPTH_NORMALIZE, d.depth ? fui(65535.0f) : 0);
+	cs.set_state(PE_DEPTH_STRIDE, d.depth_stride);
+	if (d.depth)
+		cs.set_state_reloc(PE_PIPE_DEPTH_ADDR0, {d.depth, static_cast<uint32_t>(RelocRead | RelocWrite), 0});
+	cs.set_state(PE_STENCIL_OP, 0);
+	cs.set_state(PE_STENCIL_CONFIG, 0);
+	cs.set_state(PE_ALPHA_OP, 0);
+	cs.set_state(PE_ALPHA_BLEND_COLOR, 0);
+	cs.set_state(PE_ALPHA_CONFIG, 0);
+	cs.set_state(PE_COLOR_FORMAT, PE_FORMAT_A8R8G8B8 | PE_COLOR_FORMAT_COMPONENTS_ALL | PE_COLOR_FORMAT_OVERWRITE);
+	cs.set_state(PE_COLOR_STRIDE, d.rt_stride);
+	cs.set_state(PE_HDEPTH_CONTROL, 0);
+	cs.set_state_reloc(PE_PIPE_COLOR_ADDR0, {d.rt, static_cast<uint32_t>(RelocRead | RelocWrite), 0});
+	cs.set_state(PE_STENCIL_CONFIG_EXT, 0);
+	cs.set_state(PE_LOGIC_OP, PE_LOGIC_OP_COPY_SINGLEBUF);
+	cs.set_state(PE_DITHER0, 0xFFFFFFFF);
+	cs.set_state(PE_DITHER1, 0xFFFFFFFF);
+	cs.set_state(PE_STENCIL_CONFIG_EXT2, 0);
+	cs.set_state(PE_MEM_CONFIG, 0);
+
+	// --- HALTI5 shader linkage: 1 smooth vec4 varying -------------------------
+	cs.set_state(FE_HALTI5_ID_CONFIG, 0);
+	cs.set_state(VS_HALTI5_OUTPUT_COUNT, 0x2002);
+	cs.set_state(VS_HALTI5_UNK008A0, 0x0881000E);
+	cs.set_state(VS_HALTI5_OUTPUT0, 0x0302); // pos=t2, varying=t3
+	cs.set_state(VS_HALTI5_INPUT0, 0x0100);	 // attr0->t0, attr1->t1
+	cs.set_state(PA_VS_OUTPUT_COUNT, 2);
+	cs.set_state(PA_VARYING_NUM_COMPONENTS0, 4);
+	cs.set_state(PA_VARYING_NUM_COMPONENTS1, 0);
+	cs.set_state(PS_VARYING_NUM_COMPONENTS0, 4);
+	cs.set_state(PS_VARYING_NUM_COMPONENTS1, 0);
+	cs.set_state(GL_VARYING_TOTAL_COMPONENTS, 4);
+	cs.set_state(GL_HALTI5_SH_SPECIALS, 0x7F7F7F00);
+	cs.set_state(GL_HALTI5_SHADER_ATTRIBUTES0, 0);
+
+	cs.stall(SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
+
+	// --- shader ICACHE upload (parametric sizes) -------------------------------
+	cs.set_state(VS_NEWRANGE_LOW, 0);
+	cs.set_state(VS_HALTI5_RANGE_HIGH, d.vs_words / 4);
+	cs.set_state_reloc(VS_INST_ADDR, {d.vs, RelocRead, 0});
+	cs.set_state(SH_CONFIG, SH_CONFIG_RTNE);
+	cs.set_state(SH_ICACHE_CONTROL, SH_ICACHE_CONTROL_ENABLE);
+	cs.set_state(VS_ICACHE_COUNT, d.vs_words / 4 - 1);
+	cs.set_state(PS_NEWRANGE_LOW, 0);
+	cs.set_state(PS_HALTI5_RANGE_HIGH, d.ps_words / 4);
+	cs.set_state_reloc(PS_INST_ADDR, {d.ps, RelocRead, 0});
+	cs.set_state(SH_CONFIG, SH_CONFIG_RTNE);
+	cs.set_state(SH_ICACHE_CONTROL, SH_ICACHE_CONTROL_ENABLE);
+	cs.set_state(PS_ICACHE_COUNT, d.ps_words / 4 - 1);
+
+	// --- uniforms into the unified bank (VS u0.. at base 0) --------------------
+	// VS uniforms are written through the MIRROR window (0x34000); 0x36000 is
+	// the PS stage's window (which is why the FS color uniform worked there).
+	// Uploading VS uniforms via the PS window leaves the VS reading zeros ->
+	// degenerate clip positions -> "draw runs clean, zero fragments, no faults".
+	cs.set_state(VS_UNIFORM_BASE, 0);
+	cs.set_state(PS_UNIFORM_BASE, static_cast<uint32_t>(d.uniforms.size() / 4)); // PS u0 after the VS's
+	if (!d.uniforms.empty()) {
+		cs.emit(cmd_load_state(SH_HALTI5_UNIFORMS_MIRROR0, static_cast<uint32_t>(d.uniforms.size())));
+		for (float f : d.uniforms)
+			cs.emit(fui(f));
+		cs.align();
+	}
+
+	cs.set_state(VS_ICACHE_PREFETCH, 0);
+	cs.set_state(PS_ICACHE_PREFETCH, 0);
+	cs.stall(SYNC_RECIPIENT_RA, SYNC_RECIPIENT_PE);
+
+	// --- DRAW --------------------------------------------------------------------
+	cs.emit(FE_DRAW_INSTANCED | (PRIM_TRIANGLES << 16) | 1);
+	cs.emit(d.vertex_count & 0x00FFFFFF);
 	cs.emit(0);
 	cs.emit(0);
 
