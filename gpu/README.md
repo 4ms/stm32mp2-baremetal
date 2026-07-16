@@ -187,6 +187,127 @@ Mesa before writing code:
   two-attribute vertex stream (position + color interleaved), where Mesa groups
   byte-consecutive attributes and only the last one is flagged non-consecutive.
 
+### Depth test
+
+`triangle_depth_test` proves the depth buffer occludes correctly. It draws the
+*same* triangle twice into one render target sharing a D16 depth buffer — near
+(z=0.3) in red first, then far (z=0.7) in green — with the depth test set to
+`LESS` and depth writes on. The near red triangle writes depth 0.65; the far
+green triangle's 0.85 fails `LESS` everywhere the red already drew, so it's
+rejected. Result: **1301 red, 0 green** — the near triangle occludes the far one.
+
+It's an unambiguous pass/fail: with depth *off* this would be painter's order
+(green drawn last wins) → all green. Because the fills are solid, the tiled RT
+reads back tiling-invariant, so we just count red vs green fragments.
+
+Three things made it land first try:
+
+- **`PE_DEPTH_CONFIG`** enabled is `0x00041101` (`D16 | MODE_Z | UNK18 |
+  FUNC(LESS)<<8 | WRITE_ENABLE`), late-z (no early-Z, no `DISABLE_ZS`). The
+  *disabled* value we already had (`0x01000700`) decodes as
+  `MODE_NONE | FUNC(ALWAYS) | DISABLE_ZS` — decoding it confirmed the field
+  layout before writing the enabled one. `RA_EARLY_DEPTH` stays `0x15000030`
+  (its forward-Z / late-z write-disable bits are exactly right for a PE-side test).
+- **The depth buffer**: `PE_PIPE_DEPTH_ADDR0` (reloc), `PE_DEPTH_STRIDE`, and
+  `PE_DEPTH_NORMALIZE = 65535.0` (`2^16-1` for D16 — easy to leave at 0 and get
+  garbage depth). Tiled like the color target but 2 bytes/pixel.
+- **Coherency**: both draws go in *one* command stream so the pixel engine's
+  depth cache stays hot and the second draw sees the first's depth writes. The
+  depth buffer is cleared to `0xFFFF` (far); being uniform, its tiling is moot.
+
+Both draws share `emit_triangle`, which grew an optional depth-buffer argument
+(absent ⇒ depth off, as before).
+
+### Texturing
+
+`triangle_texture_test` samples a real 2D texture in the fragment shader — the
+last big fixed-function block, completing the classic pipeline (vertex fetch →
+VS → varyings → rasterizer → FS with uniforms *and* texture sampling → depth →
+PE). A 64×64 tiled A8R8G8B8 texture holds four solid quadrants (red / green /
+blue / white); the triangle's UVs span all four; NEAREST filtering means every
+drawn pixel must be *exactly* one of the four texel colors. The result —
+`R=469 G=494 B=156 W=182 other=0` — is pixel-exact sampling.
+
+How HALTI5 texturing works (all values in `gpu_regs_3d.hh`, extracted from
+Mesa's `etnaviv_texture_desc.c`):
+
+- **A texture is a 256-byte in-memory descriptor** (TXDESC): texel base address,
+  size, format (`A8R8G8B8 = 7` — same memory layout our render targets use, so
+  render-to-texture is within reach), tiling config, plus a couple of
+  always-set magic dwords (`CONFIG2 = 0x00030000`, `ASTC0 = 0x0C0C0C00`).
+  Everything else must be zeroed.
+- **Sampler state lives in registers, not the descriptor**: per-slot
+  `NTE_DESCRIPTOR_ADDR` points at the TXDESC, and `NTE_DESCRIPTOR_SAMP_CTRL0/1`
+  + LOD registers hold wrap/filter (clamp-to-edge + nearest here). The FS
+  `TEXLD` instruction's sampler id selects the slot directly.
+- **Coherency is the silent-black trap**: the texture caches want *two*
+  separate `GL_FLUSH_CACHE` writes (`TEXTURE` then `TEXTUREVS`), the descriptor
+  cache wants `NTE_DESCRIPTOR_FLUSH` + its own flush bits, and re-pointing a
+  descriptor needs `NTE_DESCRIPTOR_INVALIDATE`.
+- **`TEXLD` (opcode 0x18)** was hand-encoded like the MOVs and verified against
+  the ISA before flashing: `texld t2, tex0, t1` = `{0x07821018, 0x39001F20, 0, 0}`.
+  A fragment-shader `TEXLD` needs no explicit LOD.
+- **Texel data is written directly in the sampler's 4×4-tile layout**
+  (`word = (y/4)·stride_px·4 + (y%4)·4 + (x/4)·16 + (x%4)`), and the UV rides
+  the same proven vec4 varying linkage as the color triangle (`u,v,0,1` — so no
+  new 2-component-varying plumbing), with `TEXLD` consuming just `.xy`.
+
+### RS resolve (untile) + exact shape verification
+
+All the checks above were *tiling-invariant* (counting colors, never asking
+*where* a pixel is) because the render target is tiled. `etna::resolve()` closes
+that gap: it uses the RS engine for its namesake job — copying a tiled surface
+out as **linear** — so pixel (x,y) is simply at `y*stride + x*4`. It's the
+`blit()` recipe with two changes from Mesa's `etnaviv_rs.c`: `RS_CONFIG` gains
+`SOURCE_TILED` (0x80), and the source-stride register holds the tiled stride
+`<< 2` (one RS source row = a row of 4×4 tiles = 4 pixel rows).
+
+`triangle_test` now finishes by resolving the RT and verifying the **shape**:
+every pixel more than 1 px inside the expected window-space triangle must be
+the draw color, everything more than 1 px outside must be the clear color (the
+1 px band belongs to the hardware's fill rule). Result: an exact match, zero
+mismatches — and it settled the window-Y question: with our positive viewport
+scale, **NDC +Y maps to increasing framebuffer rows** (a GL-style y-up flip
+would use a negative `PA_VIEWPORT_SCALE_Y`, which is how Mesa does it).
+
+The resolve is also the render→display link: a display controller scans out
+linear framebuffers, so "render tiled, resolve linear" is the shape of every
+future frame.
+
+### Spinning cube
+
+`spinning_cube_test` is the first thing that looks like real graphics: a
+36-vertex cube with six solid-colored faces, rotated by a model-view-projection
+matrix in the **vertex shader**, depth-tested, drawn at 8 rotation angles
+(~30k ticks per frame including the resolve, at 64×64). New ground it covers:
+
+- **The first multi-instruction VS**: `clip = M × position` as
+  `MUL` + 3×`MAD` accumulating the matrix columns, plus the color passthrough —
+  5 instructions, built by a small `constexpr` instruction builder
+  (`alu_inst()` in `etna_3d_tests.cc`). The builder is self-checking:
+  `static_assert`s prove it reproduces the two hardware-verified `MOV`
+  encodings bit-for-bit at compile time.
+- **VS uniforms**: the matrix rides in `u0..u3` as four column vec4s. The
+  gotcha that cost a flash cycle: on HALTI5 the *vertex* stage's uniforms are
+  written through the **mirror window at `0x34000`** — `0x36000`, where the
+  fragment color uniform had happily worked, is the *PS* stage's window.
+  Upload to the wrong one and the VS reads zeros: degenerate clip positions,
+  "draw runs clean, zero fragments, no faults" (the same silent signature as
+  the FIXP viewport bug).
+- **Perspective divide**: the first draw with w ≠ 1 — the PA's divide and the
+  perspective foreshortening match CPU math exactly.
+- `emit_mesh()` joins the library (`etna_3d.hh`): a generalized draw taking a
+  `MeshDraw` struct — any vertex count, parametric shader sizes, optional
+  uniforms and depth.
+
+With no display yet, verification is numeric like the shape test, but now
+against a full **CPU reference renderer**: the same 36 vertices, the same
+matrix values, a float z-buffer, rasterized at pixel centers. Every frame must
+match the resolved GPU image pixel-for-pixel outside a ~1.25 px band around
+projected triangle edges (the hardware's fixed-point rasterizer owns the
+edges), and all six face colors must appear over the spin. Result: **8/8 frames,
+zero mismatches**.
+
 ## The `etna` API
 
 Modeled on libdrm's `etna_cmd_stream` / `etna_bo` interface — the MIT-licensed
@@ -306,9 +427,22 @@ Same blend on the CPU in 1078384 ticks   (GPU / CPU = 97x)
 3D triangle drawn in 27235 ticks
 RT: 1301 of 4096 pixels drawn, color 0xFFFF0000 (uniform)
 GPU drew a solid triangle in 0xFFFF0000 -- 3D pipe verified. \o/
+RS resolve (untile 64x64) in 24594 ticks
+shape: exact (NDC +Y = increasing framebuffer rows)
+resolved image matches the expected triangle -- shape verified. \o/
 gradient triangle drawn in 27151 ticks
 RT: 1301 of 4096 pixels drawn; corners seen R=1 G=1 B=1 (varied)
 GPU interpolated a per-vertex-color varying across the triangle. \o/
+depth: two triangles drawn in 32141 ticks
+depth test: 1951 drawn -> 1301 red (near), 650 green (far)
+GPU depth test occluded the farther triangle -- depth buffer works. \o/
+textured triangle drawn in 16864 ticks
+texture test: 1301 drawn -> R=469 G=494 B=156 W=182 other=0
+GPU sampled a 2D texture across the triangle -- texturing works. \o/
+cube frame 0: 658 px drawn, 0 mismatches (562 edge px ignored)
+  ... 8 frames, all 0 mismatches ...
+spinning cube: 8 frames avg 30168 ticks (draw+resolve), faces seen 0x3F
+GPU spun a cube: VS matrix transform + depth + rasterization all match the CPU. \o/
 SUCCESS
 ```
 
