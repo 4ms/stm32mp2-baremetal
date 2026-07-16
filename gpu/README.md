@@ -56,11 +56,16 @@ color to fill, etc. Then we kick off the front end engine (FE) to process these
 commands.
 
 When reading the GPU's feature bits, the BLT bit is set. From what I understand,
-the BLT would be more appropriate for this kind of operation, but the etnaviv
-hardware database (which is also in mainline Linux) says there is no BLT, along
-with a comment that the database takes precedence over the feature bits in the
-registers. Attempts to drive BLT registers hangs the FE, and it since the Mesa
-driver uses the RS engine instead of the BLT for clears, we do that too.
+the BLT engine would be more appropriate for this kind of operation, but the
+etnaviv hardware database in mainline Linux says there is no
+BLT engine for our chip. To support that, there's a comment that the database
+takes precedence over the feature bits in the registers. On our chip, attempts
+to drive BLT registers hangs the FE, and since the Mesa driver uses the RS
+engine instead of the BLT for clears, we do that too. 
+
+The RS engine gets its name "resolve" from its primary function of resolving
+the tiled GPU-native pixel ordering into the linear ordering a display driver
+would expect.
 
 We do two tests:
 - `test_fill()`: calls `etna::clear()` to solid-color fill of an RGBA8888 image
