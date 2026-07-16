@@ -33,14 +33,11 @@ constexpr uint32_t FE_DRAW_INSTANCED = 0x60000000;
 constexpr uint32_t PRIM_TRIANGLES = 4; // PRIMITIVE_TYPE_TRIANGLES
 constexpr uint32_t PRIM_TRIANGLE_STRIP = 5;
 
-// Sync recipients for the FE<->pipe semaphore/stall (GL_SEMAPHORE/STALL tokens).
-constexpr uint32_t SYNC_FE = 1;
-constexpr uint32_t SYNC_RA = 5;
-constexpr uint32_t SYNC_PE = 7;
+// Sync recipient for the RA (rasterizer) stage; FE/PE are in gpu_regs.hh
+// (SYNC_RECIPIENT_FE/PE). Used with GL_SEMAPHORE_TOKEN / the STALL command.
+constexpr uint32_t SYNC_RECIPIENT_RA = 5;
 
-// ---- GL / global (state.xml.h high block) -----------------------------------
-constexpr uint32_t GL_SEMAPHORE_TOKEN = 0x3808;
-constexpr uint32_t GL_FLUSH_CACHE_3D = 0x380C; // COLOR(0x2)|DEPTH(0x1) etc.
+// ---- GL / global (GL_SEMAPHORE_TOKEN / GL_FLUSH_CACHE are in gpu_regs.hh) ----
 constexpr uint32_t GL_MULTI_SAMPLE_CONFIG = 0x3818;
 constexpr uint32_t GL_VARYING_TOTAL_COMPONENTS = 0x381C;
 constexpr uint32_t GL_API_MODE = 0x384C; // OPENGL = 0

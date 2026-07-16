@@ -363,6 +363,12 @@ bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &
 // multiply, alpha lerp, ...) over gradient data and verifies each on the CPU.
 bool compute_test(Gpu &gpu);
 
+// 3D graphics pipe (etna_3d.cc): draw one screen-covering solid-color triangle
+// through the programmable pipeline (vertex fetch -> VS -> rasterizer -> FS ->
+// pixel engine) and verify the render target changed from clear -> triangle
+// color. First light for the graphics path.
+bool triangle_test(Gpu &gpu);
+
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
 // sequence + PE drain (stall + cache flush + stall); submit() adds the ring
 // completion trailer. Note: no END -- END would halt the FE's ring loop.

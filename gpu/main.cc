@@ -259,6 +259,8 @@ int main()
 		ok = etna::compute_test(gpu);
 	if (ok)
 		ok = test_image_blend(gpu);
+	if (ok)
+		ok = etna::triangle_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 
