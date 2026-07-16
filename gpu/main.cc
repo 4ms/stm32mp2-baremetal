@@ -1,6 +1,7 @@
 #include "aarch64/system_reg.hh" // read_cntpct
 #include "drivers/hal_cnt.hh"	 // SystemA35_SYSTICK_Config
 #include "etna.hh"
+#include "etna_3d_tests.hh"
 #include "print/print.hh"
 #include <cstdint>
 
@@ -265,13 +266,13 @@ int main()
 
 	print("\n3D tests:\n");
 	if (ok)
-		ok = etna::triangle_test(gpu);
+		ok = triangle_test(gpu);
 	if (ok)
-		ok = etna::triangle_color_test(gpu);
+		ok = triangle_color_test(gpu);
 	if (ok)
-		ok = etna::triangle_depth_test(gpu);
+		ok = triangle_depth_test(gpu);
 	if (ok)
-		ok = etna::triangle_texture_test(gpu);
+		ok = triangle_texture_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 

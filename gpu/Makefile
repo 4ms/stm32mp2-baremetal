@@ -7,6 +7,7 @@ SOURCES += main.cc
 SOURCES += etna.cc
 SOURCES += etna_compute.cc
 SOURCES += etna_3d.cc
+SOURCES += etna_3d_tests.cc
 SOURCES += pmic.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/mmu/mmu.cc

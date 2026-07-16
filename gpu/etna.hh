@@ -2,7 +2,6 @@
 #include "gpu_regs.hh"
 #include "ppu_asm.hh" // ppu::ShaderInfo / build_*_shader (for Kernel/make_kernel)
 #include <atomic>
-#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -27,13 +26,6 @@
 // Naming mirrors libdrm's C API (etna_bo, etna_cmd_stream, ...) so that ported
 // Mesa/libdrm code reads the same; we express it as C++ in namespace `etna`.
 // Reference: libdrm etnaviv_drmif.h, Mesa src/gallium/drivers/etnaviv/. Both MIT.
-//
-// -----------------------------------------------------------------------------
-//  Status legend (this header doubles as the build roadmap):
-//    [HAVE]    logic already exists in gpu/main.cc; to be moved/wrapped here
-//    [NEW]     small new glue to write for the first milestone
-//    [LATER]   deferred: the WAIT/LINK ring, GPU MMU, fences-per-submit, 3D
-// -----------------------------------------------------------------------------
 //
 //  MEMORY MODEL
 //  The GPU masters *physical* DDR directly (its MMU is unused -- the RS engine
@@ -83,7 +75,7 @@ struct Reloc {
 };
 
 // -----------------------------------------------------------------------------
-//  Bo -- buffer object (a physically-contiguous DDR allocation)   [NEW]
+//  Bo -- buffer object (a physically-contiguous DDR allocation)
 // -----------------------------------------------------------------------------
 // Mirrors etna_bo. On baremetal a Bo is carved from a fixed DDR pool (see
 // Gpu::alloc()); there is no refcount/handle/dmabuf machinery.
@@ -92,26 +84,41 @@ struct Bo {
 	uint32_t bytes = 0;
 	bool cacheable = true;
 
-	void *map() const { return reinterpret_cast<void *>(static_cast<uintptr_t>(phys)); }
+	void *map() const
+	{
+		return reinterpret_cast<void *>(static_cast<uintptr_t>(phys));
+	}
 
 	template<typename T>
-	std::span<T> span() const { return {static_cast<T *>(map()), bytes / sizeof(T)}; }
+	std::span<T> span() const
+	{
+		return {static_cast<T *>(map()), bytes / sizeof(T)};
+	}
 
-	uint32_t gpu_addr() const { return phys; } // what a reloc emits
-	uint32_t size() const { return bytes; }
-	explicit operator bool() const { return phys != 0; }
+	uint32_t gpu_addr() const
+	{
+		return phys;
+	} // what a reloc emits
+	uint32_t size() const
+	{
+		return bytes;
+	}
+	explicit operator bool() const
+	{
+		return phys != 0;
+	}
 
 	// Cache bracketing for CPU access, matching etna_bo_cpu_prep/_fini semantics.
 	// op = RelocWrite: CPU is about to WRITE data the GPU will read  -> clean after
 	// op = RelocRead : CPU is about to READ data the GPU wrote       -> invalidate
-	// [NEW] implemented in etna.cc via clean_/invalidate_dcache_range().
+	// implemented in etna.cc via clean_/invalidate_dcache_range().
 	// const: they touch the backing memory, not the handle.
 	void cpu_prep(uint32_t op) const; // wait for pending GPU work (once fences exist) + prep
 	void cpu_fini(uint32_t op) const; // finish CPU access: clean if we wrote
 };
 
 // -----------------------------------------------------------------------------
-//  CmdStream -- a growable command buffer fed to the FE          [HAVE/NEW]
+//  CmdStream -- a growable command buffer fed to the FE
 // -----------------------------------------------------------------------------
 // Mirrors etna_cmd_stream. Backing store is itself a Bo (the FE DMA-reads it),
 // so it is cache-cleaned before every kick. `emit`/`reserve`/`reloc` match the
@@ -119,26 +126,37 @@ struct Bo {
 // ported op code (etnaviv_rs.c) compiles against this unchanged.
 class CmdStream {
 public:
-	// Backed by a Bo of `words` dwords. [NEW] Gpu::new_cmd_stream() creates one.
+	// Backed by a Bo of `words` dwords. Gpu::new_cmd_stream() creates one.
 	CmdStream(Bo backing, uint32_t words)
 		: buf_{backing.span<uint32_t>().first(words)}
 		, bo_{backing}
+	{}
+
+	uint32_t avail() const
 	{
+		return static_cast<uint32_t>(buf_.size()) - len_;
 	}
 
-	uint32_t avail() const { return static_cast<uint32_t>(buf_.size()) - len_; }
-	uint32_t offset() const { return len_; } // in dwords
-	const Bo &bo() const { return bo_; }
+	uint32_t offset() const
+	{
+		return len_;
+	} // in dwords
 
-	// Ensure room for n more dwords. [LATER] with a ring, a full stream flushes
-	// and wraps; for now it just asserts capacity.
-	void reserve(uint32_t n); // [NEW]
+	const Bo &bo() const
+	{
+		return bo_;
+	}
+
+	void reserve(uint32_t n);
 
 	// Append one command dword. Mirrors etna_cmd_stream_emit().
-	void emit(uint32_t data) { buf_[len_++] = data; }
+	void emit(uint32_t data)
+	{
+		buf_[len_++] = data;
+	}
 
 	// Emit a Bo's gpu address (+reloc.offset). Records read/write intent for
-	// cache/fence handling. Mirrors etna_cmd_stream_reloc(). [NEW]
+	// cache/fence handling. Mirrors etna_cmd_stream_reloc().
 	void emit_reloc(const Reloc &r);
 
 	// --- Mesa-compatible state helpers (mirror etnaviv_emit.h) -------------
@@ -148,12 +166,14 @@ public:
 		emit(VivanteGpu::cmd_load_state(state_addr));
 		emit(value);
 	}
+
 	// LOAD_STATE header + a reloc data word (state register = bo address).
 	void set_state_reloc(uint32_t state_addr, const Reloc &r)
 	{
 		emit(VivanteGpu::cmd_load_state(state_addr));
 		emit_reloc(r);
 	}
+
 	// Pad to a 64-bit (2-dword) boundary with NOP. Commands must be 64-bit
 	// aligned; a lone LOAD_STATE needs padding.
 	void align()
@@ -165,7 +185,8 @@ public:
 	// --- Synchronization primitives (mirror etnaviv_buffer.c CMD_* helpers) -
 	// FE waits for `to` engine to reach a matching semaphore. Used to make the
 	// FE block until the PE/RS pipeline drains. (SYNC_RECIPIENT_PE etc.)
-	void stall(uint32_t from, uint32_t to); // [HAVE] (stall_fe_on_pe in main.cc)
+	void stall(uint32_t from, uint32_t to);
+
 	// Queue an event: latches HI_INTR_ACKNOWLEDGE bit `id` when `engine`
 	// (GL_EVENT_FROM_PE / _FE) processes it. FROM_PE is the true completion
 	// signal (pipelined behind writes); FROM_FE fires early -- do not trust it.
@@ -174,14 +195,17 @@ public:
 		set_state(VivanteGpu::GL_EVENT, id | engine);
 	}
 	// Flush the GPU-internal caches to DDR (color/depth). Needed before the
-	// completion event or GPU writes may linger. [HAVE]
+	// completion event or GPU writes may linger.
 	void flush_cache(uint32_t bits = VivanteGpu::GL_FLUSH_CACHE_COLOR | VivanteGpu::GL_FLUSH_CACHE_DEPTH)
 	{
 		set_state(VivanteGpu::GL_FLUSH_CACHE, bits);
 	}
 
-	// Rewind for reuse (single-shot model). [LATER] a ring won't need this.
-	void reset() { len_ = 0; }
+	// Rewind for reuse (single-shot model). TODO: remove this? a ring won't need this.
+	void reset()
+	{
+		len_ = 0;
+	}
 
 private:
 	std::span<uint32_t> buf_;
@@ -190,7 +214,7 @@ private:
 };
 
 // -----------------------------------------------------------------------------
-//  Fence -- completion token for a submission                    [NEW]
+//  Fence -- completion token for a submission
 // -----------------------------------------------------------------------------
 // Mirrors the (timestamp, pipe_wait) fence model of libdrm. A submission
 // completes when its GL_EVENT(FROM_PE) latches HI_INTR_ACKNOWLEDGE bit
@@ -199,11 +223,14 @@ private:
 struct Fence {
 	uint32_t event_id = 0; // 0 = null; else the HI_INTR_ACKNOWLEDGE bit to poll
 	uint32_t seqno = 0;
-	explicit operator bool() const { return event_id != 0; }
+	explicit operator bool() const
+	{
+		return event_id != 0;
+	}
 };
 
 // -----------------------------------------------------------------------------
-//  Gpu -- device + core + pipe, collapsed (we have exactly one)  [HAVE/NEW]
+//  Gpu -- device + core + pipe, collapsed (we have exactly one)
 // -----------------------------------------------------------------------------
 // libdrm splits this into etna_device / etna_gpu / etna_pipe (for multi-device,
 // multi-core, 2D-vs-3D pipes). We have one core and drive it from EL3, so this
@@ -215,22 +242,25 @@ public:
 	struct Info {
 		uint32_t model, revision, product_id, customer_id;
 		uint32_t features, minor_features[6];
-		bool has_blt;	   // FALSE on MP25 despite the feature bit (see hwdb)
-		bool sec_mode;	   // security-enabled core: FE started via secure bank
+		bool has_blt;  // FALSE on MP25 despite the feature bit (see hwdb)
+		bool sec_mode; // security-enabled core: FE started via secure bank
 		uint32_t pixel_pipes;
 	};
 
 	// Full bring-up: power (VDDGPU), clock (PLL3), RIF, reset, identify. Returns
-	// false with a diagnostic on any failure. [HAVE] (steps 1-5 of main.cc).
+	// false with a diagnostic on any failure.
 	bool init();
-	const Info &info() const { return info_; }
+	const Info &info() const
+	{
+		return info_;
+	}
 
 	// Allocate `bytes` of physically-contiguous DDR from the GPU pool, aligned
-	// to `align` (default 64 = cache line). Mirrors etna_bo_new. [NEW]
-	// The pool is a fixed DDR carve-out; freeing is [LATER] (bump alloc for now).
+	// to `align` (default 64 = cache line). Mirrors etna_bo_new.
+	// The pool is a fixed DDR carve-out; freeing can be done later (bump alloc for now).
 	Bo alloc(uint32_t bytes, uint32_t align = 64, bool cacheable = true);
 
-	// Create a command stream backed by a freshly allocated Bo. [NEW]
+	// Create a command stream backed by a freshly allocated Bo
 	CmdStream new_cmd_stream(uint32_t words = 1024);
 
 	// Submit a command stream (which must contain an op's work + PE drain, NO
@@ -238,14 +268,13 @@ public:
 	// WAIT/LINK ring plus a completion trailer (event + wait + link), then
 	// diverts the FE by patching its idle WAIT into a LINK to the new block.
 	// The FE is never reset per submit -- it has been running the ring since
-	// init(). Returns a Fence carrying the op's rolling event id. [NEW: ring]
+	// init(). Returns a Fence carrying the op's rolling event id.
 	Fence submit(CmdStream &cs);
 
 	// Block until `f` completes or timeout. Mirrors etna_pipe_wait. Polls
 	// HI_INTR_ACKNOWLEDGE (accumulating, since the read is destructive) for
 	// f's event bit; returns false on timeout / AXI / MMU error. Several
-	// fences can be outstanding and waited in any order. [HAVE, wrap]
-	// [LATER] deliver via the GPU IRQ (GIC SPI 215) for true async.
+	// fences can be outstanding and waited in any order.
 	bool wait(Fence f, uint32_t timeout_us = 1'000'000);
 
 	// Print FE/PE/IAC/RISAF diagnostics -- the instrumentation from bring-up,
@@ -282,7 +311,7 @@ private:
 };
 
 // =============================================================================
-//  2D operations -- built on the seam above                     [HAVE, refactor]
+//  2D operations -- built on the seam above
 // =============================================================================
 // These are the ported Mesa RS emitters (etna_clear_blit_rs / etna_submit_rs_state
 // in etnaviv_rs.c), re-expressed against CmdStream. Each *emits* into a stream;
@@ -290,7 +319,7 @@ private:
 //
 // The MP25 core has no 2D pipe and no BLT engine, so clears/blits go through the
 // RS ("resolve") engine. 3D (alpha blend, rotate, arbitrary geometry) needs the
-// programmable pipe + offline-compiled shaders and is a separate header [LATER].
+// programmable pipe + offline-compiled shaders.
 
 enum class Format : uint32_t {
 	A8R8G8B8 = VivanteGpu::RS_FORMAT_A8R8G8B8, // 32bpp; more added as needed
@@ -339,7 +368,10 @@ struct Kernel {
 	Bo binary;				  // the shader program in GPU memory
 	uint32_t inst_dwords = 0; // program size in dwords (4 per instruction)
 	uint32_t reg_count = 0;	  // temp registers the program uses
-	explicit operator bool() const { return bool(binary); }
+	explicit operator bool() const
+	{
+		return bool(binary);
+	}
 };
 
 // A ppu::build_*_shader function: writes the program into inst[] (up to 8
@@ -357,23 +389,19 @@ Kernel make_kernel(Gpu &gpu, ShaderBuilder build);
 // bracketing: cpu_fini(RelocWrite) the inputs before, cpu_prep(RelocRead) the
 // output after.
 bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, uint32_t width, uint32_t height);
-bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, uint32_t width,
-			 uint32_t height);
-bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, const Bo &in2, uint32_t width,
+bool compute(Gpu &gpu, const Kernel &k, const Bo &out, const Bo &in0, const Bo &in1, uint32_t width, uint32_t height);
+bool compute(Gpu &gpu,
+			 const Kernel &k,
+			 const Bo &out,
+			 const Bo &in0,
+			 const Bo &in1,
+			 const Bo &in2,
+			 uint32_t width,
 			 uint32_t height);
 
 // Demo/self-test: builds and runs the whole kernel suite (copy, add, blends,
 // multiply, alpha lerp, ...) over gradient data and verifies each on the CPU.
 bool compute_test(Gpu &gpu);
-
-// 3D graphics pipe (etna_3d.cc): draw one screen-covering solid-color triangle
-// through the programmable pipeline (vertex fetch -> VS -> rasterizer -> FS ->
-// pixel engine) and verify the render target changed from clear -> triangle
-// color. First light for the graphics path.
-bool triangle_test(Gpu &gpu);
-bool triangle_color_test(Gpu &gpu);
-bool triangle_depth_test(Gpu &gpu);
-bool triangle_texture_test(Gpu &gpu);
 
 // Solid-color fill of `dst` (width x height, linear). Emits the RS clear
 // sequence + PE drain (stall + cache flush + stall); submit() adds the ring
@@ -381,8 +409,7 @@ bool triangle_texture_test(Gpu &gpu);
 void clear(CmdStream &cs, const Bo &dst, uint32_t width, uint32_t height, uint32_t argb);
 
 // Copy `src` -> `dst` (same size, linear) with optional per-pixel transform
-// (R<->B swap, flip), including the completion trailer. Replaces
-// test_rs_blit_convert. [HAVE -> move here]
+// (R<->B swap, flip), including the completion trailer.
 void blit(CmdStream &cs,
 		  const Bo &dst,
 		  const Bo &src,
@@ -428,7 +455,7 @@ void resolve(CmdStream &cs,
 //   fb.cpu_prep(etna::RelocRead);
 //   // ... verify fb == swap_rb(src) ...
 //
-// Once the WAIT/LINK ring lands [LATER], multiple ops queue back-to-back without
+// Multiple ops queue back-to-back without
 // per-submit reset, and submit()/wait() become truly async (build the next
 // stream while the GPU drains the current one).
 
