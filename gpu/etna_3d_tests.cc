@@ -15,6 +15,10 @@ static bool verify_shape(std::span<const uint32_t> img,
 						 uint32_t inside,
 						 uint32_t outside);
 
+// -------------------------------------------------------
+// Shaders
+// -------------------------------------------------------
+
 // Trivial HALTI5 shaders (Vivante ISA, 1 instruction = 4 dwords each).
 // VS: MOV t1, t0  -- pass the position attribute (lands in t0) straight through
 //     as the clip-space position; vs_pos_out_reg = 1.
@@ -48,11 +52,19 @@ constexpr std::array<uint32_t, 4> kPsColorCode = {0x07811009, 0x00000000, 0x0000
 //   derivatives, and MIP=NONE/MAXLOD=0 pins level 0)
 constexpr std::array<uint32_t, 4> kPsTexCode = {0x07821018, 0x39001F20, 0x00000000, 0x00000000};
 
+// -------------------------------------------------------
+// Tests
+// -------------------------------------------------------
+
+// =============================================================================
+// Basic drawing test
+// =============================================================================
+//
 // Basic drawing test: clear a small tiled RT to blue, draw a screen-covering red triangle,
 // read the RT back directly (solid color -> tiling-invariant) and report how
 // many pixels changed from clear -> triangle color.
-// v2 (appended): RS-resolve the tiled RT to a LINEAR buffer and verify the
-// triangle's actual SHAPE -- pixel positions, not just counts.
+// Then, RS-resolve the tiled RT to a linear buffer and verify the
+// triangle's actual shape -- pixel positions, not just counts.
 bool triangle_test(Gpu &gpu)
 {
 	constexpr uint32_t W = 64, H = 64;
@@ -126,9 +138,9 @@ bool triangle_test(Gpu &gpu)
 	}
 	print("GPU drew a solid triangle in 0x", Hex{sample}, " -- 3D pipe verified. \\o/\n");
 
-	// --- v2: RS resolve (untile), then verify the SHAPE ----------------------
+	// RS resolve (untile), then verify the shape
 	// The resolve makes pixel (x,y) addressable at y*W + x, so we can finally
-	// check WHERE the fragments landed: strictly inside the expected window-
+	// check where the fragments landed: strictly inside the expected window-
 	// space triangle must be the draw color, strictly outside must be clear.
 	Bo lin = gpu.alloc(W * H * 4);
 	if (!lin)
@@ -153,6 +165,10 @@ bool triangle_test(Gpu &gpu)
 	return true;
 }
 
+// =============================================================================
+//  Color test
+// =============================================================================
+//
 // Draw an RGB-gradient triangle (red/green/blue vertices) and confirm the
 // varying interpolated: the RT is tiled, but "did a red-dominant, a
 // green-dominant, and a blue-dominant fragment all appear?" is tiling-invariant,
@@ -248,16 +264,14 @@ bool triangle_color_test(Gpu &gpu)
 //  Depth test: the nearer triangle occludes the farther one
 // =============================================================================
 //
-// Draw the SAME triangle twice into one RT sharing a D16 depth buffer, in ONE
+// Draw the two triangles with the same coordinates and same center, but one is
+// flipped over the X axis. Do this into one RT sharing a D16 depth buffer, in ONE
 // command stream (so the PE's depth cache stays hot and draw 2 sees draw 1's
-// depth): near (z=0.3) in RED first, then far (z=0.7) in GREEN. Window depth =
-// 0.5*z + 0.5, so near->0.65, far->0.85. Depth test LESS + write: the red near
-// triangle writes 0.65; the green far triangle's 0.85 fails LESS *everywhere the
-// red drew* (same geometry) -> rejected. Result: the triangle stays RED.
-//
-// This is an unambiguous pass/fail: with depth OFF it would be painter's order
-// (green drawn last wins) -> all GREEN. Solid colors -> tiling-invariant, so we
-// read the tiled RT directly and just count red vs green fragments.
+// depth).
+// Draw the near triangle (z=0.3) in red first, then far tri (z=0.7) in green.
+// Window depth = 0.5*z + 0.5, so near->0.65, far->0.85.
+// The overlap area should be 50% of the green, so we should see 2x as many red
+// pixels as green.
 bool triangle_depth_test(Gpu &gpu)
 {
 	constexpr uint32_t W = 64, H = 64;
@@ -345,7 +359,11 @@ bool triangle_depth_test(Gpu &gpu)
 	return true;
 }
 
-// Texture test: a 64x64 tiled A8R8G8B8 texture with four solid quadrants
+// =============================================================================
+//  Texture test
+// =============================================================================
+//
+// A 64x64 tiled A8R8G8B8 texture with four solid quadrants
 // (TL red, TR green, BL blue, BR white), sampled by the usual triangle with UVs
 // (0,0) (1,0) (0.5,1) -- which covers all four UV quadrants. NEAREST filtering
 // returns exact texel values, so every drawn pixel must be one of the four
@@ -438,19 +456,9 @@ bool triangle_texture_test(Gpu &gpu)
 		if (!matched)
 			other++;
 	}
-	print("texture test: ",
-		  drawn,
-		  " drawn -> R=",
-		  counts[0],
-		  " G=",
-		  counts[1],
-		  " B=",
-		  counts[2],
-		  " W=",
-		  counts[3],
-		  " other=",
-		  other,
-		  "\n");
+	print("texture test: ", drawn, " drawn -> R=", counts[0]);
+	print(" G=", counts[1], " B=", counts[2]);
+	print(" W=", counts[3], " other=", other, "\n");
 	if (drawn == 0) {
 		print("FAILED: nothing drawn\n");
 		return false;
@@ -532,7 +540,7 @@ static bool verify_shape(std::span<const uint32_t> img,
 //
 // The first multi-instruction vertex shader: clip = M * position, with the 4x4
 // matrix as 4 column vec4s in VS uniforms u0..u3 (MUL + 3x MAD), plus the
-// proven color varying and D16 depth test. No display yet, so verification is
+// proven color varying and D16 depth test. Verification is
 // numeric: a CPU reference renderer transforms + rasterizes the same 36
 // vertices with the same matrix and a float z-buffer, and every frame must
 // match the resolved GPU image pixel-exactly outside a ~1.25 px band around
@@ -584,11 +592,14 @@ static constexpr auto kCubeVs = [] {
 		for (unsigned j = 0; j < 4; j++)
 			c[i * 4 + j] = w[j];
 	};
-	put(0, alu_inst(0x03, 2, Src{.reg = 0, .rgroup = 2}, Src{.reg = 0, .swiz = 0x00}, kNoSrc));		 // MUL t2, u0, t0.xxxx
-	put(1, alu_inst(0x02, 2, Src{.reg = 1, .rgroup = 2}, Src{.reg = 0, .swiz = 0x55}, Src{.reg = 2})); // MAD t2, u1, t0.yyyy, t2
-	put(2, alu_inst(0x02, 2, Src{.reg = 2, .rgroup = 2}, Src{.reg = 0, .swiz = 0xAA}, Src{.reg = 2})); // MAD t2, u2, t0.zzzz, t2
-	put(3, alu_inst(0x02, 2, Src{.reg = 3, .rgroup = 2}, Src{.reg = 0, .swiz = 0xFF}, Src{.reg = 2})); // MAD t2, u3, t0.wwww, t2
-	put(4, alu_inst(0x09, 3, kNoSrc, kNoSrc, Src{.reg = 1}));										 // MOV t3, t1
+	put(0, alu_inst(0x03, 2, Src{.reg = 0, .rgroup = 2}, Src{.reg = 0, .swiz = 0x00}, kNoSrc)); // MUL t2, u0, t0.xxxx
+	put(1, alu_inst(0x02, 2, Src{.reg = 1, .rgroup = 2}, Src{.reg = 0, .swiz = 0x55}, Src{.reg = 2})); // MAD t2, u1,
+																									   // t0.yyyy, t2
+	put(2, alu_inst(0x02, 2, Src{.reg = 2, .rgroup = 2}, Src{.reg = 0, .swiz = 0xAA}, Src{.reg = 2})); // MAD t2, u2,
+																									   // t0.zzzz, t2
+	put(3, alu_inst(0x02, 2, Src{.reg = 3, .rgroup = 2}, Src{.reg = 0, .swiz = 0xFF}, Src{.reg = 2})); // MAD t2, u3,
+																									   // t0.wwww, t2
+	put(4, alu_inst(0x09, 3, kNoSrc, kNoSrc, Src{.reg = 1}));										   // MOV t3, t1
 	return c;
 }();
 
@@ -635,8 +646,22 @@ static Mat4 cube_mvp(float angle, float tilt)
 	const Mat4 rx = {1, 0, 0, 0, /**/ 0, cx, sx, 0, /**/ 0, -sx, cx, 0, /**/ 0, 0, 0, 1};
 	const Mat4 tr = {1, 0, 0, 0, /**/ 0, 1, 0, 0, /**/ 0, 0, 1, 0, /**/ 0, 0, -3.0f, 1};
 	constexpr float f = 2.0f, zn = 1.0f, zf = 10.0f;
-	const Mat4 proj = {f, 0, 0, 0, /**/ 0, f, 0, 0, /**/ 0, 0, (zf + zn) / (zn - zf), -1, /**/
-					   0, 0, 2 * zf * zn / (zn - zf), 0};
+	const Mat4 proj = {f,
+					   0,
+					   0,
+					   0,
+					   /**/ 0,
+					   f,
+					   0,
+					   0,
+					   /**/ 0,
+					   0,
+					   (zf + zn) / (zn - zf),
+					   -1, /**/
+					   0,
+					   0,
+					   2 * zf * zn / (zn - zf),
+					   0};
 	return mat_mul(proj, mat_mul(tr, mat_mul(rx, ry)));
 }
 
@@ -667,8 +692,7 @@ static constexpr auto kCubeVerts = [] {
 	std::array<float, 36 * 7> v{};
 	unsigned o = 0;
 	for (unsigned f = 0; f < 6; f++) {
-		const std::array<int, 6> idx = {quads[f][0], quads[f][1], quads[f][2],
-										quads[f][0], quads[f][2], quads[f][3]};
+		const std::array<int, 6> idx = {quads[f][0], quads[f][1], quads[f][2], quads[f][0], quads[f][2], quads[f][3]};
 		for (int ci : idx) {
 			v[o++] = (ci & 1) ? 0.5f : -0.5f;
 			v[o++] = (ci & 2) ? 0.5f : -0.5f;
@@ -864,25 +888,29 @@ bool spinning_cube_test(etna::Gpu &gpu)
 				continue;
 			}
 			if (p != cpu_img[i]) {
-				if (mismatches < 3)
-					print("  frame ", frame, " mismatch at (", i % W, ",", i / W, "): gpu 0x", Hex{p}, " cpu 0x",
-						  Hex{cpu_img[i]}, "\n");
+				if (mismatches < 3) {
+					print("  frame ", frame, " mismatch at (", i % W, ",", (i / W), "):");
+					print(" gpu 0x", Hex{p}, " cpu 0x", Hex{cpu_img[i]}, "\n");
+				}
 				mismatches++;
 			}
 		}
-		print("cube frame ", frame, ": ", drawn, " px drawn, ", mismatches, " mismatches (", banded,
-			  " edge px ignored)\n");
+		print("cube frame ", frame, ": ", drawn, " px drawn, ");
+		print(mismatches, " mismatches (", banded, " edge px ignored)\n");
+
 		if (mismatches || alien) {
 			print("FAILED: frame ", frame, " -- ", mismatches, " mismatches, ", alien, " alien colors\n");
 			return false;
 		}
 	}
-	print("spinning cube: ", FRAMES, " frames avg ", uint32_t(gpu_ticks / FRAMES), " ticks (draw+resolve), faces seen 0x",
-		  Hex{colors_seen}, "\n");
+	print("spinning cube: ", FRAMES, " frames avg ", uint32_t(gpu_ticks / FRAMES));
+	print(" ticks (draw+resolve), faces seen 0x", Hex{colors_seen}, "\n");
+
 	if (colors_seen != 0x3F) {
 		print("FAILED: not all 6 faces appeared over the spin\n");
 		return false;
 	}
+
 	print("GPU spun a cube: VS matrix transform + depth + rasterization all match the CPU. \\o/\n");
 	return true;
 }
