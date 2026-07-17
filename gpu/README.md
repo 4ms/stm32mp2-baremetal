@@ -217,32 +217,28 @@ NIR shader compiler).
     - `make_kernel()`/`compute()` (PPU),
 
 
-## Source files
-
-| File | What |
-|---|---|
-| `etna.hh` / `etna.cc` | the API + bring-up, DDR pool, ring, submit/wait, RS clear/blit |
-| `gpu_regs.hh` | RS / MMU / compute-dispatch registers + command encoding |
-| `etna_compute.cc` | PPU dispatch template + `make_kernel`/`compute` + kernel suite |
-| `ppu_asm.hh` | halti5 shader assembler + kernel builders |
-| `gpu_regs_3d.hh` | 3D graphics-pipe registers (PA/SE/RA/PE/VS/PS/SH/FE-draw) |
-| `etna_3d.cc` | the 3D draw (state + ICACHE shaders + `DRAW_INSTANCED`) |
-| `pmic.cc` | buck3 (VDDGPU) enable over I2C7 |
-| `main.cc` | test harness |
-| `reference/` | the upstream etnaviv/Mesa sources the above are derived from |
-
-## Where the register definitions come from
+## How this was written/ported
 
 ST does not document the GPU register map. Everything comes from the
-reverse-engineered **etnaviv** project and Mesa's etnaviv/gallium drivers (MIT; the
-kernel hwdb file is GPL-2.0).
+reverse-engineered **etnaviv** project and Mesa's etnaviv/gallium drivers.
+All sources we consulted as licensed MIT or GPL-v2.0.
+I used an LLM extensively to do things like mechanically port the command
+sequences from the Mesa driver and etnaviv project into the unified
+step-by-step sequences you see in etna_3d.cc, and to test the behavior of each
+opcode and refine the bit-level assembly of shaders until the results were as
+expected.
 
-- **RS / MMU / compute** (`gpu_regs.hh`): etnaviv `state.xml.h` /
-  `state_hi.xml.h` / `cmdstream.xml.h`; the RS sequences mirror `etnaviv_rs.c`.
-- **Shader ISA** (`ppu_asm.hh`): the gcnano vendor `gckPPU_*` encoders + the
+- Register values (`gpu_regs.hh`): Most copied from etnaviv `state.xml.h`, `state_hi.xml.h`, `cmdstream.xml.h`, and `etnaviv_rs.c`.
+- Shader ISA (`ppu_asm.hh`): the gcnano vendor `gckPPU_*` encoders and the
   Vivante `rnndb/isa.xml` opcode table (copied to `reference/vivante_isa.xml`).
 - **3D pipe** (`gpu_regs_3d.hh`, `etna_3d.cc`): Mesa's `src/etnaviv/hw/
   state_3d.xml.h` and the `etnaviv_emit.c` / `etnaviv_context.c` draw path.
+
+Reference repos:
+- [Mesa](https://gitlab.freedesktop.org/mesa/mesa):
+    - [src/gallium/drivers/etnaviv](https://gitlab.freedesktop.org/mesa/mesa/-/tree/main/src/gallium/drivers/etnaviv?ref_type=heads)
+    - [src/etnaviv/hw](https://gitlab.freedesktop.org/mesa/mesa/-/tree/main/src/etnaviv/hw?ref_type=heads)
+- [ST's Linux fork]
 
 ## Expected output
 

@@ -8,10 +8,11 @@
 //  etna_3d.cc -- minimal 3D draws on the HALTI5 graphics pipe
 // =============================================================================
 //
-// Hand-port of the Mesa etnaviv draw path for OUR exact chip (customer 0x15,
-// HALTI5, 2 shader cores, 1 pixel pipe, no BLT). Register ADDRESSES/VALUES come
-// from the community-RE'd headers in mesa/src/etnaviv/hw/ (see gpu_regs_3d.hh);
-// the SEQUENCES below come from mesa/src/gallium/drivers/etnaviv/.
+// LLM-assisted port of the Mesa etnaviv draw path for the STM32MP257 GPU
+// (customer 0x15, HALTI5, 2 shader cores, 1 pixel pipe, no BLT).
+// Register addresses/values come from the headers in mesa/src/etnaviv/hw/
+// (see gpu_regs_3d.hh). The sequences below come from the Mesa project:
+// mesa/src/gallium/drivers/etnaviv/.
 //
 // HOW TO READ THIS AGAINST MESA: the driver splits every register into a
 // COMPUTE site (a create_*_state()/link function that calculates the value
