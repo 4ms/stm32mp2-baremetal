@@ -70,11 +70,12 @@ We do two tests:
 - `test_blit_convert()`: calls `etna::blit()` to copy with a per-pixel
   transform. The test swaps R<->B pixels (BlitFlags::BlitSwapRB)
 
-The RS is very slow at filling bytes in DDR RAM: a 1024x1024 fill is 4x slower
-than a CPU memset (about ~850k ticks vs. ~200k ticks). It's not clear why --
-this is still an open TODO. It could be a missing setting during bring-up, or
-it could be just because GPUs are good at doing parallel operations but a fill
-is a serial memory write (without any benefit of caches). 
+The RS is slow at filling bytes in DDR RAM: a 1024x1024 fill is 4x slower
+than a CPU memset (about ~830k ticks vs. ~220k ticks). It's not clear why --
+this is still an open TODO. It seems as if we're limited to \~325MB/s max
+bandwidth for DDR4 writes. GPUs are good at doing parallel operations but a
+fill is a serial memory write (without any benefit of caches), so that might
+just be what we're hitting.
 
 Regardless, the GPU runs asynchronously (so is basically "free") and won't
 dirty our CPU's L1/L2 data cache if we only intend to fill an area of a
@@ -121,10 +122,10 @@ Finally, we do `test_image_blend` which alpha-blends two 512×512 ARGB images
 (treated as u8). We measure the time to do that, and compare that to the time
 to do the same operation on the CPU.
 
-Again, the GPU is much slower than the CPU, by around 125x (see above).
-Interestingly, this test shows that the majority of the time is spent waiting
-for the DDR4 RAM to read or write. We can show this is the case because adding
-an extra instruction (e.g. AND) doesn't add any extra time.
+The GPU is a little slower than the CPU, by around 1.6x (see above). That 
+still seems useful for doing work in the background, and considering this is a
+low-computation example, I think it proves the GPU's worth. The GPU runs at about
+half the clock speed as the CPU, so that's actually quite good to see 1.6x the time.
 
 ## 3D — the graphics pipe (drawing triangles)
 
@@ -145,12 +146,12 @@ several engines: vertex input (NFE) -> viewport / scissor / rasterizer / PS /
 PE state -> shader ICACHE upload (VS + FS from BOs) -> inline uniform -> 
 `RA->PE` stall → DRAW_INSTANCED -> drain. The shaders are trivial `MOV`s
 (position pass-through VS, constant-color FS). I can't say I understand 
-all the things stages happening here, but the end result is tested, and 
-draws the expected triangles with the expected colors, textures and z-ordering.
+all the stages happening here, but the end result is tested, and draws the
+expected triangles with the expected colors, textures and z-depth.
 
-After drawing to the render target, the pixels are tiled, meaning they
-are arranged in an order that convenient for the GPU but not the same order
-a display driver will want its framebuffer to be in. To resolve this, we
+After drawing to the render target, the pixels are in a tiled format, meaning
+they are arranged in an order that convenient for the GPU but not the same
+order a display driver will want its framebuffer to be in. To resolve this, we
 use the Resolver Engine. For one of the examples, we resolve the buffer
 and then check if the shape is correct.
 
@@ -174,58 +175,47 @@ The tests are:
 
 ### Spinning cube
 
-`spinning_cube_test` is the first thing that looks like real graphics: a
-36-vertex cube with six solid-colored faces, rotated by a model-view-projection
-matrix in the vertex shader, depth-tested, drawn at 8 rotation angles
-(~30k ticks per frame including the resolve, at 64×64).
+`spinning_cube_test` draws a cube with 36-vertices (six solid-colored faces),
+at 8 rotation angles. Rotation is done by giving the GPU some CPU-calculated
+transformation coefficients ("model-view-projection"). Snapshots at 8 different
+angles are made and compared to a 100% CPU-rendered image.
 
-- **Multi-instruction VS**: `clip = M × position` as `MUL` + 3×`MAD`
-  accumulating the matrix columns, plus the color passthrough —
-  5 instructions, built by a small `constexpr` instruction builder
-  (`alu_inst()` in `etna_3d_tests.cc`). The builder is self-checking:
-  `static_assert`s prove it reproduces the two hardware-verified `MOV`
-  encodings bit-for-bit at compile time.
-- **VS uniforms**: the matrix rides in `u0..u3` as four column vec4s. The
-  gotcha that cost a flash cycle: on HALTI5 the *vertex* stage's uniforms are
-  written through the **mirror window at `0x34000`** — `0x36000`, where the
-  fragment color uniform had happily worked, is the *PS* stage's window.
-  Upload to the wrong one and the VS reads zeros: degenerate clip positions,
-  "draw runs clean, zero fragments, no faults" (the same silent signature as
-  the FIXP viewport bug).
-- **Perspective divide**: the first draw with w ≠ 1 — the PA's divide and the
-  perspective foreshortening match CPU math exactly.
-- `emit_mesh()` joins the library (`etna_3d.hh`): a generalized draw taking a
-  `MeshDraw` struct — any vertex count, parametric shader sizes, optional
-  uniforms and depth.
-
-With no display yet, verification is numeric like the shape test, but now
-against a full **CPU reference renderer**: the same 36 vertices, the same
-matrix values, a float z-buffer, rasterized at pixel centers. Every frame must
-match the resolved GPU image pixel-for-pixel outside a ~1.25 px band around
-projected triangle edges (the hardware's fixed-point rasterizer owns the
-edges), and all six face colors must appear over the spin. Result: **8/8 frames,
-zero mismatches**.
+Some new things checked here:
+- Multi-instruction vertex shader (VS): `clip = M × position` as `MUL` +
+  3×`MAD` accumulating the matrix columns, plus the color passthrough. This is
+  built by a small `constexpr` instruction builder (`alu_inst()` in
+  `etna_3d_tests.cc`). The builder is self-checking: `static_assert`s prove it
+  reproduces the two hardware-verified `MOV` encodings bit-for-bit at compile
+  time.
+- `emit_mesh()` is a general helper in the `etna_3d.hh` that draws a `MeshDraw`
+  struct — any vertex count, parametric shader sizes, optional uniforms and
+  depth.
 
 ## The `etna` API
 
-Modeled on libdrm's `etna_cmd_stream` / `etna_bo` interface — the MIT-licensed
+The "API" is modeled on libdrm's `etna_cmd_stream` / `etna_bo` interface, 
+which goes between Gallium and the kernel drivers.
+
 seam in the middle of the Linux etnaviv stack that Mesa's operation emitters are
 written against. Providing it on baremetal means Mesa's MIT emitter code ports
 without much friction (what *can't* port easily is Mesa itself: Gallium + the
 NIR shader compiler).
 
-- **`etna::Gpu`** — `init()` (bring-up + ring), `alloc()` (DDR pool),
-  `submit()`/`wait()`/`submit_and_wait()`. `submit()` appends to the ring and
-  patches the idle WAIT into a LINK so ops queue back-to-back (ops must not emit
-  `END` — that halts the ring). `wait()` is IRQ-driven: it sleeps on `WFE` until
-  the GPU interrupt fires rather than busy-polling.
-- **`etna::Bo`** — a physically-contiguous buffer. Identity map: CPU pointer =
-  physical = GPU address. `cpu_prep()`/`cpu_fini()` make cache bracketing
-  explicit so it can't be forgotten.
-- **`etna::CmdStream`** — a growable command buffer with libdrm/Mesa-shaped
-  `emit`/`reserve`/`set_state`/`emit_reloc`/`stall` helpers.
-- **Operations** — `clear()`/`blit()` (RS), `make_kernel()`/`compute()` (PPU),
-  `triangle_test()` (3D).
+- **`etna::Gpu`**  
+    - `init()`: bring-up + ring buffer setup-
+    - `alloc()` DDR pool
+    - `submit()` appends to the ring and patches the idle WAIT into a LINK so ops queue back-to-back (ops must not emit
+  `END` — that halts the ring). 
+    - `wait()` sleeps on `WFE` until the GPU interrupt fires
+- **`etna::Bo`** 
+    — a physically-contiguous buffer
+    - `cpu_prep()`/`cpu_fini()` need to be used before/after reading/writing because the buffer is cached 
+- **`etna::CmdStream`** 
+    — a growable command buffer with helpers similar to libdrm/Mesa (`emit`/`reserve`/`set_state`/`emit_reloc`/`stall`)
+- **Operations** 
+    — `clear()`/`blit()` (RS)
+    - `make_kernel()`/`compute()` (PPU),
+
 
 ## Source files
 
@@ -244,8 +234,8 @@ NIR shader compiler).
 ## Where the register definitions come from
 
 ST does not document the GPU register map. Everything comes from the
-reverse-engineered **etnaviv** project and Mesa's etnaviv driver (MIT; the
-kernel hwdb file is GPL-2.0), keeping the `VIVS_*` names for cross-reference:
+reverse-engineered **etnaviv** project and Mesa's etnaviv/gallium drivers (MIT; the
+kernel hwdb file is GPL-2.0).
 
 - **RS / MMU / compute** (`gpu_regs.hh`): etnaviv `state.xml.h` /
   `state_hi.xml.h` / `cmdstream.xml.h`; the RS sequences mirror `etnaviv_rs.c`.
@@ -253,36 +243,6 @@ kernel hwdb file is GPL-2.0), keeping the `VIVS_*` names for cross-reference:
   Vivante `rnndb/isa.xml` opcode table (copied to `reference/vivante_isa.xml`).
 - **3D pipe** (`gpu_regs_3d.hh`, `etna_3d.cc`): Mesa's `src/etnaviv/hw/
   state_3d.xml.h` and the `etnaviv_emit.c` / `etnaviv_context.c` draw path.
-
-The `reference/` directory holds read-only copies of the load-bearing sources,
-including the evidence chain for "this chip has no BLT engine."
-
-## Notes and gotchas
-
-- **PLL3 lives inside the GPU subsystem**, not the RCC. Touching `RCC_PLL3CFGRx`
-  while the GPU is unpowered/unclocked hangs the bus. Order: VDDGPU valid →
-  `GPUEN` → program PLL3 → pulse `GPURST` last (ref clock must be slower than the
-  kernel clock during reset). The **VDDGPU voltage monitor must stay enabled** —
-  its live output releases the GPU-domain reset that keeps PLL3 out of reset.
-- **Security-enabled core**: the FE is started via the secure command-control
-  bank (`MMUv2_SEC_COMMAND_CONTROL`) and reset via `MMUv2_AHB_CONTROL`, not the
-  plain `FE_COMMAND_CONTROL` / `CLOCK_CONTROL.SOFT_RESET`.
-- **Caches**: the GPU reads/writes physical DDR directly (its MMU is off; RS and
-  PPU master DDR fine in bypass). Clean the dcache over command/data buffers
-  before a kick; invalidate over the result before the CPU reads it.
-- **Completion** is the `FROM_PE` event (pipelined behind writes + a cache
-  flush), delivered by the GPU interrupt (GIC SPI 215). The ISR is the *sole*
-  reader of `HI_INTR_ACKNOWLEDGE` (read-to-clear, also de-asserts the GIC line);
-  a polling reader would steal event bits.
-- **Compute is memory-latency bound**, not launch- or compute-bound; workgroup
-  tiling does not help (see above). Use the right engine for the workload.
-- **3D `LOAD_STATE` FIXP bit**: viewport/scissor registers must be emitted with
-  the FIXP header flag; without it the viewport is garbage and nothing draws.
-- **HALTI5 shaders load via the instruction cache** from a memory BO — there is
-  no inline shader upload.
-- If identity reads come back zero: check VDDGPU valid, `RCC_GPUCFGR`, PLL3 lock,
-  RIF. If reads work but the FE never advances past the buffer address, master
-  transactions are blocked — check RIMC `ATTR[9]` and the `RISAF4` DDR regions.
 
 ## Expected output
 
