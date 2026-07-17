@@ -90,6 +90,36 @@ void ltdc_set_framebuffer(uint32_t fb_addr)
 	LTDC_Layer1->RCR = LXRCR_VBR; // latch at next vblank (tear-free)
 }
 
+// Set up layer 2 as a w x h ARGB8888 window whose top-left sits at (x, y) in
+// the active area, scanning out `fb_addr`. The LTDC composites it over layer 1
+// during scanout -- so a small per-frame layer (the cube) rides on top of a
+// static full-screen layer 1 (the background), and only the small window's
+// bytes are produced each frame. Latches immediately.
+void ltdc_layer2_init(uint32_t fb_addr, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+	// Window position: same accumulated-porch offset as layer 1, plus (x, y).
+	// First/last column & row are inclusive, 1-based within the active area.
+	LTDC_Layer2->WHPCR = ((AccumHbp + x + w) << 16) | (AccumHbp + x + 1);
+	LTDC_Layer2->WVPCR = ((AccumVbp + y + h) << 16) | (AccumVbp + y + 1);
+	LTDC_Layer2->PFCR = 0;	 // ARGB8888
+	LTDC_Layer2->CACR = 0xFF; // constant alpha 1.0
+	LTDC_Layer2->DCCR = 0;
+	LTDC_Layer2->BFCR = BF1_PAXCA | BF2_1PAXCA; // pixel-alpha blend (cube is opaque)
+	LTDC_Layer2->BLCR = 0;
+	LTDC_Layer2->CFBAR = fb_addr;
+	LTDC_Layer2->CFBLR = ((w * 4) << 16) | (w * 4 + 8 - 1); // pitch = w*4, 64-bit bus
+	LTDC_Layer2->CFBLNR = h;
+	LTDC_Layer2->CR = LXCR_LEN;
+	LTDC_Layer2->RCR = LXRCR_IMR; // latch now
+}
+
+void ltdc_layer2_set_framebuffer(uint32_t fb_addr)
+{
+	LTDC->ICR = IT_RR;
+	LTDC_Layer2->CFBAR = fb_addr;
+	LTDC_Layer2->RCR = LXRCR_VBR; // latch at next vblank
+}
+
 bool ltdc_wait_reload()
 {
 	// The VBR reload latches at the next vblank; RRIF (ISR bit 3) confirms it.
