@@ -300,6 +300,13 @@ bool Gpu::ring_init()
 	next_event_ = 1;
 	intr_acc_.store(0);
 
+	// AXI cache attributes: AWCACHE(2)|ARCACHE(2) = "modifiable/bufferable" --
+	// permits the NIC/DDR controller to merge the GPU's accesses into efficient
+	// bursts. etnaviv_gpu_hw_init() writes this on every boot ("cacheable, no
+	// allocate"); the reset default (0 = device-like) can force narrow
+	// single-beat transactions that throttle every memory-touching engine.
+	gpu_write(HI_AXI_CONFIG, (2u << 8) | (2u << 12));
+
 	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE, and
 	// take the GPU interrupt (GIC SPI 215) rather than polling. The ISR is the
 	// ONLY reader of HI_INTR_ACKNOWLEDGE.
