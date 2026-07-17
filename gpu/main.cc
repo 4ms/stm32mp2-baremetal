@@ -2,6 +2,8 @@
 #include "drivers/hal_cnt.hh"	 // SystemA35_SYSTICK_Config
 #include "etna.hh"
 #include "etna_3d_tests.hh"
+#include "drivers/rcc.hh"	  // RCC_Clocks::get_pll_settings (clock diagnostics)
+#include "drivers/rcc_pll.hh" // get_pll_settings / PLLSettings::calc_freq
 #include "print/print.hh"
 #include "stm32mp2xx.h" // RCC (clock diagnostics)
 #include <cstdint>
@@ -248,6 +250,16 @@ void clock_diag(etna::Gpu &gpu)
 	print("  PREDIV59 0x", Hex{RCC->PREDIVxCFGR[59]}, "  FINDIV59 0x", Hex{RCC->FINDIVxCFGR[59]}, "\n");
 	print("PLL4..8 CFGR1: 0x", Hex{RCC->PLL4CFGR1}, " 0x", Hex{RCC->PLL5CFGR1}, " 0x", Hex{RCC->PLL6CFGR1}, " 0x",
 		  Hex{RCC->PLL7CFGR1}, " 0x", Hex{RCC->PLL8CFGR1}, "\n");
+	// Computed PLL output frequencies (the flexgen source options). ref = HSE
+	// 40 MHz / HSI 64 MHz per each PLL's own src mux.
+	auto pll_mhz = [](auto pll) -> uint32_t {
+		using namespace RCC_Clocks;
+		auto s = get_pll_settings<decltype(pll)>();
+		uint32_t ref = s.src == MuxSelSource::hse ? 40'000'000u : s.src == MuxSelSource::hsi ? 64'000'000u : 0u;
+		return ref ? s.calc_freq(ref) / 1'000'000 : 0;
+	};
+	print("PLL4..8 output: ", pll_mhz(RCC_Clocks::PLL4{}), " ", pll_mhz(RCC_Clocks::PLL5{}), " ",
+		  pll_mhz(RCC_Clocks::PLL6{}), " ", pll_mhz(RCC_Clocks::PLL7{}), " ", pll_mhz(RCC_Clocks::PLL8{}), " MHz\n");
 
 	// --- measure the FE/core clock via WAIT commands --------------------------
 	constexpr uint32_t N = 2000; // N * 200 cycles of pure FE waiting
@@ -267,8 +279,39 @@ void clock_diag(etna::Gpu &gpu)
 	uint64_t dt = waits > overhead ? waits - overhead : 1; // 64 MHz ticks
 	// core MHz = (N*200 cycles) / (dt / 64MHz)
 	uint32_t core_mhz = static_cast<uint32_t>((uint64_t)N * 200 * 64 / dt);
-	print("FE WAIT timing: ", (uint32_t)waits, " - ", (uint32_t)overhead, " ticks -> core clock ~", core_mhz,
-		  " MHz (expect 800)\n\n");
+	// NOTE: this probe is UNRELIABLE -- a bare WAIT+NOP stream doesn't count
+	// core cycles the way a WAIT-in-a-LINK-loop does, and the FE's wait counter
+	// isn't the memory clock. Ground truth for the memory clock is the RS
+	// fill/blit throughput below, not this number. Kept only as a rough signal.
+	print("FE WAIT probe (unreliable): ", (uint32_t)waits, " - ", (uint32_t)overhead, " ticks -> ~", core_mhz,
+		  " MHz\n\n");
+}
+
+// Characterize the GPU's DDR write path: RS-fill a range of sizes and report
+// MB/s for each. If MB/s is FLAT across sizes, throughput is a steady-state
+// cap (NoC bandwidth regulator, or non-combinable AXI writes) -- clock-
+// independent, as measured. If MB/s RISES with size, there's a fixed per-op
+// overhead and the asymptote is the true rate. The 64x64 point also exposes
+// per-submit overhead. Timer is 64 MHz, so MB/s = bytes*64/ticks.
+void mem_bw_diag(etna::Gpu &gpu)
+{
+	print("-- GPU DDR write bandwidth (RS fill) --\n");
+	constexpr std::array<uint32_t, 5> dims = {64, 128, 256, 512, 1024};
+	auto buf = gpu.alloc(1024 * 1024 * 4);
+	if (!buf)
+		return;
+	for (uint32_t d : dims) {
+		auto cs = gpu.new_cmd_stream();
+		etna::clear(cs, buf, d, d, 0xA5A5A5A5);
+		auto t0 = read_cntpct();
+		if (!gpu.submit_and_wait(cs))
+			return;
+		uint32_t ticks = static_cast<uint32_t>(read_cntpct() - t0);
+		uint64_t bytes = uint64_t(d) * d * 4;
+		uint32_t mbps = ticks ? static_cast<uint32_t>(bytes * 64 / ticks) : 0;
+		print("  ", d, "x", d, " (", uint32_t(bytes / 1024), " KB): ", ticks, " ticks = ", mbps, " MB/s\n");
+	}
+	print("\n");
 }
 
 } // namespace
@@ -282,8 +325,10 @@ int main()
 
 	etna::Gpu gpu;
 	bool ok = gpu.init();
-	if (ok)
+	if (ok) {
 		clock_diag(gpu);
+		mem_bw_diag(gpu);
+	}
 
 	etna::Bo fb, src;
 	if (ok) {
