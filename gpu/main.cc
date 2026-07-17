@@ -3,6 +3,7 @@
 #include "etna.hh"
 #include "etna_3d_tests.hh"
 #include "print/print.hh"
+#include "stm32mp2xx.h" // RCC (clock diagnostics)
 #include <cstdint>
 
 // GPU example, now built on the etna API (see etna.hh / etna.cc).
@@ -229,6 +230,47 @@ bool test_image_blend(etna::Gpu &gpu)
 	return true;
 }
 
+// Clock-tree diagnostics for the GPU's two clocks: the core clock (ck_ker_gpu
+// = PLL3, which we program to 800 MHz) and -- the suspect -- the AXI/memory
+// interface clock (ck_icn_m_gpu = FLEXGEN CHANNEL 59, which our bring-up has
+// never touched; whatever the boot chain left there throttles ALL GPU DDR
+// traffic regardless of the core clock).
+//
+// Also measures the FE's actual clock empirically: a stream of N WAIT(200)
+// commands takes N*200 core cycles; timing it with the 64 MHz generic timer
+// gives the real core frequency, independent of what the PLL registers claim.
+void clock_diag(etna::Gpu &gpu)
+{
+	print("\n-- GPU clock diagnostics --\n");
+	print("GPUCFGR 0x", Hex{RCC->GPUCFGR}, "  PLL3CFGR1 0x", Hex{RCC->PLL3CFGR1}, "\n");
+	print("flexgen 59 (ck_icn_m_gpu, GPU AXI/memory clock):\n");
+	print("  XBAR59 0x", Hex{RCC->XBARxCFGR[59]}, " (src[2:0]: 0=PLL4 1=PLL5 2=PLL6 3=PLL7 4=PLL8 5=HSI 6=HSE)\n");
+	print("  PREDIV59 0x", Hex{RCC->PREDIVxCFGR[59]}, "  FINDIV59 0x", Hex{RCC->FINDIVxCFGR[59]}, "\n");
+	print("PLL4..8 CFGR1: 0x", Hex{RCC->PLL4CFGR1}, " 0x", Hex{RCC->PLL5CFGR1}, " 0x", Hex{RCC->PLL6CFGR1}, " 0x",
+		  Hex{RCC->PLL7CFGR1}, " 0x", Hex{RCC->PLL8CFGR1}, "\n");
+
+	// --- measure the FE/core clock via WAIT commands --------------------------
+	constexpr uint32_t N = 2000; // N * 200 cycles of pure FE waiting
+	auto measure = [&](bool with_waits) -> uint64_t {
+		auto cs = gpu.new_cmd_stream(2 * N + 64);
+		if (with_waits)
+			for (uint32_t i = 0; i < N; i++) {
+				cs.emit(VivanteGpu::cmd_wait(200));
+				cs.emit(VivanteGpu::CMD_NOP); // WAIT occupies a qword
+			}
+		auto t0 = read_cntpct();
+		gpu.submit_and_wait(cs);
+		return read_cntpct() - t0;
+	};
+	uint64_t overhead = measure(false);
+	uint64_t waits = measure(true);
+	uint64_t dt = waits > overhead ? waits - overhead : 1; // 64 MHz ticks
+	// core MHz = (N*200 cycles) / (dt / 64MHz)
+	uint32_t core_mhz = static_cast<uint32_t>((uint64_t)N * 200 * 64 / dt);
+	print("FE WAIT timing: ", (uint32_t)waits, " - ", (uint32_t)overhead, " ticks -> core clock ~", core_mhz,
+		  " MHz (expect 800)\n\n");
+}
+
 } // namespace
 
 int main()
@@ -240,6 +282,8 @@ int main()
 
 	etna::Gpu gpu;
 	bool ok = gpu.init();
+	if (ok)
+		clock_diag(gpu);
 
 	etna::Bo fb, src;
 	if (ok) {
