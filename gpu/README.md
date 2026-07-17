@@ -135,11 +135,9 @@ to verify it has the expected pixels.
 These tests all have a similar procedure: create an array of vertices (`vtx`),
 get some pre-built simple shaders (`vs` and `ps`) that do something simple like
 move the color arguments to the right engine. Then plug all these into a
-command stream that we ported from Mesa's code. If you want to see how the
+command stream ported from the Mesa Gallium driver. If you want to see how the
 porting happened, and where in the Mesa code everything came from, see the
-header comments in `etna_3d.cc` (in short, it's from the Gallium driver in the
-Mesa project, combined with the reverse-engineered state XML in the etnaviv
-project).
+header comments in `etna_3d.cc`.
 
 Compared to other examples, the command stream is complex and runs through
 several engines: vertex input (NFE) -> viewport / scissor / rasterizer / PS /
@@ -228,17 +226,24 @@ step-by-step sequences you see in etna_3d.cc, and to test the behavior of each
 opcode and refine the bit-level assembly of shaders until the results were as
 expected.
 
-- Register values (`gpu_regs.hh`): Most copied from etnaviv `state.xml.h`, `state_hi.xml.h`, `cmdstream.xml.h`, and `etnaviv_rs.c`.
+- Register values (`gpu_regs.hh`): Mostly copied from etnaviv `state.xml.h`,
+  `state_hi.xml.h`, `cmdstream.xml.h`. 
+    - RS command stream from `etnaviv_rs.c`
 - Shader ISA (`ppu_asm.hh`): the gcnano vendor `gckPPU_*` encoders and the
-  Vivante `rnndb/isa.xml` opcode table (copied to `reference/vivante_isa.xml`).
-- **3D pipe** (`gpu_regs_3d.hh`, `etna_3d.cc`): Mesa's `src/etnaviv/hw/
-  state_3d.xml.h` and the `etnaviv_emit.c` / `etnaviv_context.c` draw path.
+  Vivante `rnndb/isa.xml` opcode table from etna_viv.
+- **3D pipe** (`gpu_regs_3d.hh`, `etna_3d.cc`): Mesa's
+  `src/etnaviv/hw/state_3d.xml.h` and the Gallium `etnaviv_emit.c` and
+  `etnaviv_context.c` draw path.
 
 Reference repos:
 - [Mesa](https://gitlab.freedesktop.org/mesa/mesa):
     - [src/gallium/drivers/etnaviv](https://gitlab.freedesktop.org/mesa/mesa/-/tree/main/src/gallium/drivers/etnaviv?ref_type=heads)
     - [src/etnaviv/hw](https://gitlab.freedesktop.org/mesa/mesa/-/tree/main/src/etnaviv/hw?ref_type=heads)
-- [ST's Linux fork]
+- [Mesa Libdrm](https://gitlab.freedesktop.org/mesa/libdrm)
+- [ST's Linux fork, v6.6-stm32mp](https://github.com/STMicroelectronics/linux/tree/v6.6-stm32mp)
+    - [drivers/gpu/drm/etnaviv](https://github.com/STMicroelectronics/linux/tree/v6.6-stm32mp/drivers/gpu/drm/etnaviv)
+- (gcnano 6.4.19 sources)[https://github.com/STMicroelectronics/gcnano-binaries]
+- [etna_viv](https://github.com/etnaviv/etna_viv)
 
 ## Expected output
 
