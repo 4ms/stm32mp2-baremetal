@@ -1,6 +1,6 @@
 #include "aarch64/system_reg.hh" // clean_dcache_range
-#include "drivers/hal_cnt.hh"	 // SystemA35_SYSTICK_Config, udelay
 #include "display.hh"
+#include "drivers/hal_cnt.hh" // SystemA35_SYSTICK_Config, udelay
 #include "ltdc.hh"
 #include "lvds.hh"
 #include "panel_etml0700z9.hh"
@@ -9,24 +9,22 @@
 #include <cstdint>
 #include <span>
 
-// =============================================================================
 //  LTDC + LVDS example -- put a framebuffer on the B-LVDS7-WSVGA panel
-// =============================================================================
 //
 // Display pipeline:   framebuffer (DDR) -> LTDC (scanout) -> LVDS PHY -> panel
 //
 // Panel: EDT ETML0700Z9NDHA, 1024x600@60, vesa-24 (timings in
-// panel_etml0700z9.hh). The LVDS PHY's PLL *generates* the pixel clock (54 MHz
+// panel_etml0700z9.hh). The LVDS PHY's PLL generates the pixel clock (54 MHz
 // = 378 MHz bit clock / 7), which is routed back to the LTDC through a SYSCFG
-// mux -- so the bring-up order is forced: LVDS PLL first, then LTDC.
-//
+// mux, so the LVDS PLL must be brought up before LTDC
+
 // Recipe extracted from ST's v6.6 kernel (drivers/gpu/drm/stm/lvds.c, ltdc.c,
 // clk-stm32mp25*.c); see ltdc.cc / lvds.cc for the per-register citations.
 
 namespace
 {
 
-constexpr uint32_t FbAddr = 0x90000000; // DDR (same pool region the gpu example uses)
+constexpr uint32_t FbAddr = 0x90000000;
 
 // A test pattern that makes scanout bugs obvious: RGB gradient field, 1px
 // white border (offset/timing errors show as a missing/wrapped edge), and the
@@ -71,7 +69,12 @@ int main()
 		while (true)
 			asm volatile("wfe");
 	}
-	print("4. LVDS PLL locked: 40 MHz x ", Panel::PllMdiv, " / (", Panel::PllNdiv, "*", Panel::PllBdiv,
+	print("4. LVDS PLL locked: 40 MHz x ",
+		  Panel::PllMdiv,
+		  " / (",
+		  Panel::PllNdiv,
+		  "*",
+		  Panel::PllBdiv,
 		  ") = 378 MHz bit clock -> 54 MHz pixel\n");
 
 	SYSCFG->DISPLAYCLKCR = 1; // LTDC pixel clock = clk_pix_lvds (PHY /7 output)
