@@ -1,2 +1,6 @@
 build/
 **/settings.local.json
+
+gpu/tools/cube_preview
+gpu/tools/*.png
+gpu/tools/*.ppm
