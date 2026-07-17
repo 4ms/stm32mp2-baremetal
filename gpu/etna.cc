@@ -90,7 +90,7 @@ bool clock_and_reset_gpu()
 }
 
 // The GPU has two clocks: the core/shader clock (ck_ker_gpu = PLL3, 800 MHz)
-// and the AXI/memory-interface clock (CK_BUS_GPU = ck_icn_m_gpu = flexgen channel 59). 
+// and the AXI/memory-interface clock (CK_BUS_GPU = ck_icn_m_gpu = flexgen channel 59).
 // RM says 600MHz is typical value for ck_icn_m_gpu
 uint32_t boost_gpu_memclock(uint32_t target_hz)
 {
@@ -315,9 +315,9 @@ bool Gpu::init()
 	return ring_init();
 }
 
-// The ring lives in NON-CACHEABLE DDR so CPU writes are immediately visible to
+// The ring lives in non-cacheable DDR so CPU writes are immediately visible to
 // the FE's DMA (a dsb is enough; no cache maintenance on the hot path). We use
-// the shared "noncache" block the MMU maps at 0x8A000000 (see shared/mmu/mmu.cc).
+// the shared "noncache" block the MMU maps at 0x8A000000
 bool Gpu::ring_init()
 {
 	ring_base_ = 0x8A000000;
@@ -342,25 +342,32 @@ bool Gpu::ring_init()
 	// bursts. etnaviv_gpu_hw_init() writes this on every boot ("cacheable, no
 	// allocate")
 	// TODO: default is 0x222200, which is what we write. Can we just go with the default?
-	auto old_val = gpu_read(HI_AXI_CONFIG);
+	auto old_axi_config = gpu_read(HI_AXI_CONFIG);
 	gpu_write(HI_AXI_CONFIG, (2u << 20) | (2u << 16) | (2u << 8) | (2u << 12));
-	print("etna: HI_AXI_CONFIG reset value 0x", Hex{old_val});
-	print(" -> 0x", Hex{gpu_read(HI_AXI_CONFIG)}, " (expect 0x22200)\n");
+	if (auto new_axi_config = gpu_read(HI_AXI_CONFIG); old_axi_config != new_axi_config) {
+		print("etna: HI_AXI_CONFIG reset value 0x", Hex{old_axi_config});
+		print(" -> 0x", Hex{new_axi_config}, " (expect 0x22200)\n");
+	}
 
-	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE, and
-	// take the GPU interrupt (GIC SPI 215) rather than polling. The ISR is the
-	// ONLY reader of HI_INTR_ACKNOWLEDGE.
+	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE
 	gpu_write(HI_INTR_ENBL, 0xFFFFFFFF);
 	gpu_read(HI_INTR_ACKNOWLEDGE); // clear stale bits
 	InterruptManager::register_and_start_isr(GPU_IRQn, 0, 0, [this] { on_irq(); });
 
 	// Arm the FE once, on the ring home (prefetch = 2 qwords = the WAIT/LINK).
 	arm_fe(ring_base_, 2);
+
+	// Shader ALU flip-flop reset ("flop_reset"). The shader cores' ALU
+	// flip-flops come up uninitialized; the vendor runs its dp2x8 kernel once at
+	// GPU init to toggle them into a known state.
+	if (Bo win = alloc(4096), wout = alloc(4096); win && wout)
+		if (Kernel k = make_kernel(*this, ppu::build_dp2x8_shader))
+			compute(*this, k, wout, win, 128, 32);
 	return true;
 }
 
 // GPU interrupt handler. Reading HI_INTR_ACKNOWLEDGE returns the fired event
-// bits AND clears them / de-asserts the GIC line, so we read it exactly once
+// bits and clears them / de-asserts the GIC line, so we read it exactly once
 // and accumulate. SEV wakes any waiter parked on WFE (belt-and-suspenders for
 // the case where the IRQ landed just before the waiter's WFE).
 void Gpu::on_irq()
