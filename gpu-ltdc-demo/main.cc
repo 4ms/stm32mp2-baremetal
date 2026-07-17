@@ -1,4 +1,5 @@
 #include "aarch64/system_reg.hh" // read_cntpct, read_cntfreq
+#include "cube_cpu_render.hh"	 // ../gpu: the CPU reference renderer (verification)
 #include "cube_scene.hh"		 // ../gpu: shaders, geometry, matrices (CPU-verified)
 #include "display.hh"			 // ../ltdc: board display ladder
 #include "drivers/hal_cnt.hh"	 // SystemA35_SYSTICK_Config
@@ -83,22 +84,22 @@ int main()
 		while (true)
 			asm volatile("wfe");
 	}
-	print("Display up (", W, "x", H, "), GPU up -- spinning...\n");
+	print("Display up (", W, "x", H, "), GPU up\n");
 
-	float angle = 0.0f;
-	uint32_t back = 1; // fbs[0] is being scanned
-	uint32_t frames = 0;
-	auto t0 = read_cntpct();
-	const uint32_t tick_khz = static_cast<uint32_t>(read_cntfreq() / 1000);
-
-	while (true) {
-		angle += 2 * kPi / 240.0f; // one revolution every 4 s at 60 fps
-		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), float(W) / float(H));
-
-		// One submission per frame: clear color + clear depth + draw + resolve.
+	// Render one animation frame into `target`: clear color + clear depth +
+	// draw + resolve, one submission. `cpu_depth_clear` selects how the depth
+	// buffer is cleared -- RS fill (the demo's way) or CPU fill + cache clean
+	// (the way the hardware-verified 64x64 test did it). The A/B matters for
+	// the verification below.
+	auto render_frame = [&](const Mat4 &m, etna::Bo &target, bool cpu_depth_clear) -> bool {
+		if (cpu_depth_clear) {
+			std::ranges::fill(depth.span<uint16_t>(), uint16_t(0xFFFF));
+			depth.cpu_fini(etna::RelocWrite);
+		}
 		auto cs = gpu.new_cmd_stream(2048);
 		etna::clear(cs, rt, pw, ph, Background);
-		etna::clear(cs, depth, pw, DepthSize / (pw * 4), 0xFFFFFFFF); // D16 "far"
+		if (!cpu_depth_clear)
+			etna::clear(cs, depth, pw, DepthSize / (pw * 4), 0xFFFFFFFF); // D16 "far"
 		etna::MeshDraw d{
 			.rt = &rt,
 			.rt_stride = RtStride,
@@ -119,8 +120,65 @@ int main()
 			.depth_stride = DepthStride,
 		};
 		etna::emit_mesh(cs, d);
-		etna::resolve(cs, fbs[back], rt, W, H, RtStride, W * 4);
-		if (!gpu.submit_and_wait(cs)) {
+		etna::resolve(cs, target, rt, W, H, RtStride, W * 4);
+		return gpu.submit_and_wait(cs);
+	};
+
+	// --- one-frame GPU-vs-CPU verification at FULL panel resolution ----------
+	// The 64x64 test proved GPU == CPU at aspect 1 with CPU-cleared depth and
+	// one draw per submission. The panel demo runs 1024x600, aspect 1.71, an
+	// RS-cleared depth, and clear+draw+resolve in one stream -- all unverified
+	// deltas. Compare a frame in both depth-clear modes and categorize the
+	// mismatches: "wrong-face" = occlusion broken, "missing" = fragments
+	// killed, "extra" = stray writes.
+	{
+		etna::Bo cimg = gpu.alloc(W * H * 4);
+		etna::Bo cband = gpu.alloc(W * H);
+		etna::Bo czbuf = gpu.alloc(W * H * 4);
+		if (cimg && cband && czbuf) {
+			constexpr float VerifyAngle = 0.9f; // a nicely three-faced view
+			Mat4 vm = cube_mvp(VerifyAngle, 0.5f * tsin(VerifyAngle * 0.7f), float(W) / float(H));
+			cpu_render_cube(vm, W, H, cimg.span<uint32_t>(), cband.span<uint8_t>(), czbuf.span<float>(), Background);
+			for (int mode = 0; mode < 2; mode++) {
+				bool cpu_clear = mode == 1;
+				if (!render_frame(vm, fbs[1], cpu_clear))
+					break;
+				fbs[1].cpu_prep(etna::RelocRead);
+				auto g = fbs[1].span<const uint32_t>();
+				auto c = cimg.span<const uint32_t>();
+				auto b = cband.span<const uint8_t>();
+				uint32_t mm = 0, extra = 0, missing = 0, wrong_face = 0;
+				for (uint32_t i = 0; i < W * H; i++) {
+					if (b[i] || g[i] == c[i])
+						continue;
+					mm++;
+					if (c[i] == Background)
+						extra++;
+					else if (g[i] == Background)
+						missing++;
+					else
+						wrong_face++;
+					if (mm <= 4)
+						print("  (", i % W, ",", i / W, "): gpu 0x", Hex{g[i]}, " cpu 0x", Hex{c[i]}, "\n");
+				}
+				print("verify[depth clear = ", cpu_clear ? "CPU" : "RS ", "]: ", mm, " mismatches (extra ", extra,
+					  ", missing ", missing, ", wrong-face ", wrong_face, ")\n");
+			}
+		}
+	}
+
+	print("spinning...\n");
+	float angle = 0.0f;
+	uint32_t back = 1; // fbs[0] is being scanned
+	uint32_t frames = 0;
+	auto t0 = read_cntpct();
+	const uint32_t tick_khz = static_cast<uint32_t>(read_cntfreq() / 1000);
+
+	while (true) {
+		angle += 2 * kPi / 240.0f; // one revolution every 4 s at 60 fps
+		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), float(W) / float(H));
+
+		if (!render_frame(m, fbs[back], false)) {
 			gpu.dump_status("cube frame");
 			break;
 		}
