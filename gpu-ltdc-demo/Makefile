@@ -7,6 +7,7 @@ SOURCES += main.cc
 # GPU library (etna API + 3D emitters)
 SOURCES += ../gpu/etna.cc
 SOURCES += ../gpu/etna_3d.cc
+SOURCES += ../gpu/etna_compute.cc
 SOURCES += ../gpu/pmic.cc
 # Display library (LTDC + LVDS + board wiring)
 SOURCES += ../ltdc/display.cc

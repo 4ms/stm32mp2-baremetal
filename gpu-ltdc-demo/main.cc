@@ -13,30 +13,26 @@
 #include <cstdint>
 
 // =============================================================================
-//  gpu-ltdc-demo -- the spinning cube on the LVDS panel, LTDC-composited
+//  gpu-ltdc-demo -- spinning cube on the LVDS panel
 // =============================================================================
 //
-// The cube rides on LTDC LAYER 2 -- a small square window composited by the
-// display controller over a STATIC full-screen background on layer 1. So each
-// frame the GPU only touches the small window's bytes (not the whole 1024x600
-// screen), and the background is painted exactly once.
+// The cube is rendered on LTDC layer 2, which is a small square window in the
+// center displayed over a static background layer. Each frame the GPU only
+// touches the small window's bytes (not the whole 1024x600 screen).
 //
 //   layer 1 (static bg 1024x600)  ---.
 //                                     >-- LTDC scanout compositor --> LVDS
 //   layer 2 (cube, CWxCH window)  ---'
 //
-// Per frame the cube goes through the GPU in THREE separately-completed steps
-// (clear / draw / resolve), each its own submit_and_wait. Doing draw->resolve
-// in one command stream (as the first cut did) let the RS resolve read the
-// render target while the PE was still drawing it -> deterministically missing
-// interior fragments (the "imploded cube"). Separate submits = a hard barrier
-// between the PE draw and the RS resolve, which is how the CPU-verified 64x64
-// test has always done it.
+// Per frame the cube goes through the GPU in three steps -- clear, draw
+// (depth-tested), resolve (untile the tiled RT into the linear layer-2 buffer).
+// Then the LTDC flips layer 2 at vblank. The matrix transform runs in the
+// vertex shader.
 
 namespace
 {
-using namespace Panel;			  // HActive=1024, VActive=600
-constexpr uint32_t CW = 512, CH = 512; // cube window (square -> cube stays cubic)
+using namespace Panel;						// HActive=1024, VActive=600
+constexpr uint32_t CW = 512, CH = 512;		// cube window (square -> cube stays cubic)
 constexpr uint32_t CX = (HActive - CW) / 2; // 256
 constexpr uint32_t CY = (VActive - CH) / 2; // 44
 
@@ -69,7 +65,7 @@ int main()
 	etna::Bo rt = gpu.alloc(RtSize);	   // tiled render target (cube window)
 	etna::Bo depth = gpu.alloc(DepthSize); // D16
 	std::array<etna::Bo, 2> cube_fbs = {gpu.alloc(CubeFbSize), gpu.alloc(CubeFbSize)}; // layer-2 double buffer
-	etna::Bo bg_fb = gpu.alloc(BgFbSize);												  // layer-1 static background
+	etna::Bo bg_fb = gpu.alloc(BgFbSize);											   // layer-1 static background
 	etna::Bo vtx = gpu.alloc(sizeof(kCubeVerts));
 	etna::Bo vs = gpu.alloc(sizeof(kCubeVs));
 	etna::Bo ps = gpu.alloc(sizeof(kCubeFs));
@@ -92,14 +88,6 @@ int main()
 		std::ranges::fill(fb.span<uint32_t>(), Background);
 		fb.cpu_fini(etna::RelocWrite);
 	}
-
-	if (!display_init(bg_fb.gpu_addr())) { // layer 1 = the static background
-		print("FAILED: LVDS PLL never locked\n");
-		while (true)
-			asm volatile("wfe");
-	}
-	ltdc_layer2_init(cube_fbs[0].gpu_addr(), CX, CY, CW, CH); // layer 2 = the cube window
-	print("Display up: bg on layer 1, cube on layer 2 (", CW, "x", CH, " at ", CX, ",", CY, ")\n");
 
 	// One frame of the cube: clear -> draw -> resolve, three separate barriers.
 	auto render_frame = [&](const Mat4 &m, etna::Bo &target) -> bool {
@@ -138,7 +126,9 @@ int main()
 		return gpu.submit_and_wait(csr);
 	};
 
-	// --- boot verification at the real window size (square -> aspect 1.0) ----
+	// Sanity-check one frame against the CPU reference renderer before we spin:
+	// every pixel outside the ~1.25px edge band must match exactly. Confirms the
+	// GPU transform + depth + resolve agree with the reference (0 mismatches).
 	{
 		etna::Bo cimg = gpu.alloc(CubeFbSize), cband = gpu.alloc(CW * CH), czbuf = gpu.alloc(CW * CH * 4);
 		if (cimg && cband && czbuf) {
@@ -150,23 +140,22 @@ int main()
 				auto g = cube_fbs[1].span<const uint32_t>();
 				auto c = cimg.span<const uint32_t>();
 				auto b = cband.span<const uint8_t>();
-				uint32_t mm = 0, extra = 0, missing = 0, wrong = 0;
-				for (uint32_t i = 0; i < CW * CH; i++) {
-					if (b[i] || g[i] == c[i])
-						continue;
-					mm++;
-					if (c[i] == Background)
-						extra++;
-					else if (g[i] == Background)
-						missing++;
-					else
-						wrong++;
-				}
-				print("verify ", CW, "x", CH, ": ", mm, " mismatches (extra ", extra, ", missing ", missing,
-					  ", wrong-face ", wrong, ")", mm == 0 ? "  \\o/\n" : "\n");
+				uint32_t mm = 0;
+				for (uint32_t i = 0; i < CW * CH; i++)
+					if (!b[i] && g[i] != c[i])
+						mm++;
+				print("verify: ", mm, " mismatches vs CPU reference", mm == 0 ? "  \\o/\n" : "\n");
 			}
 		}
 	}
+
+	if (!display_init(bg_fb.gpu_addr())) { // layer 1 = the static background
+		print("FAILED: LVDS PLL never locked\n");
+		while (true)
+			asm volatile("wfe");
+	}
+	ltdc_layer2_init(cube_fbs[0].gpu_addr(), CX, CY, CW, CH); // layer 2 = the cube window
+	print("Display up: bg on layer 1, cube on layer 2 (", CW, "x", CH, " at ", CX, ",", CY, ")\n");
 
 	print("spinning...\n");
 	float angle = 0.0f;
