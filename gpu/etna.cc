@@ -305,6 +305,7 @@ bool Gpu::ring_init()
 	// bursts. etnaviv_gpu_hw_init() writes this on every boot ("cacheable, no
 	// allocate"); the reset default (0 = device-like) can force narrow
 	// single-beat transactions that throttle every memory-touching engine.
+	print("etna: HI_AXI_CONFIG reset value 0x", Hex{gpu_read(HI_AXI_CONFIG)}, " -> writing 0x2200\n");
 	gpu_write(HI_AXI_CONFIG, (2u << 8) | (2u << 12));
 
 	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE, and
