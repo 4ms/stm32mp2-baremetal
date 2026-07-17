@@ -16,7 +16,7 @@ namespace VivanteGpu
 
 constexpr uint32_t HI_CLOCK_CONTROL = 0x0000;
 constexpr uint32_t HI_IDLE_STATE = 0x0004;
-constexpr uint32_t HI_AXI_CONFIG = 0x0008;
+constexpr uint32_t HI_AXI_CONFIG = 0x03AC;
 constexpr uint32_t HI_AXI_STATUS = 0x000C;
 constexpr uint32_t HI_INTR_ACKNOWLEDGE = 0x0010; // read clears
 constexpr uint32_t HI_INTR_ENBL = 0x0014;
@@ -38,13 +38,18 @@ constexpr uint32_t HI_CHIP_PRODUCT_ID = 0x00A8;
 constexpr uint32_t HI_CHIP_ECO_ID = 0x00E8;
 
 // HI_CLOCK_CONTROL bits
+// Core-clock frequency scaler (FSCALE_VAL, bits [8:2]). On this core ,
+// 0x00 runs ~64x faster than the setting of 0x40. However, 0x01 runs much slower 
+// than either. TODO: figure out the meaning of the value.
 constexpr uint32_t CLK_FSCALE_VAL(uint32_t x)
 {
-	return (x << 2) & 0x1FC; // core clock scale: 0x40 = full speed
+	return (x << 2) & 0x1FC;
 }
 constexpr uint32_t CLK_FSCALE_CMD_LOAD = 1 << 9;
 constexpr uint32_t CLK_DISABLE_DEBUG_REGISTERS = 1 << 11;
 constexpr uint32_t CLK_SOFT_RESET = 1 << 12;
+constexpr uint32_t CLK_DISABLE_RAM_POWER_OPT = 1 << 13;
+constexpr uint32_t CLK_DISABLE_RAM_CLK_GATING = 1 << 10;
 constexpr uint32_t CLK_IDLE_3D = 1 << 16;
 constexpr uint32_t CLK_IDLE_2D = 1 << 17;
 constexpr uint32_t CLK_ISOLATE_GPU = 1 << 19;

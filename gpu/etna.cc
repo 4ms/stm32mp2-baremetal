@@ -3,6 +3,7 @@
 #include "drivers/hal_cnt.hh"	 // udelay
 #include "drivers/rcc.hh"
 #include "drivers/rcc_pll.hh"
+#include "drivers/rcc_xbar.hh"
 #include "gpu_io.hh"			  // gpu_read/write, wait_idle
 #include "interrupt/interrupt.hh" // InterruptManager (GPU IRQ)
 #include "print/print.hh"
@@ -88,6 +89,33 @@ bool clock_and_reset_gpu()
 	return true;
 }
 
+// The GPU has two clocks: the core/shader clock (ck_ker_gpu = PLL3, 800 MHz)
+// and the AXI/memory-interface clock (CK_BUS_GPU = ck_icn_m_gpu = flexgen channel 59). 
+// RM says 600MHz is typical value for ck_icn_m_gpu
+uint32_t boost_gpu_memclock(uint32_t target_hz)
+{
+	using namespace RCC_Clocks;
+	auto s = get_pll_settings<PLL4>();
+	uint32_t ref = s.src == MuxSelSource::hse ? 40'000'000u : s.src == MuxSelSource::hsi ? 64'000'000u : 0u;
+	uint32_t pll4 = ref ? s.calc_freq(ref) : 0;
+	if (pll4 < 100'000'000u || pll4 > 3'000'000'000u) {
+		print("etna: PLL4 unusable as GPU mem-clock source (", pll4 / 1'000'000, " MHz); leaving flexgen59 on HSI\n");
+		return 0;
+	}
+
+	uint32_t ratio = (pll4 + target_hz / 2) / target_hz; // round to nearest
+	if (ratio < 1)
+		ratio = 1;
+	if (ratio > 64)
+		ratio = 64;
+
+	FlexbarConf{.PLL = FlexbarConf::PLLx::_4, .findiv = static_cast<uint8_t>(ratio - 1), .prediv = 0}.init(59);
+
+	uint32_t achieved = pll4 / ratio;
+	print("etna: GPU mem-clock ~", achieved / 1'000'000, " MHz\n");
+	return achieved;
+}
+
 // The GPU's CID and security both are inherited from RISUP79 (RM0457 sec 8.3)
 // Set peripheral 79 secure because we need to access secure memory
 // (or else RISAF4 will block us, and we'll get IAC faults).
@@ -103,12 +131,11 @@ void setup_rif()
 bool reset_gpu_core()
 {
 	for (unsigned tries = 0; tries < 10; tries++) {
-		uint32_t control = CLK_FSCALE_VAL(0x40);
-		gpu_write(HI_CLOCK_CONTROL, control | CLK_FSCALE_CMD_LOAD);
-		gpu_write(HI_CLOCK_CONTROL, control);
+		auto control = gpu_read(HI_CLOCK_CONTROL);
 
 		control |= CLK_ISOLATE_GPU;
 		gpu_write(HI_CLOCK_CONTROL, control);
+
 		gpu_write(MMUv2_AHB_CONTROL, MMUv2_AHB_CONTROL_RESET);
 		gpu_write(HI_CLOCK_CONTROL, control | CLK_SOFT_RESET);
 		udelay(20);
@@ -122,8 +149,17 @@ bool reset_gpu_core()
 			continue;
 
 		gpu_write(MMUv2_AHB_CONTROL, MMUv2_AHB_CONTROL_NONSEC_ACCESS);
+
+		// Set clock speed to empirically determined max speed (0x0)
+		control &= ~0x1FC;
+		control |= CLK_FSCALE_VAL(0x0);
+		gpu_write(HI_CLOCK_CONTROL, control | CLK_FSCALE_CMD_LOAD);
+		udelay(1);
+		gpu_write(HI_CLOCK_CONTROL, control);
+
 		return true;
 	}
+
 	print("etna: GPU did not go idle after soft reset (idle 0x", Hex{gpu_read(HI_IDLE_STATE)}, ")\n");
 	return false;
 }
@@ -209,6 +245,7 @@ bool Gpu::init()
 	}
 	if (!clock_and_reset_gpu())
 		return false;
+	boost_gpu_memclock(600'000'000); // lift the AXI/memory clock off HSI 64 MHz
 	setup_rif();
 	if (!reset_gpu_core())
 		return false;
@@ -303,10 +340,12 @@ bool Gpu::ring_init()
 	// AXI cache attributes: AWCACHE(2)|ARCACHE(2) = "modifiable/bufferable" --
 	// permits the NIC/DDR controller to merge the GPU's accesses into efficient
 	// bursts. etnaviv_gpu_hw_init() writes this on every boot ("cacheable, no
-	// allocate"); the reset default (0 = device-like) can force narrow
-	// single-beat transactions that throttle every memory-touching engine.
-	print("etna: HI_AXI_CONFIG reset value 0x", Hex{gpu_read(HI_AXI_CONFIG)}, " -> writing 0x2200\n");
-	gpu_write(HI_AXI_CONFIG, (2u << 8) | (2u << 12));
+	// allocate")
+	// TODO: default is 0x222200, which is what we write. Can we just go with the default?
+	auto old_val = gpu_read(HI_AXI_CONFIG);
+	gpu_write(HI_AXI_CONFIG, (2u << 20) | (2u << 16) | (2u << 8) | (2u << 12));
+	print("etna: HI_AXI_CONFIG reset value 0x", Hex{old_val});
+	print(" -> 0x", Hex{gpu_read(HI_AXI_CONFIG)}, " (expect 0x22200)\n");
 
 	// Unmask interrupt sources so GL_EVENTs latch in HI_INTR_ACKNOWLEDGE, and
 	// take the GPU interrupt (GIC SPI 215) rather than polling. The ISR is the
