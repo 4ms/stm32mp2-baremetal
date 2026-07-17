@@ -4,6 +4,7 @@ SHAREDDIR = ../shared
 
 SOURCES := startup.s
 SOURCES += main.cc
+SOURCES += display.cc
 SOURCES += ltdc.cc
 SOURCES += lvds.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S

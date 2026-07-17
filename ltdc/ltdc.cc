@@ -1,4 +1,5 @@
 #include "ltdc.hh"
+#include "drivers/hal_cnt.hh" // udelay
 #include "panel_etml0700z9.hh"
 #include "stm32mp2xx.h"
 
@@ -84,8 +85,22 @@ void ltdc_init(uint32_t fb_addr)
 
 void ltdc_set_framebuffer(uint32_t fb_addr)
 {
+	LTDC->ICR = IT_RR; // clear the reload flag so ltdc_wait_reload() sees THIS flip
 	LTDC_Layer1->CFBAR = fb_addr;
 	LTDC_Layer1->RCR = LXRCR_VBR; // latch at next vblank (tear-free)
+}
+
+bool ltdc_wait_reload()
+{
+	// The VBR reload latches at the next vblank; RRIF (ISR bit 3) confirms it.
+	// Waiting here before rendering into the just-retired front buffer is what
+	// makes double-buffering tear-free. ~25 ms timeout (> one 60 Hz frame).
+	for (int i = 0; i < 25000; i++) {
+		if (LTDC->ISR & IT_RR)
+			return true;
+		udelay(1);
+	}
+	return false;
 }
 
 uint32_t ltdc_current_line()

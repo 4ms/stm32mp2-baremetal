@@ -13,6 +13,11 @@ void ltdc_init(uint32_t fb_addr);
 // animation later; ltdc_init uses an immediate latch).
 void ltdc_set_framebuffer(uint32_t fb_addr);
 
+// Block until the last ltdc_set_framebuffer() flip actually latched (next
+// vblank). Call before rendering into the just-retired front buffer --
+// this is what makes double-buffering tear-free. False on timeout (~25 ms).
+bool ltdc_wait_reload();
+
 uint32_t ltdc_current_line(); // CPSR CYPOS -- advancing == pixel clock alive
 uint32_t ltdc_isr();		  // ISR flags (bit1 FIFO warn, 2 transfer err, 6 FIFO err)
 uint32_t ltdc_hw_version();	  // IDR, expect 0x0401xx on MP25
