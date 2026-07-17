@@ -18,7 +18,7 @@ generation). I believe it has:
   - full 3D graphics pipeline
   - 2 NN cores
 
-The etnaviv project, the Mesa project, the Linux etnativ drivers, and the gcnano
+The etnaviv project, the Mesa project, the Linux etnaviv drivers, and the gcnano
 sources were the main sources of knowledge, as there are no reference manuals
 for this GPU like we have for the CPU. Everything is built on a small reusable
 API (`etna.hh`).
@@ -40,12 +40,10 @@ At this point we are able to read the chip identity (model 0x8000, rev 0x6205,
 product 0x80003, customer 0x15) to confirm the GPU is powered up and responding.
 
 Next, we set up a ring buffer to hold our comannds. At the tail we put
-WAIT/LINK commands so the GPU runs in an idle self-loop whenever it gets to
-the end
-processing commands we gave it. When we want to queue some commands we append
-them and move the
-WAIT/LINK to the end. That way the GPU doesn't need to be re-init each time we
-use it.
+WAIT/LINK commands so the GPU runs in an idle self-loop whenever it gets to the
+end processing commands we gave it. When we want to queue some commands we
+append them and move the WAIT/LINK to the end. That way the GPU doesn't need to
+be re-init each time we use it.
 
 ## RS engine — 2D fill and blit
 
@@ -73,11 +71,13 @@ We do two tests:
   transform. The test swaps R<->B pixels (BlitFlags::BlitSwapRB)
 
 The RS is very slow at filling bytes in DDR RAM: a 1024x1024 fill is 4x slower
-than a CPU memset (about ~850k ticks vs. ~200k ticks). This is because GPUs are
-good at doing parallel operations but a fill is a serial memory write (without
-any benefit of caches). It's clearly not going to give us big wins to use the
-GPU to fill large areas, but it runs asynchronously (so is basically "free") and
-won't dirty our CPU's L1/L2 data cache if we only intend to fill an area of a
+than a CPU memset (about ~850k ticks vs. ~200k ticks). It's not clear why --
+this is still an open TODO. It could be a missing setting during bring-up, or
+it could be just because GPUs are good at doing parallel operations but a fill
+is a serial memory write (without any benefit of caches). 
+
+Regardless, the GPU runs asynchronously (so is basically "free") and won't
+dirty our CPU's L1/L2 data cache if we only intend to fill an area of a
 framebuffer that's directly displayed on a screen. Still, the HPDMA would
 probably be much faster if you needed to fill a large area while the CPU does
 other work.
@@ -121,168 +121,66 @@ Finally, we do `test_image_blend` which alpha-blends two 512×512 ARGB images
 (treated as u8). We measure the time to do that, and compare that to the time
 to do the same operation on the CPU.
 
-Again, the GPU is much slower than the CPU, by around 125x. The reasons are similar
-to why the RS engine was slower: the majority of the time is spent waiting for the
-DDR4 RAM to read or write. We can show this is the case because adding an extra 
-instruction (e.g. AND) doesn't add any extra time. So doing simple math on pixels
-does not warrent using the GPU. Doing high-arithmetic-intensity work (or just needing
-to offload the task to run in the background) is the best use case for the PPU.
+Again, the GPU is much slower than the CPU, by around 125x (see above).
+Interestingly, this test shows that the majority of the time is spent waiting
+for the DDR4 RAM to read or write. We can show this is the case because adding
+an extra instruction (e.g. AND) doesn't add any extra time.
 
-## 3D — the graphics pipe (triangle)
+## 3D — the graphics pipe (drawing triangles)
 
-`etna_3d.cc` + `gpu_regs_3d.hh` drive the full graphics pipeline, hand-ported
-from Mesa's etnaviv draw path. `triangle_test` clears a tiled render target,
-draws one triangle, and checks the pixels changed.
+To test the 3D pipeline, we draw triangles and then check the frame buffer
+to verify it has the expected pixels.
 
-The draw sequence: one-time HALTI5 init → vertex input (NFE) → viewport /
-scissor / rasterizer / PS / PE state → shader **instruction-cache** upload (VS +
-FS from BOs — HALTI5 has no inline shader load) → inline uniform → `RA→PE` stall
-→ **`DRAW_INSTANCED`** → drain. The shaders are trivial `MOV`s (position
-pass-through VS, constant-color FS).
+These tests all have a similar procedure: create an array of vertices (`vtx`),
+get some pre-built simple shaders (`vs` and `ps`) that do something simple like
+move the color arguments to the right engine. Then plug all these into a
+command stream that we ported from Mesa's code. If you want to see how the
+porting happened, and where in the Mesa code everything came from, see the
+header comments in `etna_3d.cc` (in short, it's from the Gallium driver in the
+Mesa project, combined with the reverse-engineered state XML in the etnaviv
+project).
 
-**Status: working** — it draws a solid-color triangle (correct shape and the
-color the fragment shader pulls from its uniform), verified by reading the render
-target back. Two subtle bugs, both wrong constants in the ported sequence, cost
-the debug cycles:
+Compared to other examples, the command stream is complex and runs through
+several engines: vertex input (NFE) -> viewport / scissor / rasterizer / PS /
+PE state -> shader ICACHE upload (VS + FS from BOs) -> inline uniform -> 
+`RA->PE` stall → DRAW_INSTANCED -> drain. The shaders are trivial `MOV`s
+(position pass-through VS, constant-color FS). I can't say I understand 
+all the things stages happening here, but the end result is tested, and 
+draws the expected triangles with the expected colors, textures and z-ordering.
 
-- The `LOAD_STATE` command has a **FIXP header bit** (`0x04000000`) that tells the
-  FE to convert a 16.16 fixed-point data word to float. The viewport and scissor
-  registers need it; without it the viewport is garbage and every triangle lands
-  off-screen (draw runs clean, zero fragments, *no faults*).
-- **`PE_LOGIC_OP`**'s low nibble is the logic op: `COPY` is `0xC` (dest ← source),
-  `CLEAR` is `0x0` (dest ← 0). With `0` there, the pixel engine blanks every
-  fragment to zero — correct triangle shape, but always black, ignoring the
-  shader color entirely.
+After drawing to the render target, the pixels are tiled, meaning they
+are arranged in an order that convenient for the GPU but not the same order
+a display driver will want its framebuffer to be in. To resolve this, we
+use the Resolver Engine. For one of the examples, we resolve the buffer
+and then check if the shape is correct.
 
-The debug lesson worth keeping: "draw runs, zero pixels, no MMU/RISAF/AXI faults"
-means the geometry was rejected (viewport/clip), not that a write was blocked
-(that shows a firewall/IAC fault); and a triangle that's the *right shape but
-wrong color* points downstream of the shader, at the PE.
+The tests are:
+- triangle_test(): draw a simple triangle, check if pixels were set and if
+  color is uniform. Then resolve it to a framebuffer and check if the shape is
+  correct. 
+- triangle_color_test(): draw an rgb gradient triangle (each vertex gets a
+  color). Check that we see red, green, and blue pixels. Tests the rasterizer
+  interpolation.
+- triangle_depth_test(): draw two triangles at different z depths. The top
+  one is red and the bottom one is green and flipped upside down. Count the 
+  number of pixels of each color to check if the red triangle is blocking ~50%
+  of the green one.
+- triangle_texture_test(): draw a triangle and fill it with a texture. The
+  texture is 64x64 with each quadrant a different color. The triangle's UVs
+  span all four colors and we use a "NEAREST" filtering so that only exact
+  colors from the texture will be used. Then we count how many pixels of 
+  each color we found. Here we use a new shader opcode: TEXLD.
 
-### Per-vertex color (varyings)
-
-`triangle_color_test` (in the same file) is the next step up: a proper
-**varying**. Each vertex carries its own color; the vertex shader passes it
-through as a smooth `vec4`, the **rasterizer interpolates** it per fragment, and
-the fragment shader just outputs the interpolated value — a red/green/blue
-gradient triangle instead of a flat fill.
-
-The render target is still tiled, so rather than resolve it we verify something
-tiling-invariant: that a red-dominant, a green-dominant, *and* a blue-dominant
-fragment all appear, and the color isn't uniform — which only happens if the
-varying really interpolated the three vertex colors. (The clear is black, since
-the gradient never produces black.)
-
-This one landed first try, because the two fiddly parts were worked out from
-Mesa before writing code:
-
-- **The `MOV` encoding**, decoded from the two known-good triangle shaders:
-  `word0 = 0x07801009 | (dst_reg << 16)`, `word3 = 0x00390008 | (src_reg << 4)`
-  (`| 0x20000000` to read a uniform instead of a temp). `MOV` reads *src2*, which
-  is why the middle two instruction words are zero.
-- **The HALTI5 varying linkage** — the magic values that change with varying
-  count (`VS_HALTI5_OUTPUT_COUNT`, `…UNK008A0`, the per-varying component counts,
-  `GL_HALTI5_SHADER_ATTRIBUTES`), computed the way Mesa's `etna_link_shaders` /
-  `emit_halti5_only_state` do for one 4-component smooth varying. Plus the
-  two-attribute vertex stream (position + color interleaved), where Mesa groups
-  byte-consecutive attributes and only the last one is flagged non-consecutive.
-
-### Depth test
-
-`triangle_depth_test` proves the depth buffer occludes correctly. It draws the
-*same* triangle twice into one render target sharing a D16 depth buffer — near
-(z=0.3) in red first, then far (z=0.7) in green — with the depth test set to
-`LESS` and depth writes on. The near red triangle writes depth 0.65; the far
-green triangle's 0.85 fails `LESS` everywhere the red already drew, so it's
-rejected. Result: **1301 red, 0 green** — the near triangle occludes the far one.
-
-It's an unambiguous pass/fail: with depth *off* this would be painter's order
-(green drawn last wins) → all green. Because the fills are solid, the tiled RT
-reads back tiling-invariant, so we just count red vs green fragments.
-
-Three things made it land first try:
-
-- **`PE_DEPTH_CONFIG`** enabled is `0x00041101` (`D16 | MODE_Z | UNK18 |
-  FUNC(LESS)<<8 | WRITE_ENABLE`), late-z (no early-Z, no `DISABLE_ZS`). The
-  *disabled* value we already had (`0x01000700`) decodes as
-  `MODE_NONE | FUNC(ALWAYS) | DISABLE_ZS` — decoding it confirmed the field
-  layout before writing the enabled one. `RA_EARLY_DEPTH` stays `0x15000030`
-  (its forward-Z / late-z write-disable bits are exactly right for a PE-side test).
-- **The depth buffer**: `PE_PIPE_DEPTH_ADDR0` (reloc), `PE_DEPTH_STRIDE`, and
-  `PE_DEPTH_NORMALIZE = 65535.0` (`2^16-1` for D16 — easy to leave at 0 and get
-  garbage depth). Tiled like the color target but 2 bytes/pixel.
-- **Coherency**: both draws go in *one* command stream so the pixel engine's
-  depth cache stays hot and the second draw sees the first's depth writes. The
-  depth buffer is cleared to `0xFFFF` (far); being uniform, its tiling is moot.
-
-Both draws share `emit_triangle`, which grew an optional depth-buffer argument
-(absent ⇒ depth off, as before).
-
-### Texturing
-
-`triangle_texture_test` samples a real 2D texture in the fragment shader — the
-last big fixed-function block, completing the classic pipeline (vertex fetch →
-VS → varyings → rasterizer → FS with uniforms *and* texture sampling → depth →
-PE). A 64×64 tiled A8R8G8B8 texture holds four solid quadrants (red / green /
-blue / white); the triangle's UVs span all four; NEAREST filtering means every
-drawn pixel must be *exactly* one of the four texel colors. The result —
-`R=469 G=494 B=156 W=182 other=0` — is pixel-exact sampling.
-
-How HALTI5 texturing works (all values in `gpu_regs_3d.hh`, extracted from
-Mesa's `etnaviv_texture_desc.c`):
-
-- **A texture is a 256-byte in-memory descriptor** (TXDESC): texel base address,
-  size, format (`A8R8G8B8 = 7` — same memory layout our render targets use, so
-  render-to-texture is within reach), tiling config, plus a couple of
-  always-set magic dwords (`CONFIG2 = 0x00030000`, `ASTC0 = 0x0C0C0C00`).
-  Everything else must be zeroed.
-- **Sampler state lives in registers, not the descriptor**: per-slot
-  `NTE_DESCRIPTOR_ADDR` points at the TXDESC, and `NTE_DESCRIPTOR_SAMP_CTRL0/1`
-  + LOD registers hold wrap/filter (clamp-to-edge + nearest here). The FS
-  `TEXLD` instruction's sampler id selects the slot directly.
-- **Coherency is the silent-black trap**: the texture caches want *two*
-  separate `GL_FLUSH_CACHE` writes (`TEXTURE` then `TEXTUREVS`), the descriptor
-  cache wants `NTE_DESCRIPTOR_FLUSH` + its own flush bits, and re-pointing a
-  descriptor needs `NTE_DESCRIPTOR_INVALIDATE`.
-- **`TEXLD` (opcode 0x18)** was hand-encoded like the MOVs and verified against
-  the ISA before flashing: `texld t2, tex0, t1` = `{0x07821018, 0x39001F20, 0, 0}`.
-  A fragment-shader `TEXLD` needs no explicit LOD.
-- **Texel data is written directly in the sampler's 4×4-tile layout**
-  (`word = (y/4)·stride_px·4 + (y%4)·4 + (x/4)·16 + (x%4)`), and the UV rides
-  the same proven vec4 varying linkage as the color triangle (`u,v,0,1` — so no
-  new 2-component-varying plumbing), with `TEXLD` consuming just `.xy`.
-
-### RS resolve (untile) + exact shape verification
-
-All the checks above were *tiling-invariant* (counting colors, never asking
-*where* a pixel is) because the render target is tiled. `etna::resolve()` closes
-that gap: it uses the RS engine for its namesake job — copying a tiled surface
-out as **linear** — so pixel (x,y) is simply at `y*stride + x*4`. It's the
-`blit()` recipe with two changes from Mesa's `etnaviv_rs.c`: `RS_CONFIG` gains
-`SOURCE_TILED` (0x80), and the source-stride register holds the tiled stride
-`<< 2` (one RS source row = a row of 4×4 tiles = 4 pixel rows).
-
-`triangle_test` now finishes by resolving the RT and verifying the **shape**:
-every pixel more than 1 px inside the expected window-space triangle must be
-the draw color, everything more than 1 px outside must be the clear color (the
-1 px band belongs to the hardware's fill rule). Result: an exact match, zero
-mismatches — and it settled the window-Y question: with our positive viewport
-scale, **NDC +Y maps to increasing framebuffer rows** (a GL-style y-up flip
-would use a negative `PA_VIEWPORT_SCALE_Y`, which is how Mesa does it).
-
-The resolve is also the render→display link: a display controller scans out
-linear framebuffers, so "render tiled, resolve linear" is the shape of every
-future frame.
 
 ### Spinning cube
 
 `spinning_cube_test` is the first thing that looks like real graphics: a
 36-vertex cube with six solid-colored faces, rotated by a model-view-projection
-matrix in the **vertex shader**, depth-tested, drawn at 8 rotation angles
-(~30k ticks per frame including the resolve, at 64×64). New ground it covers:
+matrix in the vertex shader, depth-tested, drawn at 8 rotation angles
+(~30k ticks per frame including the resolve, at 64×64).
 
-- **The first multi-instruction VS**: `clip = M × position` as
-  `MUL` + 3×`MAD` accumulating the matrix columns, plus the color passthrough —
+- **Multi-instruction VS**: `clip = M × position` as `MUL` + 3×`MAD`
+  accumulating the matrix columns, plus the color passthrough —
   5 instructions, built by a small `constexpr` instruction builder
   (`alu_inst()` in `etna_3d_tests.cc`). The builder is self-checking:
   `static_assert`s prove it reproduces the two hardware-verified `MOV`
