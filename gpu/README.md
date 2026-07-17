@@ -253,55 +253,67 @@ GPU Example (etna API)
 etna: bringing up GPU
 etna: VDDGPU not present (CR12 = 0x0)
 etna: VDDGPU off -- trying to enable buck3 over I2C7...
-PMIC product ID 0x21, version 0x11
+PMIC product ID 0x20, version 0x11
 Buck3 (VDDGPU) was: voltage code 0, control 0x0
 Buck3 (VDDGPU) now: voltage code 40 (900mV), control 0x1
+etna: GPU mem-clock ~600 MHz
 
 etna: GC model 0x8000 rev 0x6205 (product 0x80003, customer 0x15)
 
-RS fill (1024x1024) in 842517 ticks
+RS Engine tests:
+RS fill (1024x1024) in 823327 ticks (326 MB/s)
 GPU filled 1024x1024 with 0x4D5A11AC -- verified. \o/
-RS blit+convert (1024x1024) in 3763949 ticks
+RS blit+convert (1024x1024) in 3260037 ticks
 GPU copied 1024x1024, swapping R<->B -- verified. \o/
-Ring throughput (16 x 64x64 clears): sequential 74485 ticks, pipelined 59042 ticks
+Ring throughput (16 x 64x64 clears): sequential 62973 ticks, pipelined 58191 ticks
 
-GPU copy over 64x6 (384 bytes) in 24707 ticks -- verified. \o/
-GPU copy over 128x32 (4096 bytes) in 27271 ticks -- verified. \o/
-GPU copy over 256x64 (16384 bytes) in 27899 ticks -- verified. \o/
-GPU copy over 32x4 (128 bytes) in 25685 ticks -- verified. \o/
-GPU add(out=in+in) over 128x32 (4096 bytes) in 23706 ticks -- verified. \o/
-GPU addsat(min(in+in,255)) over 128x32 (4096 bytes) in 10693 ticks -- verified. \o/
-GPU add2(A+B, ramp+inv=255) over 128x32 (4096 bytes) in 14537 ticks -- verified. \o/
-GPU blend-add(sat(A+B)) over 128x32 (4096 bytes) in 15185 ticks -- verified. \o/
-GPU and(in & 0x0F, imm) over 64x6 (384 bytes) in 18509 ticks -- verified. \o/
-GPU flop-reset(dp2x8, const in) over 64x6 (384 bytes) in 13450 ticks -- verified. \o/
-GPU mul2((A*B)&0xFF) over 64x6 (384 bytes) in 17780 ticks -- verified. \o/
-GPU mulhi2(mul_hi(A,B)) over 64x6 (384 bytes) in 26071 ticks -- verified. \o/
-GPU not(~in) over 64x6 (384 bytes) in 15187 ticks -- verified. \o/
-GPU blend-lerp(a*A + b*(1-A)) over 128x32 (4096 bytes) in 30343 ticks -- verified. \o/
-Alpha-blended two 512x512 ARGB images (GPU) in 104904488 ticks
+PPU compute/shader tests:
+GPU copy over 64x6 (384 bytes) in 2062 ticks -- verified. \o/
+GPU copy over 128x32 (4096 bytes) in 5648 ticks -- verified. \o/
+GPU copy over 256x64 (16384 bytes) in 16201 ticks -- verified. \o/
+GPU copy over 32x4 (128 bytes) in 1752 ticks -- verified. \o/
+GPU add(out=in+in) over 128x32 (4096 bytes) in 5684 ticks -- verified. \o/
+GPU addsat(min(in+in,255)) over 128x32 (4096 bytes) in 5564 ticks -- verified. \o/
+GPU add2(A+B, ramp+inv=255) over 128x32 (4096 bytes) in 5712 ticks -- verified. \o/
+GPU blend-add(sat(A+B)) over 128x32 (4096 bytes) in 5551 ticks -- verified. \o/
+GPU and(in & 0x0F, imm) over 64x6 (384 bytes) in 2335 ticks -- verified. \o/
+GPU flop-reset(dp2x8, const in) over 64x6 (384 bytes) in 2215 ticks -- verified. \o/
+GPU mul2((A*B)&0xFF) over 64x6 (384 bytes) in 2380 ticks -- verified. \o/
+GPU mulhi2(mul_hi(A,B)) over 64x6 (384 bytes) in 2176 ticks -- verified. \o/
+GPU not(~in) over 64x6 (384 bytes) in 2042 ticks -- verified. \o/
+GPU blend-lerp(a*A + b*(1-A)) over 128x32 (4096 bytes) in 8421 ticks -- verified. \o/
+Alpha-blended two 512x512 ARGB images (GPU) in 1648645 ticks
 GPU alpha-blended 512x512 ARGB (per-channel lerp) -- verified. \o/
-Same blend on the CPU in 1078384 ticks   (GPU / CPU = 97x)
-3D triangle drawn in 27235 ticks
+Same blend on the CPU in 1083585 ticks (GPU / CPU = 1.5x)
+
+3D tests:
+3D triangle drawn in 4660 ticks
 RT: 1301 of 4096 pixels drawn, color 0xFFFF0000 (uniform)
 GPU drew a solid triangle in 0xFFFF0000 -- 3D pipe verified. \o/
-RS resolve (untile 64x64) in 24594 ticks
+RS resolve (untile 64x64) in 4334 ticks
 shape: exact (NDC +Y = increasing framebuffer rows)
 resolved image matches the expected triangle -- shape verified. \o/
-gradient triangle drawn in 27151 ticks
-RT: 1301 of 4096 pixels drawn; corners seen R=1 G=1 B=1 (varied)
+gradient triangle drawn in 6901 ticks
+RT: 1301 of 4096 pixels drawn. corners seen R=1 G=1 B=1 (varied)
 GPU interpolated a per-vertex-color varying across the triangle. \o/
-depth: two triangles drawn in 32141 ticks
+depth: two triangles drawn in 8951 ticks
 depth test: 1951 drawn -> 1301 red (near), 650 green (far)
 GPU depth test occluded the farther triangle -- depth buffer works. \o/
-textured triangle drawn in 16864 ticks
+textured triangle drawn in 7264 ticks
 texture test: 1301 drawn -> R=469 G=494 B=156 W=182 other=0
 GPU sampled a 2D texture across the triangle -- texturing works. \o/
 cube frame 0: 658 px drawn, 0 mismatches (562 edge px ignored)
-  ... 8 frames, all 0 mismatches ...
-spinning cube: 8 frames avg 30168 ticks (draw+resolve), faces seen 0x3F
+cube frame 1: 761 px drawn, 0 mismatches (687 edge px ignored)
+cube frame 2: 721 px drawn, 0 mismatches (613 edge px ignored)
+cube frame 3: 715 px drawn, 0 mismatches (623 edge px ignored)
+cube frame 4: 635 px drawn, 0 mismatches (558 edge px ignored)
+cube frame 5: 771 px drawn, 0 mismatches (686 edge px ignored)
+cube frame 6: 739 px drawn, 0 mismatches (628 edge px ignored)
+cube frame 7: 735 px drawn, 0 mismatches (645 edge px ignored)
+spinning cube: 8 frames avg 12655 ticks (draw+resolve), faces seen 0x3F
 GPU spun a cube: VS matrix transform + depth + rasterization all match the CPU. \o/
-SUCCESS
+
+SUCCESS 
 ```
 
 ## Running
