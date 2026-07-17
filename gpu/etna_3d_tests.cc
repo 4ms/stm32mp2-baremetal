@@ -1,8 +1,8 @@
 #include "aarch64/system_reg.hh" // read_cntpct
+#include "cube_cpu_render.hh"
+#include "cube_scene.hh"
 #include "etna.hh"
 #include "etna_3d.hh"
-#include "cube_scene.hh"
-#include "cube_cpu_render.hh"
 #include "print/print.hh"
 #include <algorithm>
 #include <array>
@@ -53,10 +53,6 @@ constexpr std::array<uint32_t, 4> kPsColorCode = {0x07811009, 0x00000000, 0x0000
 //   words 2,3 = 0 (no src1/src2; FS TEXLD needs no explicit LOD -- implicit
 //   derivatives, and MIP=NONE/MAXLOD=0 pins level 0)
 constexpr std::array<uint32_t, 4> kPsTexCode = {0x07821018, 0x39001F20, 0x00000000, 0x00000000};
-
-// -------------------------------------------------------
-// Tests
-// -------------------------------------------------------
 
 // =============================================================================
 // Basic drawing test
@@ -540,18 +536,11 @@ static bool verify_shape(std::span<const uint32_t> img,
 //  Spinning cube: matrix transform in the VS + depth + CPU-reference verify
 // =============================================================================
 //
-// The first multi-instruction vertex shader: clip = M * position, with the 4x4
-// matrix as 4 column vec4s in VS uniforms u0..u3 (MUL + 3x MAD), plus the
-// proven color varying and D16 depth test. Verification is
-// numeric: a CPU reference renderer transforms + rasterizes the same 36
-// vertices with the same matrix and a float z-buffer, and every frame must
-// match the resolved GPU image pixel-exactly outside a ~1.25 px band around
-// projected triangle edges (fixed-point rasterization owns the edges).
-
-
-// Draw the cube at several rotation angles; every frame must match the CPU
-// reference pixel-exactly outside the edge band, every drawn pixel must be one
-// of the 6 exact face colors, and across the spin all 6 faces must appear.
+// Multi-instruction vertex shader: clip = M * position, with the 4x4
+// matrix as 4 column vec4s in VS uniforms u0..u3 (MUL + 3x MAD).
+// Verification is numeric against a CPU reference renderer.
+// Frames must match the resolved GPU image pixel outside a ~1.25 px band
+// around projected triangle edges
 bool spinning_cube_test(etna::Gpu &gpu)
 {
 	constexpr uint32_t W = 64, H = 64;
@@ -677,5 +666,126 @@ bool spinning_cube_test(etna::Gpu &gpu)
 	}
 
 	print("GPU spun a cube: VS matrix transform + depth + rasterization all match the CPU. \\o/\n");
+	return true;
+}
+
+// This test was made to help diagnose a rendering issue that ended up
+// being a result of the shader ALU not being reset (running a dp2x8 shader on boot
+// fixes it).
+bool cube_size_sweep_test(Gpu &gpu)
+{
+	print("-- cube render/resolve size sweep --\n");
+	constexpr uint32_t MAX = 512;
+	constexpr uint32_t CLEAR = 0xFF000000;
+	// Allocate max-size buffers once, reuse for every (smaller) size.
+	Bo rt = gpu.alloc(((MAX + 15) & ~15u) * 4 * MAX);
+	Bo depth = gpu.alloc(((MAX + 15) & ~15u) * 2 * MAX);
+	Bo lin = gpu.alloc(MAX * MAX * 4);
+	Bo vtx = gpu.alloc(sizeof(kCubeVerts));
+	Bo vs = gpu.alloc(sizeof(kCubeVs));
+	Bo ps = gpu.alloc(sizeof(kPsColorCode));
+	static std::array<uint32_t, MAX * MAX> cimg;
+	static std::array<uint8_t, MAX * MAX> cband;
+	static std::array<float, MAX * MAX> czbuf;
+	if (!rt || !depth || !lin || !vtx || !vs || !ps)
+		return false;
+	std::ranges::copy(kCubeVerts, vtx.span<float>().begin());
+	vtx.cpu_fini(RelocWrite);
+	std::ranges::copy(kCubeVs, vs.span<uint32_t>().begin());
+	vs.cpu_fini(RelocWrite);
+	std::ranges::copy(kPsColorCode, ps.span<uint32_t>().begin());
+	ps.cpu_fini(RelocWrite);
+
+	constexpr uint32_t S = 512;
+	uint32_t fails = 0;
+	constexpr std::array<float, 6> angles = {0.9f, 0.3f, 0.6f, 1.2f, 2.4f, 3.9f}; // 0.9 = the demo's verify angle
+	for (float angle : angles) {
+		const uint32_t pw = (S + 15) & ~15u, ph = (S + 3) & ~3u;
+		const uint32_t rtstride = pw * 4, dstride = pw * 2;
+		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), 1.0f); // the DEMO's exact matrix
+
+		// color via RS, DEPTH via CPU-fill (triangle_depth_test does this and
+		// works in the demo; the RS depth-clear seems not to take there).
+		auto csc = gpu.new_cmd_stream(256);
+		etna::clear(csc, rt, pw, ph, CLEAR);
+		if (!gpu.submit_and_wait(csc))
+			return false;
+		std::ranges::fill(depth.span<uint16_t>().first(dstride / 2 * ph), uint16_t(0xFFFF));
+		depth.cpu_fini(RelocWrite);
+
+		auto cs = gpu.new_cmd_stream(1024);
+		MeshDraw d{.rt = &rt,
+				   .rt_stride = rtstride,
+				   .vtx = &vtx,
+				   .vtx_stride = 28,
+				   .vs = &vs,
+				   .vs_words = kCubeVs.size(),
+				   .vs_temps = 4,
+				   .ps = &ps,
+				   .ps_words = kPsColorCode.size(),
+				   .ps_temps = 2,
+				   .ps_out_reg = 1,
+				   .uniforms = m,
+				   .width = S,
+				   .height = S,
+				   .vertex_count = 36,
+				   .depth = &depth,
+				   .depth_stride = dstride};
+		etna::emit_mesh(cs, d);
+		if (!gpu.submit_and_wait(cs))
+			return false;
+
+		// (a) render health from the RAW tiled RT: which face colors appear
+		rt.cpu_prep(RelocRead);
+		uint32_t faces = 0, drawn_raw = 0;
+		for (uint32_t p : rt.span<const uint32_t>().first(rtstride / 4 * ph)) {
+			if (p == CLEAR)
+				continue;
+			drawn_raw++;
+			for (unsigned f = 0; f < 6; f++)
+				if (p == face_argb(f))
+					faces |= 1u << f;
+		}
+
+		auto cs2 = gpu.new_cmd_stream(256);
+		etna::resolve(cs2, lin, rt, S, S, rtstride, S * 4);
+		if (!gpu.submit_and_wait(cs2))
+			return false;
+		lin.cpu_prep(RelocRead);
+
+		// (b) position-exact vs CPU reference
+		cpu_render_cube(m, S, S, {cimg.data(), S * S}, {cband.data(), S * S}, {czbuf.data(), S * S}, CLEAR);
+		auto g = lin.span<const uint32_t>();
+		uint32_t mm = 0, extra = 0, missing = 0, wrong = 0, miss_face = 0;
+		for (uint32_t i = 0; i < S * S; i++) {
+			if (cband[i] || g[i] == cimg[i])
+				continue;
+			mm++;
+			if (cimg[i] == CLEAR)
+				extra++;
+			else if (g[i] == CLEAR) {
+				missing++;
+				for (unsigned f = 0; f < 6; f++)
+					if (cimg[i] == face_argb(f))
+						miss_face |= 1u << f; // which CPU faces the GPU dropped
+			} else
+				wrong++;
+		}
+		if (mm > 50)
+			fails++;
+		print("  ang ",
+			  int(angle * 100),
+			  ": faces 0x",
+			  Hex{faces},
+			  " | ",
+			  mm,
+			  " mismatch (missing ",
+			  missing,
+			  " wrong ",
+			  wrong,
+			  "), dropped-face 0x",
+			  Hex{miss_face},
+			  "\n");
+	}
 	return true;
 }

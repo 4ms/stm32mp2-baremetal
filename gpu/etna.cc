@@ -493,8 +493,8 @@ void Gpu::dump_status(const char *msg)
 	print(" debug 0x", Hex{gpu_read(FE_DMA_DEBUG_STATE)});
 	print(" idle 0x", Hex{gpu_read(HI_IDLE_STATE)});
 	print(" axi 0x", Hex{gpu_read(HI_AXI_STATUS)}, "\n");
-	print("  GPU MMU sec status 0x", Hex{gpu_read(MMUv2_SEC_STATUS)});
-	print(" RISAF4 IASR 0x", Hex{RISAF4->IASR}, "\n");
+	print("  GPU MMU sec status: 0x", Hex{gpu_read(MMUv2_SEC_STATUS)});
+	print(" RISAF4->IASR: 0x", Hex{RISAF4->IASR}, "\n");
 	auto iac_isr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x80);
 	auto iac_icr = reinterpret_cast<volatile uint32_t *>(IAC_BASE + 0x100);
 	print("  IAC violations:");

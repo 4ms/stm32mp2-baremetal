@@ -1,9 +1,9 @@
 #include "aarch64/system_reg.hh" // read_cntpct
 #include "drivers/hal_cnt.hh"	 // SystemA35_SYSTICK_Config
+#include "drivers/rcc.hh"		 // RCC_Clocks::get_pll_settings (clock diagnostics)
+#include "drivers/rcc_pll.hh"	 // get_pll_settings / PLLSettings::calc_freq
 #include "etna.hh"
 #include "etna_3d_tests.hh"
-#include "drivers/rcc.hh"	  // RCC_Clocks::get_pll_settings (clock diagnostics)
-#include "drivers/rcc_pll.hh" // get_pll_settings / PLLSettings::calc_freq
 #include "print/print.hh"
 #include "stm32mp2xx.h" // RCC (clock diagnostics)
 #include <cstdint>
@@ -82,7 +82,8 @@ bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 	if (!gpu.submit_and_wait(cs))
 		return false;
 	auto end = read_cntpct();
-	print("RS fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks\n");
+	uint32_t mbps = (start != end) ? static_cast<uint32_t>(ImgWidth * ImgHeight * 4 * 64 / (end - start)) : 0;
+	print("RS fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)\n");
 
 	fb.cpu_prep(etna::RelocRead);
 	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++) {
@@ -128,19 +129,6 @@ bool test_blit_convert(etna::Gpu &gpu, const etna::Bo &dst, const etna::Bo &src)
 	}
 	print("GPU copied ", int(ImgWidth), "x", int(ImgHeight), ", swapping R<->B -- verified. \\o/\n");
 	return true;
-}
-
-// Build `build`, run it once over in -> out (width x height u8), return the
-// elapsed ticks. For the launch-overhead diagnostic below.
-uint64_t
-time_kernel(etna::Gpu &gpu, etna::ShaderBuilder build, const etna::Bo &out, const etna::Bo &in, uint32_t w, uint32_t h)
-{
-	auto k = etna::make_kernel(gpu, build);
-	if (!k)
-		return 0;
-	auto s = read_cntpct();
-	etna::compute(gpu, k, out, in, w, h);
-	return read_cntpct() - s;
 }
 
 // Real-image integration: alpha-blend two ARGB8888 images with a per-pixel
@@ -218,8 +206,12 @@ bool test_image_blend(etna::Gpu &gpu)
 	}
 	auto cpu_ticks = read_cntpct() - cstart;
 	print("Same blend on the CPU in ", cpu_ticks, " ticks");
-	if (cpu_ticks)
-		print("   (GPU / CPU = ", (uint32_t)(gpu_ticks / cpu_ticks), "x)");
+	if (cpu_ticks) {
+		int ratio = (gpu_ticks * 10 + 5) / cpu_ticks;
+		int i_ratio = ratio / 10;
+		int f_ratio = ratio - i_ratio * 10;
+		print(" (GPU / CPU = ", i_ratio, ".", f_ratio, "x)");
+	}
 	print("\n");
 
 	// The CPU result must match the GPU's, byte for byte.
@@ -230,88 +222,6 @@ bool test_image_blend(etna::Gpu &gpu)
 		}
 
 	return true;
-}
-
-// Clock-tree diagnostics for the GPU's two clocks: the core clock (ck_ker_gpu
-// = PLL3, which we program to 800 MHz) and -- the suspect -- the AXI/memory
-// interface clock (ck_icn_m_gpu = FLEXGEN CHANNEL 59, which our bring-up has
-// never touched; whatever the boot chain left there throttles ALL GPU DDR
-// traffic regardless of the core clock).
-//
-// Also measures the FE's actual clock empirically: a stream of N WAIT(200)
-// commands takes N*200 core cycles; timing it with the 64 MHz generic timer
-// gives the real core frequency, independent of what the PLL registers claim.
-void clock_diag(etna::Gpu &gpu)
-{
-	print("\n-- GPU clock diagnostics --\n");
-	print("GPUCFGR 0x", Hex{RCC->GPUCFGR}, "  PLL3CFGR1 0x", Hex{RCC->PLL3CFGR1}, "\n");
-	print("flexgen 59 (ck_icn_m_gpu, GPU AXI/memory clock):\n");
-	print("  XBAR59 0x", Hex{RCC->XBARxCFGR[59]}, " (src[2:0]: 0=PLL4 1=PLL5 2=PLL6 3=PLL7 4=PLL8 5=HSI 6=HSE)\n");
-	print("  PREDIV59 0x", Hex{RCC->PREDIVxCFGR[59]}, "  FINDIV59 0x", Hex{RCC->FINDIVxCFGR[59]}, "\n");
-	print("PLL4..8 CFGR1: 0x", Hex{RCC->PLL4CFGR1}, " 0x", Hex{RCC->PLL5CFGR1}, " 0x", Hex{RCC->PLL6CFGR1}, " 0x",
-		  Hex{RCC->PLL7CFGR1}, " 0x", Hex{RCC->PLL8CFGR1}, "\n");
-	// Computed PLL output frequencies (the flexgen source options). ref = HSE
-	// 40 MHz / HSI 64 MHz per each PLL's own src mux.
-	auto pll_mhz = [](auto pll) -> uint32_t {
-		using namespace RCC_Clocks;
-		auto s = get_pll_settings<decltype(pll)>();
-		uint32_t ref = s.src == MuxSelSource::hse ? 40'000'000u : s.src == MuxSelSource::hsi ? 64'000'000u : 0u;
-		return ref ? s.calc_freq(ref) / 1'000'000 : 0;
-	};
-	print("PLL4..8 output: ", pll_mhz(RCC_Clocks::PLL4{}), " ", pll_mhz(RCC_Clocks::PLL5{}), " ",
-		  pll_mhz(RCC_Clocks::PLL6{}), " ", pll_mhz(RCC_Clocks::PLL7{}), " ", pll_mhz(RCC_Clocks::PLL8{}), " MHz\n");
-
-	// --- measure the FE/core clock via WAIT commands --------------------------
-	constexpr uint32_t N = 2000; // N * 200 cycles of pure FE waiting
-	auto measure = [&](bool with_waits) -> uint64_t {
-		auto cs = gpu.new_cmd_stream(2 * N + 64);
-		if (with_waits)
-			for (uint32_t i = 0; i < N; i++) {
-				cs.emit(VivanteGpu::cmd_wait(200));
-				cs.emit(VivanteGpu::CMD_NOP); // WAIT occupies a qword
-			}
-		auto t0 = read_cntpct();
-		gpu.submit_and_wait(cs);
-		return read_cntpct() - t0;
-	};
-	uint64_t overhead = measure(false);
-	uint64_t waits = measure(true);
-	uint64_t dt = waits > overhead ? waits - overhead : 1; // 64 MHz ticks
-	// core MHz = (N*200 cycles) / (dt / 64MHz)
-	uint32_t core_mhz = static_cast<uint32_t>((uint64_t)N * 200 * 64 / dt);
-	// NOTE: this probe is UNRELIABLE -- a bare WAIT+NOP stream doesn't count
-	// core cycles the way a WAIT-in-a-LINK-loop does, and the FE's wait counter
-	// isn't the memory clock. Ground truth for the memory clock is the RS
-	// fill/blit throughput below, not this number. Kept only as a rough signal.
-	print("FE WAIT probe (unreliable): ", (uint32_t)waits, " - ", (uint32_t)overhead, " ticks -> ~", core_mhz,
-		  " MHz\n\n");
-}
-
-// Characterize the GPU's DDR write path: RS-fill a range of sizes and report
-// MB/s for each. If MB/s is FLAT across sizes, throughput is a steady-state
-// cap (NoC bandwidth regulator, or non-combinable AXI writes) -- clock-
-// independent, as measured. If MB/s RISES with size, there's a fixed per-op
-// overhead and the asymptote is the true rate. The 64x64 point also exposes
-// per-submit overhead. Timer is 64 MHz, so MB/s = bytes*64/ticks.
-void mem_bw_diag(etna::Gpu &gpu)
-{
-	print("-- GPU DDR write bandwidth (RS fill) --\n");
-	constexpr std::array<uint32_t, 5> dims = {64, 128, 256, 512, 1024};
-	auto buf = gpu.alloc(1024 * 1024 * 4);
-	if (!buf)
-		return;
-	for (uint32_t d : dims) {
-		auto cs = gpu.new_cmd_stream();
-		etna::clear(cs, buf, d, d, 0xA5A5A5A5);
-		auto t0 = read_cntpct();
-		if (!gpu.submit_and_wait(cs))
-			return;
-		uint32_t ticks = static_cast<uint32_t>(read_cntpct() - t0);
-		uint64_t bytes = uint64_t(d) * d * 4;
-		uint32_t mbps = ticks ? static_cast<uint32_t>(bytes * 64 / ticks) : 0;
-		print("  ", d, "x", d, " (", uint32_t(bytes / 1024), " KB): ", ticks, " ticks = ", mbps, " MB/s\n");
-	}
-	print("\n");
 }
 
 } // namespace
@@ -325,10 +235,6 @@ int main()
 
 	etna::Gpu gpu;
 	bool ok = gpu.init();
-	if (ok) {
-		clock_diag(gpu);
-		mem_bw_diag(gpu);
-	}
 
 	etna::Bo fb, src;
 	if (ok) {
@@ -364,6 +270,10 @@ int main()
 		ok = triangle_texture_test(gpu);
 	if (ok)
 		ok = spinning_cube_test(gpu);
+
+	// Not needed, but interesting test
+	// if (ok)
+	// 	ok = cube_size_sweep_test(gpu);
 
 	print(ok ? "\nSUCCESS\n" : "\nFAILED (see above)\n");
 
