@@ -4,6 +4,7 @@
 #include "drivers/rcc_pll.hh"	 // get_pll_settings / PLLSettings::calc_freq
 #include "etna.hh"
 #include "etna_3d_tests.hh"
+#include "fscale_sweep.hh"
 #include "perfmon.hh"
 #include "print/print.hh"
 #include "stm32mp2xx.h" // RCC (clock diagnostics)
@@ -265,7 +266,7 @@ int main()
 	etna::Gpu gpu;
 	bool ok = gpu.init();
 
-	perfmon::ddr_init(); // program DDRPERFM (DDR is already up from TF-A)
+	perfmon::ddr_init();
 
 	etna::Bo fb, src;
 	if (ok) {
@@ -285,6 +286,10 @@ int main()
 		ok = test_blit_convert(gpu, fb, src);
 	if (ok)
 		ok = test_throughput(gpu);
+
+	// Not needed, but interesting test:
+	// if (ok)
+	// 	fscale_sweep(gpu, fb); // characterize FSCALE across RS-fill vs shader engines
 
 	print("\nPPU compute/shader tests:\n");
 	if (ok)

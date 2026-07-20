@@ -11,6 +11,7 @@ SOURCES += etna_3d.cc
 SOURCES += etna_3d_tests.cc
 SOURCES += pmic.cc
 SOURCES += perfmon.cc
+SOURCES += fscale_sweep.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
 SOURCES += $(SHAREDDIR)/mmu/mmu.cc
 SOURCES += $(SHAREDDIR)/drivers/hal_cnt.cc
