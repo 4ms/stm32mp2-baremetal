@@ -4,6 +4,7 @@
 #include "drivers/rcc_pll.hh"	 // get_pll_settings / PLLSettings::calc_freq
 #include "etna.hh"
 #include "etna_3d_tests.hh"
+#include "perfmon.hh"
 #include "print/print.hh"
 #include "stm32mp2xx.h" // RCC (clock diagnostics)
 #include <cstdint>
@@ -78,12 +79,15 @@ bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 	auto cs = gpu.new_cmd_stream();
 	etna::clear(cs, fb, ImgWidth, ImgHeight, ClearColor);
 
+	perfmon::ddr_start();
 	auto start = read_cntpct();
 	if (!gpu.submit_and_wait(cs))
 		return false;
 	auto end = read_cntpct();
+	auto ddr = perfmon::ddr_stop();
 	uint32_t mbps = (start != end) ? static_cast<uint32_t>(ImgWidth * ImgHeight * 4 * 64 / (end - start)) : 0;
 	print("RS fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)\n");
+	perfmon::ddr_report("RS fill", ddr, (uint64_t)ImgWidth * ImgHeight * 4);
 
 	fb.cpu_prep(etna::RelocRead);
 	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++) {
@@ -93,6 +97,31 @@ bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 		}
 	}
 	print("GPU filled ", ImgWidth, "x", ImgHeight, " with 0x", Hex{ClearColor}, " -- verified. \\o/\n");
+	return true;
+}
+
+// A/B control for the GPU RS fill: fill the SAME 4 MB cacheable buffer from the
+// A35 (memset + dcache clean, so the writes actually reach DDR), measured by the
+// same DDRPERFM probe. The CPU streams sequential 64-byte cache-line writebacks
+// -- ideal DRAM row locality. Comparing writes/activate against the GPU fill
+// tells us whether the GPU's row-thrashing is the GPU's write stream or the DDR
+// controller's page policy (which would hit the CPU equally).
+bool test_cpu_fill(const etna::Bo &fb)
+{
+	auto pixels = fb.span<uint32_t>();
+	fb.cpu_prep(etna::RelocRead); // start cold: invalidate so the fill really evicts to DDR
+
+	perfmon::ddr_start();
+	auto start = read_cntpct();
+	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++)
+		pixels[i] = ClearColor;
+	fb.cpu_fini(etna::RelocWrite); // clean dcache -> push the whole 4 MB out to DDR
+	auto end = read_cntpct();
+	auto ddr = perfmon::ddr_stop();
+
+	uint32_t mbps = (start != end) ? static_cast<uint32_t>(ImgWidth * ImgHeight * 4 * 64 / (end - start)) : 0;
+	print("CPU fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)\n");
+	perfmon::ddr_report("CPU fill", ddr, (uint64_t)ImgWidth * ImgHeight * 4);
 	return true;
 }
 
@@ -236,6 +265,8 @@ int main()
 	etna::Gpu gpu;
 	bool ok = gpu.init();
 
+	perfmon::ddr_init(); // program DDRPERFM (DDR is already up from TF-A)
+
 	etna::Bo fb, src;
 	if (ok) {
 		fb = gpu.alloc(ImgWidth * ImgHeight * 4);
@@ -248,6 +279,8 @@ int main()
 	print("\nRS Engine tests:\n");
 	if (ok)
 		ok = test_fill(gpu, fb);
+	if (ok)
+		ok = test_cpu_fill(fb); // A/B: same buffer, CPU-filled, same DDRPERFM probe
 	if (ok)
 		ok = test_blit_convert(gpu, fb, src);
 	if (ok)
