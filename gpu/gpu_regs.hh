@@ -30,6 +30,11 @@ constexpr uint32_t HI_CHIP_CUSTOMER_ID = 0x0030;
 constexpr uint32_t HI_CHIP_MINOR_FEATURE_0 = 0x0034;
 constexpr uint32_t HI_CHIP_SPECS = 0x0048;
 constexpr uint32_t HI_CHIP_MINOR_FEATURE_1 = 0x0074;
+// Profiling counters (etnaviv state_hi.xml.h). HI_TOTAL_CYCLES free-runs at the
+// GPU core clock; reading it over a known wall-clock window measures that clock.
+// HI_TOTAL_IDLE_CYCLES counts cycles the core was idle (=> core busy fraction).
+constexpr uint32_t HI_TOTAL_CYCLES = 0x0078;
+constexpr uint32_t HI_TOTAL_IDLE_CYCLES = 0x007C;
 constexpr uint32_t HI_CHIP_MINOR_FEATURE_2 = 0x0084;
 constexpr uint32_t HI_CHIP_MINOR_FEATURE_3 = 0x0088;
 constexpr uint32_t HI_CHIP_MINOR_FEATURE_4 = 0x0094;
@@ -38,9 +43,10 @@ constexpr uint32_t HI_CHIP_PRODUCT_ID = 0x00A8;
 constexpr uint32_t HI_CHIP_ECO_ID = 0x00E8;
 
 // HI_CLOCK_CONTROL bits
-// Core-clock frequency scaler (FSCALE_VAL, bits [8:2]). On this core ,
-// 0x00 runs ~64x faster than the setting of 0x40. However, 0x01 runs much slower 
-// than either. TODO: figure out the meaning of the value.
+// Core-clock frequency scaler (FSCALE_VAL, bits [8:2]):
+// Measured behavior is strange -- the RS/FE and the shader cores respond
+// differently, but 0x00 is the fastest in both, so we use that.
+// etnaviv/ST uses 0x40 but that is ~63x slower when running the PPU compute tests.
 constexpr uint32_t CLK_FSCALE_VAL(uint32_t x)
 {
 	return (x << 2) & 0x1FC;

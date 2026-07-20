@@ -1,6 +1,6 @@
 #include "perfmon.hh"
 #include "print/print.hh"
-#include "stm32mp2xx.h" // DDRPERFM
+#include "stm32mp2xx.h"
 
 namespace perfmon
 {
@@ -44,15 +44,15 @@ constexpr uint32_t TCNT_HZ = 150'000'000;
 void ddr_init()
 {
 	auto *p = DDRPERFM;
-	p->CTRL = CTRL_STOP;	  // program only while stopped
+	p->CTRL = CTRL_STOP;	   // program only while stopped
 	p->DRAMINF = DRAMINF_DDR4; // DFI decode type
-	p->CFG0 = sel_event(0, EV_OP_IS_WR) | sel_event(1, EV_OP_IS_RD) | sel_event(2, EV_OP_IS_ACT) |
-			  sel_event(3, EV_OP_IS_PRE);
+	p->CFG0 =
+		sel_event(0, EV_OP_IS_WR) | sel_event(1, EV_OP_IS_RD) | sel_event(2, EV_OP_IS_ACT) | sel_event(3, EV_OP_IS_PRE);
 	p->CFG1 = 0;
-	p->CFG2 = 0;		 // FILT_POL* = 000 -> no rank/bank filtering (count all)
+	p->CFG2 = 0; // FILT_POL* = 000 -> no rank/bank filtering (count all)
 	p->CFG3 = 0;
 	p->CFG4 = 0xFFFFFFFF; // TIME_OUT = max (don't auto-stop on a long fill)
-	p->CFG5 = 0x0F;		 // EVCNT_EN: enable counters 0..3 (set while stopped)
+	p->CFG5 = 0x0F;		  // EVCNT_EN: enable counters 0..3 (set while stopped)
 }
 
 void ddr_start()
@@ -89,27 +89,28 @@ void ddr_report(const char *label, const DdrSample &s, uint64_t expected_bytes)
 	uint64_t us = (uint64_t)s.tcnt * 1'000'000 / TCNT_HZ;
 	uint32_t wr_mbps = us ? (uint32_t)(wr_bytes / us) : 0;
 
-	print("  [DDRPERFM] ", label, ": wr=", s.writes, " rd=", s.reads, " act=", s.acts, " pre=", s.pres,
-		  " tcnt=", s.tcnt);
+	print(
+		"  [DDRPERFM] ", label, ": wr=", s.writes, " rd=", s.reads, " act=", s.acts, " pre=", s.pres, " tcnt=", s.tcnt);
 	if (s.status & 0xFF)
 		print(" OVERFLOW(status=0x", Hex{s.status}, ")");
-	print("\n    write ", (uint32_t)(wr_bytes >> 10), " KiB, read ", (uint32_t)(rd_bytes >> 10),
-		  " KiB, DDR-busy ", busy_pm / 10, ".", busy_pm % 10, "% , wr ~", wr_mbps, " MB/s\n");
+	print("\n    write ", (uint32_t)(wr_bytes >> 10), " KiB, ");
+	print("read ", (uint32_t)(rd_bytes >> 10), " KiB, ");
+	print("DDR-busy ", busy_pm / 10, ".", busy_pm % 10, "% , ");
+	print("wr ~", wr_mbps, " MB/s\n");
 
 	// Row locality: writes per row-activate. High = good page-mode streaming;
 	// ~1 means every write reopens a row (locality broken -> that's the throttle).
 	if (s.acts) {
 		uint32_t wr_per_act = s.writes / s.acts;
-		print("    ", wr_per_act, " writes/activate (", s.acts, " ACT, ", s.pres,
-			  " PRE) -- high is good; ~1 => row-thrashing\n");
+		print("    ", wr_per_act, " writes/activate (", s.acts);
+		print(" ACT, ", s.pres, " PRE) -- high is good; ~1 => row-thrashing\n");
 	}
 
 	if (expected_bytes) {
 		// Did we see roughly the traffic we expected? Reveals the event unit if
 		// the BYTES_PER_EVENT guess is wrong (ratio will be 8x or 32x off).
 		uint32_t pct = (uint32_t)(wr_bytes * 100 / expected_bytes);
-		print("    expected ~", (uint32_t)(expected_bytes >> 10), " KiB written; measured/expected = ", pct,
-			  "%\n");
+		print("    expected ~", (uint32_t)(expected_bytes >> 10), " KiB written; measured/expected = ", pct, "%\n");
 	}
 
 	print("    verdict: ");

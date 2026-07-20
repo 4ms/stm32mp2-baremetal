@@ -150,9 +150,8 @@ bool reset_gpu_core()
 
 		gpu_write(MMUv2_AHB_CONTROL, MMUv2_AHB_CONTROL_NONSEC_ACCESS);
 
-		// Set clock speed to empirically determined max speed (0x0)
 		control &= ~0x1FC;
-		control |= CLK_FSCALE_VAL(0x0);
+		control |= CLK_FSCALE_VAL(0x00);
 		gpu_write(HI_CLOCK_CONTROL, control | CLK_FSCALE_CMD_LOAD);
 		udelay(1);
 		gpu_write(HI_CLOCK_CONTROL, control);
