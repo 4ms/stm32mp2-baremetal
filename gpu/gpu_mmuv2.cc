@@ -5,6 +5,8 @@
 #include <array>
 #include <cstdint>
 
+namespace etna
+{
 // -------------------- GPU MMU --------------------
 // The memory-touching engines (PE, BLT) do not work with the MMU in bypass on
 // this core: the BLT accepts its state writes and then hangs on the first
@@ -60,7 +62,10 @@ bool gpu_mmu_enable()
 	pta_cmdbuf[3] = 0;
 	clean_dcache_range(pta_cmdbuf.data(), sizeof(pta_cmdbuf));
 
-	arm_fe(pta_cmdbuf.data(), pta_cmdbuf.size());
+	gpu_write(FE_COMMAND_ADDRESS, (uint32_t)(uintptr_t)pta_cmdbuf.data());
+	gpu_write(FE_COMMAND_CONTROL, FE_CONTROL_ENABLE | (pta_cmdbuf.size() / 2));
+	gpu_write(MMUv2_SEC_COMMAND_CONTROL, FE_CONTROL_ENABLE | (pta_cmdbuf.size() / 2));
+
 	if (!wait_idle(IDLE_FE, 10'000)) {
 		print("ERROR: FE did not go idle loading the MMU PTA\n");
 		return false;
@@ -70,3 +75,5 @@ bool gpu_mmu_enable()
 	print("GPU MMU enabled: identity mapping of ", int(DdrMB), "MB DDR (MTLB at 0x", Hex{bus_addr(mmu_mtlb)}, ")\n");
 	return true;
 }
+
+} // namespace etna

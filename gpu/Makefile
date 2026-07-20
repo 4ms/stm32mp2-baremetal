@@ -4,6 +4,7 @@ SHAREDDIR = ../shared
 
 SOURCES := startup.s
 SOURCES += main.cc
+SOURCES += gpu_mmuv2.cc
 SOURCES += etna.cc
 SOURCES += etna_compute.cc
 SOURCES += etna_3d.cc

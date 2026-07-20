@@ -231,6 +231,8 @@ void CmdStream::stall(uint32_t from, uint32_t to)
 	emit(sync_token(from, to));
 }
 
+bool gpu_mmu_enable();
+
 // =============================================================================
 //  Gpu
 // =============================================================================
@@ -249,6 +251,8 @@ bool Gpu::init()
 	setup_rif();
 	if (!reset_gpu_core())
 		return false;
+
+	gpu_mmu_enable();
 
 	print("\n");
 
