@@ -207,6 +207,7 @@ inline uint64_t read_cntfreq()
 }
 
 // Read physical counter ticks (cntpct)
+// Counter runs at 64MHz, so each tick is 15.625ns
 inline uint64_t read_cntpct()
 {
 	uint64_t v;
@@ -294,6 +295,22 @@ inline void clean_invalidate_dcache_address(uintptr_t addr)
 inline void zero_dcache_address(uintptr_t addr)
 {
 	asm volatile("dc zva, %0" ::"r"(addr));
+}
+
+inline void clean_dcache_range(const void *start, std::size_t bytes)
+{
+	auto addr = reinterpret_cast<uintptr_t>(start);
+	for (auto a = addr & ~63u; a < addr + bytes; a += 64)
+		clean_dcache_address(a);
+	dsb_sy();
+}
+
+inline void invalidate_dcache_range(const void *start, std::size_t bytes)
+{
+	auto addr = reinterpret_cast<uintptr_t>(start);
+	for (auto a = addr & ~63u; a < addr + bytes; a += 64)
+		invalidate_dcache_address(a);
+	dsb_sy();
 }
 
 // Clean+invalidate all data cache to PoC

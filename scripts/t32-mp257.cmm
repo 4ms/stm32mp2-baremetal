@@ -3,7 +3,7 @@
 
 SYStem.CPU STM32MP257F-CA35
 
-SYStem.config DEBUGPORTTYPE JTAG 
+SYStem.config DEBUGPORTTYPE SWD 
 SYStem.JtagClock 10MHz
 
 Trace.DISable
@@ -19,7 +19,8 @@ Break
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/multicore_smp/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/i2c/build/main.elf /CPP
 //Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/hal-audio/build/main.elf /CPP
-Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
+//Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/usb-drd/build/main.elf /CPP
+Data.LOAD.Elf ~/4ms/stm32/mp2-dev/stm32mp2-baremetal/gpu/build/main.elf /CPP
 
 SYStem.JtagClock 50MHz
 
@@ -28,10 +29,11 @@ ETM.Trace ON
 ETM.ON
 
 Trace.arm
+system.Option DUALPORT on
 
 // Set breakpoints or whether you want to auto-start here:
 
-//break main
+break main
 go
 
 ENDDO
