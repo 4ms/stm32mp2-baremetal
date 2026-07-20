@@ -25,32 +25,30 @@
 //
 // Naming mirrors libdrm's C API (etna_bo, etna_cmd_stream, ...) so that ported
 // Mesa/libdrm code reads the same; we express it as C++ in namespace `etna`.
-// Reference: libdrm etnaviv_drmif.h, Mesa src/gallium/drivers/etnaviv/. Both MIT.
+// Reference: libdrm etnaviv_drmif.h, Mesa src/gallium/drivers/etnaviv/
 //
 //  MEMORY MODEL
-//  The GPU masters *physical* DDR directly (its MMU is unused -- the RS engine
-//  works in bypass). We run the CPU with a flat identity map, so for any buffer:
-//        cpu_pointer == physical_address == gpu_address
+//  We use a flat/direct memory model, where the address the GPU uses matches
+//  the physical and virtual addresses.
 //  A "buffer object" (Bo) is therefore just a physically-contiguous DDR
-//  allocation. Relocations (below) keep the abstraction so that (a) Mesa code
-//  ports unchanged and (b) if a GPU MMU is ever added, only the Bo->gpu_addr
-//  mapping changes, not the callers.
+//  allocation.
+//  We keep the API for relocations so that Mesa code ports unchanged and (b)
+//  if we ever want to use the GPU MMU only the Bo->gpu_addr mapping changes,
+//  not the callers.
 //
-//  CACHE COHERENCY (the sharp edge)
-//  The CPU caches DDR; the GPU does not see the CPU's dirty lines, and the CPU
-//  does not see GPU writes until it invalidates. Every Bo access is bracketed:
-//    - before the GPU reads CPU-written data:  clean  (flush) the range to DDR
-//    - after the GPU writes, before CPU reads: invalidate the range
-//  These map to clean_dcache_range()/invalidate_dcache_range() (system_reg.hh).
-//  The API makes this explicit via Bo::cpu_prep()/cpu_fini() so callers can't
-//  forget it (this is the #1 source of "half-written buffer" bugs).
+//  CACHE COHERENCY
+//  The CPU caches DDR, the GPU does not see the CPU's dirty lines, and the CPU
+//  does not see GPU writes until it invalidates.
+//  So you have to bracket every Bo access:
+//    - before the GPU reads CPU-written data: Bo::cpu_prep()
+//    - after the GPU writes, before CPU reads: Bo::cpu_fini()
 
 namespace etna
 {
 
 // The event id our RS/PE ops assign to "operation complete", raised FROM_PE so
-// it latches only after the pipeline drains and caches flush. wait() keys off
-// bit `kEventComplete` by default.
+// it latches only after the pipeline drains and caches flush. wait() reads
+// the bit `kEventComplete` by default
 inline constexpr uint32_t kEventComplete = 2;
 
 // -----------------------------------------------------------------------------
@@ -77,8 +75,6 @@ struct Reloc {
 // -----------------------------------------------------------------------------
 //  Bo -- buffer object (a physically-contiguous DDR allocation)
 // -----------------------------------------------------------------------------
-// Mirrors etna_bo. On baremetal a Bo is carved from a fixed DDR pool (see
-// Gpu::alloc()); there is no refcount/handle/dmabuf machinery.
 struct Bo {
 	uint32_t phys = 0; // physical == cpu == gpu address (identity map)
 	uint32_t bytes = 0;
@@ -216,7 +212,7 @@ private:
 // -----------------------------------------------------------------------------
 //  Fence -- completion token for a submission
 // -----------------------------------------------------------------------------
-// Mirrors the (timestamp, pipe_wait) fence model of libdrm. A submission
+// Mirrors the timestamp/pipe_wait fence model of libdrm. A submission
 // completes when its GL_EVENT(FROM_PE) latches HI_INTR_ACKNOWLEDGE bit
 // `event_id`. Each submit gets a distinct rolling event id (1..29), so several
 // submissions can be in flight and waited for independently.

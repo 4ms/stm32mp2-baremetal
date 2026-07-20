@@ -2,6 +2,11 @@
  * tcpp03.c — TCPP03-M20 USB Type-C port protection controller
  *
  * Stub implementation — fill in GPIO and I2C details for the EV1 board.
+
+Note: The TCPP03-M20 on the EV1 board requires reading back the ACK register (register 1) after writing to the
+programming control register (register 0). Without this readback, VBUS does not go high even with a long delay
+substituted. The readback likely serves as a command handshake/synchronization mechanism. Always read reg1 after
+writing reg0.
  */
 
 #include "tcpp03.hh"

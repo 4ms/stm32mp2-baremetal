@@ -5,7 +5,7 @@
 
 // Compute (PPU / unified-shader) dispatch, ported from the gcnano vendor
 // driver's flop_reset (_ProgramPPUInstruction + _ProgramPPUCommand, dual
-// MIT/GPL; used under MIT). See gpu/reference/gcnano_flop_reset/.
+// MIT/GPL; used under MIT).
 //
 // It runs a shader "OutImage = InImage + InImage" (EVIS img_load x2 -> dp2x8
 // add -> img_store) over a 64x6 u8 image. The dispatch command sequence below
