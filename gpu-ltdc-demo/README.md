@@ -22,7 +22,7 @@ At 12 cubes, render time is 4-6ms.
 
 ## Expected output
 
-You should see a color cube spinning on the screen.
+You should see color cubes spinning on the screen.
 
 ![](../docs/gpu-ltdc-demo-crop.gif)
 
