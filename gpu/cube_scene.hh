@@ -82,6 +82,10 @@ inline float tsin(float x)
 		x -= 2 * kPi;
 	while (x < -kPi)
 		x += 2 * kPi;
+	if (x > kPi / 2)
+		x = kPi - x;
+	else if (x < -kPi / 2)
+		x = -kPi - x;
 	float x2 = x * x;
 	return x * (1.0f - x2 / 6.0f * (1.0f - x2 / 20.0f * (1.0f - x2 / 42.0f)));
 }
