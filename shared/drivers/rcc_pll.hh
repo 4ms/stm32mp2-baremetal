@@ -44,6 +44,7 @@ inline void set_pll(PLLSettings v)
 	PLLT::PostDiv1::write(v.postdiv1);
 	PLLT::PostDiv2::write(v.postdiv2);
 	PLLT::PostDivEnable::set();
+	PLLT::PostDivBypass::clear();
 	PLLT::FracMult::write(v.frac);
 
 	PLLT::Enable::set();
