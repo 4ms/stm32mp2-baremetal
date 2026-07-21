@@ -1,8 +1,9 @@
-# GPU LTDC Demo — spinning cube
+# GPU LTDC Demo — spinning cubes
 
-This project combines the `gpu/` and `ltdc/` projects by rendering 12 moving/spinning
-cubes onto the LVDS display on the EV1. 
-Sources are pulled from the `gpu/` and `ltdc/` projects.
+This project combines the `gpu/` and `ltdc/` projects by rendering 12
+moving/spinning cubes at 60fps onto the 1024x600 LVDS display on the EV1. The
+number of cubes can be increased in the source code. Sources are pulled from
+the `gpu/` and `ltdc/` projects.
 
 All cubes are rendered into one full-screen tiled render target with a
 shared depth buffer, so the depth test resolves occlusion between them (cubes
@@ -45,4 +46,4 @@ spinning...
 60 fps, worst render 5858 us
 ```
 
-
+You can 
