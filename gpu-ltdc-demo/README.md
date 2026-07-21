@@ -1,18 +1,23 @@
 # GPU LTDC Demo — spinning cube
 
-This project combines the `gpu/` and `ltdc/` projects by rendering a spinning
-cube onto the LVDS display on the EV1. Double-buffered and tear-free.
-
-Per frame, one GPU submission: RS clear (color) + RS clear (depth set to "far") +
-draw + resolve. No CPU pixel work at all — the CPU computes one 4x4 matrix and
-builds ~500 command words.
-
+This project combines the `gpu/` and `ltdc/` projects by rendering 12 moving/spinning
+cubes onto the LVDS display on the EV1. 
 Sources are pulled from the `gpu/` and `ltdc/` projects.
+
+All cubes are rendered into one full-screen tiled render target with a
+shared depth buffer, so the depth test resolves occlusion between them (cubes
+pass in front of / behind each other by their z), though there is no collision 
+detection and so cubes will pass through each other. 
+Each cube has a world position, velocity, spin rate, and base hue (faces are shades of the
+base hue).
+
+The display is double-buffered, and the refresh is interrupt-driven via an ltdc callback.
 
 ## Performance
 
-We easily hit 60fps, which is the maximum rate of the LVDS display.
-Draw time is about 1.1ms, so we operate at around 7% load.
+Overall performance is excellent: we easily hit 60 fps with up to around 100 cubes.
+At 12 cubes, render time is 4-6ms.
+
 
 ## Expected output
 
@@ -35,11 +40,9 @@ etna: GC model 0x8000 rev 0x6205 (product 0x80003, customer 0x15)
 verify: 0 mismatches vs CPU reference  \o/
 Display up: bg on layer 1, cube on layer 2 (512x512 at 256,44)
 spinning...
-61 fps
-61 fps
-61 fps
-60 fps
-60 fps
-60 fps
+60 fps, worst render 5207 us
+60 fps, worst render 5819 us
+60 fps, worst render 5858 us
 ```
+
 
