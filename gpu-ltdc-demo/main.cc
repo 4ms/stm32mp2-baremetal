@@ -1,33 +1,16 @@
-#include "aarch64/system_reg.hh" // read_cntpct, read_cntfreq
-#include "cube_cpu_render.hh"	 // ../gpu: CPU reference renderer (verification)
-#include "cube_scene.hh"		 // ../gpu: shaders, geometry, matrices (CPU-verified)
-#include "display.hh"			 // ../ltdc: board display ladder
-#include "drivers/hal_cnt.hh"	 // SystemA35_SYSTICK_Config
-#include "etna.hh"				 // ../gpu: GPU API
-#include "etna_3d.hh"			 // ../gpu: emit_mesh / MeshDraw
-#include "ltdc.hh"				 // ../ltdc: framebuffer flip + layer 2
-#include "panel_etml0700z9.hh"	 // ../ltdc: panel dimensions
+#include "aarch64/system_reg.hh"
+#include "cube_cpu_render.hh"
+#include "cube_scene.hh"
+#include "display.hh"
+#include "drivers/hal_cnt.hh"
+#include "etna.hh"
+#include "etna_3d.hh"
+#include "ltdc.hh"
+#include "panel_etml0700z9.hh"
 #include "print/print.hh"
 #include <algorithm>
 #include <array>
 #include <cstdint>
-
-// =============================================================================
-//  gpu-ltdc-demo -- spinning cube on the LVDS panel
-// =============================================================================
-//
-// The cube is rendered on LTDC layer 2, which is a small square window in the
-// center displayed over a static background layer. Each frame the GPU only
-// touches the small window's bytes (not the whole 1024x600 screen).
-//
-//   layer 1 (static bg 1024x600)  ---.
-//                                     >-- LTDC scanout compositor --> LVDS
-//   layer 2 (cube, CWxCH window)  ---'
-//
-// Per frame the cube goes through the GPU in three steps -- clear, draw
-// (depth-tested), resolve (untile the tiled RT into the linear layer-2 buffer).
-// Then the LTDC flips layer 2 at vblank. The matrix transform runs in the
-// vertex shader.
 
 namespace
 {
@@ -43,8 +26,7 @@ constexpr uint32_t RtSize = RtStride * ph;
 constexpr uint32_t DepthStride = pw * 2;
 constexpr uint32_t DepthSize = DepthStride * ph;
 constexpr uint32_t CubeFbSize = CW * CH * 4; // linear layer-2 framebuffer
-constexpr uint32_t BgFbSize = HActive * VActive * 4;
-constexpr uint32_t Background = 0xFF101828; // layer 1 AND the cube's own clear
+constexpr uint32_t Background = 0xFF101828;	 // the cube's clear AND the LTDC surround
 
 } // namespace
 
@@ -64,12 +46,11 @@ int main()
 
 	etna::Bo rt = gpu.alloc(RtSize);	   // tiled render target (cube window)
 	etna::Bo depth = gpu.alloc(DepthSize); // D16
-	std::array<etna::Bo, 2> cube_fbs = {gpu.alloc(CubeFbSize), gpu.alloc(CubeFbSize)}; // layer-2 double buffer
-	etna::Bo bg_fb = gpu.alloc(BgFbSize);											   // layer-1 static background
+	std::array<etna::Bo, 2> cube_fbs = {gpu.alloc(CubeFbSize), gpu.alloc(CubeFbSize)}; // display double buffer
 	etna::Bo vtx = gpu.alloc(sizeof(kCubeVerts));
 	etna::Bo vs = gpu.alloc(sizeof(kCubeVs));
 	etna::Bo ps = gpu.alloc(sizeof(kCubeFs));
-	if (!rt || !depth || !cube_fbs[0] || !cube_fbs[1] || !bg_fb || !vtx || !vs || !ps) {
+	if (!rt || !depth || !cube_fbs[0] || !cube_fbs[1] || !vtx || !vs || !ps) {
 		print("FAILED: buffer alloc\n");
 		while (true)
 			asm volatile("wfe");
@@ -82,17 +63,13 @@ int main()
 	std::ranges::copy(kCubeFs, ps.span<uint32_t>().begin());
 	ps.cpu_fini(etna::RelocWrite);
 
-	std::ranges::fill(bg_fb.span<uint32_t>(), Background); // painted once, never again
-	bg_fb.cpu_fini(etna::RelocWrite);
 	for (auto &fb : cube_fbs) {
 		std::ranges::fill(fb.span<uint32_t>(), Background);
 		fb.cpu_fini(etna::RelocWrite);
 	}
 
-	// Command streams are allocated ONCE and reused every frame (reset()). The GPU
-	// pool is a bump allocator with no free, so allocating fresh streams per frame
-	// leaks ~6 KB/frame and exhausts the 64 MB pool in ~3 min. submit_and_wait
-	// completes each op before the next, so reusing the backing Bo is safe.
+	// Command streams are allocated once and reused every frame (reset()) because
+	// the GPU pool is a bump allocator with no free.
 	auto csc = gpu.new_cmd_stream(256);
 	auto csd = gpu.new_cmd_stream(1024);
 	auto csr = gpu.new_cmd_stream(256);
@@ -157,54 +134,54 @@ int main()
 		}
 	}
 
-	if (!display_init(bg_fb.gpu_addr())) { // layer 1 = the static background
+	// Single windowed layer: the CW x CH cube at (CX, CY), Background fills around it.
+	if (!display_init(cube_fbs[0].gpu_addr(), CX, CY, CW, CH, Background)) {
 		print("FAILED: LVDS PLL never locked\n");
 		while (true)
 			asm volatile("wfe");
 	}
-	ltdc_layer2_init(cube_fbs[0].gpu_addr(), CX, CY, CW, CH); // layer 2 = the cube window
-	print("Display up: bg on layer 1, cube on layer 2 (", CW, "x", CH, " at ", CX, ",", CY, ")\n");
+	print("Display up: cube ", CW, "x", CH, " at ", CX, ",", CY, "\n");
 
-	print("spinning...\n");
+	print("Spinning...\n");
 	float angle = 0.0f;
 	uint32_t back = 1; // cube_fbs[0] is being scanned
 	uint32_t frames = 0;
 	auto t0 = read_cntpct();
-	const uint32_t tick_khz = static_cast<uint32_t>(read_cntfreq() / 1000);
-	bool pending_fps = false;
+	const uint32_t tick_khz = read_cntfreq() / 1000;
 	uint32_t fps = 0;
+	uint32_t worst_render_tm = 0;
 
 	while (true) {
 		angle += 2 * kPi / 240.0f;
-		// The motion repeats every 20*pi (y-spin period 2*pi, wobble period
-		// 2*pi/0.7 -> LCM = 20*pi = 10 turns); wrap there so `angle` stays small.
 		if (angle > 20 * kPi)
 			angle -= 20 * kPi;
 		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), 1.0f);
+
+		auto render_tm_start = read_cntpct();
 		if (!render_frame(m, cube_fbs[back])) {
 			gpu.dump_status("cube frame");
 			break;
 		}
-		ltdc_layer2_set_framebuffer(cube_fbs[back].gpu_addr());
+		auto render_tm_end = read_cntpct();
+		worst_render_tm = std::max<uint32_t>(worst_render_tm, (render_tm_end - render_tm_start) / (tick_khz / 1000));
 
-		// Emit the fps line AFTER arming the flip, BEFORE ltdc_wait_reload, so the
-		// blocking (~7 ms) UART print overlaps the idle vblank wait instead of
-		// stealing time from a frame (which otherwise dropped a frame each print).
-		if (pending_fps) {
-			print(fps, " fps\n");
-			pending_fps = false;
-		}
-
-		ltdc_wait_reload(); // vsync: blocks until the panel vblank (tear-free flip)
-		back ^= 1;
+		ltdc_set_framebuffer(cube_fbs[back].gpu_addr());
 
 		if (++frames % 300 == 0) {
 			auto now = read_cntpct();
-			uint32_t us = static_cast<uint32_t>((now - t0) * 1000 / 300 / tick_khz);
+			uint32_t us = ((now - t0) * 1000 / 300 / tick_khz);
 			fps = us ? 1000000 / us : 0;
-			pending_fps = true; // printed next iteration, hidden under the vblank wait
 			t0 = now;
+
+			print(fps, " fps, worst render time: ", worst_render_tm, " us = ");
+			print(((fps * worst_render_tm + 5'000) / 10'000), "%\n");
+			worst_render_tm = 0;
 		}
+
+		ltdc_wait_vblank(); // vsync: WFE until the LTDC LINE IRQ (tear-free flip)
+
+		// Toggle buffer (double-buffered)
+		back ^= 1;
 	}
 
 	while (true)

@@ -48,14 +48,14 @@ void display_panel_on()
 	backlight.high();
 }
 
-bool display_init(uint32_t first_fb)
+bool display_init(uint32_t first_fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t bg_argb)
 {
 	display_rif_setup();
 	display_clocks_setup();
 	if (!lvds_pll_init())
 		return false;
 	SYSCFG->DISPLAYCLKCR = 1; // LTDC pixel clock = clk_pix_lvds (PHY /7 output)
-	ltdc_init(first_fb);
+	ltdc_init(first_fb, x, y, w, h, bg_argb);
 	lvds_host_enable();
 	display_panel_on();
 	return true;
