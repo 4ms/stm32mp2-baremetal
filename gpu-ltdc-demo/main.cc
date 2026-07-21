@@ -38,12 +38,13 @@ constexpr uint32_t DepthStride = rtpw * 2;
 constexpr uint32_t DepthSize = DepthStride * rtph;
 
 constexpr float Aspect = float(HActive) / float(VActive);
-constexpr float BX = 2.3f, BY = 1.3f; // world bounce bounds (keep cubes on-screen)
+constexpr float BX = 2.3f, BY = 1.3f;			 // world XY bounce bounds (keep cubes on-screen)
+constexpr float PZ_NEAR = -2.0f, PZ_FAR = -9.0f; // depth-drift range (near..far, no clipper)
 
-constexpr uint32_t NCubes = 20;
+constexpr uint32_t NCubes = 12;
 struct Cube {
 	float px, py, pz;		   // world position (pz negative = into the screen)
-	float vx, vy;			   // world velocity per frame
+	float vx, vy, vz;		   // world velocity per frame (vz = depth drift)
 	float angle, rate;		   // spin
 	float tilt_amp, tilt_freq; // X-axis wobble
 };
@@ -121,9 +122,10 @@ int main()
 		float fi = float(i);
 		cubes[i].px = BX * tsin(fi * 1.7f + 0.5f);
 		cubes[i].py = BY * tsin(fi * 2.3f + 1.0f);
-		cubes[i].pz = -2.0f - 0.4f * float(i); // -4.0 .. -6.0: varied depth
+		cubes[i].pz = PZ_NEAR + (PZ_FAR - PZ_NEAR) * (fi / float(NCubes)); // spread through depth
 		cubes[i].vx = (0.020f + 0.004f * float(i % 3)) * ((i & 1) ? 1.f : -1.f);
 		cubes[i].vy = (0.028f + 0.005f * float(i % 2)) * ((i & 2) ? 1.f : -1.f);
+		cubes[i].vz = (0.010f + 0.006f * float(i % 4)) * ((i & 1) ? -1.f : 1.f); // depth drift
 		cubes[i].angle = fi * 0.6f;
 		cubes[i].rate = (0.2f + 0.4f * float(i % 10)) * (2 * kPi / 240.0f);
 		cubes[i].tilt_amp = 0.20f + 0.12f * float(i % 4); // 0.20 .. 0.56 rad
@@ -183,6 +185,9 @@ int main()
 			cb.py += cb.vy;
 			if (cb.py > BY || cb.py < -BY)
 				cb.vy = -cb.vy;
+			cb.pz += cb.vz;
+			if (cb.pz > PZ_NEAR || cb.pz < PZ_FAR)
+				cb.vz = -cb.vz;
 			cb.angle += cb.rate;
 			if (cb.angle > 20 * kPi)
 				cb.angle -= 20 * kPi;
