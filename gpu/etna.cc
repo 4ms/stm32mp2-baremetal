@@ -579,7 +579,8 @@ void resolve(CmdStream &cs,
 			 uint32_t width,
 			 uint32_t height,
 			 uint32_t src_tiled_stride,
-			 uint32_t dst_stride)
+			 uint32_t dst_stride,
+			 uint32_t dst_offset)
 {
 	cs.reserve(64);
 	uint32_t config = RS_FORMAT_A8R8G8B8 | RS_CONFIG_SOURCE_TILED | (RS_FORMAT_A8R8G8B8 << 8);
@@ -587,7 +588,7 @@ void resolve(CmdStream &cs,
 	cs.set_state(RS_SOURCE_STRIDE, src_tiled_stride << 2);
 	cs.set_state(RS_DEST_STRIDE, dst_stride);
 	cs.set_state_reloc(RS_PIPE_SOURCE_ADDR0, {&src, RelocRead, 0});
-	cs.set_state_reloc(RS_PIPE_DEST_ADDR0, {&dst, RelocWrite, 0});
+	cs.set_state_reloc(RS_PIPE_DEST_ADDR0, {&dst, RelocWrite, dst_offset});
 	cs.set_state(RS_PIPE_OFFSET0, 0);
 	cs.set_state(RS_PIPE_OFFSET1, 0);
 	cs.set_state(RS_WINDOW_SIZE, width | (height << 16));

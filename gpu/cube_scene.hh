@@ -108,18 +108,18 @@ inline Mat4 mat_mul(const Mat4 &a, const Mat4 &b)
 	return r;
 }
 
-// Model-view-projection: rotate the cube (Y spin + X tilt), push it to z = -3,
-// project with f = 2 (zn = 1, zf = 10). Cube half-size 0.5 keeps everything
-// well inside the frustum -- we have not brought up the clipper. `aspect` =
-// width/height of the viewport (1.0 for the square test RT; 1024/600 on the
-// panel) so the cube stays a cube on non-square targets.
-inline Mat4 cube_mvp(float angle, float tilt, float aspect = 1.0f)
+// Model-view-projection: rotate the cube (Y spin + X tilt), translate it to
+// world (px, py, pz) (default 0,0,-3), project with f = 2 (zn = 1, zf = 10).
+// Cube half-size 0.5. `aspect` = viewport width/height so the cube stays cubic on
+// non-square targets. With a shared depth buffer, cubes at different pz occlude
+// each other; pz must stay inside the frustum (roughly -zn..-zf, i.e. -1..-10).
+inline Mat4 cube_mvp(float angle, float tilt, float aspect = 1.0f, float px = 0.0f, float py = 0.0f, float pz = -3.0f)
 {
 	float cy = tcos(angle), sy = tsin(angle);
 	float cx = tcos(tilt), sx = tsin(tilt);
 	const Mat4 ry = {cy, 0, -sy, 0, /**/ 0, 1, 0, 0, /**/ sy, 0, cy, 0, /**/ 0, 0, 0, 1};
 	const Mat4 rx = {1, 0, 0, 0, /**/ 0, cx, sx, 0, /**/ 0, -sx, cx, 0, /**/ 0, 0, 0, 1};
-	const Mat4 tr = {1, 0, 0, 0, /**/ 0, 1, 0, 0, /**/ 0, 0, 1, 0, /**/ 0, 0, -3.0f, 1};
+	const Mat4 tr = {1, 0, 0, 0, /**/ 0, 1, 0, 0, /**/ 0, 0, 1, 0, /**/ px, py, pz, 1};
 	constexpr float f = 2.0f, zn = 1.0f, zf = 10.0f;
 	const Mat4 proj = {f / aspect, 0, 0, 0, /**/ 0, f, 0, 0, /**/ 0, 0, (zf + zn) / (zn - zf), -1, /**/
 					   0,		   0, 2 * zf * zn / (zn - zf), 0};

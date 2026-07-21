@@ -429,7 +429,8 @@ void resolve(CmdStream &cs,
 			 uint32_t width,
 			 uint32_t height,
 			 uint32_t src_tiled_stride,
-			 uint32_t dst_stride);
+			 uint32_t dst_stride,
+			 uint32_t dst_offset = 0); // byte offset into dst (place at y*stride + x*4)
 
 // =============================================================================
 //  Usage sketch -- how the current tests become API calls

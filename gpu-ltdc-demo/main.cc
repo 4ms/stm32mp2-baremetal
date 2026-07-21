@@ -1,5 +1,4 @@
 #include "aarch64/system_reg.hh"
-#include "cube_cpu_render.hh"
 #include "cube_scene.hh"
 #include "display.hh"
 #include "drivers/hal_cnt.hh"
@@ -13,28 +12,46 @@
 #include <atomic>
 #include <cstdint>
 
+// =============================================================================
+//  gpu-ltdc-demo -- N spinning cubes bouncing around in a shared 3D scene
+// =============================================================================
+// All cubes are rendered into ONE full-screen tiled render target with ONE
+// shared depth buffer, so the depth test resolves occlusion between them (cubes
+// pass in front of / behind each other by their z). The whole RT is then RS-
+// resolved (untiled) to the framebuffer the LTDC scans out. Each cube has a
+// world position (px,py,pz) + velocity and its own spin rate/size(via z).
+// Double-buffered; vblank is interrupt-driven (ltdc callback).
+
 namespace
 {
-using namespace Panel;						// HActive=1024, VActive=600
-constexpr uint32_t CW = 512, CH = 512;		// cube window (square -> cube stays cubic)
-constexpr uint32_t CX = (HActive - CW) / 2; // 256
-constexpr uint32_t CY = (VActive - CH) / 2; // 44
+using namespace Panel; // HActive=1024, VActive=600
+constexpr uint32_t FbStride = HActive * 4;
+constexpr uint32_t FbSize = FbStride * VActive;
+constexpr uint32_t Background = 0xFF101828;
 
-constexpr uint32_t pw = (CW + 15) & ~15u;
-constexpr uint32_t ph = (CH + 3) & ~3u;
-constexpr uint32_t RtStride = pw * 4;
-constexpr uint32_t RtSize = RtStride * ph;
-constexpr uint32_t DepthStride = pw * 2;
-constexpr uint32_t DepthSize = DepthStride * ph;
-constexpr uint32_t CubeFbSize = CW * CH * 4; // linear layer-2 framebuffer
-constexpr uint32_t Background = 0xFF101828;	 // the cube's clear AND the LTDC surround
+// Full-screen tiled render target + D16 depth (shared by every cube).
+constexpr uint32_t rtpw = (HActive + 15) & ~15u; // 1024
+constexpr uint32_t rtph = (VActive + 3) & ~3u;	 // 600
+constexpr uint32_t RtStride = rtpw * 4;
+constexpr uint32_t RtSize = RtStride * rtph;
+constexpr uint32_t DepthStride = rtpw * 2;
+constexpr uint32_t DepthSize = DepthStride * rtph;
 
+constexpr float Aspect = float(HActive) / float(VActive);
+constexpr float BX = 2.3f, BY = 1.3f; // world bounce bounds (keep cubes on-screen)
+
+constexpr uint32_t NCubes = 10;
+struct Cube {
+	float px, py, pz; // world position (pz negative = into the screen)
+	float vx, vy;	  // world velocity per frame
+	float angle, rate;
+};
 } // namespace
 
 int main()
 {
-	print("\nGPU -> LTDC demo: composited spinning cube\n");
-	print("==========================================\n\n");
+	print("\nGPU -> LTDC demo: ", NCubes, " bouncing cubes\n");
+	print("==================================\n\n");
 
 	SystemA35_SYSTICK_Config(0);
 
@@ -45,13 +62,13 @@ int main()
 			asm volatile("wfe");
 	}
 
-	etna::Bo rt = gpu.alloc(RtSize);	   // tiled render target (cube window)
-	etna::Bo depth = gpu.alloc(DepthSize); // D16
-	std::array<etna::Bo, 2> cube_fbs = {gpu.alloc(CubeFbSize), gpu.alloc(CubeFbSize)}; // display double buffer
+	etna::Bo rt = gpu.alloc(RtSize);
+	etna::Bo depth = gpu.alloc(DepthSize);
+	std::array<etna::Bo, 2> fbs = {gpu.alloc(FbSize), gpu.alloc(FbSize)}; // full-screen double buffer
 	etna::Bo vtx = gpu.alloc(sizeof(kCubeVerts));
 	etna::Bo vs = gpu.alloc(sizeof(kCubeVs));
 	etna::Bo ps = gpu.alloc(sizeof(kCubeFs));
-	if (!rt || !depth || !cube_fbs[0] || !cube_fbs[1] || !vtx || !vs || !ps) {
+	if (!rt || !depth || !fbs[0] || !fbs[1] || !vtx || !vs || !ps) {
 		print("FAILED: buffer alloc\n");
 		while (true)
 			asm volatile("wfe");
@@ -64,135 +81,129 @@ int main()
 	std::ranges::copy(kCubeFs, ps.span<uint32_t>().begin());
 	ps.cpu_fini(etna::RelocWrite);
 
-	for (auto &fb : cube_fbs) {
+	// Paint both buffers once so the pre-first-flip scan isn't garbage (the whole
+	// RT is resolved every frame, so nothing here leaks into the animation).
+	for (auto &fb : fbs) {
 		std::ranges::fill(fb.span<uint32_t>(), Background);
 		fb.cpu_fini(etna::RelocWrite);
 	}
 
-	// Command streams are allocated once and reused every frame (reset()) because
-	// the GPU pool is a bump allocator with no free.
-	auto csc = gpu.new_cmd_stream(256);
-	auto csd = gpu.new_cmd_stream(1024);
-	auto csr = gpu.new_cmd_stream(256);
-
-	// One frame of the cube: clear -> draw -> resolve, three separate barriers.
-	auto render_frame = [&](const Mat4 &m, etna::Bo &target) -> bool {
-		csc.reset();
-		etna::clear(csc, rt, pw, ph, Background);
-		etna::clear(csc, depth, pw, DepthSize / (pw * 4), 0xFFFFFFFF); // D16 "far"
-		if (!gpu.submit_and_wait(csc))
-			return false;
-
-		csd.reset();
-		etna::MeshDraw d{
-			.rt = &rt,
-			.rt_stride = RtStride,
-			.vtx = &vtx,
-			.vtx_stride = 28,
-			.vs = &vs,
-			.vs_words = kCubeVs.size(),
-			.vs_temps = 4,
-			.ps = &ps,
-			.ps_words = kCubeFs.size(),
-			.ps_temps = 2,
-			.ps_out_reg = 1,
-			.uniforms = m,
-			.width = CW,
-			.height = CH,
-			.vertex_count = 36,
-			.depth = &depth,
-			.depth_stride = DepthStride,
-		};
-		etna::emit_mesh(csd, d);
-		if (!gpu.submit_and_wait(csd))
-			return false;
-
-		csr.reset();
-		etna::resolve(csr, target, rt, CW, CH, RtStride, CW * 4);
-		return gpu.submit_and_wait(csr);
-	};
-
-	// Sanity-check one frame against the CPU reference renderer before we spin:
-	// every pixel outside the ~1.25px edge band must match exactly. Confirms the
-	// GPU transform + depth + resolve agree with the reference (0 mismatches).
-	{
-		etna::Bo cimg = gpu.alloc(CubeFbSize), cband = gpu.alloc(CW * CH), czbuf = gpu.alloc(CW * CH * 4);
-		if (cimg && cband && czbuf) {
-			constexpr float A = 0.9f;
-			Mat4 vm = cube_mvp(A, 0.5f * tsin(A * 0.7f), 1.0f);
-			cpu_render_cube(vm, CW, CH, cimg.span<uint32_t>(), cband.span<uint8_t>(), czbuf.span<float>(), Background);
-			if (render_frame(vm, cube_fbs[1])) {
-				cube_fbs[1].cpu_prep(etna::RelocRead);
-				auto g = cube_fbs[1].span<const uint32_t>();
-				auto c = cimg.span<const uint32_t>();
-				auto b = cband.span<const uint8_t>();
-				uint32_t mm = 0;
-				for (uint32_t i = 0; i < CW * CH; i++)
-					if (!b[i] && g[i] != c[i])
-						mm++;
-				print("verify: ", mm, " mismatches vs CPU reference", mm == 0 ? "  \\o/\n" : "\n");
-			}
-		}
+	// Deterministic spread of positions, depths, velocities, and spin rates.
+	static const float speeds[NCubes] = {1.35f, 0.7f, 0.22f, 1.1f, 1.7f, 2.5f, 0.9f, 4.3f, 1.3f, 2.1f};
+	Cube cubes[NCubes];
+	for (uint32_t i = 0; i < NCubes; i++) {
+		float fi = float(i);
+		cubes[i].px = BX * tsin(fi * 1.7f + 0.5f);
+		cubes[i].py = BY * tsin(fi * 2.3f + 1.0f);
+		cubes[i].pz = -2.0f - 0.8f * float(i); // -4.0 .. -6.0: varied depth
+		cubes[i].vx = (0.020f + 0.004f * float(i % 3)) * ((i & 1) ? 1.f : -1.f);
+		cubes[i].vy = (0.028f + 0.005f * float(i % 2)) * ((i & 2) ? 1.f : -1.f);
+		cubes[i].angle = fi * 0.6f;
+		cubes[i].rate = speeds[i] * (2 * kPi / 240.0f);
 	}
 
-	// Single windowed layer: the CW x CH cube at (CX, CY), Background fills around it.
-	if (!display_init(cube_fbs[0].gpu_addr(), CX, CY, CW, CH, Background)) {
+	auto cs = gpu.new_cmd_stream(256);	 // clear / resolve
+	auto csd = gpu.new_cmd_stream(1024); // per-cube draw
+
+	// Render the whole scene into `fb`: clear the shared RT+depth, draw every cube
+	// (depth-tested against each other), then resolve the full RT to the fb.
+	auto render_scene = [&](etna::Bo &fb) -> bool {
+		cs.reset();
+		etna::clear(cs, rt, rtpw, rtph, Background);
+		etna::clear(cs, depth, rtpw, DepthSize / (rtpw * 4), 0xFFFFFFFF); // D16 far
+		if (!gpu.submit_and_wait(cs))
+			return false;
+
+		for (auto &cb : cubes) {
+			csd.reset();
+			Mat4 m = cube_mvp(cb.angle, 0.3f * tsin(cb.angle * 0.8f), Aspect, cb.px, cb.py, cb.pz);
+			etna::MeshDraw d{
+				.rt = &rt,
+				.rt_stride = RtStride,
+				.vtx = &vtx,
+				.vtx_stride = 28,
+				.vs = &vs,
+				.vs_words = kCubeVs.size(),
+				.vs_temps = 4,
+				.ps = &ps,
+				.ps_words = kCubeFs.size(),
+				.ps_temps = 2,
+				.ps_out_reg = 1,
+				.uniforms = m,
+				.width = HActive,
+				.height = VActive,
+				.vertex_count = 36,
+				.depth = &depth,
+				.depth_stride = DepthStride,
+			};
+			etna::emit_mesh(csd, d);
+			if (!gpu.submit_and_wait(csd))
+				return false;
+		}
+
+		cs.reset();
+		etna::resolve(cs, fb, rt, HActive, VActive, RtStride, FbStride);
+		return gpu.submit_and_wait(cs);
+	};
+
+	auto move_cubes = [&] {
+		for (auto &cb : cubes) {
+			cb.px += cb.vx;
+			if (cb.px > BX || cb.px < -BX)
+				cb.vx = -cb.vx;
+			cb.py += cb.vy;
+			if (cb.py > BY || cb.py < -BY)
+				cb.vy = -cb.vy;
+			cb.angle += cb.rate;
+			if (cb.angle > 20 * kPi)
+				cb.angle -= 20 * kPi;
+		}
+	};
+
+	if (!display_init(fbs[0].gpu_addr())) { // full-screen single layer
 		print("FAILED: LVDS PLL never locked\n");
 		while (true)
 			asm volatile("wfe");
 	}
-	print("Display up: cube ", CW, "x", CH, " at ", CX, ",", CY, "\n");
-
+	print("Display up: ", NCubes, " cubes\n");
 	print("Spinning...\n");
-	float angle = 0.0f;
-	uint32_t cur_fb = 1;
+
+	uint32_t cur = 1; // fbs[0] is being scanned; render into fbs[1] first
 	uint32_t frames = 0;
 	auto t0 = read_cntpct();
 	const uint32_t tick_khz = read_cntfreq() / 1000;
-	uint32_t fps = 0;
-	uint32_t worst_render_tm = 0;
-
-	auto animate_frame = [&] {
-		angle += 2 * kPi / 240.0f;
-		if (angle > 20 * kPi)
-			angle -= 20 * kPi;
-		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), 1.0f);
-
-		auto render_tm_start = read_cntpct();
-		if (!render_frame(m, cube_fbs[cur_fb])) {
-			gpu.dump_status("cube frame");
-			return;
-		}
-		auto render_tm_end = read_cntpct();
-		worst_render_tm = std::max<uint32_t>(worst_render_tm, (render_tm_end - render_tm_start) * 1000 / tick_khz);
-
-		ltdc_set_framebuffer(cube_fbs[cur_fb].gpu_addr());
-
-		// Toggle buffer (double-buffered)
-		cur_fb ^= 1;
-	};
+	uint32_t worst_us = 0;
 
 	std::atomic<bool> frame_ready{};
-
 	ltdc_set_callback([&] { frame_ready.store(true, std::memory_order_release); });
 
 	while (true) {
-		if (frame_ready.load(std::memory_order_acquire)) {
-			frame_ready.store(false, std::memory_order_release);
-			animate_frame();
+		if (!frame_ready.load(std::memory_order_acquire))
+			continue;
+		frame_ready.store(false, std::memory_order_release);
 
-			if (++frames % 300 == 0) {
-				auto now = read_cntpct();
-				uint32_t us = ((now - t0) * 1000 / 300 / tick_khz);
-				fps = us ? 1000000 / us : 0;
-				t0 = now;
+		auto r0 = read_cntpct();
+		if (!render_scene(fbs[cur])) {
+			gpu.dump_status("scene");
+			break;
+		}
+		worst_us = std::max<uint32_t>(worst_us, (read_cntpct() - r0) * 1000 / tick_khz);
 
-				print(fps, " fps, worst render time: ", worst_render_tm, " us = ");
-				print(((fps * worst_render_tm + 5'000) / 10'000), "%\n");
-				worst_render_tm = 0;
-			}
+		ltdc_set_framebuffer(fbs[cur].gpu_addr()); // vblank-latched flip
+		cur ^= 1;
+		move_cubes();
+
+		if (++frames % 120 == 0) {
+			auto now = read_cntpct();
+			uint32_t us = (now - t0) * 1000 / 120 / tick_khz;
+			print(us ? 1000000 / us : 0, " fps, worst render ", worst_us, " us\n");
+			t0 = now;
+			worst_us = 0;
 		}
 	}
+
+	while (true)
+		asm volatile("wfe");
 }
 
 extern "C" void assert_failed(uint8_t *file, uint32_t line)
