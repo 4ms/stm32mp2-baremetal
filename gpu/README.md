@@ -70,18 +70,21 @@ We do two tests:
 - `test_blit_convert()`: calls `etna::blit()` to copy with a per-pixel
   transform. The test swaps R<->B pixels (BlitFlags::BlitSwapRB)
 
-The RS is slow at filling bytes in DDR RAM: a 1024x1024 fill is 4x slower
-than a CPU memset (about ~830k ticks vs. ~220k ticks). It's not clear why --
-this is still an open TODO. It seems as if we're limited to \~325MB/s max
-bandwidth for DDR4 writes. GPUs are good at doing parallel operations but a
-fill is a serial memory write (without any benefit of caches), so that might
-just be what we're hitting.
 
-Regardless, the GPU runs asynchronously (so is basically "free") and won't
-dirty our CPU's L1/L2 data cache if we only intend to fill an area of a
-framebuffer that's directly displayed on a screen. Still, the HPDMA would
-probably be much faster if you needed to fill a large area while the CPU does
-other work.
+```
+RS fill (1024x1024) in 106120 ticks (2529 MB/s)   -- verified. \o/
+  vs. CPU fill (1024x1024) in 65341 ticks (4108 MB/s)
+```
+
+The RS is about 1.6x slower at filling bytes in DDR RAM than a CPU memset
+(about ~106k ticks vs. ~65k ticks). GPUs are good at doing parallel operations,
+so this is the worst case test (as you'll see later, when you put the GPU to
+work, it's 10x or faster than the CPU). Also, the GPU runs asynchronously (so
+is basically "free") and won't dirty our CPU's L1/L2 data cache if we only
+intend to fill an area of a framebuffer that's directly displayed on a screen.
+It would be interesting to see if the HPDMA would be much faster if you needed
+to fill a large area while the CPU does other work.
+
 
 A final test we do after `test_fill()` and `test_blit_convert()` is to test
 the throughoutput of the ring buffer when using the WAIT/LINK scheme vs. when
@@ -122,10 +125,14 @@ Finally, we do `test_image_blend` which alpha-blends two 512×512 ARGB images
 (treated as u8). We measure the time to do that, and compare that to the time
 to do the same operation on the CPU.
 
-The GPU is a little slower than the CPU, by around 1.6x (see above). That 
-still seems useful for doing work in the background, and considering this is a
-low-computation example, I think it proves the GPU's worth. The GPU runs at about
-half the clock speed as the CPU, so that's actually quite good to see 1.6x the time.
+Here we are actually doing computation with GPU, so we see it's 6-7x faster than a
+naive CPU implementation:
+
+```
+Alpha-blended two 512x512 ARGB images (GPU) in 155468 ticks
+GPU alpha-blended 512x512 ARGB (per-channel lerp) -- verified. \o/
+Same blend on the CPU in 1084726 ticks (CPU / GPU = 6.9x)
+```
 
 ## 3D — the graphics pipe (drawing triangles)
 
@@ -194,11 +201,6 @@ Some new things checked here:
 The "API" is modeled on libdrm's `etna_cmd_stream` / `etna_bo` interface, 
 which goes between Gallium and the kernel drivers.
 
-seam in the middle of the Linux etnaviv stack that Mesa's operation emitters are
-written against. Providing it on baremetal means Mesa's MIT emitter code ports
-without much friction (what *can't* port easily is Mesa itself: Gallium + the
-NIR shader compiler).
-
 - **`etna::Gpu`**  
     - `init()`: bring-up + ring buffer setup-
     - `alloc()` DDR pool
@@ -255,53 +257,54 @@ GPU Example (etna API)
 etna: bringing up GPU
 etna: VDDGPU not present (CR12 = 0x0)
 etna: VDDGPU off -- trying to enable buck3 over I2C7...
-PMIC product ID 0x20, version 0x11
-Buck3 (VDDGPU) was: voltage code 0, control 0x0
-Buck3 (VDDGPU) now: voltage code 40 (900mV), control 0x1
+pmic: product ID 0x20, version 0x11
+pmic: Buck3 (VDDGPU) was: voltage code 0, control 0x0
+pmic: Buck3 (VDDGPU) now: voltage code 40 (900mV), control 0x1
+etna: gpu pll set to 800 MHz
 etna: GPU mem-clock ~600 MHz
 
 etna: GC model 0x8000 rev 0x6205 (product 0x80003, customer 0x15)
 
 RS Engine tests:
-RS fill (1024x1024) in 823327 ticks (326 MB/s)
-GPU filled 1024x1024 with 0x4D5A11AC -- verified. \o/
-RS blit+convert (1024x1024) in 3260037 ticks
+RS fill (1024x1024) in 106120 ticks (2529 MB/s)   -- verified. \o/
+  vs. CPU fill (1024x1024) in 65341 ticks (4108 MB/s)
+RS blit+convert (1024x1024) in 607153 ticks
 GPU copied 1024x1024, swapping R<->B -- verified. \o/
-Ring throughput (16 x 64x64 clears): sequential 62973 ticks, pipelined 58191 ticks
+Ring throughput (16 x 64x64 clears): sequential 5269 ticks, pipelined 3336 ticks
 
 PPU compute/shader tests:
-GPU copy over 64x6 (384 bytes) in 2062 ticks -- verified. \o/
-GPU copy over 128x32 (4096 bytes) in 5648 ticks -- verified. \o/
-GPU copy over 256x64 (16384 bytes) in 16201 ticks -- verified. \o/
-GPU copy over 32x4 (128 bytes) in 1752 ticks -- verified. \o/
-GPU add(out=in+in) over 128x32 (4096 bytes) in 5684 ticks -- verified. \o/
-GPU addsat(min(in+in,255)) over 128x32 (4096 bytes) in 5564 ticks -- verified. \o/
-GPU add2(A+B, ramp+inv=255) over 128x32 (4096 bytes) in 5712 ticks -- verified. \o/
-GPU blend-add(sat(A+B)) over 128x32 (4096 bytes) in 5551 ticks -- verified. \o/
-GPU and(in & 0x0F, imm) over 64x6 (384 bytes) in 2335 ticks -- verified. \o/
-GPU flop-reset(dp2x8, const in) over 64x6 (384 bytes) in 2215 ticks -- verified. \o/
-GPU mul2((A*B)&0xFF) over 64x6 (384 bytes) in 2380 ticks -- verified. \o/
-GPU mulhi2(mul_hi(A,B)) over 64x6 (384 bytes) in 2176 ticks -- verified. \o/
-GPU not(~in) over 64x6 (384 bytes) in 2042 ticks -- verified. \o/
-GPU blend-lerp(a*A + b*(1-A)) over 128x32 (4096 bytes) in 8421 ticks -- verified. \o/
-Alpha-blended two 512x512 ARGB images (GPU) in 1648645 ticks
+GPU copy over 64x6 (384 bytes) in 422 ticks -- verified. \o/
+GPU copy over 128x32 (4096 bytes) in 618 ticks -- verified. \o/
+GPU copy over 256x64 (16384 bytes) in 1170 ticks -- verified. \o/
+GPU copy over 32x4 (128 bytes) in 353 ticks -- verified. \o/
+GPU add(out=in+in) over 128x32 (4096 bytes) in 529 ticks -- verified. \o/
+GPU addsat(min(in+in,255)) over 128x32 (4096 bytes) in 531 ticks -- verified. \o/
+GPU add2(A+B, ramp+inv=255) over 128x32 (4096 bytes) in 786 ticks -- verified. \o/
+GPU blend-add(sat(A+B)) over 128x32 (4096 bytes) in 770 ticks -- verified. \o/
+GPU and(in & 0x0F, imm) over 64x6 (384 bytes) in 355 ticks -- verified. \o/
+GPU flop-reset(dp2x8, const in) over 64x6 (384 bytes) in 385 ticks -- verified. \o/
+GPU mul2((A*B)&0xFF) over 64x6 (384 bytes) in 456 ticks -- verified. \o/
+GPU mulhi2(mul_hi(A,B)) over 64x6 (384 bytes) in 474 ticks -- verified. \o/
+GPU not(~in) over 64x6 (384 bytes) in 437 ticks -- verified. \o/
+GPU blend-lerp(a*A + b*(1-A)) over 128x32 (4096 bytes) in 947 ticks -- verified. \o/
+Alpha-blended two 512x512 ARGB images (GPU) in 155770 ticks
 GPU alpha-blended 512x512 ARGB (per-channel lerp) -- verified. \o/
-Same blend on the CPU in 1083585 ticks (GPU / CPU = 1.5x)
+Same blend on the CPU in 1084172 ticks (CPU / GPU = 6.9x)
 
 3D tests:
-3D triangle drawn in 4660 ticks
+3D triangle drawn in 510 ticks
 RT: 1301 of 4096 pixels drawn, color 0xFFFF0000 (uniform)
 GPU drew a solid triangle in 0xFFFF0000 -- 3D pipe verified. \o/
-RS resolve (untile 64x64) in 4334 ticks
+RS resolve (untile 64x64) in 417 ticks
 shape: exact (NDC +Y = increasing framebuffer rows)
 resolved image matches the expected triangle -- shape verified. \o/
-gradient triangle drawn in 6901 ticks
+gradient triangle drawn in 605 ticks
 RT: 1301 of 4096 pixels drawn. corners seen R=1 G=1 B=1 (varied)
 GPU interpolated a per-vertex-color varying across the triangle. \o/
-depth: two triangles drawn in 8951 ticks
+depth: two triangles drawn in 944 ticks
 depth test: 1951 drawn -> 1301 red (near), 650 green (far)
 GPU depth test occluded the farther triangle -- depth buffer works. \o/
-textured triangle drawn in 7264 ticks
+textured triangle drawn in 669 ticks
 texture test: 1301 drawn -> R=469 G=494 B=156 W=182 other=0
 GPU sampled a 2D texture across the triangle -- texturing works. \o/
 cube frame 0: 658 px drawn, 0 mismatches (562 edge px ignored)
@@ -312,10 +315,10 @@ cube frame 4: 635 px drawn, 0 mismatches (558 edge px ignored)
 cube frame 5: 771 px drawn, 0 mismatches (686 edge px ignored)
 cube frame 6: 739 px drawn, 0 mismatches (628 edge px ignored)
 cube frame 7: 735 px drawn, 0 mismatches (645 edge px ignored)
-spinning cube: 8 frames avg 12655 ticks (draw+resolve), faces seen 0x3F
+spinning cube: 8 frames avg 1102 ticks (draw+resolve), faces seen 0x3F
 GPU spun a cube: VS matrix transform + depth + rasterization all match the CPU. \o/
 
-SUCCESS 
+SUCCESS
 ```
 
 ## Running
@@ -323,4 +326,6 @@ SUCCESS
 ```bash
 make
 make flash SD=/dev/diskX   # or copy build/main.uimg to the app partition
+
+# or flash using TRACE32: make flash-t32
 ```
