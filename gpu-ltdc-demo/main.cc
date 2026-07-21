@@ -10,6 +10,7 @@
 #include "print/print.hh"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdint>
 
 namespace
@@ -144,48 +145,54 @@ int main()
 
 	print("Spinning...\n");
 	float angle = 0.0f;
-	uint32_t back = 1; // cube_fbs[0] is being scanned
+	uint32_t cur_fb = 1;
 	uint32_t frames = 0;
 	auto t0 = read_cntpct();
 	const uint32_t tick_khz = read_cntfreq() / 1000;
 	uint32_t fps = 0;
 	uint32_t worst_render_tm = 0;
 
-	while (true) {
+	auto animate_frame = [&] {
 		angle += 2 * kPi / 240.0f;
 		if (angle > 20 * kPi)
 			angle -= 20 * kPi;
 		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), 1.0f);
 
 		auto render_tm_start = read_cntpct();
-		if (!render_frame(m, cube_fbs[back])) {
+		if (!render_frame(m, cube_fbs[cur_fb])) {
 			gpu.dump_status("cube frame");
-			break;
+			return;
 		}
 		auto render_tm_end = read_cntpct();
-		worst_render_tm = std::max<uint32_t>(worst_render_tm, (render_tm_end - render_tm_start) / (tick_khz / 1000));
+		worst_render_tm = std::max<uint32_t>(worst_render_tm, (render_tm_end - render_tm_start) * 1000 / tick_khz);
 
-		ltdc_set_framebuffer(cube_fbs[back].gpu_addr());
-
-		if (++frames % 300 == 0) {
-			auto now = read_cntpct();
-			uint32_t us = ((now - t0) * 1000 / 300 / tick_khz);
-			fps = us ? 1000000 / us : 0;
-			t0 = now;
-
-			print(fps, " fps, worst render time: ", worst_render_tm, " us = ");
-			print(((fps * worst_render_tm + 5'000) / 10'000), "%\n");
-			worst_render_tm = 0;
-		}
-
-		ltdc_wait_vblank(); // vsync: WFE until the LTDC LINE IRQ (tear-free flip)
+		ltdc_set_framebuffer(cube_fbs[cur_fb].gpu_addr());
 
 		// Toggle buffer (double-buffered)
-		back ^= 1;
-	}
+		cur_fb ^= 1;
+	};
 
-	while (true)
-		asm volatile("wfe");
+	std::atomic<bool> frame_ready{};
+
+	ltdc_set_callback([&] { frame_ready.store(true, std::memory_order_release); });
+
+	while (true) {
+		if (frame_ready.load(std::memory_order_acquire)) {
+			frame_ready.store(false, std::memory_order_release);
+			animate_frame();
+
+			if (++frames % 300 == 0) {
+				auto now = read_cntpct();
+				uint32_t us = ((now - t0) * 1000 / 300 / tick_khz);
+				fps = us ? 1000000 / us : 0;
+				t0 = now;
+
+				print(fps, " fps, worst render time: ", worst_render_tm, " us = ");
+				print(((fps * worst_render_tm + 5'000) / 10'000), "%\n");
+				worst_render_tm = 0;
+			}
+		}
+	}
 }
 
 extern "C" void assert_failed(uint8_t *file, uint32_t line)

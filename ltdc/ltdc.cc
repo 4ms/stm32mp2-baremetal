@@ -46,12 +46,15 @@ constexpr uint32_t BF2_1PAXCA = 0x007;
 // for profiling/metrics.
 volatile uint32_t g_vblank = 0;
 
+Callback vblank_cb = [] {};
+
 void ltdc_on_irq()
 {
 	uint32_t isr = LTDC->ISR;
 	LTDC->ICR = isr; // clear everything we took (write-1-to-clear)
 	if (isr & IT_LINE) {
 		g_vblank = g_vblank + 1;
+		vblank_cb();
 	}
 }
 } // namespace
@@ -114,7 +117,9 @@ void ltdc_set_framebuffer(uint32_t fb_addr)
 	LTDC_Layer1->RCR = LXRCR_VBR; // latch at next vblank (tear-free)
 }
 
+void ltdc_set_callback(Callback &&cb)
 {
+	vblank_cb = std::move(cb);
 }
 
 bool ltdc_wait_vblank()
