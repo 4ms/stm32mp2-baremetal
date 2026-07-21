@@ -89,15 +89,23 @@ int main()
 		fb.cpu_fini(etna::RelocWrite);
 	}
 
+	// Command streams are allocated ONCE and reused every frame (reset()). The GPU
+	// pool is a bump allocator with no free, so allocating fresh streams per frame
+	// leaks ~6 KB/frame and exhausts the 64 MB pool in ~3 min. submit_and_wait
+	// completes each op before the next, so reusing the backing Bo is safe.
+	auto csc = gpu.new_cmd_stream(256);
+	auto csd = gpu.new_cmd_stream(1024);
+	auto csr = gpu.new_cmd_stream(256);
+
 	// One frame of the cube: clear -> draw -> resolve, three separate barriers.
 	auto render_frame = [&](const Mat4 &m, etna::Bo &target) -> bool {
-		auto csc = gpu.new_cmd_stream(256);
+		csc.reset();
 		etna::clear(csc, rt, pw, ph, Background);
 		etna::clear(csc, depth, pw, DepthSize / (pw * 4), 0xFFFFFFFF); // D16 "far"
 		if (!gpu.submit_and_wait(csc))
 			return false;
 
-		auto csd = gpu.new_cmd_stream(1024);
+		csd.reset();
 		etna::MeshDraw d{
 			.rt = &rt,
 			.rt_stride = RtStride,
@@ -121,7 +129,7 @@ int main()
 		if (!gpu.submit_and_wait(csd))
 			return false;
 
-		auto csr = gpu.new_cmd_stream(256);
+		csr.reset();
 		etna::resolve(csr, target, rt, CW, CH, RtStride, CW * 4);
 		return gpu.submit_and_wait(csr);
 	};
@@ -163,22 +171,38 @@ int main()
 	uint32_t frames = 0;
 	auto t0 = read_cntpct();
 	const uint32_t tick_khz = static_cast<uint32_t>(read_cntfreq() / 1000);
+	bool pending_fps = false;
+	uint32_t fps = 0;
 
 	while (true) {
 		angle += 2 * kPi / 240.0f;
+		// The motion repeats every 20*pi (y-spin period 2*pi, wobble period
+		// 2*pi/0.7 -> LCM = 20*pi = 10 turns); wrap there so `angle` stays small.
+		if (angle > 20 * kPi)
+			angle -= 20 * kPi;
 		Mat4 m = cube_mvp(angle, 0.5f * tsin(angle * 0.7f), 1.0f);
 		if (!render_frame(m, cube_fbs[back])) {
 			gpu.dump_status("cube frame");
 			break;
 		}
 		ltdc_layer2_set_framebuffer(cube_fbs[back].gpu_addr());
-		ltdc_wait_reload();
+
+		// Emit the fps line AFTER arming the flip, BEFORE ltdc_wait_reload, so the
+		// blocking (~7 ms) UART print overlaps the idle vblank wait instead of
+		// stealing time from a frame (which otherwise dropped a frame each print).
+		if (pending_fps) {
+			print(fps, " fps\n");
+			pending_fps = false;
+		}
+
+		ltdc_wait_reload(); // vsync: blocks until the panel vblank (tear-free flip)
 		back ^= 1;
 
-		if (++frames % 120 == 0) {
+		if (++frames % 300 == 0) {
 			auto now = read_cntpct();
-			uint32_t ms = static_cast<uint32_t>((now - t0) / 120 / tick_khz);
-			print("120 frames, ", ms, " ms/frame (~", ms ? 1000 / ms : 0, " fps), ISR 0x", Hex{ltdc_isr()}, "\n");
+			uint32_t us = static_cast<uint32_t>((now - t0) * 1000 / 300 / tick_khz);
+			fps = us ? 1000000 / us : 0;
+			pending_fps = true; // printed next iteration, hidden under the vblank wait
 			t0 = now;
 		}
 	}

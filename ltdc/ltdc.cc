@@ -122,11 +122,19 @@ void ltdc_layer2_set_framebuffer(uint32_t fb_addr)
 
 bool ltdc_wait_reload()
 {
-	// The VBR reload latches at the next vblank; RRIF (ISR bit 3) confirms it.
-	// Waiting here before rendering into the just-retired front buffer is what
-	// makes double-buffering tear-free. ~25 ms timeout (> one 60 Hz frame).
+	// Block until the next active->vblank edge of the scan-out (CYPOS crossing into
+	// the front porch at line AccumActH). The layer VBR flip we armed latches at
+	// that vblank, so this paces exactly one rendered+displayed frame per refresh
+	// -> tear-free. Detecting the EDGE (two phases) is race-free: unlike a "clear
+	// the flag then poll it" scheme (IT_RR never fires on MP25; IT_LINE could read
+	// already-set right after the clear and return early -> a dropped frame), there
+	// is no flag to catch stale, so no early return and no phase drift.
+	// Phase 1: make sure we start OUTSIDE vblank (in active/back-porch region).
+	for (int i = 0; i < 25000 && (LTDC->CPSR & 0xFFFF) >= AccumActH; i++)
+		udelay(1);
+	// Phase 2: wait until the scan reaches the start of vblank.
 	for (int i = 0; i < 25000; i++) {
-		if (LTDC->ISR & IT_RR)
+		if ((LTDC->CPSR & 0xFFFF) >= AccumActH)
 			return true;
 		udelay(1);
 	}
