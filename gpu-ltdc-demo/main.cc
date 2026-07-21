@@ -12,15 +12,8 @@
 #include <atomic>
 #include <cstdint>
 
-// =============================================================================
 //  gpu-ltdc-demo -- N spinning cubes bouncing around in a shared 3D scene
 // =============================================================================
-// All cubes are rendered into ONE full-screen tiled render target with ONE
-// shared depth buffer, so the depth test resolves occlusion between them (cubes
-// pass in front of / behind each other by their z). The whole RT is then RS-
-// resolved (untiled) to the framebuffer the LTDC scans out. Each cube has a
-// world position (px,py,pz) + velocity and its own spin rate/size(via z).
-// Double-buffered; vblank is interrupt-driven (ltdc callback).
 
 namespace
 {
@@ -50,6 +43,12 @@ struct Cube {
 };
 } // namespace
 
+void panic()
+{
+	while (true)
+		asm volatile("wfe");
+}
+
 int main()
 {
 	print("\nGPU -> LTDC demo: ", NCubes, " bouncing cubes\n");
@@ -58,28 +57,31 @@ int main()
 	SystemA35_SYSTICK_Config(0);
 
 	etna::Gpu gpu;
+
 	if (!gpu.init()) {
 		print("FAILED: GPU init\n");
-		while (true)
-			asm volatile("wfe");
+		panic();
 	}
 
 	etna::Bo rt = gpu.alloc(RtSize);
 	etna::Bo depth = gpu.alloc(DepthSize);
 	std::array<etna::Bo, 2> fbs = {gpu.alloc(FbSize), gpu.alloc(FbSize)}; // full-screen double buffer
 	std::array<etna::Bo, NCubes> vtxs;									  // per-cube colored geometry
+
 	for (auto &b : vtxs)
 		b = gpu.alloc(sizeof(kCubeVerts));
+
 	etna::Bo vs = gpu.alloc(sizeof(kCubeVs));
 	etna::Bo ps = gpu.alloc(sizeof(kCubeFs));
+
 	if (!rt || !depth || !fbs[0] || !fbs[1] || !vtxs[NCubes - 1] || !vs || !ps) {
 		print("FAILED: buffer alloc\n");
-		while (true)
-			asm volatile("wfe");
+		panic();
 	}
 
 	std::ranges::copy(kCubeVs, vs.span<uint32_t>().begin());
 	vs.cpu_fini(etna::RelocWrite);
+
 	std::ranges::copy(kCubeFs, ps.span<uint32_t>().begin());
 	ps.cpu_fini(etna::RelocWrite);
 
@@ -109,14 +111,14 @@ int main()
 		vtxs[i].cpu_fini(etna::RelocWrite);
 	}
 
-	// Paint both buffers once so the pre-first-flip scan isn't garbage (the whole
+	// Paint both buffers once so the first render isn't garbage (the whole
 	// RT is resolved every frame, so nothing here leaks into the animation).
 	for (auto &fb : fbs) {
 		std::ranges::fill(fb.span<uint32_t>(), Background);
 		fb.cpu_fini(etna::RelocWrite);
 	}
 
-	// Deterministic spread of positions, depths, velocities, and spin rates.
+	// Spread of positions, depths, velocities, and spin rates
 	Cube cubes[NCubes];
 	for (uint32_t i = 0; i < NCubes; i++) {
 		float fi = float(i);
@@ -208,6 +210,7 @@ int main()
 	const uint32_t tick_khz = read_cntfreq() / 1000;
 	uint32_t worst_us = 0;
 
+	// Flag for telling us when buffer is ready to swap
 	std::atomic<bool> frame_ready{};
 	ltdc_set_callback([&] { frame_ready.store(true, std::memory_order_release); });
 
@@ -219,7 +222,7 @@ int main()
 		auto r0 = read_cntpct();
 		if (!render_scene(fbs[cur])) {
 			gpu.dump_status("scene");
-			break;
+			panic();
 		}
 		worst_us = std::max<uint32_t>(worst_us, (read_cntpct() - r0) * 1000 / tick_khz);
 
@@ -235,9 +238,6 @@ int main()
 			worst_us = 0;
 		}
 	}
-
-	while (true)
-		asm volatile("wfe");
 }
 
 extern "C" void assert_failed(uint8_t *file, uint32_t line)
