@@ -87,17 +87,19 @@ bool test_fill(etna::Gpu &gpu, const etna::Bo &fb)
 	auto end = read_cntpct();
 	auto ddr = perfmon::ddr_stop();
 	uint32_t mbps = (start != end) ? static_cast<uint32_t>(ImgWidth * ImgHeight * 4 * 64 / (end - start)) : 0;
-	print("RS fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)\n");
-	perfmon::ddr_report("RS fill", ddr, (uint64_t)ImgWidth * ImgHeight * 4);
+	print("RS fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)");
+
+	// Uncomment to print ddr report:
+	// perfmon::ddr_report("RS fill", ddr, (uint64_t)ImgWidth * ImgHeight * 4);
 
 	fb.cpu_prep(etna::RelocRead);
 	for (uint32_t i = 0; i < ImgWidth * ImgHeight; i++) {
 		if (pixels[i] != ClearColor) {
-			print("ERROR: fill wrong at [", i, "] = 0x", Hex{pixels[i]}, "\n");
+			print("\nERROR: fill wrong at [", i, "] = 0x", Hex{pixels[i]}, "\n");
 			return false;
 		}
 	}
-	print("GPU filled ", ImgWidth, "x", ImgHeight, " with 0x", Hex{ClearColor}, " -- verified. \\o/\n");
+	print("   -- verified. \\o/\n");
 	return true;
 }
 
@@ -121,8 +123,11 @@ bool test_cpu_fill(const etna::Bo &fb)
 	auto ddr = perfmon::ddr_stop();
 
 	uint32_t mbps = (start != end) ? static_cast<uint32_t>(ImgWidth * ImgHeight * 4 * 64 / (end - start)) : 0;
-	print("CPU fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)\n");
-	perfmon::ddr_report("CPU fill", ddr, (uint64_t)ImgWidth * ImgHeight * 4);
+	print("  vs. CPU fill (", ImgWidth, "x", ImgHeight, ") in ", (end - start), " ticks (", mbps, " MB/s)\n");
+
+	// Uncomment to print ddr report:
+	// perfmon::ddr_report("CPU fill", ddr, (uint64_t)ImgWidth * ImgHeight * 4);
+
 	return true;
 }
 
@@ -237,10 +242,10 @@ bool test_image_blend(etna::Gpu &gpu)
 	auto cpu_ticks = read_cntpct() - cstart;
 	print("Same blend on the CPU in ", cpu_ticks, " ticks");
 	if (cpu_ticks) {
-		int ratio = (gpu_ticks * 10 + 5) / cpu_ticks;
+		int ratio = (cpu_ticks * 10 + 5) / gpu_ticks;
 		int i_ratio = ratio / 10;
 		int f_ratio = ratio - i_ratio * 10;
-		print(" (GPU / CPU = ", i_ratio, ".", f_ratio, "x)");
+		print(" (CPU / GPU = ", i_ratio, ".", f_ratio, "x)");
 	}
 	print("\n");
 

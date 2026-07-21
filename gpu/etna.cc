@@ -65,6 +65,7 @@ bool clock_and_reset_gpu()
 	};
 	static_assert(pll3.calc_freq(40'000'000) == 800'000'000);
 	RCC_Clocks::set_pll<RCC_Clocks::PLL3>(pll3);
+	print("etna: gpu pll set to ", pll3.calc_freq(40'000'000) / 1'000'000, " MHz\n");
 
 	unsigned timeout = 10'000;
 	while (!RCC_Clocks::PLL3::Ready::read()) {
@@ -74,6 +75,8 @@ bool clock_and_reset_gpu()
 		}
 		udelay(1);
 	}
+
+	udelay(10);
 
 	RCC_Reset::GPU_::set();
 	udelay(10);

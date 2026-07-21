@@ -72,7 +72,6 @@ bool gpu_mmu_enable()
 	}
 
 	gpu_write(MMUv2_SEC_CONTROL, 1); // enable the MMU
-	print("GPU MMU enabled: identity mapping of ", int(DdrMB), "MB DDR (MTLB at 0x", Hex{bus_addr(mmu_mtlb)}, ")\n");
 	return true;
 }
 

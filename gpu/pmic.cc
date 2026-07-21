@@ -61,16 +61,16 @@ bool enable_buck3_on_pmic()
 	hi2c.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
 
 	if (auto res = HAL_I2C_DeInit(&hi2c); res != HAL_OK) {
-		print("ERROR: HAL_I2C_DeInit returned ", res, "\n");
+		print("pmic: ERROR: HAL_I2C_DeInit returned ", res, "\n");
 		return false;
 	}
 	if (auto res = HAL_I2C_Init(&hi2c); res != HAL_OK) {
-		print("ERROR: HAL_I2C_Init returned ", res, "\n");
+		print("pmic: ERROR: HAL_I2C_Init returned ", res, "\n");
 		return false;
 	}
 
 	if (I2C7->CR1 == 0 && I2C7->TIMINGR == 0) {
-		print("I2C7 registers were written but read back as 0, check RIF?\n");
+		print("pmic: I2C7 registers were written but read back as 0, check RIF?\n");
 	}
 
 	auto print_i2c_error = [&]() {
@@ -91,18 +91,18 @@ bool enable_buck3_on_pmic()
 
 	uint8_t product_id = 0, version = 0;
 	if (auto res = pmic_read(ProductIdReg, product_id); res != HAL_OK) {
-		print("ERROR: cannot reach PMIC on I2C7 (HAL_I2C_Mem_Read returned ", res, ")\n");
+		print("pmic: ERROR: cannot reach PMIC on I2C7 (HAL_I2C_Mem_Read returned ", res, ")\n");
 		print_i2c_error();
 		return false;
 	}
 
 	pmic_read(VersionReg, version);
-	print("PMIC product ID 0x", Hex{product_id}, ", version 0x", Hex{version}, "\n");
+	print("pmic: product ID 0x", Hex{product_id}, ", version 0x", Hex{version}, "\n");
 
 	uint8_t cr1 = 0, cr2 = 0;
 	pmic_read(Buck3MainCr1, cr1);
 	pmic_read(Buck3MainCr2, cr2);
-	print("Buck3 (VDDGPU) was: voltage code ", cr1, ", control 0x", Hex{cr2}, "\n");
+	print("pmic: Buck3 (VDDGPU) was: voltage code ", cr1, ", control 0x", Hex{cr2}, "\n");
 
 	if (auto res = pmic_write(Buck3MainCr1, Buck3_900mV); res != HAL_OK) {
 		print("ERROR: PMIC write failed (", res, ")\n");
@@ -116,6 +116,6 @@ bool enable_buck3_on_pmic()
 
 	pmic_read(Buck3MainCr1, cr1);
 	pmic_read(Buck3MainCr2, cr2);
-	print("Buck3 (VDDGPU) now: voltage code ", cr1, " (900mV), control 0x", Hex{cr2}, "\n");
+	print("pmic: Buck3 (VDDGPU) now: voltage code ", cr1, " (900mV), control 0x", Hex{cr2}, "\n");
 	return true;
 }

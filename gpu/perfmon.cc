@@ -102,7 +102,8 @@ void ddr_report(const char *label, const DdrSample &s, uint64_t expected_bytes)
 	// ~1 means every write reopens a row (locality broken -> that's the throttle).
 	if (s.acts) {
 		uint32_t wr_per_act = s.writes / s.acts;
-		print("    ", wr_per_act, " writes/activate (", s.acts);
+		uint32_t wr_per_act_f = uint32_t((10 * s.writes) / s.acts) - (wr_per_act * 10);
+		print("    ", wr_per_act, ".", wr_per_act_f, " writes/activate (", s.acts);
 		print(" ACT, ", s.pres, " PRE) -- high is good; ~1 => row-thrashing\n");
 	}
 
