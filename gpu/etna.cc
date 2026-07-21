@@ -601,4 +601,10 @@ void resolve(CmdStream &cs,
 	emit_pe_drain(cs);
 }
 
+// Public wrapper so experiments can retune the GPU AXI/memory clock at runtime.
+uint32_t set_gpu_mem_clock(uint32_t target_hz)
+{
+	return boost_gpu_memclock(target_hz);
+}
+
 } // namespace etna

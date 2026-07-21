@@ -5,6 +5,7 @@
 #include "etna.hh"
 #include "etna_3d_tests.hh"
 #include "fscale_sweep.hh"
+#include "memclock_sweep.hh"
 #include "perfmon.hh"
 #include "print/print.hh"
 #include "stm32mp2xx.h" // RCC (clock diagnostics)
@@ -295,6 +296,11 @@ int main()
 	// Not needed, but interesting test:
 	// if (ok)
 	// 	fscale_sweep(gpu, fb); // characterize FSCALE across RS-fill vs shader engines
+
+	// if (ok) {
+	// 	print_gpu_clock_regs();
+	// 	measure_gpu_core_clock_mhz(gpu);
+	// }
 
 	print("\nPPU compute/shader tests:\n");
 	if (ok)
