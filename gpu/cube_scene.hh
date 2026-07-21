@@ -140,7 +140,10 @@ constexpr uint32_t face_argb(unsigned f)
 	const auto &c = kFaceColors[f];
 	return 0xFF000000u | (uint32_t(c[0] * 255) << 16) | (uint32_t(c[1] * 255) << 8) | uint32_t(c[2] * 255);
 }
-inline constexpr auto kCubeVerts = [] {
+// Build the 36 vertices (2 tris x 6 faces), each face a solid `fc[f]` color.
+// constexpr, but also callable at runtime to make per-instance colored cubes.
+constexpr std::array<float, 36 * 7> cube_verts(const std::array<std::array<float, 4>, 6> &fc)
+{
 	// corner index bits: bit0 -> x, bit1 -> y, bit2 -> z (0 = -0.5, 1 = +0.5)
 	constexpr std::array<std::array<int, 4>, 6> quads = {{
 		{1, 3, 7, 5}, // +X
@@ -159,8 +162,9 @@ inline constexpr auto kCubeVerts = [] {
 			v[o++] = (ci & 2) ? 0.5f : -0.5f;
 			v[o++] = (ci & 4) ? 0.5f : -0.5f;
 			for (unsigned k = 0; k < 4; k++)
-				v[o++] = kFaceColors[f][k];
+				v[o++] = fc[f][k];
 		}
 	}
 	return v;
-}();
+}
+inline constexpr auto kCubeVerts = cube_verts(kFaceColors);
