@@ -9,6 +9,7 @@ SOURCES += ../gpu/etna.cc
 SOURCES += ../gpu/etna_3d.cc
 SOURCES += ../gpu/etna_compute.cc
 SOURCES += ../gpu/pmic.cc
+SOURCES += ../gpu/gpu_mmuv2.cc
 # Display library (LTDC + LVDS + board wiring)
 SOURCES += ../ltdc/display.cc
 SOURCES += ../ltdc/ltdc.cc
