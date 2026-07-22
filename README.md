@@ -1,24 +1,24 @@
 # stm32mp2-baremetal
 
-This contains examples of the using the STM32MP257 in a
-bare-metal context on the Cortex A35 and Cortex M33 cores.
+This contains baremetal example projects for the Cortex A35 cores of the
+STM32MP257.
 
-The STM32MP2xx (aka "MP2") chips are very powerful 64-bit 1.5GHz dual-core
+The STM32MP2xx (aka "MP2") chips are powerful 64-bit 1.5GHz dual-core
 processors with access to fast DDR4 RAM, GPU, NEON instructions and a host of
 peripherals that are (mostly) compatible with the peripherals from other
-high-end STM32 MCUs such as the H7 and F7 series.
+high-end STM32 MCUs such as the MP1, H7 and F7 series.
 
-While traditionally used to run Linux or other OS's, it's absolutely possible
-to run your own programs on the MP2 chips without any operating system. Whether
-or not a baremetal approach is a good idea for your project is a decision you
-should weigh out carefully, but the purpose of this repo is 1) explore and
-document the low-level workings of this architecture, and 2) help you get started
-making a project on these chips.
+While traditionally used to run Linux or other OS's, these projects show that
+it's possible to run your own programs on the MP2 chips without any operating
+system. Whether or not a baremetal approach is a good idea for your project is
+a decision you should weigh out carefully, but the purpose of this repo is 1)
+explore and document the low-level workings of this architecture and the
+peripherals, and 2) help you get started making a project on these chips.
 
 This project is modeled after my [stm32mp1-baremetal](https://github.com/4ms/stm32mp1-baremetal) project.
 
-All projects are designed for the STM32MP257F-EV1 board, but changing to your
-own board should be trivial. 
+Most projects are designed for the STM32MP257F-EV1 board, and some projects
+have an option to be run on a custom board I use (see the README for each project).
 
 Currently working examples:
 
@@ -34,7 +34,7 @@ Currently working examples:
   - I2C
   - SMP Multi-core (dual CA35):
      - Startup code for each core
-     - core-specific interrupts (SGI)
+     - Core-specific interrupts (SGI)
   - Loading and running firmware on the M33 core
   - USB dual-role host/device
      - Device via USB3DR
@@ -59,8 +59,9 @@ TODO:
 
 #### Step 0: Prerequisites
 
-To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3, 13.1, and 14.2 have been tested but
-probably any later version will also work (please open an issue if you find a version that doesn't).
+To build you need the aarch64-none-elf-gcc toolchain. Versions 12.3, 13.1,
+14.2, and 15.3 have been tested but probably any later version will also work
+(please open an issue if you find a version that doesn't).
 
 It should be on your PATH, so you can run it like this:
 
