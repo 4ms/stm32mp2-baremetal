@@ -150,55 +150,28 @@ int main()
 	print("1. RGB565 test pattern ", pattern, " at 0x", Hex{FbAddr}, " (", Panel::HActive, "x", Panel::VActive, ")\n");
 
 	display_pins_setup();
-	print("2. 22 LTDC pads -> AF13 (R/G/B[7:2], CLK/HSYNC/VSYNC/DE)\n");
+	print("2. 22 LTDC pins init\n");
 
 	display_rif_setup();
 	print("3. RIF: LTDC secure, LTDC DMA master (RIMU 11) MSEC\n");
 
 	uint32_t pixel_clk = display_clocks_setup();
-	{
-		auto s4 = RCC_Clocks::get_pll_settings<RCC_Clocks::PLL4>();
-		print("4. LTDC clock on, reset pulsed, pixel clock = ck_ker_ltdc = ",
-			  pixel_clk / 1'000'000,
-			  ".",
-			  (pixel_clk / 100'000) % 10,
-			  " MHz (PLL4 src=",
-			  s4.src == RCC_Clocks::MuxSelSource::hse ? "HSE" : "HSI",
-			  " x",
-			  s4.mult,
-			  "/",
-			  s4.refdiv,
-			  "/",
-			  s4.postdiv1,
-			  "/",
-			  s4.postdiv2,
-			  ")\n");
-		print("   ",
-			  Panel::HTotal,
-			  "x",
-			  Panel::VTotal,
-			  " total -> ",
-			  pixel_clk / (Panel::HTotal * Panel::VTotal),
-			  " Hz refresh\n");
-		print("   LTDC version 0x", Hex{ltdc_hw_version()}, "\n");
-	}
+	auto s4 = RCC_Clocks::get_pll_settings<RCC_Clocks::PLL4>();
+	print("4. LTDC pixel clock = ");
+	print(pixel_clk / 1'000'000, ".", (pixel_clk / 100'000) % 10, " MHz");
+	print(" (PLL4 src=", s4.src == RCC_Clocks::MuxSelSource::hse ? "HSE" : "HSI");
+	print(" x", s4.mult, "/", s4.refdiv, "/", s4.postdiv1, "/", s4.postdiv2, ")\n");
+
+	print("   ", Panel::HTotal, "x", Panel::VTotal, " -> ");
+	print(pixel_clk / (Panel::HTotal * Panel::VTotal), " Hz refresh\n");
 
 	uint32_t writes = nv3052c_init();
-	print("5. NV3052C: SWRESET + vendor init over bit-banged SPI (",
-		  writes,
-		  " writes), 24-bit bus, sleep out, display on\n");
-	print("   readback: RDDPM(0Ah)=0x",
-		  Hex{nv3052c_read_reg(0x0A)},
-		  " (expect 0x9C)",
-		  "  RDDMADCTL(0Bh)=0x",
-		  Hex{nv3052c_read_reg(0x0B)},
-		  "  RDDCOLMOD(0Ch)=0x",
-		  Hex{nv3052c_read_reg(0x0C)},
-		  "  RDDIM(0Dh)=0x",
-		  Hex{nv3052c_read_reg(0x0D)},
-		  "  RDID1(DAh)=0x",
-		  Hex{nv3052c_read_reg(0xDA)},
-		  "\n");
+	print("5. NV3052C: init over bit-banged SPI (", writes, " writes)\n");
+	print("   readback: RDDPM(0Ah)=0x", Hex{nv3052c_read_reg(0x0A)}, " (expect 0x9C)");
+	print("  RDDMADCTL(0Bh)=0x", Hex{nv3052c_read_reg(0x0B)});
+	print("  RDDCOLMOD(0Ch)=0x", Hex{nv3052c_read_reg(0x0C)});
+	print("  RDDIM(0Dh)=0x", Hex{nv3052c_read_reg(0x0D)});
+	print("  RDID1(DAh)=0x", Hex{nv3052c_read_reg(0xDA)}, "\n");
 
 	ltdc_init(FbAddr);
 	print("6. LTDC configured + enabled (RGB565 layer, DE mode, HS/VS low, DE high, data on falling CLK)\n");
