@@ -137,26 +137,26 @@ int main()
 	auto fb = std::span<uint16_t>{reinterpret_cast<uint16_t *>(FbAddr), Panel::HActive * Panel::VActive};
 	int pattern = 3;
 	fill_test_pattern(fb, pattern);
-	print("1. RGB565 test pattern ", pattern, " at 0x", Hex{FbAddr}, " (", Panel::HActive, "x", Panel::VActive, ")\n");
+	print("Filled buffer with RGB565 test pattern #", pattern, " (", Panel::HActive, "x", Panel::VActive, ")\n");
 
 	display_pins_setup();
-	print("2. 22 LTDC pins init\n");
+	print("LTDC pins init\n");
 
 	display_rif_setup();
-	print("3. RIF: LTDC secure, LTDC DMA master (RIMU 11) MSEC\n");
+	print("RIF setup: LTDC secure, LTDC DMA master (RIMU 11) MSEC\n");
 
 	uint32_t pixel_clk = display_clocks_setup();
 	auto s4 = RCC_Clocks::get_pll_settings<RCC_Clocks::PLL4>();
-	print("4. LTDC pixel clock = ");
+	print("Init LTDC pixel clock = ");
 	print(pixel_clk / 1'000'000, ".", (pixel_clk / 100'000) % 10, " MHz");
 	print(" (PLL4 src=", s4.src == RCC_Clocks::MuxSelSource::hse ? "HSE" : "HSI");
 	print(" x", s4.mult, "/", s4.refdiv, "/", s4.postdiv1, "/", s4.postdiv2, ")\n");
 
-	print("   ", Panel::HTotal, "x", Panel::VTotal, " -> ");
+	print("   with porches: ", Panel::HTotal, "x", Panel::VTotal, " -> ");
 	print(pixel_clk / (Panel::HTotal * Panel::VTotal), " Hz refresh\n");
 
 	uint32_t writes = nv3052c_init();
-	print("5. NV3052C init (", writes, " register writes)\n");
+	print("NV3052C init (", writes, " register writes)\n");
 	print("   readback: RDDPM(0Ah)=0x", Hex{nv3052c_read_reg(0x0A)}, " (expect 0x9C)");
 	print("  RDDMADCTL(0Bh)=0x", Hex{nv3052c_read_reg(0x0B)});
 	print("  RDDCOLMOD(0Ch)=0x", Hex{nv3052c_read_reg(0x0C)});
@@ -164,12 +164,12 @@ int main()
 	print("  RDID1(DAh)=0x", Hex{nv3052c_read_reg(0xDA)}, "\n");
 
 	ltdc_init(FbAddr);
-	print("6. LTDC configured + enabled\n");
+	print("LTDC peripheral configured\n");
 
 	uint32_t l0 = ltdc_current_line();
 	udelay(5000);
 	uint32_t l1 = ltdc_current_line();
-	print("\nLTDC line counter: ", l0, " -> ", l1, l0 != l1 ? "  (advancing \\o/)\n" : "  (FROZEN: no pixel clock!)\n");
+	print("\nLTDC line counter: ", l0, " -> ", l1, l0 != l1 ? "  (advancing)\n" : "  (FROZEN!)\n");
 	print("LTDC ISR flags: 0x", Hex{ltdc_isr()}, "  (bit1: FIFO-warn, bit2: xfer-err, bit6: FIFO-err)\n");
 	print("vblank IRQ: ", ltdc_wait_vblank() ? "ok" : "TIMEOUT", "\n");
 
