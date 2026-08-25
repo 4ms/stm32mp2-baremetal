@@ -30,9 +30,8 @@ INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 
 EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
 
-# The parallel-RGB header (ER-TFT3.95-1 panel) only exists on the custom
-# devboard, so build for it by default: this selects the USART1 console
-# (PB8/PB10) and defines DEVBOARD_0_1. (See shared/makefile-common.mk.)
+# The parallel-RGB header only exists on the custom devboard, so make it default.	
+# This means USART1 is also default.
 BOARD ?= devboard
 
 OPTFLAG := -O2

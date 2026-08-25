@@ -1,3 +1,4 @@
+Display connections:
 PI6: VSYNC
 PI7: HSYNC
 PG15: B2
@@ -20,3 +21,10 @@ PF14: R3
 PG5: R5
 PG6: R6
 PG7: R7
+
+
+9-bit "SPI" connection:
+CS: PF4
+DATA: PA12
+SCK: PF5
+Reset: PG3
