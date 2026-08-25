@@ -1,0 +1,327 @@
+#include "nv3052c.hh"
+#include "drivers/hal_cnt.hh" // udelay
+#include "drivers/pin.hh"
+#include <cstddef>
+
+// Write timing minimums are tiny (66 ns SCL period, 15 ns CS setup/hold),
+// so a ~1 us half-period is generous. The pins are SPI6's (PF4/PA12/PF5)
+// but bit-banging is simpler for a one-shot init.
+
+namespace
+{
+constexpr GPIO CsPort = GPIO::F;
+constexpr uint8_t CsPin = PinNum::_4;
+constexpr GPIO MosiPort = GPIO::A;
+constexpr uint8_t MosiPin = PinNum::_12;
+constexpr GPIO SckPort = GPIO::F;
+constexpr uint8_t SckPin = PinNum::_5;
+
+Pin cs, mosi, sck;
+bool pins_ready = false;
+
+void half_period()
+{
+	udelay(1);
+}
+
+void pins_init()
+{
+	if (pins_ready)
+		return;
+	cs.init({CsPort, PinNum(CsPin), AFNone}, PinMode::Output);
+	mosi.init({MosiPort, PinNum(MosiPin), AFNone}, PinMode::Output);
+	sck.init({SckPort, PinNum(SckPin), AFNone}, PinMode::Output);
+	cs.high();
+	sck.low();
+	mosi.low();
+	pins_ready = true;
+	udelay(10);
+}
+
+void clock_bit(bool bit)
+{
+	sck.low();
+	half_period();
+	if (bit)
+		mosi.high();
+	else
+		mosi.low();
+	half_period();
+	sck.high(); // controller samples SDI here
+	half_period();
+}
+
+void write9(bool dc, uint8_t byte)
+{
+	cs.low();
+	half_period();
+	clock_bit(dc);
+	for (int i = 7; i >= 0; i--)
+		clock_bit((byte >> i) & 1);
+	sck.low();
+	half_period();
+	cs.high();
+	half_period(); // CS high time >= 40 ns
+}
+
+// Register read (datasheet 6.2.2): command word as usual, then -- with CS held
+// low and SDI tri-stated -- 8 more clocks; the controller shifts the reply out
+// on the falling edges (on SDO, which the module ties to SDI), so we sample on
+// the rising edge. No dummy cycle for register reads.
+uint8_t read9(uint8_t cmd)
+{
+	cs.low();
+	half_period();
+	clock_bit(false); // D/C = command
+	for (int i = 7; i >= 0; i--)
+		clock_bit((cmd >> i) & 1);
+	sck.low();
+	mosi.set_mode(PinMode::Input); // tri-state SDI before the first read clock
+	mosi.set_pull(PinPull::Up);
+	half_period();
+	uint8_t v = 0;
+	for (int i = 0; i < 8; i++) {
+		sck.low();
+		half_period();
+		sck.high();
+		half_period();
+		v = (v << 1) | (mosi.read_raw() ? 1 : 0);
+	}
+	sck.low();
+	half_period();
+	cs.high();
+	mosi.set_pull(PinPull::None);
+	mosi.set_mode(PinMode::Output);
+	half_period();
+	return v;
+}
+
+// ---- init table -------------------------------------------------------------
+// Copied from vendor-supplied reference/nv3052_Initial.h
+// except:
+//  * the vendor's HW reset is replaced by SWRESET (01h) (we could use the hardware
+//    GPIO to reset, but this shows how we don't have to)
+//  * the bus width is 24-bit (dpi[2:0] = 111) instead of the vendor's 18-bit:
+//    the devboard header is wired MSB-aligned, but 18-bit would require LSB-aligned.
+struct Op {
+	uint16_t reg; // 0..0xFF = register write, Delay = pause
+	uint8_t val;  // data byte, or ms for Delay
+};
+constexpr uint16_t Delay = 0x100;
+constexpr uint16_t Cmd = 0x200; // command byte only (no parameter)
+
+constexpr Op init_seq[] = {
+	{Cmd | 0x01, 0}, // SWRESET
+	{Delay, 150},
+
+	// page 1
+	{0xFF, 0x30},
+	{0xFF, 0x52},
+	{0xFF, 0x01},
+	{0xE3, 0x00},
+	{0x0A, 0x00},
+	{0x23, 0x20}, // RGB interface: DE mode, VS/HS low-active, DE high, data on rising PCLK
+	{0x24, 0x0F},
+	{0x25, 0x14},
+	{0x26, 0x2E},
+	{0x27, 0x2E},
+	{0x29, 0x02},
+	{0x2A, 0xCF},
+	{0x32, 0x34},
+	{0x38, 0x9C},
+	{0x39, 0xA7},
+	{0x3A, 0x77},
+	{0x3B, 0x94},
+	{0x40, 0x07},
+	{0x42, 0x6D},
+	{0x43, 0x83},
+	{0x81, 0x00},
+	{0x91, 0x57},
+	{0x92, 0x57},
+	{0xA0, 0x52},
+	{0xA1, 0x50},
+	{0xA4, 0x9C},
+	{0xA7, 0x02},
+	{0xA8, 0x02},
+	{0xA9, 0x02},
+	{0xAA, 0xA8},
+	{0xAB, 0x28},
+	{0xAE, 0xD2},
+	{0xAF, 0x02},
+	{0xB0, 0xD2},
+	{0xB2, 0x26},
+	{0xB3, 0x26},
+
+	// page 2 (gamma)
+	{0xFF, 0x30},
+	{0xFF, 0x52},
+	{0xFF, 0x02},
+	{0xB0, 0x02},
+	{0xB1, 0x0E},
+	{0xB2, 0x08},
+	{0xB3, 0x29},
+	{0xB4, 0x28},
+	{0xB5, 0x37},
+	{0xB6, 0x12},
+	{0xB7, 0x32},
+	{0xB8, 0x0B},
+	{0xB9, 0x03},
+	{0xBA, 0x0E},
+	{0xBB, 0x0D},
+	{0xBC, 0x10},
+	{0xBD, 0x13},
+	{0xBE, 0x18},
+	{0xBF, 0x0F},
+	{0xC0, 0x16},
+	{0xC1, 0x08},
+	{0xD0, 0x05},
+	{0xD1, 0x0B},
+	{0xD2, 0x03},
+	{0xD3, 0x33},
+	{0xD4, 0x32},
+	{0xD5, 0x32},
+	{0xD6, 0x0F},
+	{0xD7, 0x39},
+	{0xD8, 0x0B},
+	{0xD9, 0x02},
+	{0xDA, 0x10},
+	{0xDB, 0x0F},
+	{0xDC, 0x11},
+	{0xDD, 0x14},
+	{0xDE, 0x1A},
+	{0xDF, 0x11},
+	{0xE0, 0x18},
+	{0xE1, 0x04},
+
+	// page 3 (GIP / gate timing)
+	{0xFF, 0x30},
+	{0xFF, 0x52},
+	{0xFF, 0x03},
+	{0x00, 0x00},
+	{0x01, 0x00},
+	{0x02, 0x00},
+	{0x03, 0x00},
+	{0x08, 0x0D},
+	{0x09, 0x0E},
+	{0x0A, 0x0F},
+	{0x0B, 0x10},
+	{0x20, 0x00},
+	{0x21, 0x00},
+	{0x22, 0x00},
+	{0x23, 0x00},
+	{0x28, 0x22},
+	{0x2A, 0xE9},
+	{0x2B, 0xE9},
+	{0x30, 0x00},
+	{0x31, 0x00},
+	{0x32, 0x00},
+	{0x33, 0x00},
+	{0x34, 0x01},
+	{0x35, 0x00},
+	{0x36, 0x00},
+	{0x37, 0x03},
+	{0x40, 0x0A},
+	{0x41, 0x0B},
+	{0x42, 0x0C},
+	{0x43, 0x0D},
+	{0x44, 0x22},
+	{0x45, 0xE4},
+	{0x46, 0xE5},
+	{0x47, 0x22},
+	{0x48, 0xE6},
+	{0x49, 0xE7},
+	{0x50, 0x0E},
+	{0x51, 0x0F},
+	{0x52, 0x10},
+	{0x53, 0x11},
+	{0x54, 0x22},
+	{0x55, 0xE8},
+	{0x56, 0xE9},
+	{0x57, 0x22},
+	{0x58, 0xEA},
+	{0x59, 0xEB},
+	{0x60, 0x05},
+	{0x61, 0x05},
+	{0x65, 0x0A},
+	{0x66, 0x0A},
+	{0x80, 0x05},
+	{0x81, 0x00},
+	{0x82, 0x02},
+	{0x83, 0x04},
+	{0x84, 0x00},
+	{0x85, 0x00},
+	{0x86, 0x1F},
+	{0x87, 0x1F},
+	{0x88, 0x0A},
+	{0x89, 0x0C},
+	{0x8A, 0x0E},
+	{0x8B, 0x10},
+	{0x96, 0x05},
+	{0x97, 0x00},
+	{0x98, 0x01},
+	{0x99, 0x03},
+	{0x9A, 0x00},
+	{0x9B, 0x00},
+	{0x9C, 0x1F},
+	{0x9D, 0x1F},
+	{0x9E, 0x09},
+	{0x9F, 0x0B},
+	{0xA0, 0x0D},
+	{0xA1, 0x0F},
+
+	// page 0 (standard DCS)
+	{0xFF, 0x30},
+	{0xFF, 0x52},
+	{0xFF, 0x00},
+	{0x3A, 0x77}, // COLMOD: dpi[2:0]=111 -> 24-bit bus (vendor: 0x66 = 18-bit via 0Ch)
+	{0x0C, 0x77},
+	{0x36, 0x0A}, // MADCTL as shipped by the vendor (BGR order, source scan flipped)
+	{0x11, 0x00}, // Sleep Out
+	{Delay, 200},
+	{0x29, 0x00}, // Display On
+	{Delay, 10},
+};
+
+} // namespace
+
+void nv3052c_write_cmd(uint8_t cmd)
+{
+	pins_init();
+	write9(false, cmd);
+}
+
+void nv3052c_write_data(uint8_t data)
+{
+	pins_init();
+	write9(true, data);
+}
+
+void nv3052c_write_reg(uint8_t reg, uint8_t val)
+{
+	nv3052c_write_cmd(reg);
+	nv3052c_write_data(val);
+}
+
+uint8_t nv3052c_read_reg(uint8_t reg)
+{
+	pins_init();
+	return read9(reg);
+}
+
+uint32_t nv3052c_init()
+{
+	pins_init();
+	uint32_t writes = 0;
+	for (const auto &op : init_seq) {
+		if (op.reg == Delay) {
+			udelay(1000u * op.val);
+		} else if (op.reg & Cmd) {
+			nv3052c_write_cmd(op.reg & 0xFF);
+			writes++;
+		} else {
+			nv3052c_write_reg(op.reg, op.val);
+			writes++;
+		}
+	}
+	return writes;
+}

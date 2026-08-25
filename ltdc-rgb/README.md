@@ -43,13 +43,6 @@ Scanout running -- look at the panel!
 ## Other keys/testing/debugging:
 
 6/8/4: select 16/18/24 bit mode (only 24 bit works beacuse we wired up right-justified pins)
-l/h/a: set R4 (PF15) to 0/1/LTDC
-z/o/r: same but for R2/B2 (PF13/PG15)
-m/M: MADCTL RGB/BGR and h-flip
-p: pad self-test (not reliable)
+p: pad self-test (not reliable, but can detect some shorts)
 s: status
-
-Pattern 3 is the one to use for wiring problems: rows are
-red, green, blue, the 8 cells in each row have a color bit set (bits 7..2),
-then all bits off, then all bits on.
 
