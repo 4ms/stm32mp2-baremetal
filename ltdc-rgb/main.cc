@@ -118,29 +118,19 @@ void help()
 
 void status()
 {
-	print("RDDPM=0x",
-		  Hex{nv3052c_read_reg(0x0A)},
-		  " RDDMADCTL=0x",
-		  Hex{nv3052c_read_reg(0x0B)},
-		  " RDDCOLMOD=0x",
-		  Hex{nv3052c_read_reg(0x0C)},
-		  " RDDIM=0x",
-		  Hex{nv3052c_read_reg(0x0D)},
-		  " RDID1=0x",
-		  Hex{nv3052c_read_reg(0xDA)},
-		  "  LTDC line=",
-		  ltdc_current_line(),
-		  " ISR=0x",
-		  Hex{ltdc_isr()},
-		  "\n");
+	print("RDDPM=0x", Hex{nv3052c_read_reg(0x0A)});
+	print(" RDDMADCTL=0x", Hex{nv3052c_read_reg(0x0B)});
+	print(" RDDCOLMOD=0x", Hex{nv3052c_read_reg(0x0C)});
+	print(" RDDIM=0x", Hex{nv3052c_read_reg(0x0D)});
+	print(" RDID1=0x", Hex{nv3052c_read_reg(0xDA)});
+	print("  LTDC line=", ltdc_current_line(), " ISR=0x", Hex{ltdc_isr()}, "\n");
 }
 
 } // namespace
 
 int main()
 {
-	print("\nLTDC parallel-RGB Example (NV3052C / ER-TFT3.95-1)\n");
-	print("==================================================\n\n");
+	print("\nLTDC parallel-RGB Example\n");
 
 	SystemA35_SYSTICK_Config(0);
 
@@ -166,7 +156,7 @@ int main()
 	print(pixel_clk / (Panel::HTotal * Panel::VTotal), " Hz refresh\n");
 
 	uint32_t writes = nv3052c_init();
-	print("5. NV3052C: init over bit-banged SPI (", writes, " writes)\n");
+	print("5. NV3052C init (", writes, " register writes)\n");
 	print("   readback: RDDPM(0Ah)=0x", Hex{nv3052c_read_reg(0x0A)}, " (expect 0x9C)");
 	print("  RDDMADCTL(0Bh)=0x", Hex{nv3052c_read_reg(0x0B)});
 	print("  RDDCOLMOD(0Ch)=0x", Hex{nv3052c_read_reg(0x0C)});
@@ -174,20 +164,19 @@ int main()
 	print("  RDID1(DAh)=0x", Hex{nv3052c_read_reg(0xDA)}, "\n");
 
 	ltdc_init(FbAddr);
-	print("6. LTDC configured + enabled (RGB565 layer, DE mode, HS/VS low, DE high, data on falling CLK)\n");
+	print("6. LTDC configured + enabled\n");
 
-	// --- verify scanout is alive ----------------------------------------------
 	uint32_t l0 = ltdc_current_line();
 	udelay(5000);
 	uint32_t l1 = ltdc_current_line();
 	print("\nLTDC line counter: ", l0, " -> ", l1, l0 != l1 ? "  (advancing \\o/)\n" : "  (FROZEN: no pixel clock!)\n");
-	print("LTDC ISR flags: 0x", Hex{ltdc_isr()}, "  (bit1 FIFO-warn, bit2 xfer-err, bit6 FIFO-err)\n");
+	print("LTDC ISR flags: 0x", Hex{ltdc_isr()}, "  (bit1: FIFO-warn, bit2: xfer-err, bit6: FIFO-err)\n");
 	print("vblank IRQ: ", ltdc_wait_vblank() ? "ok" : "TIMEOUT", "\n");
 
 	if (l0 == l1)
-		print("\nFAILED: pixel clock dead -- check flexgen 27 / SYSCFG mux value\n");
+		print("\nFAILED: pixel clock dead\n");
 	else
-		print("\nScanout running -- look at the panel!\n");
+		print("\nLook at the display!\n");
 	help();
 
 	while (true) {
