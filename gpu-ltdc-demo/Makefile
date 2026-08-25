@@ -34,7 +34,7 @@ else ifeq ($(DISPLAY),rgb)
   DISPLAYDIR := ../ltdc-rgb
   SOURCES += $(DISPLAYDIR)/nv3052c.cc
   SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_ltdc.c
-  # ltdc-rgb's own example scans out RGB565; the GPU resolves ARGB8888
+  # ltdc-rgb uses RGB565, the GPU resolves ARGB8888
   DISPLAY_DEF := -DDISPLAY_RGB -DLTDC_RGB_BYTES_PER_PIXEL=4
 else
   $(error Invalid DISPLAY '$(DISPLAY)' - must be lvds, dsi or rgb)
