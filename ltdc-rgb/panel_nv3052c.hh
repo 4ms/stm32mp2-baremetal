@@ -46,7 +46,14 @@ constexpr bool DEActiveHigh = true;
 constexpr bool PixDataDriveNegEdge = true; // LTDC GCR.PCPOL
 
 // ---- framebuffer -----------------------------------------------------------
-constexpr uint32_t BytesPerPixel = 2; // RGB565
+// 2 = RGB565 (this example), 4 = ARGB8888. Projects that reuse this display
+// path with a 32-bit renderer (gpu-ltdc-demo) override it from their Makefile
+// with -DLTDC_RGB_BYTES_PER_PIXEL=4; ltdc.cc picks the layer format from it.
+#ifndef LTDC_RGB_BYTES_PER_PIXEL
+#define LTDC_RGB_BYTES_PER_PIXEL 2
+#endif
+constexpr uint32_t BytesPerPixel = LTDC_RGB_BYTES_PER_PIXEL;
+static_assert(BytesPerPixel == 2 || BytesPerPixel == 4, "RGB565 or ARGB8888 only");
 constexpr uint32_t Pitch = HActive * BytesPerPixel;
 constexpr uint32_t FbBytes = Pitch * VActive;
 

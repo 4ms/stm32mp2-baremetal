@@ -17,6 +17,7 @@ namespace
 {
 
 constexpr uint32_t FbAddr = 0x90000000;
+static_assert(Panel::BytesPerPixel == 2, "this example draws RGB565");
 
 constexpr uint16_t rgb565(uint32_t r, uint32_t g, uint32_t b)
 {

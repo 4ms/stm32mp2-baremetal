@@ -11,22 +11,35 @@ SOURCES += ../gpu/etna_compute.cc
 SOURCES += ../gpu/pmic.cc
 SOURCES += ../gpu/gpu_mmuv2.cc
 
-# Display library: LVDS (EV1, default) or MIPI-DSI (custom devboard).
-# `make BOARD=devboard` -> the ltdc-dsi/ ILI9881C path; otherwise the ltdc-lvds/
-# path. Both provide the same display.hh / ltdc.hh API, so main.cc is agnostic
-# (it just picks the matching panel_*.hh via -DDEVBOARD_0_1).
 BOARD ?= ev1
 ifeq ($(BOARD),devboard)
+  DISPLAY ?= dsi
+else
+  DISPLAY ?= lvds
+endif
+
+ifeq ($(DISPLAY),lvds)
+  DISPLAYDIR := ../ltdc-lvds
+  SOURCES += $(DISPLAYDIR)/lvds.cc
+  DISPLAY_DEF := -DDISPLAY_LVDS
+else ifeq ($(DISPLAY),dsi)
   DISPLAYDIR := ../ltdc-dsi
   SOURCES += $(DISPLAYDIR)/dsi.cc
   SOURCES += $(DISPLAYDIR)/ili9881c.cc
   # ltdc-dsi drives the DSI + LTDC through ST's HAL drivers
   SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dsi.c
   SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_ltdc.c
+  DISPLAY_DEF := -DDISPLAY_DSI
+else ifeq ($(DISPLAY),rgb)
+  DISPLAYDIR := ../ltdc-rgb
+  SOURCES += $(DISPLAYDIR)/nv3052c.cc
+  SOURCES += $(SHAREDDIR)/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_ltdc.c
+  # ltdc-rgb's own example scans out RGB565; the GPU resolves ARGB8888
+  DISPLAY_DEF := -DDISPLAY_RGB -DLTDC_RGB_BYTES_PER_PIXEL=4
 else
-  DISPLAYDIR := ../ltdc-lvds
-  SOURCES += $(DISPLAYDIR)/lvds.cc
+  $(error Invalid DISPLAY '$(DISPLAY)' - must be lvds, dsi or rgb)
 endif
+$(info Display: $(DISPLAY) ($(DISPLAYDIR)))
 SOURCES += $(DISPLAYDIR)/display.cc
 SOURCES += $(DISPLAYDIR)/ltdc.cc
 SOURCES += $(SHAREDDIR)/aarch64/vectors.S
@@ -53,7 +66,7 @@ INCLUDES += -I$(SHAREDDIR)/cmsis/Core_A/Include
 INCLUDES += -I$(SHAREDDIR)/cmsis-device/Include
 INCLUDES += -I$(SHAREDDIR)/STM32MP2xx_HAL_Driver/Inc
 
-EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER
+EXTRA_ARCH_CFLAGS := -DUSE_HAL_DRIVER $(DISPLAY_DEF)
 
 
 DDRPERF ?= n

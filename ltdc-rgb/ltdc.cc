@@ -59,14 +59,14 @@ void ltdc_init(uint32_t fb_addr, uint32_t x, uint32_t y, uint32_t w, uint32_t h,
 	LTDC->ICR = 0x3F;
 	LTDC->LIPCR = AccumActH + 1; // line IRQ at start of vblank
 
-	// --- layer 1: a w x h RGB565 window at (x, y); HAL adds the accumulated
+	// --- layer 1: a w x h RGB565/ARGB8888 window at (x, y); HAL adds the accumulated
 	// back-porch offsets internally, so pass raw positions. --
 	LTDC_LayerCfgTypeDef lc{};
 	lc.WindowX0 = x;
 	lc.WindowX1 = x + w;
 	lc.WindowY0 = y;
 	lc.WindowY1 = y + h;
-	lc.PixelFormat = LTDC_PIXEL_FORMAT_RGB565;
+	lc.PixelFormat = BytesPerPixel == 4 ? LTDC_PIXEL_FORMAT_ARGB8888 : LTDC_PIXEL_FORMAT_RGB565;
 	lc.Alpha = 0xFF; // constant alpha 1.0
 	lc.Alpha0 = 0;
 	lc.BlendingFactor1 = LTDC_BLENDING_FACTOR1_PAxCA;

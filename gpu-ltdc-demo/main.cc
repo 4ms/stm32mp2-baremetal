@@ -10,10 +10,16 @@
 #include "perfmon.hh"
 #endif
 
-#ifdef DEVBOARD_0_1
+// Panel parameters for the display path selected in the Makefile (DISPLAY=).
+#if defined(DISPLAY_DSI)
 #include "panel_ili9881c.hh" // custom devboard: ER-TFT050-10, 720x1280 MIPI-DSI
-#else
+#elif defined(DISPLAY_RGB)
+#include "panel_nv3052c.hh" // custom devboard: ER-TFT3.95-1, 720x720 parallel RGB
+static_assert(Panel::BytesPerPixel == 4, "build with -DLTDC_RGB_BYTES_PER_PIXEL=4: the GPU resolves ARGB8888");
+#elif defined(DISPLAY_LVDS)
 #include "panel_etml0700z9.hh" // EV1: B-LVDS7-WSVGA, 1024x600 LVDS
+#else
+#error "DISPLAY_LVDS, DISPLAY_DSI or DISPLAY_RGB must be defined (Makefile DISPLAY=)"
 #endif
 
 #include "print/print.hh"
@@ -24,14 +30,14 @@
 
 namespace
 {
-using namespace Panel; // EV1 LVDS: 1024x600  /  devboard DSI: 720x1280
+using namespace Panel; // EV1 LVDS: 1024x600  /  devboard DSI: 720x1280  /  devboard RGB: 720x720
 constexpr uint32_t FbStride = HActive * 4;
 constexpr uint32_t FbSize = FbStride * VActive;
 constexpr uint32_t Background = 0xFF101828;
 
 // Full-screen tiled render target + D16 depth (shared by every cube).
-constexpr uint32_t rtpw = (HActive + 15) & ~15u; // 1024
-constexpr uint32_t rtph = (VActive + 3) & ~3u;	 // 600
+constexpr uint32_t rtpw = (HActive + 15) & ~15u; // 1024 (LVDS)
+constexpr uint32_t rtph = (VActive + 3) & ~3u;	 // 600 (LVDS)
 constexpr uint32_t RtStride = rtpw * 4;
 constexpr uint32_t RtSize = RtStride * rtph;
 constexpr uint32_t DepthStride = rtpw * 2;

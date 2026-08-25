@@ -2,34 +2,42 @@
 
 This project combines the `gpu/` and display projects by rendering 12 (or more)
 moving/spinning cubes at about 60fps onto a display. The number of cubes can be
-increased in the source code. Sources are pulled from the `gpu/` and the either 
-`ltdc-dsi/` or `ltdc/` project, depending on your board (see below).
+increased in the source code. Sources are pulled from `gpu/` and one of the `ltdc-lvds/`, `ltdc-dsi/` or
+`ltdc-rgb/` projects, depending on the board and `DISPLAY=` option (see below).
 
 ## Display target
 
-- `make` (default, `BOARD=ev1`) — the 1024×600 LVDS display on the EV1,
-  using the `ltdc-lvds/` project.
-- `make BOARD=devboard` — for a 720×1280 MIPI-DSI ILI9881C panel on a
-  custom devboard, using the `ltdc-dsi/` project (and USART1 for the console).
+The display path is chosen with `DISPLAY=lvds | dsi | rgb`; the default follows
+the board:
 
-Both display paths expose the same `display_init()` / `ltdc_*` API and a `Panel`
-namespace (`HActive`/`VActive`), so `main.cc` is board-agnostic.
+- `make` (`BOARD=ev1`, default `DISPLAY=lvds`) — 1024×600 LVDS display on
+  the EV1, using the `ltdc-lvds/` project.
+- `make BOARD=devboard` (default `DISPLAY=dsi`) — 720×1280 MIPI-DSI
+  ILI9881C panel on the custom devboard, using `ltdc-dsi/` (and USART1 for the
+  console).
+- `make BOARD=devboard DISPLAY=rgb` — the 720×720 parallel RGB panel
+  on the custom devboard, using `ltdc-rgb/`
+
+All three display paths expose the same `display_init()` / `ltdc_*` API and a
+`Panel` namespace (`HActive`/`VActive`), so `main.cc` is display-agnostic apart
+from including the matching `panel_*.hh`.
 
 All cubes are rendered into one full-screen tiled render target with a shared
-depth buffer, so the depth test resolves occlusion between them (cubes pass in
-front of / behind each other by their z), though there is no collision
-detection and so cubes will pass through each other. Each cube has a world
-position, velocity, spin rate, and base hue (faces are shades of the base hue).
+depth buffer, so the depth test resolves occlusion between them, though there 
+is no collision detection and so cubes will pass through each other (but z-depth
+will determine which one is seen).
+Each cube has a world position, velocity, spin rate, and base hue (faces are
+shades of the base hue).
 
 The display is double-buffered, and the refresh is interrupt-driven via an ltdc callback.
 
 ## Performance
 
 Overall performance is excellent: we easily hit 60 fps with up to around 100 cubes.
-At 12 cubes, render time is 4-6ms on the 1024x600 LVDS EV1 display (at 60fps),
-and 8-12ms on the 720x1280 MIPI DSI display (at 57fps). The longer draw time is partially
-due to 1.4x as many pixels and partially due to the single-file DDR4 on the devboard vs
-dual DDR4 chip on the EV1.
+At 12 cubes, render time is 4-6ms on the 1024x600 LVDS EV1 display at 60fps (~123px/us),
+and 8-12ms on the 720x1280 MIPI DSI display at 57fps (92px/us), and 5-8ms on the 720x720 RGB
+display at 54fps (79px/us). The longer render times per pixel on the devboard is
+likely due the single DDR4 chip on the devboard vs dual DDR4 chips on the EV1. 
 
 
 ## Expected output
@@ -52,9 +60,8 @@ etna: gpu pll set to 800 MHz
 etna: GPU mem-clock ~600 MHz
 
 etna: GC model 0x8000 rev 0x6205 (product 0x80003, customer 0x15)
-verify: 0 mismatches vs CPU reference  \o/
-Display up: bg on layer 1, cube on layer 2 (512x512 at 256,44)
-spinning...
+Display up: 12 cubes
+Spinning...
 60 fps, worst render 5207 us
 60 fps, worst render 5819 us
 60 fps, worst render 5858 us
