@@ -41,8 +41,9 @@ Currently working examples:
      - Host via USB3DR
      - USB Hub support
   - ADC running with DMA
-  - LTDC display controller (LVDS screen)
+  - LTDC + LVDS interface 
   - LTDC + MIPI DSI interface
+  - LTDC + RGB parallel interface
   - 3D and 2D GPU rendering pipeline
   - HSEM hardware semaphore
 
@@ -50,7 +51,6 @@ Currently working examples:
 
 
 TODO:
-  - RGB parallel interface
   - IPCC (A35<=>A35 and A35<=>M33)
   - Loading and running firmware on the M0+ core 
   - SDMMC read/write
